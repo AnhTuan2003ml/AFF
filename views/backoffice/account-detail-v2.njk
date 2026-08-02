@@ -1,0 +1,265 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/charts.njk" import line_chart, bar_list %}
+
+{% block backoffice_content %}
+  <a class="admin-back-link" href="/backoffice/accounts">← Quay lại danh sách người dùng</a>
+
+  <section class="user-profile-header">
+    <span class="profile-avatar">{{ user.full_name | first | upper }}</span>
+    <div>
+      <div class="profile-title-line">
+        <h1>{{ user.full_name }}</h1>
+        {{ status_badge(user.status) }}
+      </div>
+      <p>{{ user.email }} · Tham gia {{ user.created_at | datetime }}</p>
+      <div class="profile-meta">
+        <span>Mã giới thiệu <code>{{ user.referral_code }}</code></span>
+        <span>
+          {% if user.referred_by_name %}
+            Vào qua giới thiệu của <b>{{ user.referred_by_name }}</b> ({{ user.referred_by_email }})
+          {% else %}
+            Tự đăng ký, không qua giới thiệu
+          {% endif %}
+        </span>
+        <span>Lần cuối đăng nhập {% if user.last_login_at %}{{ user.last_login_at | datetime }}{% else %}Chưa đăng nhập{% endif %}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if user.deleted_at %}
+    <section class="account-deleted-note">
+      <b>Tài khoản đã bị xóa quyền truy cập</b>
+      <span>{{ user.deleted_at | datetime }} · {{ user.deletion_reason }}</span>
+    </section>
+  {% endif %}
+
+  <section class="profile-metrics">
+    <article><span>Giá trị mua đã xác minh</span><strong>{{ user.order_value_vnd | vnd }}</strong><small>{{ user.verified_orders_count }}/{{ user.orders_count }} đơn đủ bằng chứng</small></article>
+    <article><span>Hoàn đã duyệt</span><strong>{{ user.cashback_vnd | vnd }}</strong><small>{{ balances.pending | vnd }} đang chờ · {{ user.manual_orders_count }} đơn cần kiểm tra</small></article>
+    <article><span>Link chia sẻ</span><strong>{{ user.links_count }}</strong><small>{{ user.clicks_count }} lượt mở · {{ user.linked_orders }} đơn</small></article>
+    <article><span>Thưởng chia sẻ</span><strong>{{ user.sharer_reward_vnd | vnd }}</strong><small>{{ user.referrals_count }} người được giới thiệu</small></article>
+  </section>
+
+  <div class="profile-layout">
+    <div class="profile-main">
+      <section class="panel">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">12 THÁNG</span><h2>Nhịp mua theo tháng</h2></div>
+          {% if peakMonth %}
+            <small>Mua nhiều nhất: tháng {{ peakMonth.label }} · {{ peakMonth.value }} đơn</small>
+          {% else %}
+            <small>Số đơn hợp lệ mỗi tháng</small>
+          {% endif %}
+        </header>
+        {{ line_chart(purchaseChart, "Biểu đồ số đơn mua theo tháng của người dùng", "Người dùng chưa có đơn nào trong 12 tháng qua.") }}
+      </section>
+
+      <section class="panel">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">MUA NHỮNG GÌ</span><h2>Sản phẩm mua nhiều nhất</h2></div>
+          <small>Theo dữ liệu đơn sàn gửi về</small>
+        </header>
+        {{ bar_list(topProductsBar, "Sàn chưa gửi chi tiết sản phẩm cho các đơn của người dùng này.") }}
+      </section>
+
+      <div class="admin-dashboard-grid">
+        <section class="panel">
+          <header class="admin-section-heading">
+            <div><span class="admin-kicker">QUAN TÂM</span><h2>Đã bấm mua qua link</h2></div>
+          </header>
+          {{ bar_list(clickedProductsBar, "Chưa bấm Mua ngay sản phẩm nào.") }}
+        </section>
+
+        <section class="panel">
+          <header class="admin-section-heading">
+            <div><span class="admin-kicker">THÓI QUEN</span><h2>Khung giờ hay mua</h2></div>
+          </header>
+          {{ bar_list(hourBucketsBar, "Chưa có đơn để thống kê khung giờ.") }}
+        </section>
+      </div>
+
+      <section class="panel">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">LỊCH SỬ MUA</span><h2>Đơn gần nhất</h2></div>
+          <a href="/backoffice/reconciliation?q={{ user.email }}">Xem tất cả</a>
+        </header>
+        {% if orders.length %}
+          <div class="order-evidence-list">
+            {% for order in orders %}
+              <article class="order-evidence-card{% if order.evidence_status != 'VERIFIED' %} evidence-warning{% endif %}">
+                <div class="order-evidence-summary">
+                  <span class="platform-mark">{{ order.platform | first }}</span>
+                  <span class="order-evidence-title">
+                    <b>#{{ order.platform_order_id }}</b>
+                    <small>{% if order.actual_product_name %}{{ order.actual_product_name }}{% elif order.clicked_product_name %}{{ order.clicked_product_name }}{% else %}Chưa có tên sản phẩm{% endif %}</small>
+                  </span>
+                  <span><b>{{ order.order_amount_vnd | vnd }}</b><small>Hoàn {{ order.cashback_vnd | vnd }}</small></span>
+                  <span class="evidence-badge {% if order.evidence_status == 'VERIFIED' %}is-verified{% else %}is-manual{% endif %}">
+                    {% if order.evidence_status == 'VERIFIED' %}Đủ bằng chứng{% else %}Chưa đủ bằng chứng{% endif %}
+                  </span>
+                  {{ status_badge(order.status) }}
+                </div>
+                <details class="evidence-details">
+                  <summary>Xem chuỗi đối chứng</summary>
+                  <dl class="evidence-grid">
+                    <div><dt>Tài khoản nhận hoàn</dt><dd>{{ user.full_name }}<small>{{ user.email }}</small></dd></div>
+                    <div><dt>Affiliate ID</dt><dd><code>{{ order.affiliate_id or 'Không có' }}</code></dd></div>
+                    <div><dt>Phương thức khớp</dt><dd>{{ order.attribution_method or 'Không có' }}<small>{{ order.attribution_value or 'Không có mã đối chiếu' }}</small></dd></div>
+                    <div><dt>Sub ID / Click ID</dt><dd><code>{{ order.sub_id or '—' }}</code><small>Click: {{ order.click_id or '—' }}</small></dd></div>
+                    <div><dt>Thời điểm mở link</dt><dd>{% if order.first_click_at %}{{ order.first_click_at | datetime }}{% else %}Không ghi nhận{% endif %}<small>{{ order.valid_click_count }} lượt mở hợp lệ</small></dd></div>
+                    <div><dt>Thời điểm đặt hàng</dt><dd>{% if order.purchased_at %}{{ order.purchased_at | datetime }}{% else %}Chưa có{% endif %}</dd></div>
+                    <div><dt>Sản phẩm đã bấm</dt><dd>{{ order.clicked_product_name or 'Chưa lưu' }}</dd></div>
+                    <div><dt>Sản phẩm sàn báo cáo</dt><dd>{{ order.actual_product_name or 'Sàn chưa trả chi tiết' }}<small>{{ order.item_source or '—' }}</small></dd></div>
+                    <div><dt>Nguồn báo cáo</dt><dd>{{ order.raw_source or 'Không có' }}<small>{% if order.raw_received_at %}Nhận {{ order.raw_received_at | datetime }}{% endif %}</small></dd></div>
+                    <div class="evidence-checksum"><dt>Mã kiểm chứng dữ liệu</dt><dd><code>{{ order.raw_checksum or 'Không có checksum' }}</code></dd></div>
+                  </dl>
+                  {% if order.evidence_status == 'VERIFIED' %}
+                    <p class="evidence-proof-note">Đơn được đối chiếu bằng mã tracking do ShopTik tạo trước khi chuyển sang sàn. Order ID, Sub ID/Click ID, tài khoản và báo cáo gốc đã nối thành một chuỗi bằng chứng.</p>
+                  {% else %}
+                    <p class="evidence-proof-note is-warning">Đơn này không có Sub ID/Click ID khớp nên không được dùng làm căn cứ tự động cộng tiền hoàn.</p>
+                  {% endif %}
+                </details>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state("Chưa có đơn hàng", "Người dùng này chưa phát sinh đơn được ghi nhận.") }}
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">TRAFFIC AFFILIATE</span><h2>Link gần nhất</h2></div>
+          <span>{{ user.clicks_count }} lượt mở</span>
+        </header>
+        {% if links.length %}
+          <div class="profile-list link-profile-list">
+            {% for link in links %}
+              <div>
+                <span class="platform-mark">S</span>
+                <span><b>{{ link.click_id }}</b><small class="truncate-url">{{ link.normalized_url }}</small></span>
+                <span><b>{{ link.click_count }} lượt mở</b><small>{{ link.created_at | datetime }}</small></span>
+                {{ status_badge(link.status) }}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state("Chưa có link chia sẻ", "Link do người dùng tạo sẽ xuất hiện tại đây.") }}
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">MẠNG LƯỚI GIỚI THIỆU</span><h2>Người đã mời</h2></div>
+          <span>{{ user.referrals_with_orders }}/{{ user.referrals_count }} đã mua</span>
+        </header>
+        {% if referrals.length %}
+          <div class="profile-list simple-profile-list referral-earning-list">
+            {% for referral in referrals %}
+              <a href="/backoffice/accounts/{{ referral.id }}">
+                <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
+                <span><b>{{ referral.full_name }}</b><small>{{ referral.email }} · {{ referral.approved_orders }} đơn đã duyệt</small></span>
+                <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>mang về cho người này</small></span>
+                {{ status_badge(referral.status) }}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state("Chưa giới thiệu ai", "Danh sách người đăng ký qua mã giới thiệu sẽ xuất hiện ở đây.") }}
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="profile-sidebar">
+      <section class="panel">
+        <header class="admin-section-heading"><div><span class="admin-kicker">QUYỀN TRUY CẬP</span><h2>Quản lý tài khoản</h2></div></header>
+        <div class="current-access">
+          <span>Quyền hiện tại</span>
+          <strong>
+            {% if user.role == 'SUPER_ADMIN' %}Quản trị cao nhất
+            {% elif user.role == 'ADMIN' %}Quản trị viên
+            {% elif user.role == 'FINANCE' %}Kế toán
+            {% elif user.role == 'SUPPORT' %}Chăm sóc
+            {% elif user.role == 'RISK' %}Kiểm soát
+            {% elif user.role == 'AUDITOR' %}Chỉ xem
+            {% else %}Người dùng{% endif %}
+          </strong>
+        </div>
+
+        {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+          <form method="post" action="/backoffice/accounts/{{ user.id }}/role" class="stack-form access-form" data-confirm-form data-confirm-message="Xác nhận thay đổi quyền tài khoản này?">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <label>Đổi quyền
+              <select name="role">
+                <option value="USER" {% if user.role == 'USER' %}selected{% endif %}>Người dùng</option>
+                <option value="SUPPORT" {% if user.role == 'SUPPORT' %}selected{% endif %}>Chăm sóc người dùng</option>
+                <option value="FINANCE" {% if user.role == 'FINANCE' %}selected{% endif %}>Kế toán</option>
+                <option value="RISK" {% if user.role == 'RISK' %}selected{% endif %}>Kiểm soát rủi ro</option>
+                <option value="AUDITOR" {% if user.role == 'AUDITOR' %}selected{% endif %}>Chỉ xem báo cáo</option>
+                <option value="ADMIN" {% if user.role == 'ADMIN' %}selected{% endif %}>Quản trị viên</option>
+              </select>
+            </label>
+            <label>Lý do thay đổi
+              <input type="text" name="reason" minlength="5" maxlength="500" placeholder="Ví dụ: Chuyển sang bộ phận kế toán" required>
+            </label>
+            <button class="button button-ghost button-block" type="submit">Lưu quyền mới</button>
+          </form>
+        {% endif %}
+
+        {% if user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'RISK'] %}
+          <form method="post" action="/backoffice/accounts/{{ user.id }}/status" class="stack-form access-form" data-confirm-form data-confirm-message="Xác nhận thay đổi trạng thái tài khoản này?">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            {% if user.status == 'ACTIVE' %}
+              <label>Lý do khóa
+                <input type="text" name="reason" minlength="5" maxlength="500" placeholder="Nêu rõ lý do để lưu nhật ký" required>
+              </label>
+              <button class="button button-danger button-block" type="submit" name="status" value="LOCKED">Khóa tài khoản</button>
+            {% elif user.status == 'LOCKED' %}
+              <input type="hidden" name="reason" value="Mở lại theo quyết định quản trị">
+              <button class="button button-primary button-block" type="submit" name="status" value="ACTIVE">Mở lại tài khoản</button>
+            {% else %}
+              <p class="form-note">Tài khoản đang chờ người dùng xác nhận email nên chưa thể mở thủ công.</p>
+            {% endif %}
+          </form>
+        {% endif %}
+      </section>
+
+      <section class="panel wallet-summary-card">
+        <header class="admin-section-heading"><div><span class="admin-kicker">SỐ DƯ</span><h2>Ví người dùng</h2></div></header>
+        <dl>
+          <div><dt>Đang chờ</dt><dd>{{ balances.pending | vnd }}</dd></div>
+          <div><dt>Khả dụng</dt><dd>{{ balances.available | vnd }}</dd></div>
+          <div><dt>Đang giữ</dt><dd>{{ balances.held | vnd }}</dd></div>
+          <div><dt>Đã trả</dt><dd>{{ balances.paid | vnd }}</dd></div>
+        </dl>
+      </section>
+
+      {% if logs.length %}
+        <section class="panel">
+          <header class="admin-section-heading"><div><span class="admin-kicker">DẤU VẾT</span><h2>Thao tác gần đây</h2></div></header>
+          <div class="mini-audit-list">
+            {% for log in logs %}
+              <div><b><span class="audit-tone-dot audit-tone-{{ log.action | auditTone }}" aria-hidden="true"></span>{{ log.action | auditAction }}</b><small>{{ log.actor_email or 'Hệ thống' }} · {{ log.created_at | datetime }}</small>{% if log.reason %}<p>{{ log.reason }}</p>{% endif %}</div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+        <section class="panel destructive-panel">
+          <span class="admin-kicker">VÙNG NGUY HIỂM</span>
+          <h2>Xóa tài khoản</h2>
+          <p>Người dùng sẽ mất quyền đăng nhập. Đơn và bút toán vẫn được giữ để đối soát.</p>
+          <form method="post" action="/backoffice/accounts/{{ user.id }}/delete" class="stack-form" data-confirm-form data-confirm-message="Xóa quyền truy cập của tài khoản này? Thao tác sẽ được ghi nhật ký.">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <label>Lý do xóa
+              <textarea name="reason" rows="3" minlength="10" maxlength="500" placeholder="Nêu lý do cụ thể" required></textarea>
+            </label>
+            <button class="button button-danger button-block" type="submit">Xóa tài khoản</button>
+          </form>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state, ticket_type_label %}
+
+{% block backoffice_content %}
+  <section class="page-heading"><div><span class="eyebrow">ƯU TIÊN THEO SLA</span><h1>Yêu cầu hỗ trợ</h1><p>Không tự kết luận thiếu đơn chỉ từ ảnh; cần tra click và dữ liệu đối tác.</p></div></section>
+  <section class="panel">
+    {% if tickets.length %}
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th>Ticket</th><th>Người dùng</th><th>Loại</th><th>Nội dung</th><th>SLA</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
+          <tbody>
+            {% for ticket in tickets %}
+              <tr>
+                <td><b>#{{ ticket.id | truncate(8, true, '') }}</b><br><small>{{ ticket.created_at | datetime }}</small></td>
+                <td>{{ ticket.email }}</td>
+                <td>{{ ticket_type_label(ticket.type) }}</td>
+                <td>{{ ticket.subject }}</td>
+                <td>{{ ticket.sla_at | datetime }}</td>
+                <td>{{ status_badge(ticket.status) }}</td>
+                <td>
+                  {% if currentUser.role != 'AUDITOR' %}
+                    <form method="post" action="/backoffice/support/{{ ticket.id }}/status" class="row-actions">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <select name="status">
+                        <option value="OPEN">Mới tiếp nhận</option>
+                        <option value="IN_PROGRESS">Đang xử lý</option>
+                        <option value="WAITING_PARTNER">Chờ đối tác</option>
+                        <option value="RESOLVED">Đã giải quyết</option>
+                        <option value="CLOSED">Đã đóng</option>
+                      </select>
+                      <button class="button button-small button-primary" type="submit">Lưu</button>
+                    </form>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}{{ empty_state("Không có ticket", "Yêu cầu hỗ trợ mới sẽ xuất hiện tại đây.") }}{% endif %}
+  </section>
+{% endblock %}

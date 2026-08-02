@@ -1,0 +1,33 @@
+<section class="recent-panel recent-panel-refined">
+  <header class="recent-heading">
+    <h2>Đơn hàng gần đây</h2>
+    <a href="/app/orders">Xem tất cả</a>
+  </header>
+
+  {% if recentOrders.length %}
+    <div class="compact-list recent-orders-list">
+      {% for order in recentOrders %}
+        <a href="/app/support?orderId={{ order.platform_order_id }}&platform={{ order.platform }}" class="compact-row recent-order-row">
+          <span class="recent-order-thumb">
+            {% if order.product_image_url %}
+              <img src="{{ order.product_image_url }}" alt="{{ order.product_name or order.platform_order_id }}" data-product-thumb>
+            {% else %}
+              <span class="platform-mark platform-{{ order.platform | lower }}">{{ order.platform | first }}</span>
+            {% endif %}
+          </span>
+          <span class="recent-order-copy">
+            <small>#{{ order.platform_order_id }} ({{ order.platform | lower }})</small>
+            <b>{{ order.product_name or 'Đơn hàng Affiliate' }}</b>
+            <em>{{ order.created_at | date }}</em>
+          </span>
+          <span class="recent-order-metrics">
+            {% if order.cashback_rate_percent %}<i>+ {{ order.cashback_rate_percent }}%</i>{% endif %}
+            <strong>+{{ order.cashback_vnd | vnd }}</strong>
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="recent-empty">Chưa có đơn</div>
+  {% endif %}
+</section>

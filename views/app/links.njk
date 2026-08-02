@@ -1,0 +1,70 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{% block app_content %}
+  <section class="page-heading">
+    <div>
+      <h1>Link chia sẻ</h1>
+      <p>Tạo link nhanh và sao chép để gửi cho người mua.</p>
+    </div>
+  </section>
+
+  {% if shareEnabled %}
+    <section class="buy-card" aria-label="Tạo link chia sẻ">
+      <form class="buy-form" method="post" action="/app/links" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label class="buy-label" for="share-product-url">Link sản phẩm</label>
+        <div class="buy-input-row">
+          <input id="share-product-url" type="url" name="productUrl" inputmode="url" autocomplete="off" maxlength="2048" placeholder="Dán link sản phẩm" required data-required-message="Vui lòng dán link sản phẩm." data-pattern-message="Link chưa đúng định dạng URL.">
+          <button type="submit" data-submit-button>Tạo link</button>
+        </div>
+        <small class="field-error" id="share-product-url-error" hidden></small>
+      </form>
+    </section>
+  {% else %}
+    <section class="panel"><p class="muted">Chương trình chia sẻ link đang tạm tắt.</p></section>
+  {% endif %}
+
+  <section class="stat-grid" aria-label="Hiệu quả bán hàng">
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('link') }}</span><span class="stat-copy"><small>Đã tạo</small><strong>{{ stats.links }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('discover') }}</span><span class="stat-copy"><small>Lượt mở</small><strong>{{ stats.clicks }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('orders') }}</span><span class="stat-copy"><small>Đơn ghi nhận</small><strong>{{ stats.orders }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('ops') }}</span><span class="stat-copy"><small>Chuyển đổi</small><strong>{{ stats.conversionPercent }}%</strong></span></div>
+  </section>
+
+  <section class="panel">
+    <header class="panel-heading"><div><h2>Danh sách link</h2></div></header>
+    {% if links.length %}
+      <div class="share-table-wrap responsive-table">
+        <table class="share-link-table">
+          <thead><tr><th>Sản phẩm</th><th>Ngày tạo</th><th>Lượt mở</th><th>Đơn</th><th>Link chia sẻ</th><th><span class="sr-only">Hành động</span></th></tr></thead>
+          <tbody>
+            {% for link in links %}
+              <tr>
+                <td class="share-product">{{ link.product_name or "Sản phẩm Shopee" }}</td>
+                <td>{{ link.created_at | date }}</td>
+                <td><strong>{{ link.click_count }}</strong></td>
+                <td><strong>{{ link.orders_count }}</strong></td>
+                <td>
+                  <div class="copy-field share-copy">
+                    <input type="text" readonly value="{{ appOrigin }}/go/{{ link.click_id }}" data-copy-source aria-label="Link chia sẻ">
+                    <button type="button" class="button button-small button-ghost" data-copy-button>Sao chép</button>
+                  </div>
+                </td>
+                <td>
+                  <form method="post" action="/app/links/{{ link.id }}/delete" data-confirm-form data-confirm-message="Xóa link chia sẻ này? Link sẽ ngừng hoạt động, đơn và thưởng đã ghi nhận vẫn được giữ.">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <button class="button button-small button-danger" type="submit">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có link nào", "Dán link sản phẩm ở ô phía trên để tạo link chia sẻ đầu tiên.") }}
+    {% endif %}
+  </section>
+{% endblock %}

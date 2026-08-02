@@ -1,0 +1,288 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{% set canReview = currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+
+{% block backoffice_content %}
+  <section class="admin-page-heading">
+    <div>
+      <span class="admin-kicker">ĐƠN &amp; HOÀN TIỀN</span>
+      <h1>Đơn và đối soát</h1>
+      <p>Chỉ hoàn tiền khi Order ID, Sub ID/Click ID và tài khoản ShopTik nối thành chuỗi bằng chứng đầy đủ.</p>
+    </div>
+
+    {% if canReview %}
+      <div class="admin-heading-actions">
+        <a class="button button-ghost" href="/backoffice/config">
+          Tự động: {% if autoCashbackEnabled %}Bật{% else %}Tắt{% endif %}
+        </a>
+        <button class="button button-primary" type="button" data-panel-toggle="order-import-modal">
+          {{ icon("upload") }} Nhập báo cáo
+        </button>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="order-summary-grid" aria-label="Tổng hợp bằng chứng đơn hàng">
+    <a href="/backoffice/reconciliation?status=PENDING">
+      <span>Chờ xử lý</span>
+      <strong>{{ summary.pending }}</strong>
+      <small>Đơn chưa có quyết định cuối</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Đủ bằng chứng</span>
+      <strong>{{ summary.verified }}</strong>
+      <small>Khớp Sub ID/Click ID với tài khoản</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Cần đối chứng</span>
+      <strong>{{ summary.manual_review }}</strong>
+      <small>Không được tự động cộng tiền</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Lỗi dữ liệu</span>
+      <strong>{{ summary.raw_errors }}</strong>
+      <small>Cần kiểm tra file nguồn</small>
+    </a>
+  </section>
+
+  <section class="admin-filter-bar" aria-label="Bộ lọc đơn hàng">
+    <form method="get" action="/backoffice/reconciliation" class="admin-filters">
+      <label class="admin-search-field">
+        {{ icon("search") }}
+        <input name="q" value="{{ filters.q }}" placeholder="Mã đơn, email hoặc tên người dùng">
+      </label>
+
+      <label>
+        <span>Trạng thái</span>
+        <select name="status">
+          <option value="ALL"{% if filters.status == 'ALL' %} selected{% endif %}>Tất cả</option>
+          <option value="PENDING"{% if filters.status == 'PENDING' %} selected{% endif %}>Chờ duyệt</option>
+          <option value="APPROVED"{% if filters.status == 'APPROVED' %} selected{% endif %}>Đã duyệt</option>
+          <option value="INVALID"{% if filters.status == 'INVALID' %} selected{% endif %}>Từ chối</option>
+          <option value="CANCELLED"{% if filters.status == 'CANCELLED' %} selected{% endif %}>Đã hủy</option>
+          <option value="REVERSED"{% if filters.status == 'REVERSED' %} selected{% endif %}>Thu hồi</option>
+        </select>
+      </label>
+
+      <div class="admin-filters-actions">
+        <button class="button button-dark" type="submit" data-submit-button>Lọc</button>
+        <a class="button button-ghost" href="/backoffice/reconciliation">Đặt lại</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel data-panel">
+    <header class="panel-heading">
+      <div>
+        <span class="admin-kicker">DỮ LIỆU ĐÃ CHUẨN HÓA</span>
+        <h2>{{ pagination.total }} đơn</h2>
+      </div>
+      <span class="muted">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+    </header>
+
+    {% if orders.length %}
+      {% if canReview %}
+        <form
+          id="orders-bulk-form"
+          method="post"
+          action="/backoffice/reconciliation/bulk-decision"
+          class="bulk-action-bar"
+          data-confirm-form
+          data-confirm-message="Duyệt các đơn đã chọn hoặc toàn bộ đơn đang chờ? Thao tác sẽ cộng tiền về ví và ghi nhật ký."
+        >
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="decision" value="APPROVED">
+          <span>Chỉ đơn có nhãn “Đủ bằng chứng” mới được chọn để duyệt hoàn tiền.</span>
+          <button class="button button-small button-primary" type="submit" name="scope" value="selected">
+            Duyệt đã chọn
+          </button>
+          <button class="button button-small button-ghost" type="submit" name="scope" value="all_pending">
+            Duyệt tất cả đang chờ
+          </button>
+        </form>
+      {% endif %}
+
+      <div class="responsive-table">
+        <table class="admin-data-table order-review-table">
+          <thead>
+            <tr>
+              <th class="select-col">
+                <input type="checkbox" data-select-all="orders" aria-label="Chọn tất cả đơn trên trang">
+              </th>
+              <th>Đơn hàng</th>
+              <th>Người mua</th>
+              <th>Giá trị / hoa hồng</th>
+              <th>Hoàn tiền</th>
+              <th>Trạng thái</th>
+              <th>Đối chiếu</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              {% set isPending = order.status == 'PENDING' %}
+              <tr>
+                <td class="select-col">
+                  {% if isPending and canReview and order.evidence_status == 'VERIFIED' %}
+                    <input
+                      type="checkbox"
+                      name="ids"
+                      value="{{ order.id }}"
+                      form="orders-bulk-form"
+                      data-select-item="orders"
+                      aria-label="Chọn đơn {{ order.platform_order_id }}"
+                    >
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <strong>#{{ order.platform_order_id }}</strong>
+                  <small>
+                    {% if order.purchased_at %}Mua {{ order.purchased_at | datetime }}{% else %}Chưa có ngày mua{% endif %}
+                  </small>
+                  {% if order.product_name %}<small>{{ order.product_name }}</small>{% endif %}
+                  <small>Affiliate ID {{ order.affiliate_id or '—' }}</small>
+                  <small>
+                    {% if order.attribution_method == 'SUB_ID' and order.sub_id %}
+                      Sub ID {{ order.sub_id }}
+                    {% elif order.click_id %}
+                      Click {{ order.click_id }}
+                    {% else %}
+                      Không có mã tracking
+                    {% endif %}
+                  </small>
+                </td>
+
+                <td>
+                  <strong>{{ order.full_name }}</strong>
+                  <small>{{ order.email }}</small>
+                </td>
+
+                <td>
+                  <strong>{{ order.order_amount_vnd | vnd }}</strong>
+                  <small>{{ order.commission_vnd | vnd }} hoa hồng</small>
+                </td>
+
+                <td>
+                  <strong>{{ order.cashback_vnd | vnd }}</strong>
+                  <small>{% if order.reviewer_email %}{{ order.reviewer_email }}{% else %}Chưa có người duyệt{% endif %}</small>
+                </td>
+
+                <td>
+                  <div class="status-cell">
+                    {{ status_badge(order.status) }}
+                    {% if order.review_reason %}
+                      <p class="status-note">{{ order.review_reason }}</p>
+                    {% endif %}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="evidence-badge {% if order.evidence_status == 'VERIFIED' %}is-verified{% else %}is-manual{% endif %}">
+                    {% if order.evidence_status == 'VERIFIED' %}Đủ bằng chứng{% else %}Chưa đủ bằng chứng{% endif %}
+                  </span>
+
+                  <details class="evidence-details compact-evidence">
+                    <summary>Đối chứng</summary>
+                    <dl class="evidence-grid">
+                      <div><dt>Tài khoản</dt><dd>{{ order.full_name }}<small>{{ order.email }}</small></dd></div>
+                      <div><dt>Order ID</dt><dd><code>{{ order.platform_order_id }}</code></dd></div>
+                      <div><dt>Affiliate ID</dt><dd><code>{{ order.affiliate_id or '—' }}</code></dd></div>
+                      <div><dt>Mã khớp</dt><dd>{{ order.attribution_method or '—' }}<small>{{ order.attribution_value or 'Không có' }}</small></dd></div>
+                      <div><dt>Click hợp lệ</dt><dd>{{ order.valid_click_count }}<small>{% if order.first_click_at %}{{ order.first_click_at | datetime }}{% else %}Không ghi nhận{% endif %}</small></dd></div>
+                      <div><dt>Đặt hàng</dt><dd>{% if order.purchased_at %}{{ order.purchased_at | datetime }}{% else %}Chưa có{% endif %}</dd></div>
+                      <div><dt>Sản phẩm đã bấm</dt><dd>{{ order.clicked_product_name or 'Chưa lưu' }}</dd></div>
+                      <div><dt>Sản phẩm sàn trả</dt><dd>{{ order.product_name or 'Chưa có' }}<small>{{ order.item_source or '—' }}</small></dd></div>
+                      <div><dt>Báo cáo nguồn</dt><dd>{{ order.raw_source or '—' }}<small>{% if order.raw_received_at %}{{ order.raw_received_at | datetime }}{% endif %}</small></dd></div>
+                      <div class="evidence-checksum"><dt>Checksum</dt><dd><code>{{ order.raw_checksum or 'Không có' }}</code></dd></div>
+                    </dl>
+                  </details>
+
+                  {% if isPending and canReview and order.evidence_status == 'VERIFIED' %}
+                    <div class="review-actions">
+                      <form
+                        method="post"
+                        action="/backoffice/reconciliation/{{ order.id }}/decision"
+                        data-confirm-form
+                        data-confirm-message="Duyệt hoàn tiền cho đúng tài khoản {{ order.email }} theo chuỗi bằng chứng này?"
+                      >
+                        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                        <input type="hidden" name="decision" value="APPROVED">
+                        <button class="button button-small button-primary" type="submit">Duyệt hoàn</button>
+                      </form>
+                      <button class="button button-small button-ghost" type="button" data-row-reject-toggle="reject-{{ order.id }}">Từ chối</button>
+                    </div>
+                    <form id="reject-{{ order.id }}" method="post" action="/backoffice/reconciliation/{{ order.id }}/decision" class="row-reject-form" hidden>
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <input type="hidden" name="decision" value="INVALID">
+                      <input name="reason" minlength="5" maxlength="500" placeholder="Lý do từ chối" required>
+                      <button class="button button-small button-danger" type="submit">Xác nhận</button>
+                    </form>
+                  {% elif isPending and canReview %}
+                    <p class="evidence-blocked-note">Không thể duyệt: thiếu Sub ID/Click ID khớp với tài khoản.</p>
+                  {% else %}
+                    <span class="muted">{{ order.updated_at | datetime }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="Phân trang">
+          {% if pagination.page > 1 %}
+            <a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;page={{ pagination.page - 1 }}">← Trước</a>
+          {% endif %}
+          <span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>
+          {% if pagination.page < pagination.pages %}
+            <a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;page={{ pagination.page + 1 }}">Sau →</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      {{ empty_state("Chưa có đơn phù hợp", "Thử thay đổi bộ lọc hoặc nhập báo cáo mới.") }}
+    {% endif %}
+  </section>
+
+  {% if canReview %}
+    <div class="st-dialog-scrim" id="order-import-modal" hidden>
+      <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+        <header class="panel-heading">
+          <div>
+            <span class="admin-kicker">BÁO CÁO SHOPEE</span>
+            <h2 id="import-modal-title">Nhập CSV để đối chiếu</h2>
+            <p>Hỗ trợ CSV UTF-8 tối đa 64 KB và 500 dòng. Đơn Shopee bắt buộc có Sub ID/Click ID để xác định đúng tài khoản; email không được dùng thay bằng chứng.</p>
+          </div>
+          <button class="icon-button" type="button" data-panel-toggle="order-import-modal" aria-label="Đóng">×</button>
+        </header>
+
+        <form method="post" action="/backoffice/reconciliation/import" class="stack-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label class="file-picker">
+            Chọn file CSV
+            <input type="file" accept=".csv,text/csv" data-csv-file>
+            <span data-file-name>Chưa chọn file</span>
+          </label>
+          <label>
+            Dữ liệu xem trước
+            <textarea
+              name="csvData"
+              rows="6"
+              maxlength="65536"
+              data-csv-target
+              placeholder="platform_order_id,status,order_amount_vnd,commission_vnd,sub_id,email,purchased_at,item_id,item_name,quantity,item_amount_vnd"
+              required
+            ></textarea>
+          </label>
+          <p class="muted">Chỉ nhập đơn có mã tracking được ShopTik tạo. Link chia sẻ cho người khác chưa đủ chứng minh danh tính người mua và sẽ không được tự động hoàn tiền.</p>
+          <button class="button button-primary button-block" type="submit" data-submit-button>Kiểm tra và nhập</button>
+        </form>
+      </section>
+    </div>
+  {% endif %}
+{% endblock %}

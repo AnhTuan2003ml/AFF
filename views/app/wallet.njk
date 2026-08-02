@@ -1,0 +1,57 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+
+{% block app_content %}
+  <section class="page-heading page-heading-refined">
+    <div>
+      <span class="eyebrow">TÀI CHÍNH</span>
+      <h1>Số dư hoàn tiền</h1>
+      <p>Theo dõi số dư khả dụng, lệnh rút đang xử lý và toàn bộ biến động ví trên cùng một màn hình.</p>
+    </div>
+  </section>
+
+  <section class="wallet-hero wallet-hero-wallet" aria-label="Số dư có thể rút">
+    <div>
+      <span>Có thể rút</span>
+      <strong>{{ balances.available | vnd }}</strong>
+      <small>Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.</small>
+    </div>
+    <a class="button button-primary" href="/app/withdrawals">Rút tiền <span aria-hidden="true">→</span></a>
+  </section>
+
+  <section class="balance-grid balance-grid-3 balance-grid-refined">
+    <article class="balance-card"><span>Đang chờ đối soát</span><strong>{{ balances.pending | vnd }}</strong><small>Đơn chưa được đối tác duyệt</small></article>
+    <article class="balance-card"><span>Đang xử lý rút</span><strong>{{ balances.held | vnd }}</strong><small>Đã tạo yêu cầu, chờ chuyển khoản</small></article>
+    <article class="balance-card"><span>Đã nhận</span><strong>{{ balances.paid | vnd }}</strong><small>Tổng đã chuyển vào ngân hàng</small></article>
+  </section>
+
+  <section class="panel wallet-ledger-panel">
+    <header class="panel-heading panel-heading-refined">
+      <div>
+        <span class="eyebrow">NHẬT KÝ</span>
+        <h2>Lịch sử biến động</h2>
+        <p>Mọi khoản cộng trừ đều được lưu để đối soát minh bạch.</p>
+      </div>
+    </header>
+    {% if entries.length %}
+      <div class="ledger-table-wrap">
+        <div class="ledger-table-head" aria-hidden="true">
+          <span>Loại</span>
+          <span>Nội dung</span>
+          <span>Số tiền</span>
+        </div>
+        <div class="ledger-list">
+        {% for entry in entries %}
+          <div class="ledger-row">
+            <span class="ledger-icon {% if entry.direction == 'CREDIT' %}credit{% else %}debit{% endif %}">{% if entry.direction == 'CREDIT' %}+{% else %}−{% endif %}</span>
+            <span><b>{{ entry.description }}</b><small>{{ entry.created_at | datetime }}</small></span>
+            <strong class="{% if entry.direction == 'CREDIT' %}money-in{% else %}money-out{% endif %}">{% if entry.direction == 'CREDIT' %}+{% else %}−{% endif %}{{ entry.amount_vnd | vnd }}</strong>
+          </div>
+        {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có biến động số dư", "Lịch sử sẽ xuất hiện khi đơn đầu tiên được đối tác ghi nhận hoặc khi bạn tạo giao dịch rút tiền.") }}
+    {% endif %}
+  </section>
+{% endblock %}

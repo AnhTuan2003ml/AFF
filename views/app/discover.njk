@@ -1,0 +1,169 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/icons.njk" import icon %}
+
+{% block page_scripts %}
+  <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
+  <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
+{% endblock %}
+
+{% block app_content %}
+  <div class="discover-page" data-discover-page>
+    <section class="discover-title-row" aria-labelledby="discover-title">
+      <div>
+        <span class="discover-eyebrow">NỘI DUNG TỪ QUẢN TRỊ</span>
+        <h1 id="discover-title">Khám phá</h1>
+        <p>Tất cả voucher, sản phẩm và nội dung nổi bật được hiển thị chung, lọc nhanh theo danh mục.</p>
+      </div>
+      {% if maxCashbackRate > 0 %}
+        <span class="discover-max-cashback">Hoàn tiền đến {{ maxCashbackRate }}%</span>
+      {% endif %}
+    </section>
+
+    {% if items.length %}
+      <section class="discover-hero" aria-label="Tổng quan deal nổi bật">
+        <div class="discover-hero-copy">
+          <span class="discover-hero-chip"><b aria-hidden="true">⚡</b> DEAL MỚI MỖI NGÀY</span>
+          <h2>Săn deal HOT{% if maxCashbackRate > 0 %} — Hoàn tiền đến {{ maxCashbackRate }}%{% endif %}</h2>
+          <p>Voucher và sản phẩm nổi bật từ Shopee, TikTok Shop và Lazada.</p>
+        </div>
+        <div class="discover-hero-stats" aria-label="Thống kê nội dung">
+          <div><strong>{{ items.length }}</strong><span>Tổng nội dung</span></div>
+          <div><strong>{{ productCount }}</strong><span>Sản phẩm</span></div>
+          <div><strong>{{ voucherCount }}</strong><span>Voucher</span></div>
+        </div>
+        <i class="discover-hero-orb discover-hero-orb-one" aria-hidden="true"></i>
+        <i class="discover-hero-orb discover-hero-orb-two" aria-hidden="true"></i>
+      </section>
+
+      <section class="discover-filters" aria-label="Tìm kiếm và lọc nội dung">
+        <div class="discover-filter-main">
+          <label class="discover-search">
+            <span aria-hidden="true">{{ icon('search') }}</span>
+            <span class="sr-only">Tìm nội dung</span>
+            <input type="search" placeholder="Tìm theo tên sản phẩm, voucher, thương hiệu..." autocomplete="off" data-discover-search>
+          </label>
+
+          {% if platforms.length %}
+            <div class="discover-platform-tabs" role="group" aria-label="Lọc theo sàn">
+              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả</button>
+              {% for platform in platforms %}
+                <button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="discover-category-row">
+          <span><b aria-hidden="true">◇</b> Danh mục:</span>
+          <div class="discover-category-tabs" role="group" aria-label="Lọc theo danh mục">
+            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
+            {% for category in categories %}
+              <button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="discover-grid" aria-live="polite" data-discover-grid>
+        {% for item in items %}
+          <article
+            class="discover-card discover-card-{{ item.typeKey }}"
+            data-discover-card
+            data-platform="{{ item.platform }}"
+            data-category="{{ item.category }}"
+          >
+            <div class="discover-card-media">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-discover-image>
+              {% else %}
+                <div class="discover-card-placeholder" aria-hidden="true">
+                  <span>
+                    {% if item.type == 'VOUCHER' %}％
+                    {% elif item.type == 'PRODUCT' %}▣
+                    {% elif item.type == 'TRENDING' %}↗
+                    {% elif item.type == 'GUIDE' %}◎
+                    {% else %}!
+                    {% endif %}
+                  </span>
+                </div>
+              {% endif %}
+
+              <div class="discover-card-badges">
+                <span class="discover-category-badge">{{ item.category }}</span>
+                {% if item.platformName %}
+                  <span class="discover-platform-badge platform-{{ item.platform }}">{{ item.platformName }}</span>
+                {% else %}
+                  <span class="discover-type-badge">{{ item.typeLabel }}</span>
+                {% endif %}
+              </div>
+
+              {% if item.badge %}
+                <span class="discover-hot-badge"><b aria-hidden="true">⚡</b>{{ item.badge }}</span>
+              {% endif %}
+
+              {% if item.isProduct and item.cashbackRate is not none and item.cashbackRate > 0 %}
+                <span class="discover-cashback-badge">Hoàn +{{ item.cashbackRate }}%</span>
+              {% endif %}
+            </div>
+
+            <div class="discover-card-body">
+              <div class="discover-card-meta">
+                <span>{{ item.typeLabel }}</span>
+                <time>{{ item.published_at | date }}</time>
+              </div>
+
+              <h2>{{ item.title }}</h2>
+              <p class="discover-card-description">{{ item.description }}</p>
+
+              {% if item.isProduct %}
+                <div class="discover-price-box">
+                  <div>
+                    <strong>{% if item.salePrice is not none %}{{ item.salePrice | vnd }}{% else %}Xem giá trên sàn{% endif %}</strong>
+                    {% if item.originalPrice is not none %}<del>{{ item.originalPrice | vnd }}</del>{% endif %}
+                  </div>
+                  <p>
+                    <span>Nhận về Ví ShopTik:</span>
+                    <b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}Kiểm tra khi mua{% endif %}</b>
+                  </p>
+                </div>
+              {% else %}
+                <div class="discover-info-strip">
+                  <span>{{ item.typeLabel }}</span>
+                  {% if item.badge %}<b>{{ item.badge }}</b>{% else %}<b>{{ item.category }}</b>{% endif %}
+                </div>
+              {% endif %}
+            </div>
+
+            <footer class="discover-card-footer">
+              {% if item.isProduct and item.target_url %}
+                <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}">
+                  <span aria-hidden="true">▣</span><b data-buy-label>Mua &amp; Nhận Hoàn Tiền</b><span aria-hidden="true">↗</span>
+                </button>
+              {% elif item.target_url %}
+                <a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer">
+                  <b>Xem chi tiết</b><span aria-hidden="true">↗</span>
+                </a>
+              {% else %}
+                <span class="discover-static-action">Nội dung thông tin</span>
+              {% endif %}
+            </footer>
+          </article>
+        {% endfor %}
+      </section>
+
+      <section class="discover-filter-empty" data-discover-filter-empty hidden>
+        <span aria-hidden="true">⌕</span>
+        <h2>Không tìm thấy nội dung phù hợp</h2>
+        <p>Thử đổi từ khóa, sàn hoặc danh mục đang chọn.</p>
+      </section>
+    {% else %}
+      <section class="discover-database-empty">
+        <span aria-hidden="true">◇</span>
+        <h2>Chưa có nội dung Khám phá</h2>
+        <p>Nội dung mới sẽ xuất hiện sau khi quản trị viên tạo bài đăng và gắn danh mục.</p>
+      </section>
+    {% endif %}
+
+    <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
+  </div>
+{% endblock %}

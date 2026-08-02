@@ -1,0 +1,56 @@
+<div class="buy-skeleton" data-product-loading hidden aria-live="polite" aria-busy="true">
+  <div class="skeleton-media"></div>
+  <div class="skeleton-lines">
+    <span class="skeleton-line w-40"></span>
+    <span class="skeleton-line w-70"></span>
+    <span class="skeleton-line w-55"></span>
+  </div>
+</div>
+
+<div class="buy-error" data-product-error hidden role="alert">
+  <span aria-hidden="true">!</span>
+  <div>
+    <b data-product-error-title>Chưa tìm được sản phẩm</b>
+    <p data-product-error-message></p>
+    <button type="button" class="buy-retry-button" data-product-retry>Thử lại</button>
+  </div>
+</div>
+
+<article class="product-card" data-product-result data-platform="SHOPEE" hidden aria-live="polite">
+  <div class="product-media">
+    <img src="" alt="" data-product-image>
+    <span class="product-platform-badge" data-product-platform>Shopee</span>
+  </div>
+  <div class="product-info">
+    <small class="product-shop" data-product-shop>Gian hàng</small>
+    <h2 class="product-name" data-product-name></h2>
+    <p class="product-status" data-product-status></p>
+    <div class="receipt receipt-cashback-only" data-receipt>
+      <div class="receipt-row receipt-row-price">
+        <span>Giá sản phẩm</span>
+        <span class="receipt-product-pricing">
+          <span class="receipt-current-price">
+            <small data-receipt-price-label>Giá hiện tại</small>
+            <strong data-receipt-price>—</strong>
+          </span>
+          <span class="receipt-original-line" data-receipt-original-line hidden>
+            <small>Giá gốc</small>
+            <s class="receipt-original-price" data-receipt-original-price></s>
+            <b class="receipt-discount-badge" data-receipt-discount></b>
+          </span>
+          <span class="receipt-saving-line" data-receipt-saving hidden>
+            Tiết kiệm <strong data-receipt-saving-value></strong>
+          </span>
+        </span>
+      </div>
+      <div class="receipt-tear" aria-hidden="true"></div>
+      <div class="receipt-row receipt-total"><span>Tiền hoàn</span><strong data-receipt-total>—</strong></div>
+    </div>
+    <p class="product-note" data-product-source-note></p>
+    <div class="product-actions">
+      <button type="button" class="buy-now-button" data-product-buy>Mua ngay <span aria-hidden="true">↗</span></button>
+      <button type="button" class="buy-reset-button" data-product-reset>Đổi sản phẩm</button>
+    </div>
+    <p class="product-note" data-product-cashback-note></p>
+  </div>
+</article>

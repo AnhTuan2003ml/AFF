@@ -1,0 +1,6 @@
+{% if flash %}
+  <div class="flash flash-{{ flash.type }}" role="{% if flash.type == 'error' %}alert{% else %}status{% endif %}" data-flash>
+    <span>{{ flash.message }}</span>
+    <button type="button" class="icon-button" aria-label="Đóng thông báo" data-dismiss-flash>×</button>
+  </div>
+{% endif %}

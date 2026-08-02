@@ -1,0 +1,215 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state, role_label %}
+{% from "partials/icons.njk" import icon %}
+
+{% block backoffice_content %}
+  <section class="admin-page-heading">
+    <div>
+      <span class="admin-kicker">TÀI KHOẢN &amp; QUYỀN</span>
+      <h1>Người dùng</h1>
+      <p>{{ pagination.total }} tài khoản · tìm một người, xem hoạt động và xử lý trong cùng một nơi.</p>
+    </div>
+    {% if currentUser.role == 'SUPER_ADMIN' %}
+      <div class="admin-heading-actions">
+        <button class="button button-primary" type="button" data-panel-toggle="create-user-modal">{{ icon("plus") }}Thêm tài khoản</button>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="admin-filter-bar">
+    <form method="get" action="/backoffice/accounts" class="admin-filters">
+      <label class="admin-search-field">{{ icon("search") }}<input name="q" value="{{ filters.q }}" placeholder="Tên, email hoặc mã giới thiệu"></label>
+      <label><span>Vai trò</span>
+        <select name="role">
+          <option value="ALL"{% if filters.role == 'ALL' %} selected{% endif %}>Tất cả</option>
+          <option value="USER"{% if filters.role == 'USER' %} selected{% endif %}>Người dùng</option>
+          <option value="SUPPORT"{% if filters.role == 'SUPPORT' %} selected{% endif %}>CSKH</option>
+          <option value="FINANCE"{% if filters.role == 'FINANCE' %} selected{% endif %}>Tài chính</option>
+          <option value="RISK"{% if filters.role == 'RISK' %} selected{% endif %}>Rủi ro</option>
+          <option value="AUDITOR"{% if filters.role == 'AUDITOR' %} selected{% endif %}>Kiểm toán</option>
+          <option value="ADMIN"{% if filters.role == 'ADMIN' %} selected{% endif %}>Quản trị</option>
+          <option value="SUPER_ADMIN"{% if filters.role == 'SUPER_ADMIN' %} selected{% endif %}>Quản trị cao nhất</option>
+        </select>
+      </label>
+      <label><span>Trạng thái</span>
+        <select name="status">
+          <option value="ALL"{% if filters.status == 'ALL' %} selected{% endif %}>Tất cả</option>
+          <option value="ACTIVE"{% if filters.status == 'ACTIVE' %} selected{% endif %}>Đang hoạt động</option>
+          <option value="PENDING_EMAIL"{% if filters.status == 'PENDING_EMAIL' %} selected{% endif %}>Chờ xác minh</option>
+          <option value="LOCKED"{% if filters.status == 'LOCKED' %} selected{% endif %}>Đã chặn</option>
+          <option value="DISABLED"{% if filters.status == 'DISABLED' %} selected{% endif %}>Đã xóa</option>
+        </select>
+      </label>
+      <div class="admin-filters-actions">
+        <button class="button button-dark" type="submit" data-submit-button>Lọc</button>
+        <a class="button button-ghost" href="/backoffice/accounts">Đặt lại</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel data-panel">
+    <header class="panel-heading"><div><span class="admin-kicker">DANH SÁCH</span><h2>{{ pagination.total }} tài khoản</h2></div><span class="muted">Trang {{ pagination.page }}/{{ pagination.pages }}</span></header>
+    {% if users.length %}
+      <div class="responsive-table"><table class="admin-data-table">
+        <thead><tr><th>Người dùng</th><th>Trạng thái</th><th>Nguồn vào</th><th>Đơn mua</th><th>Tiền hoàn</th><th>Link / click</th><th>Đã mời</th><th>Hoạt động cuối</th><th class="row-actions-cell"><span class="sr-only">Hành động</span></th></tr></thead>
+        <tbody>{% for user in users %}<tr>
+          <td><a class="user-cell" href="/backoffice/accounts/{{ user.id }}"><span class="avatar">{{ user.full_name | first | upper }}</span><span><strong>{{ user.full_name }}</strong><small>{{ user.email }}</small><small>{{ role_label(user.role) }}</small></span></a></td>
+          <td>{{ status_badge(user.status) }}</td>
+          <td>{% if user.referred_by_name %}<strong>{{ user.referred_by_name }}</strong><small>giới thiệu</small>{% else %}<span class="muted">Tự vào</span>{% endif %}</td>
+          <td><strong>{{ user.verified_orders_count }} xác minh</strong><small>{{ user.order_value_vnd | vnd }} · {{ user.manual_orders_count }} cần kiểm tra</small></td>
+          <td><strong>{{ user.cashback_vnd | vnd }}</strong><small>{{ user.pending_vnd | vnd }} đang chờ</small></td>
+          <td><strong>{{ user.links_count }} / {{ user.clicks_count }}</strong><small>link / lượt mở</small></td>
+          <td><strong>{{ user.referred_count }}</strong><small>{{ user.referred_rewarded_count }} đã mua · mã {{ user.referral_code }}</small></td>
+          <td>{% if user.last_login_at %}{{ user.last_login_at | datetime }}{% else %}<span class="muted">Chưa đăng nhập</span>{% endif %}</td>
+          <td class="row-actions-cell">
+            <div class="row-menu">
+              <button class="icon-button" type="button" data-row-menu-trigger aria-haspopup="true" aria-expanded="false" aria-label="Hành động khác cho {{ user.full_name }}">{{ icon("more") }}</button>
+              <div class="row-menu-dropdown" data-row-menu hidden>
+                <a href="/backoffice/accounts/{{ user.id }}">Xem hồ sơ</a>
+                {% set canManage = user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'RISK'] and (currentUser.role != 'RISK' or user.role == 'USER') and (user.role != 'ADMIN' or currentUser.role == 'SUPER_ADMIN') %}
+                {% if canManage and user.status == 'ACTIVE' %}
+                  <button type="button" class="row-menu-danger" data-open-account-modal="lock" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}">Khóa tài khoản</button>
+                {% elif canManage and user.status == 'LOCKED' %}
+                  <form method="post" action="/backoffice/accounts/{{ user.id }}/status" data-confirm-form data-confirm-message="Mở lại tài khoản {{ user.full_name }}?">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <input type="hidden" name="status" value="ACTIVE">
+                    <input type="hidden" name="reason" value="Mở lại theo quyết định quản trị">
+                    <button type="submit">Mở tài khoản</button>
+                  </form>
+                {% endif %}
+                {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+                  <button type="button" data-open-account-modal="role" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}" data-user-role="{{ user.role }}">Đổi quyền</button>
+                  <button type="button" class="row-menu-danger" data-open-account-modal="delete" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}">Xóa tài khoản</button>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Phân trang">{% if pagination.page > 1 %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;page={{ pagination.page - 1 }}">← Trước</a>{% endif %}<span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.page < pagination.pages %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;page={{ pagination.page + 1 }}">Sau →</a>{% endif %}</nav>{% endif %}
+    {% else %}{{ empty_state("Không tìm thấy tài khoản", "Hãy thử đổi từ khóa hoặc bộ lọc.") }}{% endif %}
+  </section>
+
+  {% if currentUser.role == 'SUPER_ADMIN' %}
+    <div class="st-dialog-scrim" id="create-user-modal" hidden>
+      <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="create-user-modal-title">
+        <header class="panel-heading">
+          <div><span class="admin-kicker">TẠO MỚI</span><h2 id="create-user-modal-title">Thêm tài khoản</h2></div>
+          <button class="icon-button" type="button" data-panel-toggle="create-user-modal" aria-label="Đóng">×</button>
+        </header>
+        <form method="post" action="/backoffice/accounts" class="stack-form" data-validate-form novalidate>
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <fieldset class="form-group">
+            <legend>Thông tin đăng nhập</legend>
+            <label for="create-user-fullname-input">Họ và tên
+              <input id="create-user-fullname-input" name="fullName" minlength="2" maxlength="100" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">
+              <small class="field-error" id="create-user-fullname-input-error" hidden></small>
+            </label>
+            <label for="create-user-email-input">Email
+              <input id="create-user-email-input" type="email" name="email" required data-required-message="Vui lòng nhập email." data-pattern-message="Email chưa đúng định dạng.">
+              <small class="field-error" id="create-user-email-input-error" hidden></small>
+            </label>
+            <label for="create-user-password-input">Mật khẩu tạm
+              <input id="create-user-password-input" type="password" name="password" minlength="10" autocomplete="new-password" required data-required-message="Vui lòng nhập mật khẩu." data-minlength-message="Mật khẩu cần ít nhất 10 ký tự.">
+              <small class="field-error" id="create-user-password-input-error" hidden></small>
+            </label>
+            <label for="create-user-password-confirm-input">Xác nhận mật khẩu
+              <input id="create-user-password-confirm-input" type="password" name="passwordConfirm" minlength="10" autocomplete="new-password" required data-required-message="Vui lòng nhập lại mật khẩu.">
+              <small class="field-error" id="create-user-password-confirm-input-error" hidden></small>
+            </label>
+          </fieldset>
+          <fieldset class="form-group">
+            <legend>Vai trò &amp; quyền</legend>
+            <label>Quyền
+              <select name="role">
+                <option value="USER">Người dùng</option>
+                <option value="SUPPORT">Chăm sóc khách hàng</option>
+                <option value="FINANCE">Tài chính</option>
+                <option value="RISK">Kiểm soát rủi ro</option>
+                <option value="AUDITOR">Chỉ xem / kiểm toán</option>
+              </select>
+            </label>
+          </fieldset>
+          <div class="modal-footer">
+            <button class="button button-ghost" type="button" data-panel-toggle="create-user-modal">Hủy</button>
+            <button class="button button-primary" type="submit" data-submit-button>Lưu tài khoản</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  {% endif %}
+
+  <div class="st-dialog-scrim" id="lock-account-modal" hidden>
+    <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="lock-modal-title">
+      <header class="panel-heading">
+        <div><h2 id="lock-modal-title">Khóa tài khoản</h2><p data-modal-target-name></p></div>
+        <button class="icon-button" type="button" data-panel-toggle="lock-account-modal" aria-label="Đóng">×</button>
+      </header>
+      <p class="form-note">Tài khoản sẽ bị đăng xuất khỏi mọi thiết bị và không thể đăng nhập lại cho tới khi được mở lại.</p>
+      <form method="post" class="stack-form" data-account-action-form data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="status" value="LOCKED">
+        <label for="lock-account-reason-input">Lý do khóa
+          <textarea id="lock-account-reason-input" name="reason" rows="3" minlength="5" maxlength="500" placeholder="Nêu rõ lý do để lưu nhật ký" required data-required-message="Vui lòng nêu lý do khóa." data-minlength-message="Lý do cần ít nhất 5 ký tự."></textarea>
+          <small class="field-error" id="lock-account-reason-input-error" hidden></small>
+        </label>
+        <div class="modal-footer">
+          <button class="button button-ghost" type="button" data-panel-toggle="lock-account-modal">Hủy</button>
+          <button class="button button-danger" type="submit" data-submit-button>Khóa tài khoản</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="st-dialog-scrim" id="role-account-modal" hidden>
+    <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
+      <header class="panel-heading">
+        <div><h2 id="role-modal-title">Đổi quyền tài khoản</h2><p data-modal-target-name></p></div>
+        <button class="icon-button" type="button" data-panel-toggle="role-account-modal" aria-label="Đóng">×</button>
+      </header>
+      <p class="form-note">Đổi quyền sẽ đăng xuất tài khoản khỏi mọi thiết bị đang đăng nhập.</p>
+      <form method="post" class="stack-form" data-account-action-form data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label>Quyền mới
+          <select name="role">
+            <option value="USER">Người dùng</option>
+            <option value="SUPPORT">Chăm sóc người dùng</option>
+            <option value="FINANCE">Kế toán</option>
+            <option value="RISK">Kiểm soát rủi ro</option>
+            <option value="AUDITOR">Chỉ xem báo cáo</option>
+            <option value="ADMIN">Quản trị viên</option>
+          </select>
+        </label>
+        <label for="role-account-reason-input">Lý do thay đổi
+          <input id="role-account-reason-input" type="text" name="reason" minlength="5" maxlength="500" placeholder="Ví dụ: Chuyển sang bộ phận kế toán" required data-required-message="Vui lòng nêu lý do thay đổi." data-minlength-message="Lý do cần ít nhất 5 ký tự.">
+          <small class="field-error" id="role-account-reason-input-error" hidden></small>
+        </label>
+        <div class="modal-footer">
+          <button class="button button-ghost" type="button" data-panel-toggle="role-account-modal">Hủy</button>
+          <button class="button button-primary" type="submit" data-submit-button>Lưu quyền mới</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="st-dialog-scrim" id="delete-account-modal" hidden>
+    <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+      <header class="panel-heading">
+        <div><h2 id="delete-modal-title">Xóa tài khoản</h2><p data-modal-target-name></p></div>
+        <button class="icon-button" type="button" data-panel-toggle="delete-account-modal" aria-label="Đóng">×</button>
+      </header>
+      <p class="form-note">Người dùng sẽ mất quyền đăng nhập. Đơn và bút toán vẫn được giữ để đối soát, không thể hoàn tác qua giao diện.</p>
+      <form method="post" class="stack-form" data-account-action-form data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="delete-account-reason-input">Lý do xóa
+          <textarea id="delete-account-reason-input" name="reason" rows="3" minlength="10" maxlength="500" placeholder="Nêu lý do cụ thể" required data-required-message="Vui lòng nêu lý do xóa." data-minlength-message="Lý do cần ít nhất 10 ký tự."></textarea>
+          <small class="field-error" id="delete-account-reason-input-error" hidden></small>
+        </label>
+        <div class="modal-footer">
+          <button class="button button-ghost" type="button" data-panel-toggle="delete-account-modal">Hủy</button>
+          <button class="button button-danger" type="submit" data-submit-button>Xóa tài khoản</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

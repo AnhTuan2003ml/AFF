@@ -1,0 +1,121 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import empty_state, kpi_trend %}
+{% from "partials/icons.njk" import icon %}
+
+{% block backoffice_content %}
+  <section class="admin-page-heading">
+    <div>
+      <span class="admin-kicker">TỔNG QUAN VẬN HÀNH</span>
+      <h1>Bàn điều hành</h1>
+      <p>Dữ liệu cập nhật lúc {{ generatedAt | datetime }}.</p>
+    </div>
+    <div class="admin-heading-actions">
+      <a class="button button-ghost" href="/backoffice/console">{{ icon('refresh') }}Làm mới dữ liệu</a>
+      <a class="button button-primary" href="/backoffice/reconciliation">{{ icon('upload') }}Nhập báo cáo</a>
+    </div>
+  </section>
+
+  <section class="kpi-grid" aria-label="Số liệu quan trọng">
+    <article class="kpi-card">
+      <span class="kpi-scope">Hôm nay</span>
+      <span class="kpi-name">Người mua</span>
+      <strong class="kpi-value">{{ today.buyers_today }}</strong>
+      {{ kpi_trend(today.buyers_today, today.buyers_yesterday) }}
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-scope">Hôm nay</span>
+      <span class="kpi-name">Giá trị đơn</span>
+      <strong class="kpi-value">{{ today.gmv_today | vnd }}</strong>
+      {{ kpi_trend(today.gmv_today, today.gmv_yesterday) }}
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-scope">Hôm nay · đã duyệt</span>
+      <span class="kpi-name">Doanh thu nền tảng</span>
+      <strong class="kpi-value">{{ today.platform_today | vnd }}</strong>
+      {{ kpi_trend(today.platform_today, today.platform_yesterday) }}
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-scope">Đã ghi sổ · từ trước đến nay</span>
+      <span class="kpi-name">Doanh thu nền tảng khả dụng</span>
+      <strong class="kpi-value">{{ booked.platform_booked_vnd | vnd }}</strong>
+      <small class="kpi-sub">Từ {{ booked.orders_approved }} đơn đã duyệt</small>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-scope">Đang chờ</span>
+      <span class="kpi-name">Hoa hồng chưa đối soát</span>
+      <strong class="kpi-value">{{ booked.pending_commission_vnd | vnd }}</strong>
+      <small class="kpi-sub">{{ booked.orders_pending }} đơn chờ duyệt</small>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-scope">Dự kiến</span>
+      <span class="kpi-name">Sẽ chi trả cho người rút tiền</span>
+      <strong class="kpi-value">{{ booked.projected_payout_vnd | vnd }}</strong>
+      <small class="kpi-sub">{{ booked.withdrawals_projected }} yêu cầu đang xử lý</small>
+    </article>
+  </section>
+
+  <section class="panel">
+    <header class="admin-section-heading">
+      <div>
+        <span class="admin-kicker">CẦN XỬ LÝ</span>
+        <h2>Việc đang chờ</h2>
+      </div>
+      <small>Ưu tiên từ trên xuống</small>
+    </header>
+    {% if queue.orders_pending != '0' or queue.withdrawals_pending != '0' or queue.banks_pending != '0' or queue.raw_errors != '0' %}
+      <div class="work-queue">
+        <a href="/backoffice/reconciliation?status=PENDING" class="{% if queue.orders_pending != '0' %}has-work{% endif %}">
+          <span class="queue-icon">{{ icon('orders') }}</span>
+          <span><b>Đơn chờ đối soát</b><small>Kiểm tra đơn và quyết định hoàn tiền</small></span>
+          <strong>{{ queue.orders_pending }}</strong>
+          <i>→</i>
+        </a>
+        <a href="/backoffice/withdrawals" class="{% if queue.withdrawals_pending != '0' %}has-work{% endif %}">
+          <span class="queue-icon">{{ icon('withdraw') }}</span>
+          <span><b>Yêu cầu rút tiền</b><small>Tiền đã giữ, chờ duyệt chuyển khoản</small></span>
+          <strong>{{ queue.withdrawals_pending }}</strong>
+          <i>→</i>
+        </a>
+        <a href="/backoffice/banks" class="{% if queue.banks_pending != '0' %}has-work{% endif %}">
+          <span class="queue-icon">{{ icon('bank') }}</span>
+          <span><b>Tài khoản ngân hàng chờ xác minh</b><small>Tài khoản nhận tiền mới gửi lên</small></span>
+          <strong>{{ queue.banks_pending }}</strong>
+          <i>→</i>
+        </a>
+        <a href="/backoffice/reconciliation" class="{% if queue.raw_errors != '0' %}has-work{% endif %}">
+          <span class="queue-icon">{{ icon('warning') }}</span>
+          <span><b>Dữ liệu đối soát lỗi</b><small>Dòng dữ liệu nhập vào không xử lý được</small></span>
+          <strong>{{ queue.raw_errors }}</strong>
+          <i>→</i>
+        </a>
+      </div>
+    {% else %}
+      {{ empty_state("Không có việc cần xử lý", "Mọi đơn, yêu cầu rút tiền và tài khoản ngân hàng đều đã được xử lý.", compact=true) }}
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <header class="admin-section-heading">
+      <div>
+        <span class="admin-kicker">NHẬT KÝ</span>
+        <h2>Hoạt động gần đây</h2>
+      </div>
+      <a href="/backoffice/audit">Xem tất cả</a>
+    </header>
+    {% if recentActivity.length %}
+      <div class="admin-activity-list">
+        {% for log in recentActivity %}
+          <div class="audit-activity-row">
+            <span class="avatar-small">{{ (log.actor_name or log.actor_email or 'H') | first | upper }}</span>
+            <span>
+              <b><span class="audit-tone-dot audit-tone-{{ log.action | auditTone }}" aria-hidden="true"></span>{{ log.action | auditAction }}</b>
+              <small>{{ log.actor_name or log.actor_email or 'Hệ thống' }} · {{ log.created_at | datetime }}{% if log.reason %} · {{ log.reason }}{% endif %}</small>
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có hoạt động", "Các thao tác quan trọng của quản trị viên sẽ hiển thị tại đây.", compact=true) }}
+    {% endif %}
+  </section>
+{% endblock %}

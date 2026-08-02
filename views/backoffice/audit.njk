@@ -1,0 +1,83 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">CHỈ ĐỌC · KHÔNG XÓA</span>
+      <h1>Nhật ký kiểm toán</h1>
+      <p>Mọi quyết định ảnh hưởng ngân hàng, đơn và tiền đều có người thực hiện, lý do và mã yêu cầu.</p>
+    </div>
+  </section>
+
+  <section class="admin-filter-bar">
+    <form method="get" action="/backoffice/audit" class="admin-filters admin-filters-wrap">
+      <label class="admin-search-field">{{ icon("search") }}<input name="actor" value="{{ filters.actor }}" placeholder="Email người thao tác"></label>
+      <label><span>Nhóm hành động</span>
+        <select name="targetType">
+          <option value="ALL"{% if filters.targetType == 'ALL' %} selected{% endif %}>Tất cả</option>
+          {% for type in targetTypeOptions %}
+            <option value="{{ type }}"{% if filters.targetType == type %} selected{% endif %}>{{ type | auditTargetType }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label><span>Kết quả</span>
+        <select name="tone">
+          <option value="ALL"{% if filters.tone == 'ALL' %} selected{% endif %}>Tất cả</option>
+          <option value="POSITIVE"{% if filters.tone == 'POSITIVE' %} selected{% endif %}>Duyệt / Mở</option>
+          <option value="NEGATIVE"{% if filters.tone == 'NEGATIVE' %} selected{% endif %}>Khóa / Từ chối</option>
+          <option value="NEUTRAL"{% if filters.tone == 'NEUTRAL' %} selected{% endif %}>Cập nhật</option>
+        </select>
+      </label>
+      <label class="admin-date-range"><span>Từ</span><input type="date" name="dateFrom" value="{{ filters.dateFrom }}"><span>đến</span><input type="date" name="dateTo" value="{{ filters.dateTo }}"></label>
+      <div class="admin-filters-actions">
+        <button class="button button-dark" type="submit" data-submit-button>Lọc</button>
+        <a class="button button-ghost" href="/backoffice/audit">Đặt lại</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    {% if logs.length %}
+      <div class="responsive-table">
+        <table class="admin-data-table">
+          <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th><th>Kết quả</th><th><span class="sr-only">Chi tiết</span></th></tr></thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td>{{ log.created_at | datetime }}</td>
+                <td>{{ log.actor_email or 'Hệ thống' }}</td>
+                <td>{{ log.action | auditAction }}</td>
+                <td>{{ log.target_type | auditTargetType }}</td>
+                <td><span class="status-badge status-{{ log.action | auditTone }}">{{ log.action | auditTone | auditToneLabel }}</span></td>
+                <td><button class="button button-small button-ghost" type="button" data-panel-toggle="log-detail-{{ log.id }}">Chi tiết</button></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}{{ empty_state("Chưa có nhật ký phù hợp", "Thử đổi bộ lọc hoặc khoảng ngày.") }}{% endif %}
+  </section>
+
+  {% for log in logs %}
+    <div class="st-dialog-scrim" id="log-detail-{{ log.id }}" hidden>
+      <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="log-detail-title-{{ log.id }}">
+        <header class="panel-heading">
+          <div><span class="admin-kicker">CHI TIẾT KỸ THUẬT · PHỤC VỤ HỖ TRỢ</span><h2 id="log-detail-title-{{ log.id }}">{{ log.action | auditAction }}</h2></div>
+          <button class="icon-button" type="button" data-panel-toggle="log-detail-{{ log.id }}" aria-label="Đóng">×</button>
+        </header>
+        <dl class="log-detail-list">
+          <div><dt>Thời gian</dt><dd>{{ log.created_at | datetime }}</dd></div>
+          <div><dt>Người thực hiện</dt><dd>{{ log.actor_email or 'Hệ thống' }}</dd></div>
+          <div><dt>Mã hành động</dt><dd><code>{{ log.action }}</code></dd></div>
+          <div><dt>Đối tượng</dt><dd>{{ log.target_type | auditTargetType }}{% if log.target_id %} · <code>{{ log.target_id }}</code>{% endif %}</dd></div>
+          <div><dt>Lý do</dt><dd>{{ log.reason or '—' }}</dd></div>
+          <div><dt>Request ID</dt><dd><code>{{ log.request_id or '—' }}</code></dd></div>
+          {% if log.before_redacted %}<div><dt>Trước khi đổi</dt><dd><pre>{{ log.before_redacted | dump }}</pre></dd></div>{% endif %}
+          {% if log.after_redacted %}<div><dt>Sau khi đổi</dt><dd><pre>{{ log.after_redacted | dump }}</pre></dd></div>{% endif %}
+        </dl>
+      </section>
+    </div>
+  {% endfor %}
+{% endblock %}

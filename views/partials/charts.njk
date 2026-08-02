@@ -1,0 +1,45 @@
+{# Macro biểu đồ đường dùng chung — nhận TrendChartData từ chart-data.ts. #}
+{% macro line_chart(chart, ariaLabel, emptyCopy) %}
+  <div class="trend-chart admin-mini-chart" role="img" aria-label="{{ ariaLabel }}">
+    <svg viewBox="0 0 {{ chart.viewBoxWidth }} {{ chart.viewBoxHeight }}" preserveAspectRatio="none">
+      {% for grid in chart.gridLines %}
+        <line x1="54" y1="{{ grid.y }}" x2="{{ chart.viewBoxWidth - 18 }}" y2="{{ grid.y }}" class="trend-gridline"/>
+        <text x="48" y="{{ grid.y + 4 }}" text-anchor="end" class="trend-grid-label">{{ grid.label }}</text>
+      {% endfor %}
+      {% if chart.hasData %}
+        <path d="{{ chart.areaPath }}" class="trend-area"/>
+        <path d="{{ chart.linePath }}" class="trend-line"/>
+        {% for dot in chart.dots %}
+          <circle cx="{{ dot.x }}" cy="{{ dot.y }}" r="3.5" class="trend-dot">
+            <title>{{ dot.dateLabel }} · {{ dot.valueLabel }}</title>
+          </circle>
+        {% endfor %}
+      {% endif %}
+      {% for tick in chart.axisLabels %}
+        <text x="{{ tick.x }}" y="{{ chart.viewBoxHeight - 4 }}" text-anchor="middle" class="trend-axis-label">{{ tick.label }}</text>
+      {% endfor %}
+    </svg>
+    {% if not chart.hasData %}
+      <p class="chart-empty-copy">{{ emptyCopy or "Chưa có dữ liệu." }}</p>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{# Danh sách thanh ngang — nhận BarListItem[] từ buildBarList. #}
+{% macro bar_list(items, emptyCopy) %}
+  {% if items.length %}
+    <div class="bar-list">
+      {% for item in items %}
+        <div class="bar-list-row {% if loop.first %}is-top{% endif %}">
+          <span class="bar-list-label" title="{{ item.label }}">{{ item.label }}</span>
+          <span class="bar-list-value">{{ item.valueLabel }}</span>
+          <div class="bar-list-track">
+            <div class="bar-list-fill {{ item.widthClass }}"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="chart-empty-copy">{{ emptyCopy or "Chưa có dữ liệu." }}</p>
+  {% endif %}
+{% endmacro %}

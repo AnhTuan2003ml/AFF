@@ -1,0 +1,36 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+
+{% block backoffice_content %}
+  <section class="page-heading"><div><span class="eyebrow">KHÔNG HIỂN THỊ SỐ ĐẦY ĐỦ</span><h1>Xác minh ngân hàng</h1><p>Đối chiếu danh tính qua quy trình được doanh nghiệp phê duyệt; không yêu cầu OTP ngân hàng.</p></div></section>
+  <section class="panel">
+    {% if accounts.length %}
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th>Người dùng</th><th>Ngân hàng</th><th>Chủ tài khoản</th><th>Trạng thái</th><th>Ngày thêm</th><th>Thao tác</th></tr></thead>
+          <tbody>
+            {% for account in accounts %}
+              <tr>
+                <td><b>{{ account.full_name }}</b><br><small>{{ account.email }}</small></td>
+                <td>{{ account.bank_code }} · •••• {{ account.account_last4 }}</td>
+                <td>{{ account.account_name_masked }}</td>
+                <td>{{ status_badge(account.status) }}</td>
+                <td>{{ account.created_at | datetime }}</td>
+                <td>
+                  {% if account.status == 'PENDING_REVIEW' and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+                    <form method="post" action="/backoffice/banks/{{ account.id }}/decision" class="row-actions">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <input type="text" name="reason" maxlength="300" placeholder="Lý do nếu từ chối">
+                      <button class="button button-small button-primary" type="submit" name="decision" value="VERIFIED">Xác minh</button>
+                      <button class="button button-small button-danger" type="submit" name="decision" value="REJECTED">Từ chối</button>
+                    </form>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}{{ empty_state("Không có tài khoản chờ xử lý", "Tài khoản ngân hàng người dùng thêm sẽ xuất hiện tại đây.") }}{% endif %}
+  </section>
+{% endblock %}

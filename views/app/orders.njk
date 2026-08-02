@@ -1,0 +1,101 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/icons.njk" import icon %}
+{% from "partials/macros.njk" import empty_state %}
+
+{% macro order_tab(status, label) %}
+  <a href="/app/orders?status={{ status }}{% if searchTerm %}&q={{ searchTerm }}{% endif %}" class="{% if selectedStatus == status %}active{% endif %}">{{ label }}</a>
+{% endmacro %}
+
+{% macro order_status(order) %}
+  {% if order.status == 'APPROVED' and selectedStatus == 'PAID' %}
+    <span class="orders-history-status is-paid">{{ icon('orders') }} Đã về ví</span>
+  {% elif order.status == 'APPROVED' %}
+    <span class="orders-history-status is-approved">{{ icon('orders') }} Sàn đã duyệt</span>
+  {% elif order.status == 'PENDING' %}
+    <span class="orders-history-status is-pending">{{ icon('orders') }} Đang chờ đối soát</span>
+  {% elif order.status in ['CANCELLED', 'INVALID', 'REVERSED'] %}
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Không hợp lệ</span>
+  {% else %}
+    <span class="orders-history-status is-pending">{{ order.status }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% block app_content %}
+  <section class="orders-history-shell">
+    <header class="orders-history-hero">
+      <div class="orders-history-title">
+        <span class="orders-history-icon">{{ icon('orders') }}</span>
+        <div>
+          <h1>Lịch sử đơn hàng hoàn tiền</h1>
+          <p>Danh sách các đơn hàng đã thực hiện qua liên kết ShopTik Affiliate</p>
+        </div>
+      </div>
+
+      <nav class="orders-history-tabs" aria-label="Lọc trạng thái đơn">
+        {{ order_tab('ALL', 'Tất cả') }}
+        {{ order_tab('PENDING', 'Đang chờ') }}
+        {{ order_tab('APPROVED', 'Đã duyệt') }}
+        {{ order_tab('PAID', 'Đã về ví') }}
+      </nav>
+
+      <form class="orders-history-search" method="get" action="/app/orders">
+        <input type="hidden" name="status" value="{{ selectedStatus }}">
+        <span>{{ icon('search') }}</span>
+        <input type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn hàng, tên sản phẩm..." autocomplete="off">
+      </form>
+    </header>
+
+    {% if orders.length %}
+      <div class="orders-history-list">
+        {% for order in orders %}
+          <article class="orders-history-card">
+            <div class="orders-history-product">
+              <span class="orders-history-thumb">
+                {% if order.product_image_url %}
+                  <img src="{{ order.product_image_url }}" alt="{{ order.product_name or 'Sản phẩm' }}" loading="lazy">
+                {% else %}
+                  <span class="platform-mark platform-{{ order.platform | lower }}">{{ order.platform | first }}</span>
+                {% endif %}
+              </span>
+
+              <div class="orders-history-info">
+                <div class="orders-history-meta">
+                  <span class="orders-history-code">#{{ order.platform_order_id }}</span>
+                  <span class="orders-history-platform">{% if order.platform == 'TIKTOK' %}TikTok{% elseif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
+                </div>
+
+                <h2>{{ order.product_name or "Sản phẩm đã mua" }}</h2>
+
+                <div class="orders-history-dates">
+                  <span>{{ (order.purchased_at or order.created_at) | date }}</span>
+                  <i aria-hidden="true">•</i>
+                  <span>Dự kiến về ví: <b>{{ (order.estimated_payout_at or order.purchased_at or order.created_at) | date }}</b></span>
+                </div>
+
+                {% if order.product_price_vnd %}
+                  <div class="orders-history-price">
+                    {% if order.product_original_price_vnd %}<s>{{ order.product_original_price_vnd | vnd }}</s>{% endif %}
+                    <b>{{ order.product_price_vnd | vnd }}</b>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <aside class="orders-history-payout">
+              {{ order_status(order) }}
+              <div>
+                <small>Hoàn tiền{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
+                <strong>+{{ order.cashback_vnd | vnd }}</strong>
+              </div>
+              <a class="button button-small button-ghost" href="/app/support?orderId={{ order.platform_order_id }}&platform={{ order.platform }}">Hỗ trợ</a>
+            </aside>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="orders-history-empty">
+        {{ empty_state("Không tìm thấy đơn hàng nào", "Hãy thử đổi bộ lọc hoặc tìm sản phẩm mới để ghi nhận đơn hoàn tiền.", "/app", "Tìm sản phẩm") }}
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

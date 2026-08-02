@@ -1,0 +1,31 @@
+{% if featuredVoucher %}
+  <div class="voucher-popup-scrim" data-voucher-popup data-voucher-id="{{ featuredVoucher.id }}" hidden>
+    <section class="voucher-modal" role="dialog" aria-modal="true" aria-labelledby="voucher-popup-title">
+      {# Nút đóng nằm NGOÀI vùng cuộn nội dung — luôn ở góc trên bên phải,
+         không bao giờ bị đẩy ra ngoài màn hình dù ảnh/mô tả dài. Toàn bộ
+         popup này dùng script riêng, độc lập (data-voucher-*), không đi
+         qua cơ chế data-panel-toggle dùng chung để tránh mọi xung đột. #}
+      <button class="voucher-modal-close" type="button" data-voucher-close aria-label="Đóng">×</button>
+
+      <div class="voucher-modal-scroll">
+        {% if featuredVoucher.image_url %}
+          <div class="voucher-modal-media">
+            <img src="{{ featuredVoucher.image_url }}" alt="{{ featuredVoucher.title }}" loading="lazy" referrerpolicy="no-referrer">
+          </div>
+        {% endif %}
+
+        <div class="voucher-modal-body">
+          {% if featuredVoucher.badge %}<span class="voucher-modal-badge">{{ featuredVoucher.badge }}</span>{% endif %}
+          <h2 id="voucher-popup-title">{{ featuredVoucher.title }}</h2>
+          <p>{{ featuredVoucher.description }}</p>
+          {% if featuredVoucher.target_url %}
+            <a class="button button-primary voucher-modal-cta" href="{{ featuredVoucher.target_url }}" target="_blank" rel="noopener noreferrer" data-voucher-close>Xem ngay <span aria-hidden="true">→</span></a>
+          {% else %}
+            <a class="button button-primary voucher-modal-cta" href="/app/discover" data-voucher-close>Xem tất cả voucher <span aria-hidden="true">→</span></a>
+          {% endif %}
+          <button type="button" class="voucher-modal-skip" data-voucher-close>Để sau, vào trang chính</button>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endif %}

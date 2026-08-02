@@ -1,0 +1,124 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">CÓ HIỆU LỰC NGAY, KHÔNG HỒI TỐ ĐƠN CŨ</span>
+      <h1>Cấu hình nghiệp vụ</h1>
+      <p>Mỗi đơn đã ghi nhận lưu bản chụp tỷ lệ riêng; đổi cấu hình ở đây chỉ áp dụng cho các đơn ghi nhận sau đó.</p>
+    </div>
+  </section>
+
+  {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN'] %}
+    <aside class="info-strip"><span>i</span><div><b>Chỉ xem</b><p>Vai trò của bạn chỉ được xem cấu hình. Chỉ Quản trị (ADMIN/SUPER_ADMIN) mới được lưu thay đổi.</p></div></aside>
+  {% endif %}
+
+  <form method="post" action="/backoffice/config" class="config-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <fieldset {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN'] %}disabled{% endif %}>
+
+      <section class="panel config-section">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">NHÓM 1</span><h2>Chia hoa hồng</h2></div>
+        </header>
+        <div class="stack-form">
+          <label for="config-buyer-cashback-input">Người mua nhận (%)
+            <input id="config-buyer-cashback-input" type="number" name="buyerCashbackPercent" min="0" max="100" value="{{ businessConfig.buyerCashbackPercent }}" required data-required-message="Vui lòng nhập tỷ lệ." data-min-message="Tỷ lệ tối thiểu là 0%." data-max-message="Tỷ lệ tối đa là 100%.">
+            <small>Nền tảng tự giữ phần còn lại ({{ 100 - businessConfig.buyerCashbackPercent }}%).</small>
+            <small class="field-error" id="config-buyer-cashback-input-error" hidden></small>
+          </label>
+          <label for="config-sharer-reward-input">Chủ link chia sẻ nhận, tính trên phần nền tảng (%)
+            <input id="config-sharer-reward-input" type="number" name="sharerRewardFromPlatformPercent" min="0" max="100" value="{{ businessConfig.sharerRewardFromPlatformPercent }}" required data-required-message="Vui lòng nhập tỷ lệ." data-min-message="Tỷ lệ tối thiểu là 0%." data-max-message="Tỷ lệ tối đa là 100%.">
+            <small>Ví dụ 80/20 và 20% ở đây → chủ link nhận 4% tổng hoa hồng, nền tảng còn 16%.</small>
+            <small class="field-error" id="config-sharer-reward-input-error" hidden></small>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" name="enableShareLink" {% if businessConfig.enableShareLink %}checked{% endif %}>
+            <span>Bật link chia sẻ<small>Cho phép người dùng tạo link chia sẻ và nhận thưởng khi người khác mua qua link đó.</small></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel config-section">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">NHÓM 2</span><h2>Thưởng giới thiệu</h2></div>
+        </header>
+        <div class="stack-form">
+          <label for="config-referrer-reward-input">Thưởng cho người giới thiệu (VNĐ)
+            <span class="currency-input-shell">
+              <input id="config-referrer-reward-input" type="text" inputmode="numeric" autocomplete="off" required
+                data-currency-input
+                data-currency-min="0"
+                data-currency-step="1000"
+                data-required-message="Vui lòng nhập số tiền."
+                data-min-message="Số tiền không được âm.">
+              <span class="currency-input-suffix" aria-hidden="true">₫</span>
+            </span>
+            <input type="hidden" name="referrerRewardAmountVnd" value="{{ businessConfig.referrerRewardAmountVnd }}" data-currency-raw>
+            <small class="field-error" id="config-referrer-reward-input-error" hidden></small>
+          </label>
+          <label for="config-referred-bonus-input">Quà cho người mới (VNĐ)
+            <span class="currency-input-shell">
+              <input id="config-referred-bonus-input" type="text" inputmode="numeric" autocomplete="off" required
+                data-currency-input
+                data-currency-min="0"
+                data-currency-step="1000"
+                data-required-message="Vui lòng nhập số tiền."
+                data-min-message="Số tiền không được âm.">
+              <span class="currency-input-suffix" aria-hidden="true">₫</span>
+            </span>
+            <input type="hidden" name="referredUserBonusAmountVnd" value="{{ businessConfig.referredUserBonusAmountVnd }}" data-currency-raw>
+            <small class="field-error" id="config-referred-bonus-input-error" hidden></small>
+          </label>
+          <p class="optional">Kích hoạt khi: đơn hợp lệ đầu tiên của người được giới thiệu được duyệt. Không trả theo lượt click hay lượt đăng ký.</p>
+          <label class="switch-row">
+            <input type="checkbox" name="enableReferralProgram" {% if businessConfig.enableReferralProgram %}checked{% endif %}>
+            <span>Bật chương trình giới thiệu<small>Thưởng tiền cho người giới thiệu khi mời được người dùng mới mua hàng lần đầu.</small></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel config-section">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">NHÓM 3</span><h2>Quy tắc duyệt đơn &amp; rút tiền</h2></div>
+        </header>
+        <div class="stack-form">
+          <label for="config-attribution-days-input">Thời gian ghi nhận link (ngày)
+            <input id="config-attribution-days-input" type="number" name="affiliateAttributionDays" min="1" max="365" value="{{ businessConfig.affiliateAttributionDays }}" required data-required-message="Vui lòng nhập số ngày." data-min-message="Tối thiểu 1 ngày." data-max-message="Tối đa 365 ngày.">
+            <small>Số ngày kể từ lúc bấm link mà đơn mua vẫn được tính là qua link đó.</small>
+            <small class="field-error" id="config-attribution-days-input-error" hidden></small>
+          </label>
+          <label for="config-hold-days-input">Thời gian giữ hoàn tiền trước khi khả dụng (ngày)
+            <input id="config-hold-days-input" type="number" name="cashbackHoldDays" min="0" max="365" value="{{ businessConfig.cashbackHoldDays }}" required data-required-message="Vui lòng nhập số ngày." data-min-message="Không được âm." data-max-message="Tối đa 365 ngày.">
+            <small>Số ngày giữ tiền hoàn sau khi duyệt, trước khi người dùng rút được.</small>
+            <small class="field-error" id="config-hold-days-input-error" hidden></small>
+          </label>
+          <label for="config-min-withdraw-input">Số tiền rút tối thiểu (VNĐ)
+            <span class="currency-input-shell">
+              <input id="config-min-withdraw-input" type="text" inputmode="numeric" autocomplete="off" required
+                data-currency-input
+                data-currency-min="1"
+                data-currency-step="10000"
+                data-required-message="Vui lòng nhập số tiền."
+                data-min-message="Số tiền phải lớn hơn 0.">
+              <span class="currency-input-suffix" aria-hidden="true">₫</span>
+            </span>
+            <input type="hidden" name="minWithdrawAmountVnd" value="{{ businessConfig.minWithdrawAmountVnd }}" data-currency-raw>
+            <small class="field-error" id="config-min-withdraw-input-error" hidden></small>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" name="enableAutoCashbackApproval" {% if businessConfig.enableAutoCashbackApproval %}checked{% endif %}>
+            <span>Tự động duyệt hoàn tiền<small>Khi bật, đơn mới ở trạng thái chờ duyệt sẽ tự chuyển sang đã duyệt, cộng tiền về ví và ghi nhật ký hệ thống.</small></span>
+          </label>
+        </div>
+      </section>
+
+      <div class="config-save-bar">
+        <span class="config-saved-state">Đã lưu lúc {{ businessConfig.updatedAt | datetime }}</span>
+        {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+          <button class="button button-primary" type="submit" data-submit-button>Lưu thay đổi</button>
+        {% endif %}
+      </div>
+    </fieldset>
+  </form>
+{% endblock %}

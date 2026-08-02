@@ -1,0 +1,345 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+
+{% block page_scripts %}
+  <link rel="stylesheet" href="/assets/backoffice-products.css?v={{ assetVersion }}">
+  <script src="/assets/backoffice-products.js?v={{ assetVersion }}" defer></script>
+{% endblock %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">KHÁM PHÁ</span>
+      <h1>Khám phá</h1>
+      <p>Quản lý nội dung Khám phá (Voucher, Sản phẩm nổi bật...) và theo dõi sản phẩm bán chạy qua đơn hợp lệ.</p>
+    </div>
+  </section>
+
+  <nav class="filter-tabs" aria-label="Chọn khu vực">
+    <a href="/backoffice/products?tab=content" class="{% if activeTab == 'content' %}active{% endif %}">Nội dung Khám phá</a>
+    <a href="/backoffice/products?tab=top-products" class="{% if activeTab == 'top-products' %}active{% endif %}">Sản phẩm bán chạy</a>
+  </nav>
+
+  {% if activeTab == 'content' %}
+    {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+      <section class="panel discover-editor-panel">
+        <header class="discover-editor-heading">
+          <div>
+            <span class="action-index" data-editor-mode-label>ĐĂNG MỚI</span>
+            <h2 data-editor-mode-title>Thêm nội dung Khám phá</h2>
+            <p>Tải ảnh trực tiếp hoặc dùng link ảnh. File tải lên sẽ được ưu tiên khi nhập cả hai nguồn.</p>
+          </div>
+          <span class="discover-editor-note">JPG, PNG, WEBP, GIF · tối đa 5 MB</span>
+        </header>
+
+        <form
+          method="post"
+          action="/backoffice/products"
+          enctype="multipart/form-data"
+          class="discover-editor-form"
+          data-discover-editor
+          data-create-action="/backoffice/products"
+        >
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+
+          <div class="discover-editor-layout">
+            <div class="discover-editor-fields">
+              <div class="discover-form-grid discover-form-grid-two">
+                <label>Loại nội dung
+                  <select name="type" required data-preview-type>
+                    <option value="VOUCHER">Voucher</option>
+                    <option value="PRODUCT">Sản phẩm nổi bật</option>
+                    <option value="TRENDING">Xu hướng</option>
+                    <option value="GUIDE">Hướng dẫn</option>
+                    <option value="ANNOUNCEMENT">Thông báo</option>
+                  </select>
+                </label>
+                <label>Danh mục lọc
+                  <input type="text" name="category" maxlength="80" list="discover-category-options" placeholder="Ví dụ: Điện tử, Voucher" required data-preview-category>
+                  <datalist id="discover-category-options">
+                    <option value="Voucher">
+                    <option value="Điện tử">
+                    <option value="Mỹ phẩm">
+                    <option value="Gia dụng">
+                    <option value="Thời trang">
+                    <option value="Sách">
+                    <option value="Ăn uống">
+                    <option value="Mẹ & Bé">
+                    <option value="Du lịch">
+                    <option value="Nổi bật">
+                    <option value="Khác">
+                  </datalist>
+                </label>
+              </div>
+
+              <div class="discover-form-grid discover-form-grid-two">
+                <label>Tiêu đề
+                  <input type="text" name="title" maxlength="160" placeholder="Nhập tiêu đề ngắn, rõ ràng" required data-preview-title>
+                </label>
+                <label>Nhãn nổi bật <span class="optional">không bắt buộc</span>
+                  <input type="text" name="badge" maxlength="40" placeholder="Ví dụ: HOT, Giảm 30%" data-preview-badge>
+                </label>
+              </div>
+
+              <label>Mô tả
+                <textarea name="description" rows="4" maxlength="500" placeholder="Nêu đúng thông tin người dùng cần biết" required data-preview-description></textarea>
+              </label>
+
+              <fieldset class="discover-product-fields" data-product-fields hidden>
+                <legend>Thông tin sản phẩm (Shopee/TikTok Shop/Lazada)</legend>
+                <div class="discover-form-grid discover-form-grid-two">
+                  <label>Sàn
+                    <select name="platform" data-product-field>
+                      <option value="">— Chọn sàn —</option>
+                      <option value="SHOPEE">Shopee</option>
+                      <option value="TIKTOK">TikTok Shop</option>
+                      <option value="LAZADA">Lazada</option>
+                    </select>
+                  </label>
+                  <label>Tỷ lệ hoàn tiền (%) <span class="optional">không bắt buộc</span>
+                    <input type="number" name="cashbackRatePercent" min="0" max="100" step="0.1" placeholder="Ví dụ: 12" data-product-field>
+                  </label>
+                  <label>Giá bán (đ)
+                    <span class="currency-input-shell">
+                      <input type="text" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 250.000"
+                        data-currency-input data-product-field
+                        data-currency-min="0" data-currency-step="1000">
+                      <span class="currency-input-suffix" aria-hidden="true">₫</span>
+                    </span>
+                    <input type="hidden" name="priceVnd" data-currency-raw data-product-field>
+                  </label>
+                  <label>Giá gốc (đ) <span class="optional">không bắt buộc, chỉ hiện gạch ngang khi cao hơn giá bán</span>
+                    <span class="currency-input-shell">
+                      <input type="text" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 350.000"
+                        data-currency-input data-product-field
+                        data-currency-min="0" data-currency-step="1000">
+                      <span class="currency-input-suffix" aria-hidden="true">₫</span>
+                    </span>
+                    <input type="hidden" name="originalPriceVnd" data-currency-raw data-product-field>
+                  </label>
+                </div>
+              </fieldset>
+
+              <label>Đường dẫn khi bấm xem chi tiết <span class="optional" data-target-url-hint>không bắt buộc</span>
+                <input type="url" name="targetUrl" maxlength="2048" placeholder="https://...">
+                <small data-target-url-product-note hidden>Với "Sản phẩm nổi bật", dán đúng link sản phẩm thật trên sàn — dùng để tạo link mua &amp; hoàn tiền khi người dùng bấm "Mua ngay".</small>
+              </label>
+
+              <div class="discover-image-source">
+                <label>Link ảnh <span class="optional">không bắt buộc</span>
+                  <input type="url" name="imageUrl" maxlength="2048" placeholder="https://.../anh-san-pham.jpg" data-preview-image-url>
+                </label>
+
+                <div class="discover-source-divider"><span>hoặc</span></div>
+
+                <label class="discover-file-picker">
+                  <span>Ảnh tải lên <span class="optional">không bắt buộc</span></span>
+                  <span class="discover-file-control">
+                    <input type="file" name="imageFile" accept="image/jpeg,image/png,image/webp,image/gif" data-preview-image-file>
+                    <b>Chọn ảnh</b>
+                    <small data-selected-file>Chưa chọn file</small>
+                  </span>
+                </label>
+              </div>
+
+              <label class="discover-sort-field">Thứ tự hiển thị
+                <input type="number" name="sortOrder" min="0" max="1000" value="10">
+                <small>Số nhỏ sẽ hiển thị trước.</small>
+              </label>
+            </div>
+
+            <aside class="discover-live-preview" aria-label="Xem trước thẻ nội dung">
+              <div class="discover-preview-label"><span>XEM TRƯỚC</span><small>Cập nhật theo nội dung đang nhập</small></div>
+              <article class="discover-preview-card" data-preview-card>
+                <div class="discover-preview-media">
+                  <img src="" alt="" data-preview-image hidden>
+                  <div class="discover-preview-placeholder" data-preview-placeholder><span>％</span></div>
+                  <div class="discover-preview-badges">
+                    <span data-preview-category-label>Voucher</span>
+                    <i data-preview-type-label>Voucher</i>
+                    <em data-preview-badge-label hidden></em>
+                  </div>
+                </div>
+                <div class="discover-preview-body">
+                  <h3 data-preview-title-label>Tiêu đề nội dung</h3>
+                  <p data-preview-description-label>Mô tả sẽ hiển thị ở đây để bạn kiểm tra bố cục trước khi đăng.</p>
+                  <footer><span>Nội dung mới</span><b>Xem chi tiết →</b></footer>
+                </div>
+              </article>
+            </aside>
+          </div>
+
+          <div class="discover-editor-actions">
+            <p>Ảnh tải lên được lưu trong hệ thống. Không nhập ảnh vẫn có khung minh họa đồng nhất.</p>
+            <span class="discover-editor-submit-row">
+              <button type="button" class="button button-ghost" data-editor-cancel-edit hidden>Hủy sửa, tạo mới</button>
+              <button class="button button-primary" type="submit" data-submit-button data-editor-mode-submit>Đăng nội dung</button>
+            </span>
+          </div>
+        </form>
+      </section>
+    {% endif %}
+
+    <section class="panel discover-content-admin-panel">
+      <header class="panel-heading">
+        <div><span class="eyebrow">TẤT CẢ TRẠNG THÁI</span><h2>Nội dung Khám phá</h2></div>
+        <p>{{ content.length }} mục trong cơ sở dữ liệu</p>
+      </header>
+
+      {% if content.length %}
+        <div class="discover-admin-grid">
+          {% for item in content %}
+            <article class="discover-admin-card">
+              <div class="discover-admin-media">
+                {% if item.image_url %}
+                  <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-admin-content-image>
+                {% else %}
+                  <div class="discover-admin-placeholder" aria-hidden="true">
+                    <span>
+                      {% if item.type == 'VOUCHER' %}％
+                      {% elif item.type == 'PRODUCT' %}▣
+                      {% elif item.type == 'TRENDING' %}↗
+                      {% elif item.type == 'GUIDE' %}◎
+                      {% else %}!
+                      {% endif %}
+                    </span>
+                  </div>
+                {% endif %}
+                <div class="discover-admin-badges">
+                  <span>{{ item.category }}</span>
+                  <small class="discover-admin-type">
+                    {% if item.type == 'VOUCHER' %}Voucher
+                    {% elif item.type == 'PRODUCT' %}Sản phẩm
+                    {% elif item.type == 'TRENDING' %}Xu hướng
+                    {% elif item.type == 'GUIDE' %}Hướng dẫn
+                    {% else %}Thông báo
+                    {% endif %}
+                  </small>
+                  {{ status_badge(item.status) }}
+                </div>
+              </div>
+
+              <div class="discover-admin-body">
+                <div>
+                  {% if item.badge %}<small>{{ item.badge }}</small>{% endif %}
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.description }}</p>
+                </div>
+                <dl>
+                  <div><dt>Danh mục</dt><dd>{{ item.category }}</dd></div>
+                  {% if item.type == 'PRODUCT' %}
+                    <div><dt>Sàn</dt><dd>{{ item.platform or "Chưa chọn" }}</dd></div>
+                    <div><dt>Giá bán</dt><dd>{% if item.price_vnd %}{{ item.price_vnd | vnd }}{% else %}Chưa nhập{% endif %}</dd></div>
+                    {% if item.original_price_vnd %}<div><dt>Giá gốc</dt><dd>{{ item.original_price_vnd | vnd }}</dd></div>{% endif %}
+                    {% if item.cashback_rate_bps %}<div><dt>Hoàn tiền</dt><dd>{{ (item.cashback_rate_bps / 100) | round(1) }}%</dd></div>{% endif %}
+                  {% endif %}
+                  <div><dt>Thứ tự</dt><dd>{{ item.sort_order }}</dd></div>
+                  <div><dt>Đăng lúc</dt><dd>{{ item.published_at | datetime }}</dd></div>
+                  <div><dt>Liên kết</dt><dd>{% if item.target_url %}<a href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer">Mở link ↗</a>{% else %}Không có{% endif %}</dd></div>
+                </dl>
+
+                {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+                  <div class="discover-admin-actions">
+                    <form method="post" action="/backoffice/products/{{ item.id }}/status" class="discover-admin-status-form">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      {% if item.status != 'PUBLISHED' %}
+                        <button class="button button-small button-primary" type="submit" name="status" value="PUBLISHED">Đăng</button>
+                      {% endif %}
+                      {% if item.status != 'DRAFT' %}
+                        <button class="button button-small button-ghost" type="submit" name="status" value="DRAFT">Ẩn</button>
+                      {% endif %}
+                      {% if item.status != 'ARCHIVED' %}
+                        <button class="button button-small button-ghost" type="submit" name="status" value="ARCHIVED">Lưu trữ</button>
+                      {% endif %}
+                    </form>
+                    <div class="discover-admin-delete-form">
+                      <button
+                        type="button"
+                        class="button button-small button-ghost"
+                        data-edit-content
+                        data-edit-id="{{ item.id }}"
+                        data-edit-type="{{ item.type }}"
+                        data-edit-title="{{ item.title }}"
+                        data-edit-description="{{ item.description }}"
+                        data-edit-target-url="{{ item.target_url or '' }}"
+                        data-edit-image-url="{{ item.image_url or '' }}"
+                        data-edit-badge="{{ item.badge or '' }}"
+                        data-edit-category="{{ item.category }}"
+                        data-edit-sort-order="{{ item.sort_order }}"
+                        data-edit-platform="{{ item.platform or '' }}"
+                        data-edit-price-vnd="{{ item.price_vnd or '' }}"
+                        data-edit-original-price-vnd="{{ item.original_price_vnd or '' }}"
+                        data-edit-cashback-rate-percent="{{ (item.cashback_rate_bps / 100) if item.cashback_rate_bps else '' }}"
+                      >Sửa</button>
+                    </div>
+                    <form
+                      method="post"
+                      action="/backoffice/products/{{ item.id }}/delete"
+                      class="discover-admin-delete-form"
+                      data-confirm-form
+                      data-confirm-message="Xóa hẳn bài đăng &quot;{{ item.title }}&quot;? Không thể khôi phục."
+                    >
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button class="button button-small button-danger" type="submit">Xóa</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa có nội dung", "Tạo bài đăng đầu tiên bằng form phía trên. Nội dung sẽ được lấy trực tiếp từ cơ sở dữ liệu.") }}
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="chart-panel">
+      <header class="chart-panel-heading">
+        <div><span class="eyebrow">TOP 20 · TỪ ĐƠN HỢP LỆ</span><h2>Sản phẩm được mua nhiều nhất</h2></div>
+        <p>Xếp theo tổng giá trị đơn hợp lệ</p>
+      </header>
+      {% if topProductsByRevenue.length %}
+        <div class="bar-list">
+          {% for item in topProductsByRevenue %}
+            <div class="bar-list-row">
+              <span class="bar-list-label" title="{{ item.label }}">{{ item.label }}</span>
+              <span class="bar-list-value">{{ item.valueLabel }}</span>
+              <div class="bar-list-track">
+                <div class="bar-list-fill {{ item.widthClass }}"></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="chart-empty">Chưa có dữ liệu sản phẩm từ đơn hợp lệ.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <header class="panel-heading"><div><span class="eyebrow">CHI TIẾT</span><h2>{{ topProducts.length }} sản phẩm</h2></div></header>
+      {% if topProducts.length %}
+        <div class="product-grid">
+          {% for product in topProducts %}
+            <article class="product-grid-card">
+              <div class="product-media" data-platform="{{ product.platform }}">
+                {% if product.image_url %}
+                  <img src="{{ product.image_url }}" alt="{{ product.item_name }}" loading="lazy" data-product-thumb>
+                {% else %}
+                  <img src="/assets/images/logo.png" alt="{{ product.item_name }}" class="is-placeholder">
+                {% endif %}
+                <span class="product-platform-badge">{{ product.platform }}</span>
+              </div>
+              <div class="product-grid-info">
+                <b title="{{ product.item_name }}">{{ product.item_name }}</b>
+                <span class="product-grid-price">{{ product.avg_unit_price_vnd | vnd }}</span>
+                <small>{{ product.orders_count }} đơn đã duyệt · {{ product.amount_vnd | vnd }} tổng giá trị</small>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa có dữ liệu sản phẩm", "Số liệu sẽ xuất hiện khi có đơn hợp lệ từ báo cáo đối soát.") }}
+      {% endif %}
+    </section>
+  {% endif %}
+{% endblock %}

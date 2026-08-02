@@ -1,0 +1,1746 @@
+/*
+ * ShopTik premium patch — mobile app + toàn bộ backoffice.
+ * File này luôn được nạp sau theme hiện tại để xử lý xung đột cascade cũ.
+ */
+
+/* ======================================================================
+   0. TOÀN SITE — công tắc sáng/tối, nút Ứng dụng/Quản trị, hiệu ứng nước
+   Áp dụng không phân biệt trang (public, app desktop, mobile, quản trị)
+   để tránh tình trạng mỗi nơi một kiểu nút khác nhau.
+   ====================================================================== */
+
+/* Chữ "SHOP" trong logo luôn trắng, không đổi theo theme/màn hình — logo
+   luôn nằm trên nền tối (header, drawer, footer) nên không được để nó thừa
+   hưởng nhầm màu chữ theo sáng/tối của trang. */
+.commerce-brand b,
+.commerce-brand-wordmark > b,
+.commerce-brand-wordmark > b > span {
+  color: #fff !important;
+}
+
+/*
+ * tokens.css có rule toàn cục "h1,h2,h3,h4,strong,b { color: var(--text) }"
+ * — biến --text đổi theo sáng/tối của TRANG. Các nhãn chữ trong nav dùng
+ * thẻ <b> không gắn class (mobile-bottom-nav, backoffice-mobile-nav, drawer)
+ * bị rule đó ghi đè mất màu đã set cho .a/.button cha — ở chế độ sáng chữ
+ * hoá gần đen trong khi nền các khối này luôn tối, không đọc được. Trả lại
+ * đúng màu bằng color:inherit (giống cách .nav-link-label đã làm).
+ */
+.dv13-commerce-shell .mobile-bottom-nav a b,
+.dv13-commerce-shell .mobile-bottom-nav button b,
+.backoffice-mobile-nav a b,
+.backoffice-mobile-nav button b,
+.commerce-mobile-drawer .app-nav a b {
+  color: inherit !important;
+}
+
+.theme-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 58px;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffe6d2 0%, #f2f0ec 55%, #e3e8f4 100%);
+  box-shadow: inset 0 1px 4px rgba(17, 24, 32, .14);
+  transition: background .25s ease, border-color .25s ease, box-shadow .2s ease;
+}
+
+.theme-toggle:hover {
+  border-color: color-mix(in srgb, var(--chrome-accent-from) 55%, var(--line));
+  box-shadow: inset 0 1px 4px rgba(17, 24, 32, .14), 0 0 0 3px color-mix(in srgb, var(--chrome-accent-from) 16%, transparent);
+  transform: none;
+}
+
+:root[data-theme="dark"] .theme-toggle {
+  border-color: rgba(255, 255, 255, .14);
+  background: linear-gradient(90deg, #2c2430 0%, #1c1720 100%);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .45);
+}
+
+.theme-toggle-track {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+}
+
+.theme-toggle-track::before,
+.theme-toggle-track::after {
+  position: absolute;
+  top: 50%;
+  z-index: 0;
+  font-size: 12px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.theme-toggle-track::before {
+  left: 7px;
+  color: #d98a2b;
+  content: "☀";
+}
+
+.theme-toggle-track::after {
+  right: 7px;
+  color: #7c86d6;
+  content: "☾";
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  z-index: 1;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: #fff;
+  background: var(--chrome-accent);
+  border-radius: 50%;
+  box-shadow: var(--chrome-accent-shadow);
+  transform: translateY(-50%);
+  transition: transform .3s cubic-bezier(.34, 1.4, .64, 1), background .25s ease;
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
+  transform: translate(26px, -50%);
+}
+
+.theme-toggle .theme-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+}
+
+.mode-switch-option:not(.active) {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.mode-switch-option:not(.active):hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 13%, transparent);
+}
+
+/*
+ * .theme-toggle và .mode-switch ở phần trên KHÔNG dùng --text/--line/--jade
+ * (đổi theo sáng/tối của trang) vì 2 điều khiển này còn xuất hiện trên các
+ * thanh chrome LUÔN LUÔN tối (header app desktop, topnav quản trị) — nếu
+ * để chúng đổi theo theme, khi bật dark mode chúng sẽ hoá sáng/trắng giữa
+ * nền đen, rất chói mắt. Ghi đè cố định 1 tông tối bất kể theme trang.
+ */
+/* .commerce-header-theme/.commerce-header-mode dùng chung cho cả app lẫn
+   quản trị vì header quản trị giờ tái dùng đúng markup commerce-navbar-wrap
+   của app — sửa 1 nơi, cả 2 nơi cùng đúng. */
+.commerce-header-theme .theme-toggle {
+  border-color: rgba(255, 255, 255, .16) !important;
+  background: linear-gradient(90deg, #241d29 0%, #171219 100%) !important;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .4) !important;
+}
+
+.commerce-header-mode .mode-switch {
+  border-color: rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .06);
+}
+
+.commerce-header-mode .mode-switch-option:not(.active) {
+  color: rgba(255, 255, 255, .66);
+  background: transparent;
+}
+
+.commerce-header-mode .mode-switch-option:not(.active):hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .1);
+}
+
+/*
+ * Hiệu ứng "mặt nước" theo chuột/click vốn ĐÃ có sẵn trong app.js +
+ * dv13-commerce.css (createWaterRipple/createControlRipple) — chỉ là trước
+ * đây bị khoá theo điều kiện "phải có .dv13-commerce-shell" nên chỉ chạy ở
+ * /app/*, còn quản trị và trang công khai không có gì. app.js đã sửa để bỏ
+ * điều kiện đó (chạy toàn site); ở đây chỉ cần bỏ luôn tiền tố
+ * .dv13-commerce-shell trong 2 rule style riêng cho nút/link, để hiệu ứng
+ * click trên nút cũng hiện đúng màu ở quản trị/trang công khai.
+ */
+/*
+ * KHÔNG đặt position ở đây — nhiều nút (như nút Đóng popup quảng cáo, các
+ * nút mở dropdown...) vốn đã dùng position:absolute/fixed để neo đúng chỗ.
+ * app.js chỉ tự thêm position:relative qua inline style khi phát hiện nút
+ * đang là static, tránh phá vị trí các nút đã định vị sẵn.
+ */
+.commerce-water-control {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.commerce-control-water-ripple {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  border: 2px solid rgba(228, 74, 43, .62);
+  border-radius: 50%;
+  background: rgba(228, 74, 43, .16);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 0 18px rgba(228, 74, 43, .2);
+  mix-blend-mode: normal;
+  will-change: transform, opacity;
+}
+
+:root[data-theme="dark"] .commerce-control-water-ripple {
+  border-color: rgba(104, 211, 240, .68);
+  background: rgba(104, 211, 240, .18);
+  box-shadow: 0 0 0 1px rgba(255, 125, 91, .24), 0 0 20px rgba(104, 211, 240, .2);
+}
+
+/* ======================================================================
+   1. MOBILE APP — lấy ngôn ngữ thị giác desktop làm chuẩn
+   ====================================================================== */
+
+@media (max-width: 760px) {
+  .dv13-commerce-shell {
+    --mobile-page: #f2f0ec;
+    --mobile-card: #ffffff;
+    --mobile-card-soft: #f7f7f6;
+    --mobile-nav: #11161d;
+    --mobile-nav-soft: #1a2029;
+    --mobile-line: #d9dde2;
+    --mobile-copy: #111820;
+    --mobile-muted: #687382;
+    --mobile-orange: #ee4d2d;
+    --mobile-orange-strong: #ff673f;
+    --mobile-shadow: 0 18px 46px rgba(17, 24, 32, .12);
+    color: var(--mobile-copy);
+    background: var(--mobile-page);
+  }
+
+  :root[data-theme="dark"] .dv13-commerce-shell {
+    --mobile-page: #090d12;
+    --mobile-card: #141a22;
+    --mobile-card-soft: #10161d;
+    --mobile-nav: #1b222c;
+    --mobile-nav-soft: #222b36;
+    --mobile-line: #303a47;
+    --mobile-copy: #f6f7f9;
+    --mobile-muted: #a3acb8;
+    --mobile-shadow: 0 20px 54px rgba(0, 0, 0, .38);
+    color-scheme: dark;
+  }
+
+  .dv13-commerce-shell .app-content {
+    width: min(calc(100% - 28px), var(--dv-container)) !important;
+    padding-right: 0 !important;
+    padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+    padding-left: 0 !important;
+  }
+
+  .dv13-commerce-shell .commerce-navbar-wrap,
+  .dv13-commerce-shell .commerce-navbar {
+    background: #090d12;
+  }
+
+  .dv13-commerce-shell .commerce-navbar-wrap {
+    border-bottom-color: rgba(255, 255, 255, .1);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .22);
+  }
+
+  .dv13-commerce-shell .commerce-navbar {
+    min-height: 76px;
+  }
+
+  .dv13-commerce-shell .commerce-navbar-actions {
+    gap: 8px;
+  }
+
+  .dv13-commerce-shell .notification-trigger,
+  .dv13-commerce-shell .commerce-menu-button,
+  .dv13-commerce-shell .commerce-logout-button {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(145deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .025));
+    box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 8px 20px rgba(0, 0, 0, .18);
+  }
+
+  .dv13-commerce-shell .commerce-logout-button {
+    color: #fff;
+    border-color: rgba(238, 77, 45, .6);
+    background: linear-gradient(135deg, #f65b35, #d93c20);
+  }
+
+  .dv13-commerce-shell .commerce-menu-button span {
+    background: currentColor;
+  }
+
+  /* Khu tra cứu và các thẻ chính dùng một hệ bề mặt thống nhất. */
+  .dv13-commerce-shell .shopping-panel,
+  .dv13-commerce-shell .shopping-panel-refined,
+  .dv13-commerce-shell .buy-card,
+  .dv13-commerce-shell .panel,
+  .dv13-commerce-shell .orders-history-hero,
+  .dv13-commerce-shell .withdraw-action,
+  .dv13-commerce-shell .withdraw-steps,
+  .dv13-commerce-shell .mission-panel {
+    border: 1px solid var(--mobile-line) !important;
+    border-radius: 22px !important;
+    color: var(--mobile-copy) !important;
+    background: var(--mobile-card) !important;
+    box-shadow: var(--mobile-shadow) !important;
+  }
+
+  .dv13-commerce-shell .shopping-panel,
+  .dv13-commerce-shell .shopping-panel-refined {
+    position: relative;
+    overflow: hidden;
+    padding: 24px 18px 20px !important;
+  }
+
+  .dv13-commerce-shell .shopping-panel::before,
+  .dv13-commerce-shell .shopping-panel-refined::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, #ff714b, #ee4d2d 60%, #d9391c);
+  }
+
+  .dv13-commerce-shell .home-section-title-refined h1,
+  .dv13-commerce-shell .shopping-panel h1,
+  .dv13-commerce-shell .shopping-panel h2 {
+    color: var(--mobile-copy) !important;
+    letter-spacing: -.045em;
+  }
+
+  .dv13-commerce-shell .home-section-title-refined p,
+  .dv13-commerce-shell .buy-form-hint,
+  .dv13-commerce-shell .buy-supported,
+  .dv13-commerce-shell .shopping-panel p {
+    color: var(--mobile-muted) !important;
+  }
+
+  /*
+   * Ô nhập link phải là chủ thể chính: có viền riêng, cao và rõ hơn nút Tra
+   * cứu. Trước đây cả hàng dùng chung 1 viền/khung (input không viền riêng)
+   * và nút Dán quên đặt position:absolute nên top/right vô nghĩa — icon Dán
+   * bị đẩy xuống thành 1 khối riêng, lệch khỏi ô nhập.
+   */
+  .dv13-commerce-shell .shopping-panel .buy-input-row,
+  .dv13-commerce-shell .shopping-panel .buy-input-row-refined {
+    display: grid !important;
+    position: relative !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .dv13-commerce-shell .shopping-panel .buy-input-row input,
+  .dv13-commerce-shell .shopping-panel .buy-input-row-refined input {
+    width: 100%;
+    min-height: 56px;
+    padding: 0 52px 0 16px !important;
+    border: 1.5px solid color-mix(in srgb, var(--mobile-copy) 26%, var(--mobile-line)) !important;
+    border-radius: 14px !important;
+    color: var(--mobile-copy) !important;
+    background: var(--mobile-card) !important;
+    font-size: 14px;
+    font-weight: 700;
+    -webkit-text-fill-color: var(--mobile-copy);
+  }
+
+  .dv13-commerce-shell .shopping-panel .buy-input-row input:focus-visible,
+  .dv13-commerce-shell .shopping-panel .buy-input-row-refined input:focus-visible {
+    border-color: var(--mobile-orange) !important;
+    outline: 0 !important;
+  }
+
+  .dv13-commerce-shell .shopping-panel .buy-input-row input::placeholder,
+  .dv13-commerce-shell .shopping-panel .buy-input-row-refined input::placeholder {
+    color: var(--mobile-muted) !important;
+    -webkit-text-fill-color: var(--mobile-muted);
+  }
+
+  .dv13-commerce-shell .shopping-panel .buy-paste-button,
+  .dv13-commerce-shell .buy-paste-button-refined {
+    position: absolute !important;
+    top: 11px !important;
+    right: 11px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 1px solid var(--mobile-line) !important;
+    border-radius: 10px !important;
+    color: var(--mobile-orange) !important;
+    background: var(--mobile-card-soft) !important;
+  }
+
+  .dv13-commerce-shell .shopping-panel .buy-input-row > button[type="submit"],
+  .dv13-commerce-shell .shopping-panel .buy-input-row-refined > .buy-submit-button-refined {
+    width: 100% !important;
+    min-height: 44px !important;
+    margin-top: 0 !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    background: linear-gradient(135deg, var(--mobile-orange-strong), #df3f20) !important;
+    box-shadow: 0 8px 18px rgba(238, 77, 45, .24) !important;
+  }
+
+  /* Danh sách sàn: không còn các dải trắng mỏng, icon và trạng thái thẳng hàng. */
+  .dv13-commerce-shell .platform-grid {
+    gap: 10px;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .dv13-commerce-shell .platform-grid .platform-tab {
+    min-height: 74px;
+    padding: 12px 14px !important;
+    border: 1px solid var(--mobile-line) !important;
+    border-radius: 17px !important;
+    color: var(--mobile-copy) !important;
+    background: var(--mobile-card) !important;
+    box-shadow: 0 8px 24px rgba(17, 24, 32, .07) !important;
+  }
+
+  .dv13-commerce-shell .platform-grid .platform-tab.active {
+    border-color: rgba(238, 77, 45, .7) !important;
+    color: #fff !important;
+    background: linear-gradient(135deg, #151b22, #0d1117) !important;
+    box-shadow: inset 4px 0 var(--mobile-orange), 0 12px 30px rgba(17, 24, 32, .18) !important;
+  }
+
+  .dv13-commerce-shell .platform-grid .platform-logo,
+  .dv13-commerce-shell .platform-grid .platform-logo img {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  /*
+   * FIX lỗi sản phẩm bị ép từng chữ thành cột dọc:
+   * rule cũ đổi product-card về 1 cột nhưng vẫn giữ các phần tử ở grid-column:2.
+   * Bản vá khôi phục đúng 2 cột nhận diện và cho hóa đơn/nút chiếm toàn hàng.
+   */
+  .dv13-commerce-shell .product-card {
+    display: grid !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: 108px minmax(0, 1fr) !important;
+    grid-auto-columns: 0 !important;
+    align-items: start !important;
+    gap: 11px 14px !important;
+    padding: 14px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--mobile-line) !important;
+    border-radius: 20px !important;
+    color: var(--mobile-copy) !important;
+    background: var(--mobile-card) !important;
+    box-shadow: var(--mobile-shadow) !important;
+    box-sizing: border-box !important;
+  }
+
+  .dv13-commerce-shell .product-card[hidden] {
+    display: none !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-info {
+    display: contents !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-media {
+    grid-column: 1 !important;
+    grid-row: 1 / span 3 !important;
+    width: 108px !important;
+    max-width: 108px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    border-radius: 15px !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-media img {
+    display: block;
+    width: 108px !important;
+    height: 108px !important;
+    aspect-ratio: 1 !important;
+    border: 0 !important;
+    border-radius: 15px !important;
+    object-fit: cover;
+    background: var(--mobile-card-soft) !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-platform-badge {
+    top: 7px;
+    left: 7px;
+    max-width: calc(100% - 14px);
+    padding: 4px 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dv13-commerce-shell .product-card .product-shop,
+  .dv13-commerce-shell .product-card .product-name,
+  .dv13-commerce-shell .product-card .product-status {
+    grid-column: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-shop {
+    grid-row: 1 !important;
+    align-self: end;
+    overflow: hidden;
+    color: var(--mobile-muted) !important;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dv13-commerce-shell .product-card .product-name {
+    grid-row: 2 !important;
+    display: -webkit-box;
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: var(--mobile-copy) !important;
+    font-size: 14px !important;
+    line-height: 1.42 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  .dv13-commerce-shell .product-card .product-status {
+    grid-row: 3 !important;
+    align-self: start;
+    max-width: max-content !important;
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-cashback-only,
+  .dv13-commerce-shell .product-card .product-actions,
+  .dv13-commerce-shell .product-card .product-note {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-cashback-only {
+    display: grid;
+    gap: 10px;
+    margin-top: 3px !important;
+    padding: 14px !important;
+    border: 1px solid color-mix(in srgb, #059669 30%, var(--mobile-line)) !important;
+    border-radius: 15px !important;
+    background: color-mix(in srgb, #059669 9%, var(--mobile-card)) !important;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-row {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-row > span:first-child {
+    min-width: 82px;
+    color: var(--mobile-muted) !important;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-product-pricing,
+  .dv13-commerce-shell .product-card .receipt-current-price,
+  .dv13-commerce-shell .product-card .receipt-original-line {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    justify-items: end;
+    text-align: right;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-current-price strong,
+  .dv13-commerce-shell .product-card .receipt-total strong {
+    color: var(--mobile-copy) !important;
+    font-size: 18px !important;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .dv13-commerce-shell .product-card .receipt-total strong {
+    color: #07865d !important;
+    font-size: 23px !important;
+  }
+
+  :root[data-theme="dark"] .dv13-commerce-shell .product-card .receipt-total strong {
+    color: #43d7a2 !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 9px !important;
+  }
+
+  .dv13-commerce-shell .product-card .buy-now-button,
+  .dv13-commerce-shell .product-card .buy-reset-button {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 50px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    white-space: nowrap;
+  }
+
+  .dv13-commerce-shell .product-card .buy-now-button {
+    padding: 0 18px !important;
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--mobile-orange-strong), #db3c1e) !important;
+    box-shadow: 0 10px 22px rgba(238, 77, 45, .28) !important;
+  }
+
+  .dv13-commerce-shell .product-card .buy-reset-button {
+    padding: 0 14px !important;
+    border: 1px solid var(--mobile-line) !important;
+    color: var(--mobile-copy) !important;
+    background: var(--mobile-card-soft) !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-note {
+    color: var(--mobile-muted) !important;
+    font-size: 11px !important;
+    line-height: 1.5;
+    text-align: left !important;
+    overflow-wrap: anywhere;
+  }
+
+  /*
+   * Thanh dưới bắt buộc khác màu phần thân (nền sáng/tối phía trên luôn là
+   * --mobile-page) nhưng vẫn phải đọc ra là CÙNG một hệ thống với header
+   * desktop tối màu + viền/glow cam thương hiệu — không phải màu bất kỳ.
+   */
+  .dv13-commerce-shell .mobile-bottom-nav {
+    position: fixed !important;
+    z-index: 120 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    min-height: 70px !important;
+    padding: 7px max(7px, env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom)) !important;
+    overflow: hidden;
+    border: 0 !important;
+    border-top: 2px solid var(--chrome-accent-from) !important;
+    border-radius: 0 !important;
+    color: #fff;
+    background: linear-gradient(165deg, color-mix(in srgb, var(--mobile-nav) 100%, transparent), var(--mobile-nav)) !important;
+    box-shadow: var(--chrome-accent-shadow), 0 -8px 30px rgba(0, 0, 0, .3) !important;
+    backdrop-filter: blur(18px) saturate(135%);
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .07), transparent 42%),
+      radial-gradient(120% 65% at 50% -25%, rgba(var(--water-tint), .18), transparent 70%);
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav a,
+  .dv13-commerce-shell .mobile-bottom-nav button {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 56px;
+    gap: 4px;
+    padding: 4px 2px !important;
+    border-radius: 15px;
+    color: #aeb6c1 !important;
+    background: transparent !important;
+    font-size: 10px;
+    transition: color .18s ease, background .18s ease, transform .18s ease;
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav a span,
+  .dv13-commerce-shell .mobile-bottom-nav button span {
+    display: grid;
+    width: 34px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 11px;
+    background: var(--mobile-nav-soft);
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav a.active {
+    color: #fff !important;
+    background: linear-gradient(180deg, rgba(238, 77, 45, .2), rgba(238, 77, 45, .06)) !important;
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav a.active span {
+    border-color: rgba(255, 116, 77, .62);
+    color: #fff;
+    background: var(--chrome-accent);
+    box-shadow: 0 8px 20px rgba(238, 77, 45, .32);
+  }
+
+  .dv13-commerce-shell .mobile-bottom-nav a.active::after {
+    content: "";
+    position: absolute;
+    right: 22%;
+    bottom: 0;
+    left: 22%;
+    height: 2px;
+    border-radius: 99px;
+    background: #ff6842;
+  }
+
+  .dv13-commerce-shell .support-fab {
+    right: 14px;
+    bottom: calc(98px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Drawer mobile: sâu màu, icon đồng nhất, nút chuyển chế độ rõ trạng thái. */
+  .dv13-commerce-shell .commerce-mobile-drawer {
+    width: min(356px, 91vw) !important;
+    border-right: 1px solid rgba(255, 255, 255, .13) !important;
+    color: #f6f7f9 !important;
+    background:
+      radial-gradient(circle at 18% 4%, rgba(238, 77, 45, .16), transparent 26%),
+      linear-gradient(180deg, #0b1016, #111821 58%, #0d1219) !important;
+    box-shadow: 24px 0 70px rgba(0, 0, 0, .48);
+  }
+
+  .commerce-mobile-drawer .sidebar-head {
+    min-height: 92px;
+    padding: 16px 18px;
+    border-bottom-color: rgba(255, 255, 255, .09);
+  }
+
+  .dv13-commerce-shell .sidebar-close-button {
+    width: 42px;
+    height: 42px;
+    border-color: rgba(255, 255, 255, .16);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .045);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .08);
+  }
+
+  .commerce-mobile-drawer .sidebar-tools {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px 18px 16px;
+    border-bottom-color: rgba(255, 255, 255, .09);
+    background: rgba(255, 255, 255, .018);
+  }
+
+  .commerce-mobile-drawer .theme-toggle {
+    width: 96px !important;
+    height: 44px !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    border: 1px solid rgba(255, 255, 255, .15) !important;
+    border-radius: 15px !important;
+    background: linear-gradient(145deg, #171e27, #0b1016) !important;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .07), 0 8px 22px rgba(0, 0, 0, .25) !important;
+  }
+
+  .commerce-mobile-drawer .theme-toggle-track::before,
+  .commerce-mobile-drawer .theme-toggle-track::after {
+    position: absolute;
+    top: 50%;
+    z-index: 0;
+    color: rgba(255, 255, 255, .42);
+    font-size: 15px;
+    line-height: 1;
+    transform: translateY(-50%);
+  }
+
+  .commerce-mobile-drawer .theme-toggle-track::before {
+    content: "☀";
+    left: 13px;
+  }
+
+  .commerce-mobile-drawer .theme-toggle-track::after {
+    content: "☾";
+    right: 13px;
+  }
+
+  .commerce-mobile-drawer .theme-toggle-thumb {
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    color: #fff;
+    background: var(--chrome-accent) !important;
+    box-shadow: 0 8px 18px rgba(238, 77, 45, .38) !important;
+  }
+
+  :root[data-theme="dark"] .commerce-mobile-drawer .theme-toggle-thumb {
+    background: var(--chrome-accent) !important;
+    transform: translate(52px, -50%) !important;
+  }
+
+  .commerce-mobile-drawer .theme-toggle .theme-icon {
+    color: #fff !important;
+  }
+
+  .commerce-mobile-drawer .mode-switch {
+    width: fit-content !important;
+    height: 44px;
+    padding: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .15) !important;
+    border-radius: 0 !important;
+    background: linear-gradient(145deg, #171e27, #0b1016) !important;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 8px 22px rgba(0, 0, 0, .22);
+  }
+
+  .commerce-mobile-drawer .mode-switch-option {
+    min-width: 0;
+    height: 100%;
+    padding: 0 9px;
+    border: 1px solid transparent;
+    border-radius: 0 !important;
+    color: #929ba8;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .commerce-mobile-drawer .mode-switch-option.active {
+    border-color: rgba(255, 126, 85, .64);
+    color: #fff;
+    background: var(--chrome-accent);
+    box-shadow: 0 8px 18px rgba(238, 77, 45, .3);
+  }
+
+  .commerce-mobile-drawer .app-nav {
+    padding: 10px 13px 28px;
+    scrollbar-color: rgba(255, 255, 255, .2) transparent;
+  }
+
+  .commerce-mobile-drawer .app-nav p {
+    margin: 17px 11px 8px;
+    color: #727b87;
+    font-size: 9px;
+    letter-spacing: .2em;
+  }
+
+  .commerce-mobile-drawer .app-nav a {
+    position: relative;
+    min-height: 50px;
+    gap: 12px;
+    margin-bottom: 3px;
+    padding: 5px 37px 5px 7px;
+    border: 1px solid transparent;
+    border-left: 0;
+    border-radius: 14px;
+    color: #bac1ca;
+  }
+
+  .commerce-mobile-drawer .app-nav a::after {
+    content: "›";
+    position: absolute;
+    right: 14px;
+    color: #626b76;
+    font-size: 23px;
+    font-weight: 300;
+  }
+
+  .commerce-mobile-drawer .app-nav a span {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 12px;
+    color: #d6dbe1;
+    background: linear-gradient(145deg, #1b232d, #11161d);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .05);
+  }
+
+  .commerce-mobile-drawer .app-nav a:hover,
+  .commerce-mobile-drawer .app-nav a.active {
+    border-color: rgba(238, 77, 45, .24);
+    color: #fff;
+    background: linear-gradient(90deg, rgba(238, 77, 45, .17), rgba(255, 255, 255, .035));
+    box-shadow: inset 3px 0 #ee4d2d;
+  }
+
+  .commerce-mobile-drawer .app-nav a.active span {
+    border-color: rgba(255, 126, 85, .62);
+    color: #fff;
+    background: var(--chrome-accent);
+    box-shadow: 0 8px 18px rgba(238, 77, 45, .3);
+  }
+
+  .commerce-mobile-drawer .app-nav a.active::after {
+    color: #ff7654;
+  }
+
+  .commerce-mobile-footer {
+    padding: 11px 14px calc(11px + env(safe-area-inset-bottom));
+    border-top-color: rgba(255, 255, 255, .09);
+    background: #0b1016;
+  }
+
+  .commerce-mobile-footer button {
+    min-height: 50px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--chrome-accent);
+    box-shadow: 0 10px 24px rgba(238, 77, 45, .28);
+  }
+}
+
+@media (max-width: 390px) {
+  .dv13-commerce-shell .product-card {
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    gap: 10px 12px !important;
+    padding: 12px !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-media,
+  .dv13-commerce-shell .product-card .product-media img {
+    width: 92px !important;
+    max-width: 92px !important;
+    height: 92px !important;
+  }
+
+  .dv13-commerce-shell .product-card .product-name {
+    font-size: 13px !important;
+    -webkit-line-clamp: 4;
+  }
+
+  .dv13-commerce-shell .product-card .product-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dv13-commerce-shell .product-card .buy-reset-button {
+    min-height: 44px !important;
+  }
+
+  .commerce-mobile-drawer .sidebar-tools {
+    grid-template-columns: 86px minmax(0, 1fr);
+  }
+
+  .commerce-mobile-drawer .theme-toggle {
+    width: 86px !important;
+  }
+
+  :root[data-theme="dark"] .commerce-mobile-drawer .theme-toggle-thumb {
+    transform: translate(42px, -50%) !important;
+  }
+}
+
+/* ======================================================================
+   2. BACKOFFICE — toàn bộ quản trị dùng hệ ShopTik cam + trung tính
+   ====================================================================== */
+
+.backoffice-shell {
+  --admin-bg: #f1efeb;
+  --admin-sidebar: #0d1218;
+  --admin-surface: #ffffff;
+  --admin-surface-soft: #f7f5f2;
+  --admin-hover: #fff0eb;
+  --admin-border: #dedbd6;
+  --admin-border-strong: #c9c4bd;
+  --admin-text: #141a22;
+  --admin-text-soft: #3e4855;
+  --admin-muted: #737d89;
+  --admin-brand: var(--brand);
+  --admin-brand-strong: var(--brand-strong);
+  --admin-brand-soft: var(--accent-soft);
+  --admin-success: #07865d;
+  --admin-success-bg: #e8f7f1;
+  --admin-success-border: #acdccc;
+  --admin-warning: #9a6500;
+  --admin-warning-bg: #fff4d7;
+  --admin-warning-border: #ead28f;
+  --admin-danger: #c93636;
+  --admin-danger-bg: #fff0f0;
+  --admin-danger-border: #eebcbc;
+  --admin-neutral-bg: #ece9e4;
+  --admin-shadow-sm: 0 7px 24px rgba(20, 26, 34, .065);
+  --admin-shadow: 0 22px 58px rgba(20, 26, 34, .13);
+  --topbar-bg: rgba(13, 18, 24, .96);
+  color: var(--admin-text);
+  background:
+    radial-gradient(circle at 82% -8%, rgba(238, 77, 45, .09), transparent 25%),
+    var(--admin-bg);
+}
+
+:root[data-theme="dark"] .backoffice-shell {
+  --admin-bg: #090d12;
+  --admin-sidebar: #0c1117;
+  --admin-surface: #141a22;
+  --admin-surface-soft: #10161d;
+  --admin-hover: #221e20;
+  --admin-border: #303a47;
+  --admin-border-strong: #44505f;
+  --admin-text: #f6f7f9;
+  --admin-text-soft: #cbd1d8;
+  --admin-muted: #98a2ae;
+  --admin-brand: var(--brand);
+  --admin-brand-strong: var(--brand-strong);
+  --admin-brand-soft: var(--accent-soft);
+  --admin-success: #43d7a2;
+  --admin-success-bg: #143128;
+  --admin-success-border: #2e6755;
+  --admin-warning: #f6c96a;
+  --admin-warning-bg: #342b18;
+  --admin-warning-border: #695627;
+  --admin-danger: #ff9b9b;
+  --admin-danger-bg: #3a2023;
+  --admin-danger-border: #734047;
+  --admin-neutral-bg: #202833;
+  --admin-shadow-sm: 0 9px 28px rgba(0, 0, 0, .24);
+  --admin-shadow: 0 24px 64px rgba(0, 0, 0, .42);
+  --topbar-bg: rgba(9, 13, 18, .96);
+}
+
+.backoffice-shell .backoffice-sidebar {
+  border-right-color: rgba(255, 255, 255, .1) !important;
+  color: #eef1f4 !important;
+  background:
+    radial-gradient(circle at 22% 0, rgba(238, 77, 45, .17), transparent 23%),
+    linear-gradient(180deg, #0a0f15, #111821 58%, #0c1117) !important;
+  box-shadow: 16px 0 46px rgba(0, 0, 0, .18) !important;
+}
+
+.backoffice-shell .sidebar-brand-image {
+  border-bottom: 1px solid rgba(255, 255, 255, .09);
+}
+
+.backoffice-shell .brand-image-sidebar {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .28));
+}
+
+.backoffice-shell .sidebar-utility {
+  margin: 12px 0 2px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .035);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .05);
+}
+
+.backoffice-shell .sidebar-utility > p,
+.backoffice-shell .app-nav > p {
+  color: #6f7884 !important;
+  letter-spacing: .17em;
+}
+
+.backoffice-shell .sidebar-utility .theme-toggle {
+  width: 100%;
+  height: 42px;
+  margin: 0 0 9px !important;
+  border-color: rgba(255, 255, 255, .13);
+  border-radius: 13px;
+  background: #090e14;
+}
+
+.backoffice-shell .sidebar-utility .theme-toggle-thumb {
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  background: var(--chrome-accent);
+  box-shadow: 0 8px 18px rgba(238, 77, 45, .34);
+}
+
+:root[data-theme="dark"] .backoffice-shell .sidebar-utility .theme-toggle-thumb {
+  left: calc(100% - 34px);
+  background: var(--chrome-accent);
+  transform: translate(0, -50%);
+}
+
+.backoffice-shell .sidebar-utility .theme-icon {
+  color: #fff !important;
+}
+
+.backoffice-shell .sidebar-utility .mode-switch {
+  width: fit-content;
+  height: 42px;
+  padding: 4px;
+  border-color: rgba(255, 255, 255, .12);
+  border-radius: 0;
+  background: #090e14;
+}
+
+.backoffice-shell .sidebar-utility .mode-switch-option {
+  height: 100%;
+  padding: 0 9px;
+  border-radius: 0;
+  color: #8f99a6;
+}
+
+.backoffice-shell .sidebar-utility .mode-switch-option.active {
+  color: #fff;
+  background: var(--chrome-accent);
+  box-shadow: 0 8px 18px rgba(238, 77, 45, .28);
+}
+
+.backoffice-shell .backoffice-nav a {
+  min-height: 48px;
+  margin-bottom: 3px;
+  border-color: transparent;
+  border-radius: 14px;
+  color: #b9c0c9;
+}
+
+.backoffice-shell .backoffice-nav a > span {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(255, 255, 255, .11);
+  border-radius: 11px;
+  color: #d3d8df;
+  background: linear-gradient(145deg, #1a222c, #10161d);
+}
+
+.backoffice-shell .backoffice-nav a:hover {
+  color: #fff;
+  border-color: rgba(238, 77, 45, .2);
+  background: rgba(238, 77, 45, .09);
+}
+
+.backoffice-shell .backoffice-nav a.active {
+  color: #fff;
+  border-color: rgba(255, 110, 68, .5);
+  background: linear-gradient(90deg, rgba(238, 77, 45, .24), rgba(238, 77, 45, .06));
+  box-shadow: inset 3px 0 #ee4d2d;
+}
+
+.backoffice-shell .backoffice-nav a.active > span {
+  border-color: rgba(255, 138, 107, .55);
+  color: #fff;
+  background: var(--chrome-accent);
+  box-shadow: 0 8px 18px rgba(238, 77, 45, .28);
+}
+
+.backoffice-shell .nav-notification-badge {
+  color: #fff;
+  background: #ee4d2d;
+}
+
+.backoffice-shell .sidebar-account {
+  border-color: rgba(255, 255, 255, .1) !important;
+  border-radius: 16px !important;
+  color: #fff !important;
+  background: rgba(255, 255, 255, .045) !important;
+}
+
+.backoffice-shell .sidebar-account-role,
+.backoffice-shell .sidebar-account-email {
+  color: #8f99a6 !important;
+}
+
+.backoffice-shell .sidebar-account-name {
+  color: #fff !important;
+}
+
+.backoffice-shell .app-content {
+  padding-top: 28px;
+  padding-bottom: 54px;
+}
+
+.backoffice-shell .admin-page-heading,
+.backoffice-shell .page-heading {
+  position: relative;
+  isolation: isolate;
+  padding: 26px 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 24px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 86% 22%, rgba(238, 77, 45, .23), transparent 25%),
+    linear-gradient(135deg, #101720, #090e14 72%);
+  box-shadow: 0 22px 58px rgba(12, 17, 23, .2);
+}
+
+.backoffice-shell .admin-page-heading::after,
+.backoffice-shell .page-heading::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 18px;
+  right: 28px;
+  width: 116px;
+  height: 84px;
+  border: 1px solid rgba(255, 111, 70, .24);
+  border-radius: 22px;
+  background:
+    linear-gradient(90deg, transparent 14%, rgba(255, 104, 66, .7) 15% 22%, transparent 23% 34%, rgba(255, 104, 66, .45) 35% 47%, transparent 48% 60%, rgba(255, 104, 66, .28) 61% 75%, transparent 76%),
+    rgba(255, 255, 255, .025);
+  opacity: .72;
+  transform: rotate(-7deg);
+}
+
+.backoffice-shell .admin-page-heading h1,
+.backoffice-shell .page-heading h1 {
+  color: #fff !important;
+  font-size: clamp(1.9rem, 3vw, 2.65rem);
+}
+
+.backoffice-shell .admin-page-heading p,
+.backoffice-shell .page-heading p {
+  color: #aeb6c1 !important;
+}
+
+.backoffice-shell .admin-kicker,
+.backoffice-shell .eyebrow {
+  color: #ff7654 !important;
+}
+
+.backoffice-shell .admin-heading-actions {
+  position: relative;
+  z-index: 2;
+}
+
+.backoffice-shell .admin-heading-actions .button {
+  min-height: 46px;
+  border-radius: 13px;
+}
+
+.backoffice-shell .admin-heading-actions .button-ghost {
+  border-color: rgba(255, 255, 255, .16);
+  color: #fff;
+  background: rgba(255, 255, 255, .055);
+}
+
+.backoffice-shell .admin-heading-actions .button-primary {
+  border-color: #ee4d2d;
+  color: #fff;
+  background: var(--chrome-accent);
+  box-shadow: 0 12px 28px rgba(238, 77, 45, .28);
+}
+
+.backoffice-shell .button-primary,
+.backoffice-shell .button-coral {
+  border-color: var(--admin-brand);
+  color: #fff;
+  background: var(--chrome-accent);
+  box-shadow: 0 9px 22px rgba(238, 77, 45, .2);
+}
+
+.backoffice-shell .button-primary:hover,
+.backoffice-shell .button-coral:hover {
+  border-color: #ff7654;
+  background: linear-gradient(135deg, #ff7654, #e44222);
+  box-shadow: 0 12px 28px rgba(238, 77, 45, .3);
+}
+
+.backoffice-shell .button-ghost {
+  color: var(--admin-text-soft);
+  border-color: var(--admin-border);
+  background: var(--admin-surface);
+}
+
+.backoffice-shell .panel,
+.backoffice-shell .chart-panel,
+.backoffice-shell .balance-card,
+.backoffice-shell .kpi-card,
+.backoffice-shell .user-profile-header,
+.backoffice-shell .import-panel,
+.backoffice-shell .responsive-table,
+.backoffice-shell .data-panel {
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+  background: var(--admin-surface) !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+}
+
+.backoffice-shell .panel,
+.backoffice-shell .chart-panel,
+.backoffice-shell .user-profile-header,
+.backoffice-shell .data-panel {
+  border-radius: 20px !important;
+}
+
+.backoffice-shell .kpi-grid {
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.backoffice-shell .kpi-card {
+  display: grid;
+  min-height: 150px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "scope scope"
+    "name trend"
+    "value value";
+  align-content: center;
+  gap: 7px 12px;
+  padding: 20px !important;
+  overflow: hidden;
+  border-radius: 19px !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--admin-surface) 96%, #fff), var(--admin-surface)) !important;
+}
+
+.backoffice-shell .kpi-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ff7654, #d83b1e);
+}
+
+.backoffice-shell .kpi-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -34px;
+  width: 104px;
+  height: 104px;
+  border: 18px solid color-mix(in srgb, var(--admin-brand) 8%, transparent);
+  border-radius: 50%;
+}
+
+.backoffice-shell .kpi-scope {
+  grid-area: scope;
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--admin-brand) 32%, var(--admin-border));
+  color: var(--admin-brand-strong);
+  background: var(--admin-brand-soft);
+  font-size: .64rem;
+}
+
+.backoffice-shell .kpi-name {
+  grid-area: name;
+  align-self: center;
+  color: var(--admin-text-soft);
+  font-size: .78rem;
+}
+
+.backoffice-shell .kpi-value {
+  grid-area: value;
+  position: relative;
+  z-index: 1;
+  color: var(--admin-text);
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+}
+
+.backoffice-shell .kpi-trend,
+.backoffice-shell .kpi-sub {
+  grid-area: trend;
+  align-self: center;
+  max-width: 150px;
+  color: var(--admin-muted);
+  font-size: .68rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.backoffice-shell .admin-section-heading {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.backoffice-shell .admin-section-heading h2 {
+  color: var(--admin-text);
+  font-size: 1.2rem;
+}
+
+.backoffice-shell .work-queue > a,
+.backoffice-shell .admin-activity-list > a,
+.backoffice-shell .audit-activity-row {
+  min-height: 70px;
+  padding: 11px 8px;
+  border-radius: 13px;
+  transition: background .18s ease, transform .18s ease;
+}
+
+.backoffice-shell .work-queue > a:hover,
+.backoffice-shell .admin-activity-list > a:hover {
+  background: var(--admin-hover);
+  transform: translateX(2px);
+}
+
+.backoffice-shell .queue-icon {
+  border-color: var(--admin-border);
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+}
+
+.backoffice-shell input,
+.backoffice-shell select,
+.backoffice-shell textarea {
+  border-radius: 12px;
+}
+
+.backoffice-shell input:focus,
+.backoffice-shell select:focus,
+.backoffice-shell textarea:focus {
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-brand) 18%, transparent);
+}
+
+.backoffice-sidebar-close,
+.backoffice-mobile-nav {
+  display: none;
+}
+
+/* Mobile backoffice: gọn, có điều hướng dưới và không còn thẻ KPI rỗng cao. */
+@media (max-width: 900px) {
+  .backoffice-shell .backoffice-sidebar {
+    width: min(356px, 91vw) !important;
+    padding-top: 14px;
+  }
+
+  .backoffice-shell .sidebar-brand-image {
+    min-height: 68px;
+    padding-right: 52px;
+  }
+
+  .backoffice-sidebar-close {
+    position: absolute;
+    z-index: 4;
+    top: 18px;
+    right: 14px;
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, .05);
+    font-size: 22px;
+  }
+
+  .backoffice-shell .app-content {
+    width: 100%;
+    padding: 16px 14px calc(108px + env(safe-area-inset-bottom));
+  }
+
+  .backoffice-shell .admin-page-heading,
+  .backoffice-shell .page-heading {
+    gap: 18px;
+    margin-bottom: 16px;
+    padding: 22px 18px;
+    border-radius: 21px;
+  }
+
+  .backoffice-shell .admin-page-heading::after,
+  .backoffice-shell .page-heading::after {
+    top: 18px;
+    right: -28px;
+    opacity: .4;
+  }
+
+  .backoffice-shell .admin-page-heading h1,
+  .backoffice-shell .page-heading h1 {
+    font-size: 2rem;
+  }
+
+  .backoffice-shell .admin-heading-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .backoffice-shell .admin-heading-actions .button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .backoffice-shell .kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 11px;
+  }
+
+  .backoffice-shell .kpi-card {
+    min-height: 126px;
+    grid-template-columns: minmax(0, 1fr) minmax(100px, .65fr);
+    padding: 17px 18px !important;
+  }
+
+  .backoffice-shell .kpi-trend,
+  .backoffice-shell .kpi-sub {
+    max-width: 132px;
+  }
+
+  .backoffice-shell .panel,
+  .backoffice-shell .chart-panel,
+  .backoffice-shell .data-panel {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .backoffice-mobile-nav {
+    position: fixed;
+    z-index: 118;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    min-height: 72px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 7px max(7px, env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));
+    overflow: hidden;
+    border: 0;
+    border-top: 2px solid var(--chrome-accent-from);
+    border-radius: 0;
+    background: linear-gradient(165deg, #151b22, #11161d);
+    box-shadow: var(--chrome-accent-shadow), 0 -8px 30px rgba(0, 0, 0, .32);
+    backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  :root[data-theme="dark"] .backoffice-mobile-nav {
+    background: linear-gradient(165deg, #232c37, #1b222c);
+  }
+
+  .backoffice-mobile-nav a,
+  .backoffice-mobile-nav button {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 56px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 1px;
+    border: 0;
+    border-radius: 14px;
+    color: #aeb6c1;
+    background: transparent;
+    font-size: 9px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .backoffice-mobile-nav a span,
+  .backoffice-mobile-nav button span {
+    display: grid;
+    width: 32px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 10px;
+    background: #1a2029;
+  }
+
+  .backoffice-mobile-nav svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .backoffice-mobile-nav a.active {
+    color: #fff;
+    background: linear-gradient(180deg, rgba(238, 77, 45, .2), rgba(238, 77, 45, .05));
+  }
+
+  .backoffice-mobile-nav a.active span {
+    border-color: rgba(255, 126, 85, .62);
+    background: var(--chrome-accent);
+    box-shadow: 0 8px 18px rgba(238, 77, 45, .3);
+  }
+}
+
+@media (max-width: 480px) {
+  .backoffice-shell .admin-heading-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-shell .kpi-card {
+    min-height: 120px;
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .backoffice-shell .kpi-name {
+    font-size: .74rem;
+  }
+
+  .backoffice-shell .kpi-value {
+    font-size: 1.95rem;
+  }
+
+  .backoffice-mobile-nav a,
+  .backoffice-mobile-nav button {
+    font-size: 8px;
+  }
+}
+
+/* ======================================================================
+   3. BACKOFFICE — header dùng ĐÚNG commerce-hero/commerce-navbar-wrap/
+   commerce-nav của app desktop (không tự vẽ lại bằng class riêng) nên tự
+   động cùng màu, cùng cỡ, cùng hành vi dính cố định khi cuộn. Chỉ cần patch
+   nền ảnh (vốn chỉ áp dụng trong .dv13-commerce-shell — không bọc quanh
+   header quản trị vì class đó còn kéo theo min-height:100dvh cho toàn
+   trang app) và badge số lượng chờ xử lý. Sidebar cũ chỉ còn dùng làm
+   drawer trượt ra trên mobile/tablet, không cố định bên trái nữa.
+   ====================================================================== */
+
+.backoffice-shell .commerce-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 0;
+  color: #fff;
+  background:
+    #11161a
+    url("/assets/images/shop-tik-commerce-hero.webp")
+    center center / cover no-repeat;
+}
+
+.backoffice-shell .app-main {
+  margin-left: 0 !important;
+}
+
+.backoffice-shell .backoffice-sidebar {
+  position: fixed !important;
+  z-index: 160 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  visibility: hidden !important;
+  transform: translateX(-102%) !important;
+  transition: transform .25s ease, visibility .25s !important;
+}
+
+.backoffice-shell .backoffice-sidebar.open {
+  visibility: visible !important;
+  transform: translateX(0) !important;
+}
+
+/* Badge số lượng chờ xử lý trong .commerce-nav — app không dùng nên chỉ
+   quản trị được ảnh hưởng, nhưng để bare .commerce-nav cho tương lai dùng
+   chung nếu cần. */
+.commerce-nav .nav-notification-badge {
+  display: inline-grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  padding: 0 4px;
+  margin-left: 2px;
+  background: var(--chrome-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ======================================================================
+   4. APP DESKTOP — menu ngang dính cố định khi cuộn, giống DV13 gốc.
+   ====================================================================== */
+
+/*
+ * .commerce-navbar-wrap nằm lồng trong .commerce-hero (cao ~180-300px) nên
+ * position:sticky bị giới hạn trong đúng khối cha ngắn đó rồi trôi mất theo
+ * — không thể dính suốt trang chỉ bằng CSS. public/sticky-navbar.js đo vị
+ * trí gốc rồi chuyển sang position:fixed đúng lúc cuộn qua khỏi, kèm ô đệm
+ * (.commerce-navbar-spacer) để nội dung phía dưới không giật lên.
+ */
+.commerce-navbar-wrap.is-pinned {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  z-index: 150;
+  background: var(--chrome-bg) !important;
+}
+
+.commerce-navbar-spacer {
+  display: block;
+  height: 0;
+}
+
+@media (max-width: 930px) {
+  .commerce-header-mode {
+    display: none;
+  }
+}
+
+/* ======================================================================
+   5. VUÔNG GÓC TOÀN SITE — không bo viền cho khối điều hướng (chuẩn
+   DV13: menu, thẻ, nút đều vuông góc), và thu gọn công tắc Ứng dụng/Quản
+   trị để 2 lựa chọn không bị tách xa nhau trên mobile.
+   ====================================================================== */
+
+.mode-switch,
+.dv13-commerce-shell .mobile-bottom-nav,
+.dv13-commerce-shell .mobile-bottom-nav a,
+.dv13-commerce-shell .mobile-bottom-nav a span,
+.dv13-commerce-shell .mobile-bottom-nav button,
+.dv13-commerce-shell .mobile-bottom-nav button span,
+.dv13-commerce-shell .mobile-bottom-nav a.active::after,
+.backoffice-mobile-nav,
+.backoffice-mobile-nav a,
+.backoffice-mobile-nav a span,
+.backoffice-mobile-nav button,
+.backoffice-mobile-nav button span,
+.commerce-mobile-drawer .app-nav a,
+.commerce-mobile-drawer .app-nav a span,
+.backoffice-sidebar .backoffice-nav a,
+.backoffice-sidebar .backoffice-nav a > span,
+.mode-switch-option {
+  border-radius: 0 !important;
+}
+
+/*
+ * Track công tắc luôn gọn theo nội dung, cùng chiều cao/độ chặt với
+ * .theme-toggle (32px, đệm 3px) — trước đây padding/khoảng cách của
+ * .mode-switch-option quá rộng khiến 2 lựa chọn bị đẩy xa nhau, nhất là khi
+ * chỉ còn icon (ẩn chữ) trên mobile.
+ */
+.mode-switch {
+  display: inline-flex;
+  width: fit-content;
+  height: 32px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.mode-switch-option {
+  height: 100%;
+  padding: 0 10px;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .mode-switch-option {
+    padding: 0 8px;
+  }
+}

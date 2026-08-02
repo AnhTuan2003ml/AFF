@@ -1,0 +1,11 @@
+{% extends "base.njk" %}
+
+{% block content %}
+  <section class="error-page">
+    <span class="error-code">{{ statusCode or 500 }}</span>
+    <h1>{{ pageTitle }}</h1>
+    <p>{{ message }}</p>
+    {% if requestId %}<small>Mã tra cứu: {{ requestId }}</small>{% endif %}
+    <div><a class="button button-primary" href="{% if currentUser %}/app{% else %}/{% endif %}">Về trang chính</a></div>
+  </section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state, ticket_type_label %}
+
+{% block app_content %}
+  <section class="page-heading">
+    <div>
+      <h1>Hỗ trợ đơn hàng</h1>
+      <p>Gửi yêu cầu để nền tảng và nhân viên trực hỗ trợ xử lý.</p>
+    </div>
+  </section>
+
+  <div class="two-column-layout support-layout">
+    <section class="panel support-create-panel">
+      <header class="panel-heading"><div><h2>Tạo yêu cầu hỗ trợ</h2></div></header>
+      {% if supportPrefill.orderId %}
+        <div class="flash flash-info support-prefill-banner" role="status">
+          <span>Đang hỗ trợ đơn <b>#{{ supportPrefill.orderId }}</b>{% if supportPrefill.platform %} · {{ supportPrefill.platformLabel }}{% endif %}</span>
+        </div>
+      {% endif %}
+      <form method="post" action="/app/support" class="stack-form" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="support-type-input">Loại yêu cầu
+          <select id="support-type-input" name="type" required data-required-message="Vui lòng chọn loại yêu cầu.">
+            <option value="MISSING_ORDER" {% if supportPrefill.type == 'MISSING_ORDER' %}selected{% endif %}>Chưa thấy đơn</option>
+            <option value="WRONG_CASHBACK" {% if supportPrefill.type == 'WRONG_CASHBACK' %}selected{% endif %}>Sai tiền hoàn</option>
+            <option value="WITHDRAWAL_DELAY" {% if supportPrefill.type == 'WITHDRAWAL_DELAY' %}selected{% endif %}>Rút tiền chậm</option>
+            <option value="ACCOUNT" {% if supportPrefill.type == 'ACCOUNT' %}selected{% endif %}>Tài khoản</option>
+            <option value="OTHER" {% if supportPrefill.type == 'OTHER' %}selected{% endif %}>Vấn đề khác</option>
+          </select>
+          <small class="field-error" id="support-type-input-error" hidden></small>
+        </label>
+        <label for="support-subject-input">Tiêu đề
+          <input id="support-subject-input" type="text" name="subject" minlength="5" maxlength="150" required value="{{ supportPrefill.subject or '' }}" data-required-message="Vui lòng nhập tiêu đề." data-minlength-message="Tiêu đề cần ít nhất 5 ký tự.">
+          <small class="field-error" id="support-subject-input-error" hidden></small>
+        </label>
+        <label for="support-order-input">Mã đơn liên quan
+          <input id="support-order-input" type="text" name="relatedOrderId" maxlength="100" value="{{ supportPrefill.orderId or '' }}">
+        </label>
+        <label for="support-description-input">Mô tả
+          <textarea id="support-description-input" name="description" rows="6" minlength="20" maxlength="3000" placeholder="Mô tả vấn đề cần hỗ trợ" required data-required-message="Vui lòng mô tả chi tiết vấn đề." data-minlength-message="Mô tả cần ít nhất 20 ký tự.">{{ supportPrefill.description or '' }}</textarea>
+          <small class="field-error" id="support-description-input-error" hidden></small>
+        </label>
+        <button class="button button-primary button-block" type="submit" data-submit-button>Gửi hỗ trợ</button>
+      </form>
+    </section>
+
+    <section class="panel support-history-panel">
+      <header class="panel-heading"><div><h2>Yêu cầu của bạn</h2></div></header>
+      {% if tickets.length %}
+        <div class="ticket-list">
+          {% for ticket in tickets %}
+            <article>
+              <span class="ticket-id">#{{ ticket.id | truncate(8, true, '') }}</span>
+              <div><b>{{ ticket.subject }}</b><small>{{ ticket_type_label(ticket.type) }} · {{ ticket.created_at | datetime }}</small></div>
+              {{ status_badge(ticket.status) }}
+              <small class="ticket-sla">Dự kiến phản hồi trước {{ ticket.sla_at | datetime }}</small>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa có yêu cầu hỗ trợ", "Khi cần hỗ trợ, hãy gửi biểu mẫu bên trái.") }}
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

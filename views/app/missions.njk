@@ -1,0 +1,110 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{% macro mission_row(item) %}
+  {% set locked = item.progress < item.definition.threshold %}
+  <div class="mission-row {{ 'mission-row-locked' if locked }}">
+    <span class="mission-row-icon" aria-hidden="true">
+      {% if item.claimStatus == 'APPROVED' %}
+        {{ icon('mission-approved') }}
+      {% elif item.claimStatus == 'REJECTED' %}
+        {{ icon('mission-rejected') }}
+      {% elif locked %}
+        {{ icon('mission-locked') }}
+      {% else %}
+        {{ icon('mission') }}
+      {% endif %}
+    </span>
+
+    <div class="mission-row-main">
+      <b>{{ item.definition.title }}</b>
+      {% if item.definition.description %}<p>{{ item.definition.description }}</p>{% endif %}
+      <small>Mốc: {{ item.definition.threshold }} · Tiến độ của bạn: {{ item.progress }}/{{ item.definition.threshold }}</small>
+    </div>
+
+    <div class="mission-row-reward">
+      <span>Thưởng</span>
+      <b>{{ item.definition.rewardAmountVnd | vnd }}</b>
+    </div>
+
+    <div class="mission-row-action">
+      {% if item.claimStatus == 'APPROVED' %}
+        {{ status_badge('APPROVED') }}
+      {% elif item.claimStatus == 'REJECTED' %}
+        {{ status_badge('REJECTED') }}
+      {% elif item.claimStatus == 'PENDING' %}
+        {{ status_badge('PENDING') }}
+      {% elif item.claimable %}
+        <form method="post" action="/app/nhiem-vu/claim">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="missionDefinitionId" value="{{ item.definition.id }}">
+          <button type="submit" class="button button-primary button-small">Nhận thưởng</button>
+        </form>
+      {% else %}
+        <span class="status-badge status-neutral">Chưa đạt mốc</span>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro mission_group(group, unitLabel) %}
+  <div class="mission-meter">
+    <div class="mission-meter-head">
+      <span>Tiến độ hiện tại</span>
+      <b>{{ group.currentProgress }}{% if group.maxThreshold %} / {{ group.maxThreshold }}{% endif %} {{ unitLabel }}</b>
+    </div>
+    {% if group.maxThreshold %}
+      <div class="mission-meter-track">
+        <div class="mission-meter-fill" data-pct="{{ group.fillPercent }}"></div>
+        {% for item in group.items %}
+          <span
+            class="mission-meter-tick {{ 'mission-meter-tick-done' if item.progress >= item.definition.threshold }}"
+            data-pct="{{ item.tickPercent }}"
+            title="{{ item.definition.title }}: {{ item.definition.threshold }} {{ unitLabel }}"
+          ></span>
+        {% endfor %}
+      </div>
+      {% if group.currentProgress < group.maxThreshold %}
+        <p class="mission-meter-note">Còn {{ group.maxThreshold - group.currentProgress }} {{ unitLabel }} nữa để đạt mốc cao nhất.</p>
+      {% else %}
+        <p class="mission-meter-note mission-meter-note-done">Bạn đã đạt mốc cao nhất!</p>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {% if group.items.length %}
+    <div class="mission-list-scroll">
+      <div class="mission-list">
+        {% for item in group.items %}{{ mission_row(item) }}{% endfor %}
+      </div>
+    </div>
+  {% else %}
+    {{ empty_state("Chưa có mốc nào", "Admin chưa thiết lập mốc thưởng cho mục này.", compact=true) }}
+  {% endif %}
+{% endmacro %}
+
+{% block app_content %}
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">NHIỆM VỤ</span>
+      <h1>Đạt mốc, <em>nhận thưởng</em></h1>
+      <p>Đạt mốc rồi bấm "Nhận thưởng" — ShopTik sẽ kiểm tra và duyệt trước khi cộng vào ví.</p>
+    </div>
+  </header>
+
+  <div class="mission-tabs" role="tablist" aria-label="Loại nhiệm vụ">
+    <button type="button" class="active" data-mission-tab="referral" aria-pressed="true">{{ icon('referral') }} Mời người</button>
+    <button type="button" data-mission-tab="purchase" aria-pressed="false">{{ icon('orders') }} Mua hàng</button>
+  </div>
+
+  <section class="mission-panel" data-mission-panel="referral">
+    <p class="mission-panel-hint">Tính theo tổng số người bạn giới thiệu thành công, cộng dồn trọn đời — không reset theo tháng.</p>
+    {{ mission_group(referralGroup, 'người') }}
+  </section>
+
+  <section class="mission-panel" data-mission-panel="purchase" hidden>
+    <p class="mission-panel-hint">Tính theo số đơn đã được duyệt trong tháng hiện tại — mốc tự reset vào đầu tháng sau.</p>
+    {{ mission_group(purchaseGroup, 'đơn') }}
+  </section>
+{% endblock %}

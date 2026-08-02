@@ -1,0 +1,45 @@
+{% extends "auth/auth-commerce-base.njk" %}
+
+{% block auth_content %}
+  <header class="auth-heading auth-heading-login">
+    <h1>Đăng nhập</h1>
+  </header>
+
+  <form method="post" action="/dang-nhap" class="stack-form login-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <input type="hidden" name="next" value="{{ next or '' }}">
+
+    <label class="login-field" for="login-email-input">
+      <span class="auth-field-label">Email</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"></path><path d="m5.5 7 6.5 5 6.5-5"></path></svg>
+        </span>
+        <input id="login-email-input" type="email" name="email" autocomplete="email" maxlength="254" placeholder="ten@email.com" value="{{ values.email or '' }}" required autofocus data-required-message="Vui lòng nhập email." data-pattern-message="Email chưa đúng định dạng.">
+      </span>
+      <small class="field-error" id="login-email-input-error" hidden></small>
+    </label>
+
+    <label class="login-field" for="login-password-input">
+      <span class="auth-field-label">Mật khẩu</span>
+      <span class="auth-input-shell password-field">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
+        </span>
+        <input id="login-password-input" type="password" name="password" autocomplete="current-password" maxlength="128" placeholder="Nhập mật khẩu" data-password required data-required-message="Vui lòng nhập mật khẩu.">
+        <button type="button" data-toggle-password aria-label="Hiện mật khẩu">Hiện</button>
+      </span>
+      <small class="field-error" id="login-password-input-error" hidden></small>
+    </label>
+
+    <div class="login-inline-actions">
+      <a href="/quen-mat-khau">Quên mật khẩu?</a>
+    </div>
+    <button class="button button-primary button-block button-large login-submit" type="submit" data-submit-button>
+      <span>Đăng nhập</span>
+      <span aria-hidden="true">→</span>
+    </button>
+  </form>
+
+  <p class="auth-switch login-register-link">Chưa có tài khoản? <a href="/dang-ky">Tạo tài khoản</a></p>
+{% endblock %}

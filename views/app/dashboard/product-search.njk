@@ -1,0 +1,77 @@
+<section
+  class="shopping-panel shopping-panel-refined"
+  id="shop-search"
+  data-buy-flow
+  data-platform-purchase='{{ platformAvailability | dump | safe }}'
+  aria-label="Mua sắm hoàn tiền"
+>
+  <header class="home-section-title home-section-title-refined">
+    <div class="section-heading-rule" aria-hidden="true"></div>
+    <div class="home-section-copy">
+      <span class="home-section-kicker">DÁN LINK · XEM TIỀN HOÀN</span>
+      <div class="home-section-heading-row">
+        <h2>TÌM SẢN PHẨM</h2>
+      </div>
+      <p>Dán link Shopee, TikTok Shop hoặc Lazada. ShopTik sẽ nhận diện sàn và tính tiền hoàn dự kiến.</p>
+    </div>
+  </header>
+
+  <form class="buy-form" data-product-finder novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <input type="hidden" name="platform" value="{{ defaultPlatform }}" data-platform-input>
+    <label class="sr-only" for="product-url">Dán link sản phẩm</label>
+    <div class="buy-input-row buy-input-row-emphasis">
+      <input
+        id="product-url"
+        type="url"
+        name="productUrl"
+        inputmode="url"
+        autocomplete="off"
+        maxlength="2048"
+        placeholder="Dán link sản phẩm vào đây..."
+        required
+        data-product-url
+      >
+      <button type="button" class="buy-paste-button" data-product-paste hidden aria-label="Dán link từ bộ nhớ tạm">{{ icon('paste') }}</button>
+      <button type="submit" data-product-submit><span data-product-submit-text>Tra cứu</span></button>
+    </div>
+    <span class="buy-form-hint">Dán link là tự động tra cứu — hỗ trợ Shopee, TikTok Shop và Lazada.</span>
+  </form>
+
+  <div class="platform-tabs platform-grid" role="tablist" aria-label="Chọn sàn">
+    {% include "app/dashboard/platform-tabs.njk" %}
+  </div>
+
+  {% include "app/dashboard/product-states.njk" %}
+</section>
+
+<section class="commerce-benefits" aria-label="Ưu điểm ShopTik">
+  <article>
+    <span>{{ icon('ops') }}</span>
+    <div><h2>Đối soát minh bạch</h2><p>Mọi đơn và biến động ví đều có lịch sử kiểm tra.</p></div>
+  </article>
+  <article>
+    <span>{{ icon('discover') }}</span>
+    <div><h2>Ba sàn trong một nơi</h2><p>Shopee, TikTok Shop và Lazada cùng một quy trình.</p></div>
+  </article>
+  <article>
+    <span>{{ icon('wallet') }}</span>
+    <div><h2>Nhận tiền rõ ràng</h2><p>Biết khoản đang chờ, có thể rút và đã nhận.</p></div>
+  </article>
+  <article>
+    <span>{{ icon('support') }}</span>
+    <div><h2>Hỗ trợ theo đơn</h2><p>Gửi yêu cầu gắn đúng mã đơn để xử lý nhanh.</p></div>
+  </article>
+</section>
+
+<section class="commerce-home-links">
+  <div class="commerce-section-heading">
+    <span>MUA SẮM THÔNG MINH</span>
+    <h2>TẤT CẢ CÔNG CỤ BẠN CẦN</h2>
+  </div>
+  <div class="commerce-home-link-grid">
+    <a href="/app/discover"><span>{{ icon('discover') }}</span><b>Khám phá ưu đãi</b><small>Xem deal và voucher mới</small><i>→</i></a>
+    <a href="/app/orders"><span>{{ icon('orders') }}</span><b>Theo dõi đơn hàng</b><small>Kiểm tra trạng thái đối soát</small><i>→</i></a>
+    <a href="/app/wallet"><span>{{ icon('wallet') }}</span><b>Quản lý số dư</b><small>Xem mọi biến động hoàn tiền</small><i>→</i></a>
+  </div>
+</section>

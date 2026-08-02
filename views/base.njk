@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi" {% block html_attrs %}{% endblock %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ee4d2d">
+  <meta name="description" content="ShopTik giúp tìm sản phẩm, mua tự động qua Affiliate và nhận hoàn tiền minh bạch.">
+  <meta name="csrf-token" content="{{ csrfToken }}">
+  <title>{{ pageTitle }} · {{ appName }}</title>
+  <link rel="manifest" href="/assets/manifest.webmanifest">
+  <link rel="icon" href="/assets/images/icon.png" sizes="any">
+  <link rel="shortcut icon" href="/assets/images/icon.png">
+  <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
+  <link rel="stylesheet" href="/assets/styles.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/instant-purchase.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/ui-refresh.css?v={{ assetVersion }}">
+  {# temp-theme.css trước đây gộp các file dưới đây bằng @import — nhưng @import
+     không mang được ?v={{assetVersion}}, nên trình duyệt cache "immutable" 30
+     ngày ở production và không bao giờ thấy bản sửa mới. Nạp trực tiếp từng
+     file bằng <link> để giữ đúng thứ tự cascade cũ nhưng luôn phá cache đúng. #}
+  <link rel="stylesheet" href="/assets/theme/tokens.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/shell.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/dashboard.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/pages.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/withdrawals.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/responsive.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/dv13-commerce.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/auth-commerce.css?v={{ assetVersion }}">
+  <script src="/assets/theme-init.js?v={{ assetVersion }}"></script>
+  <script src="/assets/backoffice-product-integrity.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/app.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/ux-integrity.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/backoffice-integrity.js?v={{ assetVersion }}" defer></script>
+  {% block page_scripts %}{% endblock %}
+</head>
+<body class="{{ bodyClass or '' }}">
+  <a class="skip-link" href="#main-content">Bỏ qua menu</a>
+  {% block body %}
+    <header class="public-header">
+      <a class="brand" href="/" aria-label="ShopTik - Trang chủ">
+        <img class="brand-image brand-image-light" src="/assets/images/logo.png" alt="ShopTik">
+      </a>
+      <nav class="public-nav" aria-label="Điều hướng chính">
+        {% include "partials/theme-toggle.njk" %}
+        <a href="/dang-nhap">Đăng nhập</a>
+        <a class="button button-primary button-small" href="/dang-ky">Bắt đầu</a>
+      </nav>
+    </header>
+    <main id="main-content">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="public-footer">
+      <div>
+        <img class="brand-image brand-image-footer" src="/assets/images/logo.png" alt="ShopTik">
+      </div>
+      <nav aria-label="Thông tin pháp lý">
+        <a href="/dieu-khoan">Điều khoản</a>
+        <a href="/quyen-rieng-tu">Quyền riêng tư</a>
+        <a href="/dang-nhap">Đăng nhập</a>
+      </nav>
+    </footer>
+  {% endblock %}
+</body>
+</html>

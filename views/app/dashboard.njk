@@ -1,0 +1,15 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/icons.njk" import icon %}
+
+{% block app_content %}
+  {% set defaultPlatform = "SHOPEE" if platformAvailability.SHOPEE else ("TIKTOK" if platformAvailability.TIKTOK else "LAZADA") %}
+
+
+  <div class="cashback-home cashback-home-refined cashback-home-wide">
+    {% include "app/dashboard/product-search.njk" %}
+  </div>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/purchase.js?v={{ assetVersion }}" defer></script>
+{% endblock %}

@@ -1,0 +1,620 @@
+/* Responsive tập trung tại một nơi để tránh override rải rác. */
+
+@media (max-width: 1120px) {
+  .topbar-title em {
+    display: none;
+  }
+
+  .topbar-balance-pill span {
+    display: none;
+  }
+
+  .recent-order-row,
+  .ledger-table-head,
+  .ledger-row {
+    grid-template-columns: 56px minmax(0, 1fr) 142px;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-sidebar,
+  .backoffice-sidebar {
+    width: min(82vw, 292px);
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+
+  .app-main {
+    margin-left: 0;
+  }
+
+  .sidebar-close-button {
+    display: grid;
+    place-items: center;
+  }
+
+  .app-topbar {
+    min-height: 64px;
+    padding: 0 13px;
+    gap: 6px;
+  }
+
+  .app-content,
+  .app-section-dashboard .app-content {
+    width: 100%;
+    padding: 16px 13px calc(102px + env(safe-area-inset-bottom));
+  }
+
+  .page-heading-refined,
+  .page-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cashback-home {
+    gap: 15px;
+  }
+
+  .wallet-hero {
+    min-height: auto;
+    padding: 20px;
+    border-radius: 21px;
+  }
+
+  .shopping-panel,
+  .home-guide-card,
+  .recent-panel,
+  .wallet-ledger-panel {
+    padding: 17px;
+    border-radius: 20px;
+  }
+
+  .shopping-panel-refined {
+    padding: 20px;
+  }
+
+  .platform-grid .platform-tab,
+  .platform-grid .platform-tab.active {
+    min-height: 126px;
+    padding: 14px 12px;
+    border-radius: 17px;
+  }
+
+  .platform-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .wallet-quick-actions a {
+    min-width: 0;
+  }
+
+  .mobile-bottom-nav {
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+    width: auto;
+    min-height: 64px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .16);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    min-height: 50px;
+    border-radius: 14px;
+    color: var(--muted);
+  }
+
+  .mobile-bottom-nav a span,
+  .mobile-bottom-nav button span {
+    color: var(--brand);
+    background: var(--accent-soft);
+  }
+
+  .mobile-bottom-nav .active {
+    color: var(--brand-strong);
+    background: var(--accent-soft);
+  }
+
+  .mobile-bottom-nav .active span {
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+    box-shadow: 0 6px 14px -6px var(--brand-shadow-hover);
+  }
+
+  .support-fab {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .responsive-table,
+  .share-table-wrap,
+  .ledger-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-topbar {
+    padding-inline: 10px;
+  }
+
+  .topbar-title {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .topbar-spacer {
+    display: none;
+  }
+
+  .menu-button,
+  .notification-trigger,
+  .sidebar-close-button {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .theme-toggle-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-option {
+    width: 32px;
+    height: 32px;
+  }
+
+  .theme-option b {
+    display: none;
+  }
+
+  :root:not([data-theme="dark"]) .theme-option-dark,
+  :root[data-theme="light"] .theme-option-dark,
+  :root[data-theme="dark"] .theme-option-light {
+    display: none;
+  }
+
+  .mode-switch-option span,
+  .account-copy,
+  .account-trigger-chevron,
+  .topbar-balance-pill {
+    display: none;
+  }
+
+  .mode-switch {
+    min-height: 44px;
+    flex: 0 0 auto;
+    margin-right: 0;
+  }
+
+  .mode-switch-option {
+    width: 38px;
+    min-height: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .account-trigger {
+    min-height: 44px;
+    padding: 2px;
+  }
+
+  .account-trigger > span:first-child {
+    width: 40px;
+    height: 40px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .auth-theme-control {
+    top: 12px;
+    right: 12px;
+  }
+
+  .wallet-chip-row {
+    gap: 8px;
+  }
+
+  .wallet-sync-badge {
+    min-height: 24px;
+    padding: 0 9px;
+    font-size: .64rem;
+  }
+
+  .home-section-title-refined {
+    gap: 12px;
+  }
+
+  .home-section-title-refined h1 {
+    font-size: 1.28rem;
+  }
+
+  .buy-form-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  /*
+   * Kết quả tra cứu trên mobile:
+   * - ảnh và thông tin nhận diện nằm gọn ở hàng đầu;
+   * - hóa đơn, ghi chú và nhóm thao tác chiếm trọn chiều ngang bên dưới.
+   *
+   * .product-info dùng display: contents để các phần tử con tham gia trực
+   * tiếp vào grid của .product-card. Nhờ đó receipt/product-actions không
+   * còn bị bó trong cột phải và tràn khỏi màn hình.
+   */
+  .product-card {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: clamp(88px, 26vw, 132px) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px 14px;
+    margin-inline: auto;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .product-info {
+    display: contents;
+  }
+
+  .product-media {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    width: 100%;
+    max-width: 132px;
+    min-width: 0;
+    margin: 0;
+    justify-self: center;
+  }
+
+  .product-shop {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    align-self: end;
+  }
+
+  .product-name {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .product-status {
+    grid-column: 2;
+    grid-row: 3;
+    max-width: 100%;
+  }
+
+  .receipt-cashback-only,
+  .product-actions,
+  .product-card > .product-note,
+  .product-info > .product-note {
+    grid-column: 1 / -1;
+    width: min(100%, 520px);
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    justify-self: center;
+    box-sizing: border-box;
+  }
+
+  .receipt-cashback-only {
+    margin-top: 2px;
+    margin-bottom: 0;
+  }
+
+  .receipt-cashback-only .receipt-row,
+  .receipt-product-pricing,
+  .receipt-current-price {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .product-actions {
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .product-card .product-note {
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .product-card .product-note:empty {
+    display: none;
+  }
+
+  .recent-order-row {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .recent-order-metrics {
+    grid-column: 2;
+    justify-items: start;
+  }
+
+  .ledger-table-head {
+    display: none;
+  }
+
+  .ledger-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .ledger-row > strong {
+    justify-self: start;
+    grid-column: 2;
+  }
+
+  .mission-tabs {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: 16px;
+  }
+
+  .mission-tabs button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    justify-content: center;
+    padding: 8px 10px;
+    border-radius: 12px;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .orders-history-tabs a {
+    min-height: 44px;
+  }
+
+  .row-actions {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    font-size: 15px;
+  }
+
+  .app-topbar .theme-toggle {
+    margin-right: 3px;
+  }
+
+  .wallet-hero {
+    padding: 18px;
+  }
+
+  .wallet-quick-actions {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .wallet-quick-actions a {
+    width: 100%;
+    min-height: 52px;
+    justify-content: center;
+    padding-inline: 6px;
+  }
+
+  .platform-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .platform-grid .platform-tab,
+  .platform-grid .platform-tab.active {
+    min-height: 112px;
+    padding: 12px 8px;
+    border-radius: 18px;
+  }
+
+  .platform-logo {
+    width: 48px;
+    height: 48px;
+    border-width: 2px;
+    border-radius: 12px;
+  }
+
+  .platform-card-badge {
+    top: 8px;
+    right: 8px;
+    min-width: 38px;
+    min-height: 22px;
+    font-size: .61rem;
+  }
+
+  .platform-grid .platform-tab strong {
+    font-size: .8rem;
+  }
+
+  .platform-grid .platform-tab small {
+    font-size: .69rem;
+  }
+
+  .shopping-panel .buy-form {
+    padding: 7px;
+  }
+
+  .shopping-panel .buy-input-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .shopping-panel .buy-input-row > button[type="submit"] {
+    grid-column: 1 / -1;
+    width: fit-content;
+    min-width: 112px;
+    min-height: 40px;
+    justify-self: center;
+    padding-inline: 18px;
+    border-radius: 12px;
+    font-size: .8rem;
+    box-shadow: 0 6px 14px var(--brand-shadow);
+  }
+
+  .product-card {
+    grid-template-columns: clamp(84px, 27vw, 104px) minmax(0, 1fr);
+    gap: 10px 12px;
+    padding: 12px;
+  }
+
+  .product-media {
+    max-width: 104px;
+  }
+
+  .receipt-cashback-only {
+    padding-inline: 14px;
+  }
+
+  .receipt-row {
+    gap: 10px;
+  }
+
+  .receipt-row > span,
+  .receipt-row > strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .buy-now-button,
+  .buy-reset-button,
+  .product-actions .button {
+    min-height: 48px;
+  }
+
+  .wallet-balance strong {
+    font-size: 1.95rem;
+  }
+
+  .recent-order-row {
+    padding: 12px;
+  }
+
+  .wallet-ledger-panel {
+    padding: 16px;
+  }
+
+  .ledger-row {
+    padding: 14px;
+  }
+
+  .auth-shell-premium .auth-panel {
+    margin-top: -24px !important;
+    padding: 0 12px 24px !important;
+  }
+
+  .auth-shell-premium .auth-card {
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+
+  .auth-shell-premium,
+  :root[data-theme="dark"] .auth-shell-premium {
+    grid-template-rows: minmax(200px, 31svh) auto !important;
+  }
+
+  .auth-shell-premium .auth-backdrop,
+  :root[data-theme="dark"] .auth-shell-premium .auth-backdrop {
+    min-height: 200px !important;
+    height: min(31svh, 240px) !important;
+  }
+
+  .auth-card-brand-image {
+    margin-bottom: 18px;
+  }
+
+  .mission-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mission-card-side {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0 0;
+    border-top: 1px dashed var(--line);
+    text-align: left;
+  }
+
+  .mission-progress {
+    max-width: none;
+  }
+
+  .flash:not(.support-prefill-banner) {
+    top: calc(72px + env(safe-area-inset-top));
+    right: 12px;
+    bottom: auto;
+    left: 12px;
+    width: auto;
+    transform: none;
+  }
+
+  .flash:not(.support-prefill-banner).is-hiding {
+    transform: translateY(-8px);
+  }
+
+  .notification-dropdown {
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top));
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+    max-height: min(70dvh, 520px);
+    overflow-y: auto;
+  }
+
+  .entry-promo-modal {
+    width: calc(100vw - 20px);
+  }
+
+  .entry-promo-visual img {
+    object-fit: contain;
+    background: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

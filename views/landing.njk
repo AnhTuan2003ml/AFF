@@ -1,0 +1,56 @@
+{% extends "base.njk" %}
+
+{% block content %}
+  <section class="hero">
+    <div class="hero-copy">
+      <h1>Dán link mua hàng.<br><em>Thấy rõ tiền hoàn.</em></h1>
+      <div class="hero-platforms" aria-label="Sàn được hỗ trợ">
+        <span class="platform-tab{% if platformAvailability.SHOPEE %} active{% endif %}">Shopee{% if not platformAvailability.SHOPEE %}<span class="platform-tab-soon">Sắp mở</span>{% endif %}</span>
+        <span class="platform-tab{% if platformAvailability.TIKTOK %} active{% endif %}">TikTok Shop{% if not platformAvailability.TIKTOK %}<span class="platform-tab-soon">Sắp mở</span>{% endif %}</span>
+        <span class="platform-tab{% if platformAvailability.LAZADA %} active{% endif %}">Lazada{% if not platformAvailability.LAZADA %}<span class="platform-tab-soon">Sắp mở</span>{% endif %}</span>
+      </div>
+      <div class="hero-actions">
+        <a class="button button-primary button-large" href="/dang-ky">Tra cứu tiền hoàn <span aria-hidden="true">→</span></a>
+        <a class="text-link" href="#cach-hoat-dong">Xem cách hoạt động</a>
+      </div>
+      <p class="trust-line"><span aria-hidden="true">✓</span> Không yêu cầu mật khẩu, PIN hoặc OTP ngân hàng</p>
+    </div>
+    <div class="hero-demo" role="img" aria-label="ShopTik — trợ lý săn sale"></div>
+  </section>
+
+  <section class="process-section" id="cach-hoat-dong">
+    <header class="section-heading">
+      <h2>3 bước từ sản phẩm đến tiền hoàn</h2>
+    </header>
+    <div class="process-grid">
+      <article>
+        <span class="step-no">01</span>
+        <h3>Dán link sản phẩm</h3>
+        <p>Hệ thống tự lấy ảnh, giá và hoa hồng dự kiến.</p>
+      </article>
+      <article>
+        <span class="step-no">02</span>
+        <h3>Kiểm tra tiền hoàn</h3>
+        <p>Xem giá thật và khoản hoàn dự kiến.</p>
+      </article>
+      <article>
+        <span class="step-no">03</span>
+        <h3>Mua qua link ShopTik</h3>
+        <p>Mã Affiliate đã gắn sẵn khi bấm Mua ngay.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="transparency-section" id="minh-bach">
+    <div>
+      <h2>“Dự kiến” không phải “đã có thể rút”</h2>
+      <p>ShopTik tách riêng tiền đang chờ, khả dụng, đang giữ và đã trả. Mọi thay đổi đều có lịch sử.</p>
+    </div>
+    <div class="balance-legend">
+      <div><span class="legend-dot dot-pending"></span><b>Đang chờ</b><small>Đối tác đang xác nhận đơn</small></div>
+      <div><span class="legend-dot dot-ready"></span><b>Khả dụng</b><small>Đã đủ điều kiện rút</small></div>
+      <div><span class="legend-dot dot-held"></span><b>Đang giữ</b><small>Đang xử lý yêu cầu rút</small></div>
+      <div><span class="legend-dot dot-paid"></span><b>Đã trả</b><small>Đã hoàn tất chuyển tiền</small></div>
+    </div>
+  </section>
+{% endblock %}

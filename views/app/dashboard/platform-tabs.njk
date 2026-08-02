@@ -1,0 +1,21 @@
+{% set platforms = [
+  { code: 'SHOPEE', label: 'Shopee', image: 'platform-shopee.webp', className: 'platform-shopee', badge: 'HOT' },
+  { code: 'TIKTOK', label: 'TikTok', image: 'platform-tiktok.webp', className: 'platform-tiktok', badge: 'LIVE' },
+  { code: 'LAZADA', label: 'Lazada', image: 'platform-lazada.webp', className: 'platform-lazada', badge: 'HOT' }
+] %}
+
+{% for platform in platforms %}
+  <button
+    type="button"
+    class="platform-tab {{ platform.className }}{% if defaultPlatform == platform.code %} active{% endif %}"
+    data-platform-tab="{{ platform.code }}"
+    data-platform-label="{{ platform.label }}"
+    role="tab"
+    aria-selected="{% if defaultPlatform == platform.code %}true{% else %}false{% endif %}"
+  >
+    <span class="platform-card-badge">{{ platform.badge }}</span>
+    <span class="platform-logo"><img src="/assets/images/{{ platform.image }}" alt="{{ platform.label }}"></span>
+    <strong>{{ platform.label }}</strong>
+    <small>Hoàn tối {{ cashbackRate }}%</small>
+  </button>
+{% endfor %}

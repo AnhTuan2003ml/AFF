@@ -1,0 +1,48 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+
+{% block backoffice_content %}
+  <section class="page-heading"><div><span class="eyebrow">TIỀN ĐÃ GIỮ TRƯỚC KHI DUYỆT</span><h1>Duyệt rút tiền</h1><p>Duyệt sẽ đưa yêu cầu sang hàng chờ chi; hệ thống chưa tự chuyển tiền vào ngân hàng.</p></div></section>
+  <aside class="warning-strip"><span>!</span><div><b>Không gửi lại yêu cầu “Chờ kiểm tra” khi chưa đối soát</b><p>Hãy tra cứu trạng thái từ đối tác chi hộ trước khi thử lại để tránh chuyển tiền hai lần.</p></div></aside>
+  <section class="panel">
+    {% if withdrawals.length %}
+      {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+        <form id="withdrawals-bulk-form" method="post" action="/backoffice/withdrawals/bulk-decision" class="bulk-action-bar" data-confirm-form data-confirm-message="Duyệt các yêu cầu rút tiền đã chọn hoặc toàn bộ yêu cầu đang chờ?">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="decision" value="APPROVED">
+          <span>Chọn yêu cầu đã giữ tiền trong bảng</span>
+          <button class="button button-small button-primary" type="submit" name="scope" value="selected">Duyệt đã chọn</button>
+          <button class="button button-small button-ghost" type="submit" name="scope" value="all_pending">Duyệt tất cả đang chờ</button>
+        </form>
+      {% endif %}
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th class="select-col"><input type="checkbox" data-select-all="withdrawals" aria-label="Chọn tất cả yêu cầu rút trên trang"></th><th>Người dùng</th><th>Số tiền</th><th>Ngân hàng</th><th>Rủi ro</th><th>Trạng thái</th><th>Thời gian</th><th>Quyết định</th></tr></thead>
+          <tbody>
+            {% for withdrawal in withdrawals %}
+              <tr>
+                <td class="select-col">{% if withdrawal.status == 'FUNDS_HELD' and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}<input type="checkbox" name="ids" value="{{ withdrawal.id }}" form="withdrawals-bulk-form" data-select-item="withdrawals" aria-label="Chọn yêu cầu rút {{ withdrawal.amount_vnd | vnd }}">{% else %}<span class="muted">—</span>{% endif %}</td>
+                <td><b>{{ withdrawal.full_name }}</b><br><small>{{ withdrawal.email }}</small></td>
+                <td><strong>{{ withdrawal.amount_vnd | vnd }}</strong></td>
+                <td>{{ withdrawal.bank_code }} · •••• {{ withdrawal.bank_last4 }}</td>
+                <td><span class="risk-score {% if withdrawal.risk_score > 50 %}high{% endif %}">{{ withdrawal.risk_score }}</span></td>
+                <td>{{ status_badge(withdrawal.status) }}</td>
+                <td>{{ withdrawal.requested_at | datetime }}</td>
+                <td>
+                  {% if withdrawal.status == 'FUNDS_HELD' and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE', 'RISK'] %}
+                    <form method="post" action="/backoffice/withdrawals/{{ withdrawal.id }}/decision" class="row-actions">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <input type="text" name="reason" maxlength="500" placeholder="Lý do nếu từ chối">
+                      {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}<button class="button button-small button-primary" type="submit" name="decision" value="APPROVED">Duyệt</button>{% endif %}
+                      <button class="button button-small button-danger" type="submit" name="decision" value="REJECTED">Từ chối</button>
+                    </form>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}{{ empty_state("Không có yêu cầu rút", "Yêu cầu mới sẽ xuất hiện sau khi người dùng xác nhận OTP và tiền đã được giữ.") }}{% endif %}
+  </section>
+{% endblock %}

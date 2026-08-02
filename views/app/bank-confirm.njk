@@ -1,0 +1,26 @@
+{% extends "app/app-base.njk" %}
+
+{% block app_content %}
+  <section class="narrow-flow">
+    <a class="back-link" href="/app/banks">← Quay lại ngân hàng</a>
+    <div class="flow-card">
+      <span class="eyebrow">XÁC NHẬN THAY ĐỔI NHẠY CẢM</span>
+      <h1>Nhập OTP email</h1>
+      <p>Mã được gửi tới email đăng nhập, không phải OTP của ngân hàng.</p>
+      <dl class="confirmation-summary">
+        <div><dt>Ngân hàng</dt><dd>{{ pending.bank_code }}</dd></div>
+        <div><dt>Số tài khoản</dt><dd>•••• {{ pending.account_last4 }}</dd></div>
+        <div><dt>Chủ tài khoản</dt><dd>{{ pending.account_name_masked }}</dd></div>
+      </dl>
+      <form method="post" action="/app/banks/confirm/{{ pending.id }}" class="stack-form" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="bank-confirm-code-input">Mã OTP 6 số
+          <input id="bank-confirm-code-input" class="otp-input" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus data-required-message="Vui lòng nhập mã OTP." data-pattern-message="Mã OTP gồm 6 chữ số.">
+          <small class="field-error" id="bank-confirm-code-input-error" hidden></small>
+        </label>
+        <button class="button button-primary button-block button-large" type="submit" data-submit-button>Xác nhận tài khoản</button>
+      </form>
+      <small class="flow-expiry">Yêu cầu hết hạn lúc {{ pending.expires_at | datetime }}.</small>
+    </div>
+  </section>
+{% endblock %}

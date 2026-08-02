@@ -1,0 +1,777 @@
+:root {
+  --discover-accent: #ff5a1f;
+  --discover-accent-strong: #ef3f17;
+  --discover-success: #08a86b;
+  --discover-warning: #ffb400;
+}
+
+.discover-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px 18px 44px;
+}
+
+.discover-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.discover-title-row h1 {
+  margin: 3px 0 4px;
+  color: var(--text);
+  font-size: clamp(2rem, 3.2vw, 2.7rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.discover-title-row p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.discover-eyebrow {
+  color: var(--discover-accent);
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.discover-max-cashback {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--discover-success);
+  font-size: .78rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px -14px rgba(8, 168, 107, .72);
+}
+
+.discover-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  min-height: 176px;
+  margin-bottom: 22px;
+  padding: 26px 30px;
+  overflow: hidden;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(112deg, #ff8a00 0%, #ff5b1f 52%, #ff2455 100%);
+  box-shadow: 0 22px 48px -28px rgba(255, 77, 32, .8);
+}
+
+.discover-hero-copy {
+  position: relative;
+  z-index: 2;
+  align-self: center;
+}
+
+.discover-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  backdrop-filter: blur(8px);
+}
+
+.discover-hero h2 {
+  margin: 13px 0 7px;
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  line-height: 1.08;
+  letter-spacing: -.04em;
+}
+
+.discover-hero p {
+  max-width: 670px;
+  margin: 0;
+  color: rgba(255,255,255,.9);
+  line-height: 1.55;
+}
+
+.discover-hero-stats {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  align-self: center;
+  gap: 10px;
+}
+
+.discover-hero-stats > div {
+  display: grid;
+  min-height: 88px;
+  place-items: center;
+  align-content: center;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 18px;
+  background: rgba(255,255,255,.13);
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.discover-hero-stats strong {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.discover-hero-stats span {
+  margin-top: 7px;
+  color: rgba(255,255,255,.82);
+  font-size: .67rem;
+  font-weight: 800;
+}
+
+.discover-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,.13);
+  pointer-events: none;
+}
+
+.discover-hero-orb-one {
+  width: 190px;
+  height: 190px;
+  right: -48px;
+  bottom: -86px;
+}
+
+.discover-hero-orb-two {
+  width: 110px;
+  height: 110px;
+  right: 260px;
+  top: -55px;
+}
+
+.discover-filters {
+  position: relative;
+  top: auto;
+  z-index: 20;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 14px 32px -24px color-mix(in srgb, var(--shadow-color) 70%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.discover-filter-main {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.discover-search {
+  position: relative;
+  display: block;
+}
+
+.discover-search > span:first-child {
+  position: absolute;
+  z-index: 2;
+  left: 14px;
+  top: 50%;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.discover-search svg {
+  width: 18px;
+  height: 18px;
+}
+
+.discover-search input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 16px 0 43px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 96%, var(--line));
+  font: inherit;
+  font-size: .83rem;
+}
+
+.discover-search input:focus {
+  border-color: var(--discover-accent);
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--discover-accent) 12%, transparent);
+}
+
+.discover-platform-tabs,
+.discover-category-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.discover-platform-tabs::-webkit-scrollbar,
+.discover-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.discover-platform-tabs button,
+.discover-category-tabs button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 94%, var(--line));
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background-color .16s ease, transform .16s ease;
+}
+
+.discover-platform-tabs button:hover,
+.discover-category-tabs button:hover {
+  border-color: color-mix(in srgb, var(--discover-accent) 42%, var(--line));
+  transform: translateY(-1px);
+}
+
+.discover-platform-tabs button.active,
+.discover-category-tabs button.active {
+  color: #fff;
+  border-color: var(--discover-accent);
+  background: var(--discover-accent);
+}
+
+.discover-category-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.discover-category-row > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.discover-category-row > span b {
+  color: var(--discover-accent);
+}
+
+.discover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.discover-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px -26px color-mix(in srgb, var(--shadow-color) 75%, transparent);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.discover-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--discover-accent) 34%, var(--line));
+  box-shadow: 0 24px 46px -28px color-mix(in srgb, var(--shadow-color) 92%, transparent);
+}
+
+.discover-card[hidden] {
+  display: none;
+}
+
+.discover-card-media {
+  position: relative;
+  aspect-ratio: 1.48 / 1;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 86%, var(--line));
+}
+
+.discover-card-media > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .3s ease;
+}
+
+.discover-card:hover .discover-card-media > img {
+  transform: scale(1.025);
+}
+
+.discover-card-media > img.is-placeholder {
+  padding: 42px;
+  object-fit: contain;
+  opacity: .7;
+}
+
+.discover-card-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 22% 24%, color-mix(in srgb, var(--discover-accent) 18%, transparent), transparent 30%),
+    linear-gradient(135deg, color-mix(in srgb, var(--discover-accent) 8%, var(--surface)), color-mix(in srgb, var(--surface) 86%, var(--line)));
+}
+
+.discover-card-placeholder span {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--discover-accent) 30%, var(--line));
+  border-radius: 22px;
+  color: var(--discover-accent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  font-size: 1.9rem;
+  font-weight: 900;
+  box-shadow: 0 12px 28px -20px rgba(0,0,0,.4);
+}
+
+.discover-card-badges {
+  position: absolute;
+  inset: 12px 12px auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.discover-category-badge,
+.discover-platform-badge,
+.discover-type-badge,
+.discover-hot-badge,
+.discover-cashback-badge {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 900;
+  box-shadow: 0 8px 18px -10px rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+}
+
+.discover-category-badge {
+  max-width: 52%;
+  overflow: hidden;
+  background: var(--discover-accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-platform-badge,
+.discover-type-badge {
+  max-width: 48%;
+  overflow: hidden;
+  background: rgba(15, 23, 42, .78);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-platform-badge.platform-shopee { background: #ee4d2d; }
+.discover-platform-badge.platform-tiktok { background: #17181d; }
+.discover-platform-badge.platform-lazada { background: #1d2d86; }
+
+.discover-hot-badge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  gap: 5px;
+  background: rgba(15, 23, 42, .82);
+}
+
+.discover-cashback-badge {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  background: var(--discover-success);
+}
+
+.discover-card-body {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 17px;
+}
+
+.discover-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.discover-card-meta span {
+  overflow: hidden;
+  color: var(--discover-accent);
+  font-size: .72rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-card-meta time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.discover-card-body h2 {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 2.72em;
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.36;
+  letter-spacing: -.016em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.discover-card-description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 3em;
+  margin: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.discover-price-box {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--line));
+}
+
+.discover-price-box > div,
+.discover-price-box p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+}
+
+.discover-price-box strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.discover-price-box del {
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+.discover-price-box p {
+  color: var(--discover-success);
+  font-size: .72rem;
+  font-weight: 850;
+}
+
+.discover-price-box p b {
+  text-align: right;
+}
+
+.discover-info-strip {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px dashed color-mix(in srgb, var(--discover-accent) 32%, var(--line));
+  border-radius: 13px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--discover-accent) 4%, var(--surface));
+  font-size: .72rem;
+}
+
+.discover-info-strip b {
+  color: var(--discover-accent);
+  text-align: right;
+}
+
+.discover-card-footer {
+  padding: 0 17px 17px;
+}
+
+.discover-primary-action,
+.discover-static-action {
+  display: flex;
+  width: 100%;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.discover-primary-action {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(100deg, var(--discover-accent), #ff315f);
+  cursor: pointer;
+  box-shadow: 0 11px 24px -15px color-mix(in srgb, var(--discover-accent) 72%, transparent);
+  transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+}
+
+.discover-primary-action:hover:not(:disabled) {
+  color: #fff;
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+}
+
+.discover-primary-action:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--discover-accent) 26%, transparent);
+  outline-offset: 2px;
+}
+
+.discover-primary-action:disabled {
+  cursor: wait;
+  opacity: .62;
+}
+
+.discover-static-action {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 94%, var(--line));
+}
+
+.discover-filter-empty,
+.discover-database-empty {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  align-content: center;
+  margin-top: 20px;
+  padding: 38px 24px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  text-align: center;
+  background: color-mix(in srgb, var(--surface) 95%, var(--line));
+}
+
+.discover-filter-empty[hidden] {
+  display: none;
+}
+
+.discover-filter-empty > span,
+.discover-database-empty > span {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  margin-bottom: 13px;
+  border-radius: 18px;
+  color: var(--discover-accent);
+  background: color-mix(in srgb, var(--discover-accent) 10%, var(--surface));
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.discover-filter-empty h2,
+.discover-database-empty h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.discover-filter-empty p,
+.discover-database-empty p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.discover-toast {
+  position: fixed;
+  z-index: 100;
+  right: 22px;
+  bottom: 24px;
+  max-width: min(390px, calc(100vw - 32px));
+  padding: 13px 16px;
+  border: 1px solid color-mix(in srgb, var(--discover-success) 36%, var(--line));
+  border-radius: 13px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 18px 44px -20px color-mix(in srgb, var(--shadow-color) 80%, transparent);
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.discover-toast.is-error {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
+}
+
+@media (max-width: 1060px) {
+  .discover-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .discover-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(460px, 100%);
+  }
+}
+
+@media (max-width: 820px) {
+  .discover-page {
+    padding: 18px 14px 92px;
+  }
+
+  .discover-title-row {
+    align-items: flex-start;
+  }
+
+  .discover-filter-main {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-platform-tabs {
+    padding-bottom: 2px;
+  }
+
+  .discover-filters { top: auto; }
+}
+
+@media (max-width: 620px) {
+  .discover-page {
+    padding-inline: 12px;
+  }
+
+  .discover-title-row {
+    display: grid;
+    gap: 12px;
+  }
+
+  .discover-title-row h1 {
+    font-size: 2rem;
+  }
+
+  .discover-max-cashback {
+    justify-self: flex-start;
+  }
+
+  .discover-hero {
+    min-height: 0;
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .discover-hero h2 {
+    font-size: 1.68rem;
+  }
+
+  .discover-hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .discover-hero-stats > div {
+    min-height: 74px;
+    padding: 9px 6px;
+    border-radius: 14px;
+  }
+
+  .discover-hero-stats strong {
+    font-size: 1.15rem;
+  }
+
+  .discover-hero-stats span {
+    font-size: .6rem;
+  }
+
+  .discover-filters {
+    position: relative;
+    top: auto;
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .discover-category-row {
+    display: grid;
+    gap: 9px;
+  }
+
+  .discover-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .discover-card {
+    border-radius: 18px;
+  }
+
+  .discover-card-media {
+    aspect-ratio: 1.5 / 1;
+  }
+
+  .discover-card-body {
+    padding: 15px;
+  }
+
+  .discover-card-footer {
+    padding: 0 15px 15px;
+  }
+
+  .discover-toast {
+    right: 16px;
+    bottom: 84px;
+  }
+}

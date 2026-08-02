@@ -1,0 +1,98 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{% block app_content %}
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">MẠNG LƯỚI CỦA TÔI</span>
+      <h1>Giới thiệu bạn bè, <em>nhận thưởng minh bạch</em></h1>
+      <p>
+        {% if referredByName %}
+          Bạn tham gia qua giới thiệu của <b>{{ referredByName }}</b>.
+        {% else %}
+          Bạn tự tham gia, không qua giới thiệu.
+        {% endif %}
+        Thưởng giới thiệu được ghi nhận một lần khi người bạn mời có đơn hợp lệ đầu tiên được duyệt; số tiền áp dụng theo cấu hình tại thời điểm duyệt.
+      </p>
+    </div>
+  </header>
+
+  <section class="referral-hero">
+    <div>
+      <span class="eyebrow">MÃ CỦA BẠN</span>
+      <strong>{{ referralCode }}</strong>
+      <p>Gửi link này cho người bạn muốn giới thiệu.</p>
+    </div>
+    <div class="copy-field copy-field-light">
+      <input type="text" readonly value="{{ referralUrl }}" data-copy-source>
+      <button class="button button-light" type="button" data-copy-button>Sao chép link</button>
+    </div>
+  </section>
+
+  <section class="stat-grid" aria-label="Hiệu quả mạng lưới">
+    <div class="stat-card">
+      <span class="stat-icon" aria-hidden="true">{{ icon('referral') }}</span>
+      <span class="stat-copy">
+        <small>Đã mời</small>
+        <strong>{{ referrals.length }}</strong>
+        <b>người tham gia</b>
+      </span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon" aria-hidden="true">{{ icon('users') }}</span>
+      <span class="stat-copy">
+        <small>Đang mang về thưởng</small>
+        <strong>{{ networkEarnings.rewarded_count }}</strong>
+        <b>người đã phát sinh đơn</b>
+      </span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon" aria-hidden="true">{{ icon('wallet') }}</span>
+      <span class="stat-copy">
+        <small>Tổng thưởng từ mạng lưới</small>
+        <strong>{{ networkEarnings.total_vnd | vnd }}</strong>
+        <b>đã cộng vào ví</b>
+      </span>
+    </div>
+    <a class="stat-card" href="/app/orders">
+      <span class="stat-icon" aria-hidden="true">{{ icon('orders') }}</span>
+      <span class="stat-copy">
+        <small>Mua sắm của bạn</small>
+        <strong>{{ myShopping.orders_count }} đơn</strong>
+        <b>{{ myShopping.cashback_vnd | vnd }} đã hoàn · xem lịch sử →</b>
+      </span>
+    </a>
+  </section>
+
+  <aside class="info-strip">
+    <span>i</span>
+    <div>
+      <b>Điều kiện ghi nhận</b>
+      <p>Thưởng chỉ áp dụng cho đơn hợp lệ đầu tiên đã được duyệt của người được giới thiệu. Tiền được cộng theo cấu hình hiện hành và có thể cần chờ đối soát.</p>
+    </div>
+  </aside>
+
+  <section class="panel">
+    <header class="panel-heading">
+      <div><span class="eyebrow">TỪNG NGƯỜI MANG VỀ BAO NHIÊU</span><h2>Người bạn đã mời</h2></div>
+      <span>{{ referrals.length }} người</span>
+    </header>
+    {% if referrals.length %}
+      <div class="compact-list">
+        {% for referral in referrals %}
+          <div class="compact-row referral-row">
+            <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
+            <span><b>{{ referral.full_name }}</b><small>Tham gia {{ referral.created_at | date }} · {{ referral.approved_orders }} đơn đã duyệt</small></span>
+            <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>bạn nhận được</small></span>
+            {{ status_badge(referral.status) }}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có người được giới thiệu", "Sao chép link phía trên và gửi cho bạn bè quan tâm.") }}
+    {% endif %}
+  </section>
+
+  <aside class="info-strip"><span>i</span><div><b>Không tự tạo nhiều tài khoản</b><p>Referral vòng lặp, tự mua hoặc hành vi gian lận có thể bị loại và khóa rút tiền.</p></div></aside>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.njk" %}
+{% from "partials/icons.njk" import icon %}
+{% from "partials/mode-switch.njk" import mode_switch %}
+{% from "partials/macros.njk" import account_card %}
+
+{% block body %}
+  <link rel="stylesheet" href="/assets/dashboard.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/shoptik-premium-patch.css?v={{ assetVersion }}">
+  <div class="backoffice-shell">
+    {# Header quản trị dùng ĐÚNG các class commerce-hero/commerce-navbar-wrap/
+       commerce-nav như app desktop — không tự vẽ lại bằng class riêng nữa —
+       để chắc chắn cùng màu, cùng cỡ, cùng hành vi dính cố định khi cuộn (kể
+       cả cách né lỗi isolation ở public/sticky-navbar.js). Nền ảnh + isolation
+       của .commerce-hero vốn chỉ áp dụng trong .dv13-commerce-shell (class đó
+       còn kéo theo min-height:100dvh cho toàn trang app nên KHÔNG bọc quanh
+       đây) — patch riêng `.backoffice-shell .commerce-hero` trong
+       shoptik-premium-patch.css để có đúng hiệu ứng mà không dính hệ quả đó. #}
+    <header class="commerce-hero">
+      <div class="commerce-hero-shade" aria-hidden="true"></div>
+
+      <div class="commerce-topline">
+        <div class="commerce-container commerce-topline-inner">
+          <div class="commerce-contact">
+            <span>{{ icon('ops') }} Trung tâm quản trị ShopTik</span>
+          </div>
+          <div class="commerce-userline">
+            <span>{{ currentUser.role }}</span>
+            <span>{{ currentUser.email }}</span>
+          </div>
+        </div>
+      </div>
+
+        <div class="commerce-navbar-wrap" data-sticky-navbar>
+          <div class="commerce-container commerce-navbar">
+            <a class="commerce-brand" href="/backoffice/console" aria-label="ShopTik">
+              <img src="/assets/images/icon.png" alt="" aria-hidden="true">
+              <span class="commerce-brand-wordmark">
+                <b aria-hidden="true"><span>S</span><span>H</span><span>O</span><span>P</span></b>
+                <strong aria-hidden="true"><span>T</span><span>I</span><span>K</span></strong>
+                <small>QUẢN TRỊ</small>
+              </span>
+            </a>
+
+            <nav class="commerce-nav" aria-label="Quản trị">
+              <a href="/backoffice/console" class="{% if backofficeSection == 'dashboard' %}active{% endif %}">Tổng quan</a>
+              <a href="/backoffice/reconciliation" class="{% if backofficeSection == 'orders' %}active{% endif %}">Đơn hàng{% if backofficeOrdersPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeOrdersPendingCount }} đơn chờ xử lý">{{ backofficeOrdersPendingCount }}</em>{% endif %}</a>
+              <a href="/backoffice/withdrawals" class="{% if backofficeSection == 'withdrawals' %}active{% endif %}">Rút tiền{% if backofficeWithdrawalsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
+              <a href="/backoffice/support" class="{% if backofficeSection == 'support' %}active{% endif %}">Hỗ trợ{% if backofficeSupportPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeSupportPendingCount }} yêu cầu hỗ trợ chờ xử lý">{{ backofficeSupportPendingCount }}</em>{% endif %}</a>
+              <a href="/backoffice/accounts" class="{% if backofficeSection == 'users' %}active{% endif %}">Người dùng</a>
+              <a href="/backoffice/banks" class="{% if backofficeSection == 'banks' %}active{% endif %}">Ngân hàng</a>
+              <a href="/backoffice/products" class="{% if backofficeSection == 'products' %}active{% endif %}">Khám phá</a>
+              <a href="/backoffice/missions" class="{% if backofficeSection == 'missions' %}active{% endif %}">Nhiệm vụ{% if backofficeMissionsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
+              <a href="/backoffice/revenue" class="{% if backofficeSection == 'revenue' %}active{% endif %}">Doanh thu</a>
+              <a href="/backoffice/config" class="{% if backofficeSection == 'config' %}active{% endif %}">Cấu hình</a>
+              <a href="/backoffice/audit" class="{% if backofficeSection == 'audit' %}active{% endif %}">Nhật ký</a>
+              <a href="/app/settings">Tài khoản</a>
+            </nav>
+
+            <div class="commerce-navbar-actions">
+              <div class="commerce-header-mode">
+                {{ mode_switch("backoffice") }}
+              </div>
+              <div class="commerce-header-theme">
+                {% include "partials/theme-toggle.njk" %}
+              </div>
+              <form class="commerce-logout-form" method="post" action="/dang-xuat">
+                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                <button class="commerce-logout-button" type="submit" aria-label="Đăng xuất">
+                  {{ icon('logout') }}<span>Đăng xuất</span>
+                </button>
+              </form>
+              <button class="commerce-menu-button" type="button" aria-label="Mở menu" data-sidebar-open>
+                <span></span><span></span><span></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+    {# Sidebar cũ chỉ còn dùng làm drawer trên tablet/mobile (giống
+       .commerce-mobile-drawer bên app) — trên desktop menu đã ở thanh ngang
+       phía trên nên không còn hiển thị cố định bên trái nữa. #}
+    <aside class="backoffice-sidebar" data-sidebar>
+      <a class="brand sidebar-brand sidebar-brand-image" href="/backoffice/console" aria-label="ShopTik">
+        <img class="brand-image brand-image-sidebar" src="/assets/images/logo.png" alt="ShopTik">
+      </a>
+      <button class="backoffice-sidebar-close" type="button" aria-label="Đóng menu" data-sidebar-close>×</button>
+      <div class="sidebar-utility">
+        <p>GIAO DIỆN</p>
+        {% include "partials/theme-toggle.njk" %}
+        {{ mode_switch("backoffice") }}
+      </div>
+      <nav class="app-nav backoffice-nav" aria-label="Quản trị">
+        <p>Hôm nay</p>
+        <a href="/backoffice/console" class="{% if backofficeSection == 'dashboard' %}active{% endif %}"><span>{{ icon('dashboard') }}</span>Tổng quan</a>
+        <a href="/backoffice/reconciliation" class="{% if backofficeSection == 'orders' %}active{% endif %}"><span>{{ icon('orders') }}</span><b class="nav-link-label">Đơn &amp; hoàn tiền</b>{% if backofficeOrdersPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeOrdersPendingCount }} đơn chờ xử lý">{{ backofficeOrdersPendingCount }}</em>{% endif %}</a>
+        <a href="/backoffice/withdrawals" class="{% if backofficeSection == 'withdrawals' %}active{% endif %}"><span>{{ icon('withdraw') }}</span><b class="nav-link-label">Yêu cầu rút tiền</b>{% if backofficeWithdrawalsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
+        <a href="/backoffice/support" class="{% if backofficeSection == 'support' %}active{% endif %}"><span>{{ icon('support') }}</span><b class="nav-link-label">Hỗ trợ</b>{% if backofficeSupportPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeSupportPendingCount }} yêu cầu hỗ trợ chờ xử lý">{{ backofficeSupportPendingCount }}</em>{% endif %}</a>
+        <p>Quản lý</p>
+        <a href="/backoffice/accounts" class="{% if backofficeSection == 'users' %}active{% endif %}"><span>{{ icon('users') }}</span>Người dùng &amp; quyền</a>
+        <a href="/backoffice/banks" class="{% if backofficeSection == 'banks' %}active{% endif %}"><span>{{ icon('bank') }}</span>Tài khoản ngân hàng</a>
+        <a href="/backoffice/products" class="{% if backofficeSection == 'products' %}active{% endif %}"><span>{{ icon('discover') }}</span>Khám phá</a>
+        <a href="/backoffice/missions" class="{% if backofficeSection == 'missions' %}active{% endif %}"><span>{{ icon('mission') }}</span><b class="nav-link-label">Nhiệm vụ</b>{% if backofficeMissionsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
+        <a href="/backoffice/revenue" class="{% if backofficeSection == 'revenue' %}active{% endif %}"><span>{{ icon('wallet') }}</span>Doanh thu</a>
+        <p>Hệ thống</p>
+        <a href="/backoffice/config" class="{% if backofficeSection == 'config' %}active{% endif %}"><span>{{ icon('settings') }}</span>Cấu hình nghiệp vụ</a>
+        <a href="/backoffice/audit" class="{% if backofficeSection == 'audit' %}active{% endif %}"><span>{{ icon('audit') }}</span>Nhật ký</a>
+      </nav>
+      {{ account_card(currentUser) }}
+    </aside>
+    <button class="sidebar-scrim" type="button" aria-label="Đóng menu" data-sidebar-close></button>
+
+    <div class="app-main">
+      <main class="app-content" id="main-content">
+        {% include "partials/flash.njk" %}
+        {% block backoffice_content %}{% endblock %}
+      </main>
+    </div>
+
+    <nav class="backoffice-mobile-nav" aria-label="Điều hướng quản trị di động">
+      <a href="/backoffice/console" class="{% if backofficeSection == 'dashboard' %}active{% endif %}"><span>{{ icon('dashboard') }}</span><b>Tổng quan</b></a>
+      <a href="/backoffice/reconciliation" class="{% if backofficeSection == 'orders' %}active{% endif %}"><span>{{ icon('orders') }}</span><b>Đơn</b></a>
+      <a href="/backoffice/withdrawals" class="{% if backofficeSection == 'withdrawals' %}active{% endif %}"><span>{{ icon('withdraw') }}</span><b>Rút tiền</b></a>
+      <a href="/backoffice/accounts" class="{% if backofficeSection == 'users' %}active{% endif %}"><span>{{ icon('users') }}</span><b>Người dùng</b></a>
+      <button type="button" data-sidebar-open><span>{{ icon('more') }}</span><b>Thêm</b></button>
+    </nav>
+  </div>
+  <script src="/assets/sticky-navbar.js?v={{ assetVersion }}" defer></script>
+{% endblock %}

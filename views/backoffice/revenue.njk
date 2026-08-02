@@ -1,0 +1,141 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">TOÀN BỘ DỮ LIỆU TÀI CHÍNH TRÊN MÁY CHỦ</span>
+      <h1>Doanh thu</h1>
+      <p>Tổng hợp từ đơn hợp lệ, bút toán ledger và yêu cầu rút tiền — không hồi tố khi đổi cấu hình.</p>
+    </div>
+    <a class="button button-primary" href="/backoffice/revenue/export" download>Tải Excel (CSV)</a>
+  </section>
+
+  <div class="balance-grid">
+    <div class="balance-card">
+      <span>Tổng hoa hồng các sàn ghi nhận</span>
+      <strong>{{ totals.commission_total | vnd }}</strong>
+      <small>{{ totals.orders_approved }} đơn hợp lệ (tất cả thời gian)</small>
+    </div>
+    <div class="balance-card">
+      <span>Đã hoàn cho người mua</span>
+      <strong>{{ totals.buyer_total | vnd }}</strong>
+    </div>
+    <div class="balance-card">
+      <span>Đã thưởng chủ link chia sẻ</span>
+      <strong>{{ totals.sharer_total | vnd }}</strong>
+    </div>
+    <div class="balance-card balance-ready">
+      <span>Doanh thu nền tảng giữ lại</span>
+      <strong>{{ platformBalance | vnd }}</strong>
+    </div>
+    <div class="balance-card">
+      <span>Đã rút thành công</span>
+      <strong>{{ withdrawnPaid | vnd }}</strong>
+    </div>
+    <div class="balance-card">
+      <span>30 ngày qua</span>
+      <strong>{{ last30.commission_vnd | vnd }}</strong>
+      <small>{{ last30.orders_count }} đơn hợp lệ</small>
+    </div>
+  </div>
+
+  <section class="chart-panel">
+    <header class="chart-panel-heading">
+      <div><span class="eyebrow">14 NGÀY GẦN NHẤT</span><h2>Hoa hồng theo ngày</h2></div>
+      <p>Tổng hoa hồng đơn hợp lệ ghi nhận mỗi ngày</p>
+    </header>
+    {% if trendChart.hasData %}
+      <svg class="trend-chart" viewBox="0 0 {{ trendChart.viewBoxWidth }} {{ trendChart.viewBoxHeight }}" role="img" aria-label="Biểu đồ hoa hồng theo ngày trong 14 ngày gần nhất">
+        {% for line in trendChart.gridLines %}
+          <line class="trend-gridline" x1="46" y1="{{ line.y }}" x2="{{ trendChart.viewBoxWidth - 12 }}" y2="{{ line.y }}" />
+          <text class="trend-axis-label" x="4" y="{{ line.y + 3 }}">{{ line.label }}</text>
+        {% endfor %}
+        <path class="trend-area" d="{{ trendChart.areaPath }}" />
+        <path class="trend-line" d="{{ trendChart.linePath }}" />
+        {% for dot in trendChart.dots %}
+          <circle class="trend-dot" cx="{{ dot.x }}" cy="{{ dot.y }}" r="4">
+            <title>{{ dot.dateLabel }}: {{ dot.valueLabel }}</title>
+          </circle>
+        {% endfor %}
+        {% for label in trendChart.axisLabels %}
+          <text class="trend-axis-label" x="{{ label.x }}" y="{{ trendChart.viewBoxHeight - 6 }}" text-anchor="middle">{{ label.label }}</text>
+        {% endfor %}
+      </svg>
+    {% else %}
+      <div class="chart-empty">Chưa có đơn hợp lệ nào trong 14 ngày qua.</div>
+    {% endif %}
+    {% if daily.length %}
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th>Ngày</th><th>Số đơn hợp lệ</th><th>Hoa hồng ghi nhận</th></tr></thead>
+          <tbody>
+            {% for row in daily %}
+              <tr>
+                <td>{{ row.day | date }}</td>
+                <td>{{ row.orders_count }}</td>
+                <td><strong>{{ row.commission_vnd | vnd }}</strong></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="chart-panel">
+    <header class="chart-panel-heading">
+      <div><span class="eyebrow">PHÂN BỔ HOA HỒNG</span><h2>Cơ cấu chia hoa hồng (đã ghi nhận)</h2></div>
+      <p>Tỉ lệ hoa hồng khả dụng chia cho người mua, chủ link chia sẻ và nền tảng</p>
+    </header>
+    {% if splitBar.length %}
+      <div class="chart-legend">
+        {% for segment in splitBar %}
+          <span class="chart-legend-item"><i class="chart-legend-swatch swatch-{{ segment.key }}"></i>{{ segment.label }} — {{ segment.vndLabel }} ({{ segment.percent | round(1) }}%)</span>
+        {% endfor %}
+      </div>
+      <div class="stacked-bar" role="img" aria-label="Thanh chồng thể hiện tỉ lệ chia hoa hồng">
+        {% for segment in splitBar %}
+          <div class="stacked-bar-segment seg-{{ segment.key }} {{ segment.widthClass }}" title="{{ segment.label }}: {{ segment.vndLabel }} ({{ segment.percent | round(1) }}%)"></div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="chart-empty">Chưa có hoa hồng khả dụng để phân bổ.</div>
+    {% endif %}
+  </section>
+
+  <section class="chart-panel">
+    <header class="chart-panel-heading">
+      <div><span class="eyebrow">TOP 10</span><h2>Sản phẩm được mua nhiều nhất</h2></div>
+      <p>Xếp theo số đơn hợp lệ</p>
+    </header>
+    {% if topProductsByOrders.length %}
+      <div class="bar-list">
+        {% for item in topProductsByOrders %}
+          <div class="bar-list-row">
+            <span class="bar-list-label" title="{{ item.label }}">{{ item.label }}</span>
+            <span class="bar-list-value">{{ item.valueLabel }}</span>
+            <div class="bar-list-track">
+              <div class="bar-list-fill {{ item.widthClass }}"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th>Sản phẩm</th><th>Số đơn</th><th>Tổng giá trị</th></tr></thead>
+          <tbody>
+            {% for product in topProducts %}
+              <tr>
+                <td>{{ product.item_name }}</td>
+                <td>{{ product.orders_count }}</td>
+                <td>{{ product.amount_vnd | vnd }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="chart-empty">Chưa có dữ liệu sản phẩm từ đơn hợp lệ.</div>
+    {% endif %}
+  </section>
+{% endblock %}

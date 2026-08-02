@@ -1,0 +1,25 @@
+{% extends "app/app-base.njk" %}
+
+{% block app_content %}
+  <section class="narrow-flow">
+    <a class="back-link" href="/app/withdrawals">← Quay lại rút tiền</a>
+    <div class="flow-card">
+      <span class="eyebrow">XÁC NHẬN TRƯỚC KHI GIỮ SỐ DƯ</span>
+      <h1>Kiểm tra yêu cầu rút</h1>
+      <p>Nhập OTP gửi tới email đăng nhập. Sau khi xác nhận, số tiền sẽ chuyển sang trạng thái đang giữ.</p>
+      <dl class="confirmation-summary large-summary">
+        <div><dt>Số tiền</dt><dd>{{ intent.amount_vnd | vnd }}</dd></div>
+        <div><dt>Nhận về</dt><dd>{{ intent.bank_code }} · •••• {{ intent.account_last4 }}</dd></div>
+      </dl>
+      <form method="post" action="/app/withdrawals/confirm/{{ intent.id }}" class="stack-form" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="withdrawal-confirm-code-input">Mã OTP 6 số
+          <input id="withdrawal-confirm-code-input" class="otp-input" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus data-required-message="Vui lòng nhập mã OTP." data-pattern-message="Mã OTP gồm 6 chữ số.">
+          <small class="field-error" id="withdrawal-confirm-code-input-error" hidden></small>
+        </label>
+        <button class="button button-coral button-block button-large" type="submit" data-submit-button>Xác nhận rút {{ intent.amount_vnd | vnd }}</button>
+      </form>
+      <small class="flow-expiry">Yêu cầu hết hạn lúc {{ intent.expires_at | datetime }}.</small>
+    </div>
+  </section>
+{% endblock %}

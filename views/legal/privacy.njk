@@ -1,0 +1,23 @@
+{% extends "base.njk" %}
+
+{% block content %}
+  <article class="legal-page">
+    <span class="eyebrow">PHIÊN BẢN {{ policyVersion }}</span>
+    <h1>Chính sách quyền riêng tư</h1>
+    <p class="legal-lead">ShopTik chỉ thu thập dữ liệu cần thiết để xác thực tài khoản, ghi nhận đơn, tính hoàn tiền, chuyển tiền và bảo vệ hệ thống.</p>
+    <h2>1. Dữ liệu được xử lý</h2>
+    <p>Email, họ tên, phiên đăng nhập, đường dẫn mua, click, dữ liệu đơn từ đối tác, lịch sử số dư, yêu cầu hỗ trợ và thông tin tài khoản nhận tiền.</p>
+    <h2>2. Bảo vệ dữ liệu nhạy cảm</h2>
+    <p>Mật khẩu được băm một chiều. Số tài khoản và tên chủ tài khoản được mã hóa; giao diện chỉ hiển thị dữ liệu đã che. OTP không được lưu dạng rõ.</p>
+    <h2>3. Chia sẻ dữ liệu</h2>
+    <p>Dữ liệu chỉ được chia sẻ với đối tác Affiliate, email, ngân hàng hoặc đơn vị chi hộ trong phạm vi cần thiết và theo thỏa thuận hợp lệ.</p>
+    <h2>4. Quyền của người dùng</h2>
+    <p>Người dùng có thể yêu cầu truy cập, chỉnh sửa hoặc xóa dữ liệu theo quy định, trừ dữ liệu giao dịch và kiểm toán phải được lưu để đáp ứng nghĩa vụ pháp lý.</p>
+    <h2>5. Liên hệ</h2>
+    {% if communityZaloUrl %}
+      <p>Để yêu cầu truy cập, chỉnh sửa hoặc xóa dữ liệu theo mục 4, liên hệ qua nhóm cộng đồng Zalo chính thức của ShopTik: <a href="{{ communityZaloUrl }}" target="_blank" rel="noopener noreferrer">{{ communityZaloUrl }}</a>. Yêu cầu chính thức cũng có thể gửi qua mục Hỗ trợ trong ứng dụng sau khi đăng nhập.</p>
+    {% else %}
+      <p>Gửi yêu cầu liên quan tới dữ liệu qua mục Hỗ trợ trong ứng dụng sau khi đăng nhập.</p>
+    {% endif %}
+  </article>
+{% endblock %}

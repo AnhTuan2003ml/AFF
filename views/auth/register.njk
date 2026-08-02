@@ -1,0 +1,80 @@
+{% extends "auth/auth-commerce-base.njk" %}
+
+{% block auth_content %}
+  <header class="auth-heading">
+    <span class="eyebrow">BƯỚC 1/2</span>
+    <h2>Tạo tài khoản</h2>
+    <p>Nhập email đang hoạt động. Hệ thống sẽ gửi mã OTP 6 số tới chính email này.</p>
+  </header>
+  <form method="post" action="/dang-ky" class="stack-form login-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+
+    <label class="login-field" for="register-fullname-input">
+      <span class="auth-field-label">Họ và tên</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 20c1-3.6 4-5.5 6.5-5.5s5.5 1.9 6.5 5.5"></path></svg>
+        </span>
+        <input id="register-fullname-input" type="text" name="fullName" autocomplete="name" minlength="2" maxlength="100" placeholder="Nguyễn Văn A" value="{{ values.fullName or '' }}" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">
+      </span>
+      <small class="field-error" id="register-fullname-input-error" hidden></small>
+    </label>
+
+    <label class="login-field" for="register-email-input">
+      <span class="auth-field-label">Email</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"></path><path d="m5.5 7 6.5 5 6.5-5"></path></svg>
+        </span>
+        <input id="register-email-input" type="email" name="email" autocomplete="email" maxlength="254" placeholder="ten@email.com" value="{{ values.email or '' }}" required data-required-message="Vui lòng nhập email." data-pattern-message="Email chưa đúng định dạng.">
+      </span>
+      <small class="field-error" id="register-email-input-error" hidden></small>
+    </label>
+
+    <label class="login-field" for="register-password-input">
+      <span class="auth-field-label">Mật khẩu</span>
+      <span class="auth-input-shell password-field">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
+        </span>
+        <input id="register-password-input" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Ít nhất 10 ký tự" data-password required data-required-message="Vui lòng nhập mật khẩu." data-minlength-message="Mật khẩu cần ít nhất 10 ký tự.">
+        <button type="button" data-toggle-password aria-label="Hiện mật khẩu">Hiện</button>
+      </span>
+      <small>Ít nhất 10 ký tự, có chữ hoa, chữ thường và số.</small>
+      <small class="field-error" id="register-password-input-error" hidden></small>
+    </label>
+
+    <label class="login-field" for="register-password-confirm-input">
+      <span class="auth-field-label">Nhập lại mật khẩu</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
+        </span>
+        <input id="register-password-confirm-input" type="password" name="passwordConfirm" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Nhập lại mật khẩu" required data-required-message="Vui lòng nhập lại mật khẩu.">
+      </span>
+      <small class="field-error" id="register-password-confirm-input-error" hidden></small>
+    </label>
+
+    <label class="login-field" for="register-referral-input">
+      <span class="auth-field-label">Mã giới thiệu <span class="optional">(không bắt buộc)</span></span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12.5 4h5.5a1 1 0 0 1 1 1v5.5a1 1 0 0 1-.3.7l-8.5 8.5a1 1 0 0 1-1.4 0l-5.5-5.5a1 1 0 0 1 0-1.4l8.5-8.5a1 1 0 0 1 .7-.3z"></path><circle cx="16.2" cy="7.8" r="1.3"></circle></svg>
+        </span>
+        <input id="register-referral-input" type="text" name="referralCode" maxlength="30" placeholder="Nếu có" value="{{ values.referralCode or referralCode or '' }}">
+      </span>
+    </label>
+
+    <label class="check-row" for="register-accept-input">
+      <input id="register-accept-input" type="checkbox" name="acceptPolicies" required data-required-message="Bạn cần đồng ý Điều khoản và Chính sách quyền riêng tư trước khi tiếp tục.">
+      <span>Tôi đồng ý với <a href="/dieu-khoan" target="_blank">Điều khoản</a> và <a href="/quyen-rieng-tu" target="_blank">Chính sách quyền riêng tư</a>.</span>
+    </label>
+    <small class="field-error" id="register-accept-input-error" hidden></small>
+
+    <button class="button button-primary button-block button-large login-submit" type="submit" data-submit-button>
+      <span>Gửi mã OTP</span>
+      <span aria-hidden="true">→</span>
+    </button>
+  </form>
+  <p class="auth-switch login-register-link">Đã có tài khoản? <a href="/dang-nhap">Đăng nhập</a></p>
+{% endblock %}

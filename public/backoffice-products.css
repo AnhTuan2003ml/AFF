@@ -1,0 +1,575 @@
+.backoffice-shell .discover-editor-panel {
+  margin-bottom: 18px;
+  padding: 22px;
+}
+
+.discover-editor-heading,
+.discover-editor-actions,
+.discover-preview-label,
+.discover-admin-badges,
+.discover-admin-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.discover-editor-heading {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.discover-editor-heading h2 {
+  margin: 7px 0 6px;
+  color: var(--admin-text);
+  font-size: 1.28rem;
+}
+
+.discover-editor-heading p,
+.discover-editor-actions p {
+  margin: 0;
+  color: var(--admin-muted);
+  line-height: 1.55;
+}
+
+.discover-editor-note {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  color: var(--admin-muted);
+  background: var(--admin-surface-soft);
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.discover-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.discover-editor-fields {
+  display: grid;
+  gap: 15px;
+}
+
+.discover-editor-fields > label,
+.discover-form-grid label,
+.discover-image-source > label,
+.discover-file-picker {
+  display: grid;
+  gap: 7px;
+  color: var(--admin-text-soft);
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.discover-form-grid {
+  display: grid;
+  gap: 13px;
+}
+
+.discover-form-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.discover-product-fields {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--admin-border);
+  border-radius: 12px;
+}
+
+.discover-product-fields legend {
+  padding: 0 6px;
+  color: var(--admin-text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.discover-product-fields .discover-form-grid {
+  margin-top: 8px;
+}
+
+.discover-editor-fields input,
+.discover-editor-fields select,
+.discover-editor-fields textarea {
+  width: 100%;
+  min-height: var(--admin-control-h);
+  border: 1px solid var(--admin-border);
+  border-radius: 11px;
+  padding: 0 13px;
+}
+
+.discover-editor-fields textarea {
+  min-height: 104px;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+.discover-editor-fields .optional {
+  color: var(--admin-muted);
+  font-weight: 650;
+}
+
+.discover-image-source {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface-soft);
+}
+
+.discover-source-divider {
+  display: grid;
+  min-height: 74px;
+  place-items: center;
+}
+
+.discover-source-divider span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--admin-border);
+  border-radius: 50%;
+  color: var(--admin-muted);
+  background: var(--admin-surface);
+  font-size: .66rem;
+  font-weight: 850;
+}
+
+.discover-file-control {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: var(--admin-control-h);
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 11px;
+  background: var(--admin-surface);
+}
+
+.discover-file-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.discover-file-control b {
+  display: inline-flex;
+  height: 100%;
+  min-height: var(--admin-control-h);
+  align-items: center;
+  padding: 0 13px;
+  color: #fff;
+  background: var(--admin-brand);
+  cursor: pointer;
+}
+
+.discover-file-control small {
+  overflow: hidden;
+  padding-right: 10px;
+  color: var(--admin-muted);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-sort-field {
+  max-width: 220px;
+}
+
+.discover-sort-field small {
+  color: var(--admin-muted);
+  font-size: .7rem;
+  font-weight: 650;
+}
+
+.discover-live-preview {
+  position: sticky;
+  top: 88px;
+  padding: 15px;
+  border: 1px solid var(--admin-border);
+  border-radius: 17px;
+  background: var(--admin-surface-soft);
+}
+
+.discover-preview-label {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.discover-preview-label span {
+  color: var(--admin-brand-strong);
+  font-size: .67rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.discover-preview-label small {
+  color: var(--admin-muted);
+  font-size: .68rem;
+}
+
+.discover-preview-card {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.discover-preview-media,
+.discover-admin-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--admin-surface-soft);
+}
+
+.discover-preview-media img,
+.discover-admin-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discover-preview-placeholder,
+.discover-admin-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 25% 24%, color-mix(in srgb, var(--admin-brand) 22%, transparent), transparent 32%),
+    linear-gradient(135deg, var(--admin-brand-soft), var(--admin-surface-soft));
+}
+
+.discover-preview-placeholder span,
+.discover-admin-placeholder span {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--admin-brand) 30%, var(--admin-border));
+  border-radius: 20px;
+  color: var(--admin-brand-strong);
+  background: color-mix(in srgb, var(--admin-surface) 90%, transparent);
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.discover-preview-badges,
+.discover-admin-badges {
+  position: absolute;
+  inset: 12px 12px auto;
+  align-items: flex-start;
+}
+
+.discover-preview-badges > span,
+.discover-admin-badges > span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--admin-brand);
+  font-size: .66rem;
+  font-weight: 900;
+  box-shadow: 0 7px 16px rgba(0, 0, 0, .14);
+}
+
+.discover-preview-badges i {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 70%, transparent);
+  border-radius: 999px;
+  color: var(--admin-text);
+  background: color-mix(in srgb, var(--admin-surface) 88%, transparent);
+  font-size: .66rem;
+  font-style: normal;
+  font-weight: 900;
+  backdrop-filter: blur(8px);
+}
+
+.discover-preview-body,
+.discover-admin-body {
+  padding: 16px;
+}
+
+.discover-preview-body h3,
+.discover-admin-body h3 {
+  margin: 0;
+  color: var(--admin-text);
+  line-height: 1.35;
+}
+
+.discover-preview-body h3 {
+  font-size: 1.05rem;
+}
+
+.discover-preview-body p,
+.discover-admin-body p {
+  margin: 9px 0 0;
+  color: var(--admin-muted);
+  line-height: 1.55;
+}
+
+.discover-preview-body footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.discover-preview-body footer span {
+  color: var(--admin-muted);
+  font-size: .7rem;
+}
+
+.discover-preview-body footer b {
+  color: var(--admin-brand-strong);
+  font-size: .74rem;
+}
+
+.discover-editor-actions {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.discover-editor-actions .button {
+  min-width: 170px;
+}
+
+.discover-editor-submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.discover-content-admin-panel {
+  padding: 20px;
+}
+
+.discover-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.discover-admin-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: var(--admin-surface);
+}
+
+.discover-admin-media {
+  aspect-ratio: 1.65;
+}
+
+.discover-admin-badges .status-badge {
+  box-shadow: 0 7px 16px rgba(0, 0, 0, .12);
+}
+
+.discover-admin-body {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 13px;
+}
+
+.discover-admin-body > div > small {
+  display: inline-flex;
+  margin-bottom: 7px;
+  color: var(--admin-brand-strong);
+  font-size: .67rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.discover-admin-body h3 {
+  font-size: .98rem;
+}
+
+.discover-admin-body p {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: .78rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.discover-admin-body dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 11px;
+  border: 1px solid var(--admin-border);
+  border-radius: 11px;
+  background: var(--admin-surface-soft);
+}
+
+.discover-admin-body dl > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.discover-admin-body dt,
+.discover-admin-body dd {
+  margin: 0;
+  font-size: .69rem;
+}
+
+.discover-admin-body dt {
+  color: var(--admin-muted);
+  font-weight: 750;
+}
+
+.discover-admin-body dd {
+  max-width: 66%;
+  color: var(--admin-text-soft);
+  font-weight: 800;
+  text-align: right;
+}
+
+.discover-admin-body dd a {
+  color: var(--admin-brand-strong);
+  text-decoration: none;
+}
+
+.discover-admin-actions {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-top: 13px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.discover-admin-status-form,
+.discover-admin-delete-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.discover-admin-media img.is-placeholder {
+  padding: 36px;
+  object-fit: contain;
+  opacity: .66;
+}
+
+@media (max-width: 1180px) {
+  .discover-editor-layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .discover-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .discover-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-live-preview {
+    position: static;
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 680px) {
+  .backoffice-shell .discover-editor-panel,
+  .discover-content-admin-panel {
+    padding: 16px;
+  }
+
+  .discover-editor-heading,
+  .discover-editor-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .discover-editor-note {
+    white-space: normal;
+  }
+
+  .discover-form-grid-two,
+  .discover-image-source,
+  .discover-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-source-divider {
+    min-height: auto;
+  }
+
+  .discover-sort-field {
+    max-width: none;
+  }
+
+  .discover-editor-actions .button {
+    width: 100%;
+  }
+}
+
+
+.discover-preview-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.discover-preview-badges em,
+.discover-admin-type {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 72%, transparent);
+  border-radius: 999px;
+  color: var(--admin-text);
+  background: color-mix(in srgb, var(--admin-surface) 90%, transparent);
+  font-size: .66rem;
+  font-style: normal;
+  font-weight: 900;
+  backdrop-filter: blur(8px);
+}
+
+.discover-preview-badges em {
+  color: #9a3412;
+  border-color: color-mix(in srgb, #fb923c 30%, var(--admin-border));
+  background: color-mix(in srgb, #ffedd5 86%, var(--admin-surface));
+}
+
+.discover-admin-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}

@@ -1,0 +1,51 @@
+{% extends "base.njk" %}
+
+{% block html_attrs %}data-theme="light"{% endblock %}
+
+{% block body %}
+  <main class="auth-shell auth-shell-premium auth-commerce" id="main-content">
+    <section class="auth-commerce-story" aria-label="Giới thiệu ShopTik">
+      <div class="auth-commerce-media" aria-hidden="true"></div>
+      <div class="auth-commerce-story-content">
+        <a class="auth-commerce-brand" href="/" aria-label="ShopTik - Trang chủ">
+          <img src="/assets/images/icon.png" alt="">
+          <span><b>SHOP</b><strong>TIK</strong><small>CASHBACK</small></span>
+        </a>
+
+        <div class="auth-commerce-message">
+          <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
+          <h1>MUA ĐÚNG LINK.<br>NHẬN ĐÚNG TIỀN.</h1>
+          <p>Dán link sản phẩm, mua qua liên kết Affiliate và theo dõi tiền hoàn minh bạch trên một nền tảng.</p>
+        </div>
+
+        <div class="auth-commerce-trust" aria-label="Điểm nổi bật">
+          <span>SHOPEE</span>
+          <span>TIKTOK SHOP</span>
+          <span>LAZADA</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel auth-commerce-panel">
+      <div class="auth-card">
+        <a class="auth-card-brand auth-card-brand-image" href="/" aria-label="ShopTik - Trang chủ">
+          <img src="/assets/images/logo.png" alt="ShopTik">
+        </a>
+
+        {% include "partials/flash.njk" %}
+        {% if formError %}<div class="form-error" role="alert">{{ formError }}</div>{% endif %}
+        {% block auth_content %}{% endblock %}
+
+        <footer class="auth-card-footer">
+          <span class="auth-secure-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><path d="m9.5 15 1.6 1.6 3.5-3.6"></path></svg>
+          </span>
+          <span>Kết nối bảo mật</span>
+          <i></i>
+          <a href="/dieu-khoan" target="_blank">Điều khoản</a>
+          <a href="/quyen-rieng-tu" target="_blank">Quyền riêng tư</a>
+        </footer>
+      </div>
+    </section>
+  </main>
+{% endblock %}

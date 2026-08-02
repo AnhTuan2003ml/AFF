@@ -1,0 +1,7 @@
+{% from "partials/icons.njk" import icon %}
+{% macro mode_switch(active) %}
+<div class="mode-switch" role="tablist" aria-label="Chế độ xem">
+  <a href="/app" class="mode-switch-option {% if active == 'app' %}active{% endif %}" role="tab" aria-selected="{{ active == 'app' }}">{{ icon('dashboard') }}<span>Ứng dụng</span></a>
+  <a href="/backoffice/console" class="mode-switch-option {% if active == 'backoffice' %}active{% endif %}" role="tab" aria-selected="{{ active == 'backoffice' }}">{{ icon('ops') }}<span>Quản trị</span></a>
+</div>
+{% endmacro %}

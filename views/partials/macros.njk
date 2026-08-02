@@ -1,0 +1,108 @@
+{% macro status_badge(status) %}
+  {% set positive = ['ACTIVE', 'APPROVED', 'AVAILABLE', 'VERIFIED', 'PAID', 'RESOLVED', 'PUBLISHED'] %}
+  {% set pending = ['PENDING', 'PENDING_REVIEW', 'REQUESTED', 'FUNDS_HELD', 'PROCESSING', 'OPEN', 'IN_PROGRESS', 'WAITING_PARTNER', 'OTP_PENDING', 'ELIGIBLE', 'DRAFT'] %}
+  {% set negative = ['INVALID', 'CANCELLED', 'REVERSED', 'REJECTED', 'FAILED', 'DISABLED', 'LOCKED', 'ARCHIVED'] %}
+  <span class="status-badge {% if status in positive %}status-positive{% elif status in pending %}status-pending{% elif status in negative %}status-negative{% else %}status-neutral{% endif %}">
+    {% if status == 'ACTIVE' %}Đang hoạt động
+    {% elif status == 'PENDING' %}Chờ xác nhận
+    {% elif status == 'APPROVED' %}Đã duyệt
+    {% elif status == 'DISABLED' %}Đã xóa
+    {% elif status == 'INVALID' %}Không hợp lệ
+    {% elif status == 'CANCELLED' %}Đã hủy
+    {% elif status == 'REVERSED' %}Đã đảo
+    {% elif status == 'PENDING_REVIEW' %}Đã xác thực OTP · chờ duyệt
+    {% elif status == 'VERIFIED' %}Đã xác minh
+    {% elif status == 'REJECTED' %}Đã từ chối
+    {% elif status == 'FUNDS_HELD' %}Đã giữ tiền
+    {% elif status == 'PROCESSING' %}Đang chuyển
+    {% elif status == 'PAID' %}Đã trả
+    {% elif status == 'FAILED' %}Thất bại
+    {% elif status == 'UNKNOWN' %}Chờ kiểm tra
+    {% elif status == 'OPEN' %}Mới tiếp nhận
+    {% elif status == 'WAITING_PARTNER' %}Chờ đối tác
+    {% elif status == 'IN_PROGRESS' %}Đang xử lý
+    {% elif status == 'RESOLVED' %}Đã giải quyết
+    {% elif status == 'CLOSED' %}Đã đóng
+    {% elif status == 'PENDING_EMAIL' %}Chờ xác nhận email
+    {% elif status == 'ELIGIBLE' %}Đủ điều kiện
+    {% elif status == 'REWARDED' %}Đã thưởng
+    {% elif status == 'LOCKED' %}Đã khóa
+    {% elif status == 'PUBLISHED' %}Đang hiển thị
+    {% elif status == 'DRAFT' %}Đã ẩn
+    {% elif status == 'ARCHIVED' %}Đã lưu trữ
+    {% else %}{{ status }}{% endif %}
+  </span>
+{% endmacro %}
+
+{# Nhãn tiếng Việt + hạng màu cho vai trò tài khoản — dùng ở thẻ tài khoản
+   trong sidebar và mọi nơi cần hiển thị vai trò nhất quán. #}
+{% macro role_label(role) -%}
+  {%- if role == 'SUPER_ADMIN' -%}Quản trị cao nhất
+  {%- elif role == 'ADMIN' -%}Quản trị viên
+  {%- elif role == 'SUPPORT' -%}Chăm sóc khách hàng
+  {%- elif role == 'FINANCE' -%}Tài chính
+  {%- elif role == 'RISK' -%}Rủi ro &amp; an toàn
+  {%- elif role == 'AUDITOR' -%}Kiểm toán
+  {%- else -%}Thành viên
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro ticket_type_label(type) -%}
+  {%- if type == 'MISSING_ORDER' -%}Chưa thấy đơn
+  {%- elif type == 'WRONG_CASHBACK' -%}Sai tiền hoàn
+  {%- elif type == 'WITHDRAWAL_DELAY' -%}Rút tiền chậm
+  {%- elif type == 'ACCOUNT' -%}Tài khoản
+  {%- elif type == 'OTHER' -%}Vấn đề khác
+  {%- else -%}Yêu cầu hỗ trợ
+  {%- endif -%}
+{%- endmacro %}
+
+{# Thẻ tài khoản cố định cuối sidebar: badge vai trò → tên vai trò → tên
+   tài khoản → email. Dùng chung cho cả khung quản trị và khung người dùng. #}
+{% macro account_card(user) %}
+  <div class="sidebar-account">
+    <span class="sidebar-account-badge role-{{ user.role | lower | replace('_', '-') }}" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3.4 18.8 6a1.6 1.6 0 0 1 1 1.5V12c0 4.6-3.2 7.8-7.8 9-4.6-1.2-7.8-4.4-7.8-9V7.5a1.6 1.6 0 0 1 1-1.5z"/><path d="m8.9 12.2 2.1 2.1 4.1-4.2"/></svg>
+    </span>
+    <div class="sidebar-account-body">
+      <span class="sidebar-account-role">{{ role_label(user.role) }}</span>
+      <b class="sidebar-account-name">{{ user.fullName }}</b>
+      <small class="sidebar-account-email">{{ user.email }}</small>
+    </div>
+  </div>
+{% endmacro %}
+
+{# So sánh một số liệu hôm nay với đúng số liệu đó hôm qua — chỉ hiện dấu
+   tăng/giảm khi có cơ sở thật để so sánh, không tự bịa phần trăm. #}
+{% macro kpi_trend(current, previous) %}
+  {% set cur = current | int %}
+  {% set prev = previous | int %}
+  {% if prev == 0 and cur == 0 %}
+    <span class="kpi-trend kpi-trend-neutral">Không đổi so với hôm qua</span>
+  {% elif prev == 0 %}
+    <span class="kpi-trend kpi-trend-positive">▲ Mới so với hôm qua</span>
+  {% else %}
+    {% set diff = cur - prev %}
+    {% set pct = ((diff / prev) * 100) | round(0) %}
+    {% if diff > 0 %}
+      <span class="kpi-trend kpi-trend-positive">▲ {{ pct }}% so với hôm qua</span>
+    {% elif diff < 0 %}
+      <span class="kpi-trend kpi-trend-negative">▼ {{ -pct }}% so với hôm qua</span>
+    {% else %}
+      <span class="kpi-trend kpi-trend-neutral">Không đổi so với hôm qua</span>
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% macro empty_state(title, description, actionHref='', actionLabel='', compact=false) %}
+  <div class="empty-state{% if compact %} empty-state-compact{% endif %}">
+    <span class="empty-orbit" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 12h4l1.5 3h5L16 12h4"/><path d="M6 6h12l2 6v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7z"/></svg>
+    </span>
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+    {% if actionHref and actionLabel %}
+      <a class="button button-primary" href="{{ actionHref }}">{{ actionLabel }}</a>
+    {% endif %}
+  </div>
+{% endmacro %}

@@ -1,0 +1,326 @@
+import path from "node:path";
+import cookie from "@fastify/cookie";
+import formbody from "@fastify/formbody";
+import helmet from "@fastify/helmet";
+import multipart from "@fastify/multipart";
+import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
+import view from "@fastify/view";
+import Fastify from "fastify";
+import nunjucks from "nunjucks";
+import { registerCsrfProtection } from "./auth/csrf.js";
+import { registerSessionHooks } from "./auth/session.js";
+import { bootstrapDefaultAdmins, syncAdminAccountsFromEnv } from "./auth/admin-sync.js";
+import { loadConfig } from "./config.js";
+import { assertDatabaseReady, createDatabase, query } from "./db.js";
+import { AppError, asAppError, respondWithAppError } from "./lib/errors.js";
+import { consumeFlash } from "./lib/flash.js";
+import {
+  auditActionTone,
+  formatAuditAction,
+  formatAuditTargetType,
+  formatAuditTone,
+  formatDate,
+  formatDateTime,
+  formatVnd,
+} from "./lib/format.js";
+import { registerAuthRoutes } from "./routes/auth.js";
+import { registerPublicRoutes } from "./routes/public.js";
+import { registerAppRoutes } from "./routes/app.js";
+import { registerBackofficeRoutes } from "./routes/backoffice.js";
+import { registerAdminConsoleRoutes } from "./routes/admin-console.js";
+import { registerApiRoutes } from "./routes/api/index.js";
+import { EmailService } from "./services/email.js";
+import {
+  ensureMissionDefinitionsSeeded,
+  getUnreadNotificationCount,
+  listNotifications,
+} from "./services/mission.js";
+import { getWalletBalances } from "./services/ledger.js";
+
+const projectRoot = process.cwd();
+// Đổi mỗi lần khởi động để né cache immutable 30 ngày của /assets/*.
+const assetVersion = Date.now().toString(36);
+const config = loadConfig();
+const db = createDatabase(config);
+const emailService = new EmailService(config);
+const loggerOptions = {
+  level: config.NODE_ENV === "production" ? "info" : "debug",
+  redact: {
+    paths: [
+      "req.headers.authorization",
+      "req.headers.cookie",
+      "res.headers.set-cookie",
+      "body.password",
+      "body.passwordConfirm",
+      "body.code",
+      "body.accountNumber",
+    ],
+    censor: "[REDACTED]",
+  },
+  ...(config.NODE_ENV === "development"
+    ? { transport: { target: "pino-pretty", options: { colorize: true } } }
+    : {}),
+};
+
+const app = Fastify({
+  trustProxy: config.TRUST_PROXY,
+  requestIdHeader: "x-request-id",
+  logger: loggerOptions,
+});
+
+app.server.keepAliveTimeout = 65_000;
+app.server.headersTimeout = 66_000;
+
+await app.register(cookie, {
+  secret: config.APP_SECRET,
+  hook: "onRequest",
+});
+await app.register(formbody, { bodyLimit: 64 * 1024 });
+await app.register(multipart, {
+  attachFieldsToBody: "keyValues",
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 20 },
+});
+await app.register(helmet, {
+  global: true,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests:
+        config.NODE_ENV === "production" ? [] : null,
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  strictTransportSecurity:
+    config.NODE_ENV === "production"
+      ? { maxAge: 31_536_000, includeSubDomains: true, preload: true }
+      : false,
+});
+await app.register(rateLimit, {
+  global: true,
+  max: 300,
+  timeWindow: "1 minute",
+  allowList: ["/-/live", "/-/ready"],
+  errorResponseBuilder: (_request, context) =>
+    new AppError(
+      "RATE_LIMITED",
+      `Bạn thao tác quá nhanh. Hãy thử lại sau ${Math.ceil(context.ttl / 1000)} giây.`,
+      context.statusCode,
+    ),
+});
+await app.register(fastifyStatic, {
+  root: path.join(projectRoot, "public"),
+  prefix: "/assets/",
+  immutable: config.NODE_ENV === "production",
+  maxAge: config.NODE_ENV === "production" ? "30d" : 0,
+});
+await app.register(view, {
+  engine: { nunjucks },
+  root: path.join(projectRoot, "views"),
+  viewExt: "njk",
+  options: {
+    onConfigure(environment: nunjucks.Environment) {
+      environment.addFilter("vnd", formatVnd);
+      environment.addFilter("datetime", formatDateTime);
+      environment.addFilter("date", formatDate);
+      environment.addFilter("auditAction", formatAuditAction);
+      environment.addFilter("auditTone", auditActionTone);
+      environment.addFilter("auditToneLabel", formatAuditTone);
+      environment.addFilter("auditTargetType", formatAuditTargetType);
+    },
+  },
+});
+
+await registerSessionHooks(app, db, config);
+await registerCsrfProtection(app, config);
+
+app.addHook("onRequest", async (request, reply) => {
+  const pathOnly = request.url.split("?")[0]?.replace(/\/+$/, "");
+  if (pathOnly === "/backoffice") {
+    return reply.redirect("/backoffice/console");
+  }
+});
+
+app.addHook("preHandler", async (request, reply) => {
+  const target = reply as typeof reply & { locals?: Record<string, unknown> };
+  target.locals ??= {};
+  let backofficeOrdersPendingCount = 0;
+  let backofficeWithdrawalsPendingCount = 0;
+  let backofficeSupportPendingCount = 0;
+  let backofficeMissionsPendingCount = 0;
+  if (
+    request.currentUser &&
+    request.url.startsWith("/backoffice") &&
+    ["SUPER_ADMIN", "ADMIN", "FINANCE", "RISK", "SUPPORT", "AUDITOR"].includes(
+      request.currentUser.role,
+    )
+  ) {
+    const backofficeCounts = await query<{
+      orders_pending_count: string;
+      withdrawals_pending_count: string;
+      support_pending_count: string;
+      missions_pending_count: string;
+    }>(
+      db,
+      `
+        SELECT
+          (SELECT count(*) FROM orders WHERE status = 'PENDING')::text
+            AS orders_pending_count,
+          (SELECT count(*) FROM withdrawals
+            WHERE status IN ('FUNDS_HELD', 'UNKNOWN'))::text
+            AS withdrawals_pending_count,
+          (SELECT count(*) FROM support_tickets
+            WHERE status IN ('OPEN', 'WAITING_PARTNER', 'IN_PROGRESS'))::text
+            AS support_pending_count,
+          (SELECT count(*) FROM user_mission_claims WHERE status = 'PENDING')::text
+            AS missions_pending_count
+      `,
+    );
+    backofficeOrdersPendingCount = Number(
+      backofficeCounts.rows[0]?.orders_pending_count ?? 0,
+    );
+    backofficeWithdrawalsPendingCount = Number(
+      backofficeCounts.rows[0]?.withdrawals_pending_count ?? 0,
+    );
+    backofficeSupportPendingCount = Number(
+      backofficeCounts.rows[0]?.support_pending_count ?? 0,
+    );
+    backofficeMissionsPendingCount = Number(
+      backofficeCounts.rows[0]?.missions_pending_count ?? 0,
+    );
+  }
+  let unreadNotificationCount = 0;
+  let recentNotifications: Awaited<ReturnType<typeof listNotifications>> = [];
+  let headerBalances: Awaited<ReturnType<typeof getWalletBalances>> | null =
+    null;
+  if (request.currentUser && request.url.startsWith("/app")) {
+    [unreadNotificationCount, recentNotifications, headerBalances] =
+      await Promise.all([
+        getUnreadNotificationCount(db, request.currentUser.id),
+        listNotifications(db, request.currentUser.id, 8),
+        request.method === "GET"
+          ? getWalletBalances(db, request.currentUser.id)
+          : Promise.resolve(null),
+      ]);
+  }
+
+  Object.assign(target.locals, {
+    appName: config.APP_NAME,
+    assetVersion,
+    backofficeOrdersPendingCount,
+    backofficeSupportPendingCount,
+    backofficeWithdrawalsPendingCount,
+    backofficeMissionsPendingCount,
+    communityZaloUrl: config.COMMUNITY_ZALO_URL,
+    communityTelegramUrl: config.COMMUNITY_TELEGRAM_URL,
+    currentUser: request.currentUser,
+    currentPath: request.url.split("?")[0],
+    flash: consumeFlash(request, reply),
+    headerBalances,
+    minimumWithdrawal: config.MIN_WITHDRAWAL_VND,
+    unreadNotificationCount,
+    recentNotifications,
+  });
+});
+
+await registerPublicRoutes(app, { db, config });
+await registerAuthRoutes(app, { db, config, emailService });
+await app.register(
+  async (scoped) =>
+    registerAppRoutes(scoped, { db, config, emailService }),
+  { prefix: "/app" },
+);
+await app.register(
+  async (scoped) => registerBackofficeRoutes(scoped, { db, config }),
+  { prefix: "/backoffice" },
+);
+await app.register(
+  async (scoped) =>
+    registerAdminConsoleRoutes(scoped, { db, config, emailService }),
+  { prefix: "/backoffice" },
+);
+await app.register(
+  async (scoped) => registerApiRoutes(scoped, { db, config, emailService }),
+  { prefix: "/api/v1" },
+);
+
+app.setNotFoundHandler(async (request, reply) => {
+  if (request.url.startsWith("/api/")) {
+    return reply.code(404).send({
+      error: {
+        code: "NOT_FOUND",
+        message: "API không tồn tại.",
+        requestId: request.id,
+      },
+    });
+  }
+  return reply.code(404).view("error.njk", {
+    pageTitle: "Không tìm thấy trang",
+    statusCode: 404,
+    message: "Trang bạn cần không tồn tại hoặc đã được chuyển đi.",
+  });
+});
+
+app.setErrorHandler(async (error, request, reply) => {
+  const appError = asAppError(error);
+  if (appError.statusCode >= 500) {
+    request.log.error({ err: error }, "Lỗi xử lý yêu cầu");
+  }
+  return respondWithAppError(request, reply, appError);
+});
+
+async function shutdown(signal: string): Promise<void> {
+  app.log.info({ signal }, "Đang dừng máy chủ");
+  await app.close();
+  await db.end();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
+
+try {
+  await assertDatabaseReady(db);
+  const defaultAdmins = await bootstrapDefaultAdmins(db);
+  if (defaultAdmins.created.length || defaultAdmins.updated.length) {
+    app.log.info(
+      {
+        created: defaultAdmins.created.length,
+        updated: defaultAdmins.updated.length,
+      },
+      "Đã đảm bảo admin mặc định (hardcode)",
+    );
+  }
+  await ensureMissionDefinitionsSeeded(db, config);
+  const adminSync = await syncAdminAccountsFromEnv(db, config);
+  if (
+    adminSync.created.length ||
+    adminSync.updated.length ||
+    adminSync.revoked.length
+  ) {
+    app.log.info(
+      {
+        created: adminSync.created.length,
+        updated: adminSync.updated.length,
+        revoked: adminSync.revoked.length,
+        skippedRevokeLastAdmin: adminSync.skippedRevokeLastAdmin,
+      },
+      "Đã đồng bộ tài khoản admin từ ENV",
+    );
+  }
+  await app.listen({ host: config.HOST, port: config.PORT });
+} catch (error) {
+  app.log.fatal({ err: error }, "Không thể khởi động máy chủ");
+  await db.end().catch(() => undefined);
+  process.exit(1);
+}

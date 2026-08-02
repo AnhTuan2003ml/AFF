@@ -1,0 +1,354 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
+import {
+  createSession,
+  revokeCurrentSession,
+} from "../auth/session.js";
+import type { AppConfig } from "../config.js";
+import type { Database } from "../db.js";
+import { maskEmail } from "../lib/crypto.js";
+import { AppError } from "../lib/errors.js";
+import { setFlash } from "../lib/flash.js";
+import { passwordSchema } from "../lib/password.js";
+import { parseInput } from "../lib/validation.js";
+import {
+  authenticateWithEmail,
+  registerWithEmail,
+  requestPasswordReset,
+  resetPassword,
+  verifyRegistration,
+} from "../services/auth.js";
+import type { EmailService } from "../services/email.js";
+import { issueOtp } from "../services/otp.js";
+import { safeNextPath } from "../auth/guards.js";
+
+interface AuthRouteDeps {
+  db: Database;
+  config: AppConfig;
+  emailService: EmailService;
+}
+
+const emailSchema = z.string().trim().email("Email chưa đúng định dạng.").max(254);
+const nameSchema = z
+  .string()
+  .trim()
+  .min(2, "Họ tên cần ít nhất 2 ký tự.")
+  .max(100, "Họ tên quá dài.");
+
+const registerSchema = z
+  .object({
+    fullName: nameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    passwordConfirm: z.string(),
+    referralCode: z.string().trim().max(30).optional().default(""),
+    acceptPolicies: z.literal("on", {
+      error: "Bạn cần đồng ý Điều khoản và Chính sách quyền riêng tư.",
+    }),
+  })
+  .refine((value) => value.password === value.passwordConfirm, {
+    message: "Mật khẩu nhập lại chưa khớp.",
+    path: ["passwordConfirm"],
+  });
+
+const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Hãy nhập mật khẩu.").max(128),
+  next: z.string().optional().default(""),
+});
+
+const PENDING_EMAIL_COOKIE = "aff_pending_email";
+const RESET_EMAIL_COOKIE = "aff_reset_email";
+
+function signedEmailCookie(
+  reply: FastifyReply,
+  config: AppConfig,
+  name: string,
+  email: string,
+): void {
+  reply.setCookie(name, email, {
+    path: "/",
+    httpOnly: true,
+    secure: config.NODE_ENV === "production",
+    sameSite: "lax",
+    signed: true,
+    maxAge: 20 * 60,
+  });
+}
+
+function readSignedCookie(request: FastifyRequest, name: string): string | null {
+  const signed = request.cookies[name];
+  if (!signed) return null;
+  const parsed = request.unsignCookie(signed);
+  return parsed.valid && parsed.value ? parsed.value : null;
+}
+
+function renderAuthError(
+  reply: FastifyReply,
+  template: string,
+  error: unknown,
+  context: Record<string, unknown>,
+) {
+  const appError =
+    error instanceof AppError
+      ? error
+      : new AppError("INTERNAL_ERROR", "Hệ thống đang bận. Vui lòng thử lại.", 500);
+  return reply.code(appError.statusCode).view(template, {
+    ...context,
+    formError: appError.message,
+  });
+}
+
+export async function registerAuthRoutes(
+  app: FastifyInstance,
+  deps: AuthRouteDeps,
+): Promise<void> {
+  app.get("/dang-ky", async (request, reply) => {
+    if (request.currentUser) return reply.redirect("/app");
+    return reply.view("auth/register.njk", {
+      pageTitle: "Tạo tài khoản",
+      referralCode: String(
+        (request.query as Record<string, unknown>).ref ?? "",
+      ).slice(0, 30),
+    });
+  });
+
+  app.post(
+    "/dang-ky",
+    {
+      config: { rateLimit: { max: 5, timeWindow: "1 hour" } },
+    },
+    async (request, reply) => {
+      try {
+        const input = parseInput(registerSchema, request.body);
+        await registerWithEmail(
+          deps.db,
+          deps.emailService,
+          deps.config,
+          input,
+        );
+        signedEmailCookie(
+          reply,
+          deps.config,
+          PENDING_EMAIL_COOKIE,
+          input.email,
+        );
+        return reply.redirect("/xac-thuc-email");
+      } catch (error) {
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        return renderAuthError(reply, "auth/register.njk", error, {
+          pageTitle: "Tạo tài khoản",
+          values: {
+            fullName: String(body.fullName ?? ""),
+            email: String(body.email ?? ""),
+            referralCode: String(body.referralCode ?? ""),
+          },
+        });
+      }
+    },
+  );
+
+  app.get("/xac-thuc-email", async (request, reply) => {
+    const email = readSignedCookie(request, PENDING_EMAIL_COOKIE);
+    if (!email) return reply.redirect("/dang-ky");
+    return reply.view("auth/verify-email.njk", {
+      pageTitle: "Xác nhận email",
+      maskedEmail: maskEmail(email),
+    });
+  });
+
+  app.post(
+    "/xac-thuc-email",
+    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const email = readSignedCookie(request, PENDING_EMAIL_COOKIE);
+      if (!email) return reply.redirect("/dang-ky");
+      try {
+        const input = parseInput(
+          z.object({
+            code: z.string().trim().regex(/^\d{6}$/, "Mã xác nhận gồm 6 chữ số."),
+          }),
+          request.body,
+        );
+        const userId = await verifyRegistration(
+          deps.db,
+          deps.config,
+          request,
+          email,
+          input.code,
+        );
+        await createSession(deps.db, deps.config, request, reply, userId);
+        reply.clearCookie(PENDING_EMAIL_COOKIE, { path: "/" });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Email đã được xác nhận. Bạn có thể bắt đầu tạo link hoàn tiền.",
+        );
+        return reply.redirect("/app");
+      } catch (error) {
+        return renderAuthError(reply, "auth/verify-email.njk", error, {
+          pageTitle: "Xác nhận email",
+          maskedEmail: maskEmail(email),
+        });
+      }
+    },
+  );
+
+  app.post(
+    "/xac-thuc-email/gui-lai",
+    { config: { rateLimit: { max: 3, timeWindow: "1 hour" } } },
+    async (request, reply) => {
+      const email = readSignedCookie(request, PENDING_EMAIL_COOKIE);
+      if (!email) return reply.redirect("/dang-ky");
+      try {
+        await issueOtp(
+          deps.db,
+          deps.emailService,
+          deps.config,
+          email,
+          "REGISTER",
+        );
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Mã xác nhận mới đã được gửi.",
+        );
+      } catch (error) {
+        const message =
+          error instanceof AppError
+            ? error.message
+            : "Chưa gửi được mã xác nhận.";
+        setFlash(reply, deps.config, "error", message);
+      }
+      return reply.redirect("/xac-thuc-email");
+    },
+  );
+
+  app.get("/dang-nhap", async (request, reply) => {
+    if (request.currentUser) return reply.redirect("/app");
+    const query = request.query as Record<string, unknown>;
+    return reply.view("auth/login.njk", {
+      pageTitle: "Đăng nhập",
+      next: safeNextPath(query.next, ""),
+    });
+  });
+
+  app.post(
+    "/dang-nhap",
+    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      try {
+        const input = parseInput(loginSchema, request.body);
+        const user = await authenticateWithEmail(
+          deps.db,
+          input.email,
+          input.password,
+        );
+        await createSession(deps.db, deps.config, request, reply, user.id);
+        return reply.redirect(safeNextPath(input.next, "/app"));
+      } catch (error) {
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        return renderAuthError(reply, "auth/login.njk", error, {
+          pageTitle: "Đăng nhập",
+          next: safeNextPath(body.next, ""),
+          values: { email: String(body.email ?? "") },
+        });
+      }
+    },
+  );
+
+  app.post("/dang-xuat", async (request, reply) => {
+    await revokeCurrentSession(deps.db, deps.config, request, reply);
+    return reply.redirect("/");
+  });
+
+  app.get("/quen-mat-khau", async (_request, reply) =>
+    reply.view("auth/forgot-password.njk", {
+      pageTitle: "Quên mật khẩu",
+    }),
+  );
+
+  app.post(
+    "/quen-mat-khau",
+    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    async (request, reply) => {
+      try {
+        const input = parseInput(z.object({ email: emailSchema }), request.body);
+        await requestPasswordReset(
+          deps.db,
+          deps.emailService,
+          deps.config,
+          input.email,
+        );
+        signedEmailCookie(
+          reply,
+          deps.config,
+          RESET_EMAIL_COOKIE,
+          input.email,
+        );
+        setFlash(
+          reply,
+          deps.config,
+          "info",
+          "Nếu email tồn tại, mã đặt lại mật khẩu đã được gửi.",
+        );
+        return reply.redirect("/dat-lai-mat-khau");
+      } catch (error) {
+        return renderAuthError(reply, "auth/forgot-password.njk", error, {
+          pageTitle: "Quên mật khẩu",
+        });
+      }
+    },
+  );
+
+  app.get("/dat-lai-mat-khau", async (request, reply) => {
+    const email = readSignedCookie(request, RESET_EMAIL_COOKIE);
+    if (!email) return reply.redirect("/quen-mat-khau");
+    return reply.view("auth/reset-password.njk", {
+      pageTitle: "Đặt lại mật khẩu",
+      maskedEmail: maskEmail(email),
+    });
+  });
+
+  app.post(
+    "/dat-lai-mat-khau",
+    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const email = readSignedCookie(request, RESET_EMAIL_COOKIE);
+      if (!email) return reply.redirect("/quen-mat-khau");
+      try {
+        const schema = z
+          .object({
+            code: z.string().trim().regex(/^\d{6}$/, "Mã xác nhận gồm 6 chữ số."),
+            password: passwordSchema,
+            passwordConfirm: z.string(),
+          })
+          .refine((value) => value.password === value.passwordConfirm, {
+            message: "Mật khẩu nhập lại chưa khớp.",
+            path: ["passwordConfirm"],
+          });
+        const input = parseInput(schema, request.body);
+        await resetPassword(deps.db, deps.config, {
+          email,
+          code: input.code,
+          password: input.password,
+        });
+        reply.clearCookie(RESET_EMAIL_COOKIE, { path: "/" });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Mật khẩu đã được đổi. Hãy đăng nhập lại.",
+        );
+        return reply.redirect("/dang-nhap");
+      } catch (error) {
+        return renderAuthError(reply, "auth/reset-password.njk", error, {
+          pageTitle: "Đặt lại mật khẩu",
+          maskedEmail: maskEmail(email),
+        });
+      }
+    },
+  );
+}

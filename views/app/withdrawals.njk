@@ -1,0 +1,102 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+
+{% block app_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">BƯỚC 4 · NHẬN TIỀN</span>
+      <h1>Rút tiền</h1>
+      <p>Chỉ số dư khả dụng mới được dùng để tạo yêu cầu.</p>
+    </div>
+  </section>
+
+  <div class="withdraw-layout">
+    <section class="withdraw-action">
+      <span>Số dư có thể rút</span>
+      <strong>{{ balances.available | vnd }}</strong>
+      {% if not accounts.length %}
+        <div class="feature-gate">
+          <strong>Chưa có ngân hàng đã xác minh</strong>
+          <p>Thêm tài khoản nhận tiền và chờ bộ phận vận hành xác minh trước khi rút.</p>
+          <a class="button button-primary" href="/app/banks">Thêm ngân hàng</a>
+        </div>
+      {% elif balances.available <= 0 %}
+        <div class="feature-gate">
+          <strong>Bạn chưa có số dư có thể rút.</strong>
+          <p>Số dư sẽ chuyển sang khả dụng sau khi đơn hàng được đối tác duyệt.</p>
+          <button class="button button-coral button-block button-large" type="button" disabled>Gửi OTP và tiếp tục</button>
+        </div>
+      {% elif balances.available < minimumWithdrawal %}
+        <div class="feature-gate">
+          <strong>Số dư khả dụng chưa đủ mức tối thiểu để rút.</strong>
+          <p>Cần tối thiểu {{ minimumWithdrawal | vnd }} mỗi lần rút — bạn hiện có {{ balances.available | vnd }}.</p>
+          <button class="button button-coral button-block button-large" type="button" disabled>Gửi OTP và tiếp tục</button>
+        </div>
+      {% else %}
+        <form method="post" action="/app/withdrawals/request" class="stack-form" data-validate-form data-withdraw-form novalidate>
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label for="withdraw-amount-input">Số tiền muốn rút
+            <span class="currency-input-shell">
+              <input id="withdraw-amount-input" type="text" inputmode="numeric" autocomplete="off" placeholder="{{ minimumWithdrawal | vnd }}" required
+                data-currency-input
+                data-currency-min="{{ minimumWithdrawal }}"
+                data-currency-max="{{ maxWithdrawable }}"
+                data-currency-step="1000"
+                data-required-message="Vui lòng nhập số tiền muốn rút."
+                data-min-message="Số tiền tối thiểu là {{ minimumWithdrawal | vnd }}."
+                data-max-message="Số tiền tối đa là {{ maxWithdrawable | vnd }} (không vượt quá số dư khả dụng)."
+                data-step-message="Số tiền rút phải là bội số của 1.000 ₫.">
+              <span class="currency-input-suffix" aria-hidden="true">₫</span>
+            </span>
+            <input type="hidden" name="amountVnd" data-currency-raw>
+            <small>Tối thiểu {{ minimumWithdrawal | vnd }}, tối đa {{ maximumWithdrawal | vnd }} mỗi yêu cầu.</small>
+            <small class="field-error" id="withdraw-amount-input-error" hidden></small>
+          </label>
+          <label for="withdraw-bank-input">Nhận về
+            <select id="withdraw-bank-input" name="bankAccountId" required data-required-message="Vui lòng chọn tài khoản nhận tiền.">
+              {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.bank_code }} · •••• {{ account.account_last4 }} · {{ account.account_name_masked }}</option>
+              {% endfor %}
+            </select>
+            <small class="field-error" id="withdraw-bank-input-error" hidden></small>
+          </label>
+          <button class="button button-coral button-block button-large" type="submit" data-submit-button>Gửi OTP và tiếp tục</button>
+        </form>
+      {% endif %}
+    </section>
+
+    <aside class="withdraw-steps">
+      <h2>Yêu cầu đi qua 4 điểm kiểm soát</h2>
+      <ol>
+        <li class="active"><span>1</span><div><b>Xác nhận OTP email</b><small>Chứng minh đúng chủ tài khoản ShopTik</small></div></li>
+        <li><span>2</span><div><b>Giữ số dư</b><small>Ngăn rút trùng trong khi xử lý</small></div></li>
+        <li><span>3</span><div><b>Kiểm tra rủi ro</b><small>Vận hành duyệt theo hạn mức</small></div></li>
+        <li><span>4</span><div><b>Chuyển khoản</b><small>Cập nhật khi tiền đã chuyển vào tài khoản ngân hàng</small></div></li>
+      </ol>
+    </aside>
+  </div>
+
+  <section class="panel">
+    <header class="panel-heading"><div><span class="eyebrow">LỊCH SỬ</span><h2>Yêu cầu rút tiền</h2></div></header>
+    {% if withdrawals.length %}
+      <div class="responsive-table">
+        <table>
+          <thead><tr><th>Thời gian</th><th>Ngân hàng</th><th>Số tiền</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+          <tbody>
+            {% for withdrawal in withdrawals %}
+              <tr>
+                <td>{{ withdrawal.requested_at | datetime }}</td>
+                <td>{{ withdrawal.bank_code }} · •••• {{ withdrawal.bank_last4 }}</td>
+                <td><strong>{{ withdrawal.amount_vnd | vnd }}</strong></td>
+                <td>{{ status_badge(withdrawal.status) }}</td>
+                <td>{{ withdrawal.rejection_reason or '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có yêu cầu rút", "Khi số dư khả dụng đạt mức tối thiểu, bạn có thể tạo yêu cầu tại đây.") }}
+    {% endif %}
+  </section>
+{% endblock %}

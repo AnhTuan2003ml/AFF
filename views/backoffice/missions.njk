@@ -1,0 +1,162 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, empty_state %}
+
+{% block page_scripts %}
+  <link rel="stylesheet" href="/assets/backoffice-products.css?v={{ assetVersion }}">
+{% endblock %}
+
+{% macro currency_field(name, id, requiredMsg, value='') %}
+  <span class="currency-input-shell">
+    <input id="{{ id }}" type="text" inputmode="numeric" autocomplete="off" required
+      data-currency-input
+      data-currency-min="1"
+      data-currency-step="1000"
+      data-required-message="{{ requiredMsg }}"
+      data-min-message="Số tiền phải lớn hơn 0.">
+    <span class="currency-input-suffix" aria-hidden="true">₫</span>
+  </span>
+  <input type="hidden" name="{{ name }}" value="{{ value }}" data-currency-raw>
+{% endmacro %}
+
+{% macro mission_form(action, def, idPrefix) %}
+  <form method="post" action="{{ action }}" class="stack-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="discover-form-grid discover-form-grid-two">
+      <label for="{{ idPrefix }}-type">Loại mốc
+        <select id="{{ idPrefix }}-type" name="type" required>
+          <option value="REFERRAL_MILESTONE" {{ 'selected' if def.type == 'REFERRAL_MILESTONE' }}>Mốc giới thiệu (cộng dồn trọn đời)</option>
+          <option value="PURCHASE_MILESTONE" {{ 'selected' if def.type == 'PURCHASE_MILESTONE' }}>Mốc mua hàng (theo tháng)</option>
+        </select>
+      </label>
+      <label for="{{ idPrefix }}-status">Trạng thái
+        <select id="{{ idPrefix }}-status" name="status">
+          <option value="ACTIVE" {{ 'selected' if def.status == 'ACTIVE' or not def }}>Đang áp dụng</option>
+          <option value="INACTIVE" {{ 'selected' if def.status == 'INACTIVE' }}>Tạm ẩn</option>
+        </select>
+      </label>
+    </div>
+    <label for="{{ idPrefix }}-title">Tiêu đề hiển thị cho người dùng
+      <input id="{{ idPrefix }}-title" type="text" name="title" maxlength="160" required value="{{ def.title if def else '' }}" placeholder="Ví dụ: Mời 5 người">
+    </label>
+    <label for="{{ idPrefix }}-description">Mô tả <span class="optional">không bắt buộc</span>
+      <input id="{{ idPrefix }}-description" type="text" name="description" maxlength="500" value="{{ def.description if def else '' }}">
+    </label>
+    <div class="discover-form-grid discover-form-grid-two">
+      <label for="{{ idPrefix }}-threshold">Mốc cần đạt <small>(số người giới thiệu hoặc số đơn/tháng)</small>
+        <input id="{{ idPrefix }}-threshold" type="number" name="threshold" min="1" step="1" required value="{{ def.threshold if def else '' }}" data-required-message="Vui lòng nhập mốc cần đạt.">
+      </label>
+      <label for="{{ idPrefix }}-reward">Số tiền thưởng
+        {{ currency_field('rewardAmountVnd', idPrefix ~ '-reward', 'Vui lòng nhập số tiền thưởng.', def.rewardAmountVnd if def else '') }}
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="button button-primary">{{ 'Lưu thay đổi' if def else 'Tạo mốc nhiệm vụ' }}</button>
+      {% if def %}<button type="button" class="button button-ghost" data-panel-toggle="mission-edit-{{ def.id }}">Hủy</button>{% endif %}
+    </div>
+  </form>
+{% endmacro %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">NHIỆM VỤ</span>
+      <h1>Nhiệm vụ &amp; thưởng mốc</h1>
+      <p>Thiết lập mốc thưởng giới thiệu bạn bè và mốc mua hàng theo tháng. Yêu cầu nhận thưởng của người dùng cần được duyệt tay ở đây trước khi tiền được cộng vào ví.</p>
+    </div>
+  </section>
+
+  {% if pendingClaims.length %}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">CHỜ DUYỆT</span><h2>Yêu cầu nhận thưởng ({{ pendingClaims.length }})</h2></div>
+      </header>
+      <div class="responsive-table">
+        <table class="admin-data-table">
+          <thead>
+            <tr><th>Người dùng</th><th>Nhiệm vụ</th><th>Kỳ</th><th>Tiến độ</th><th>Thưởng</th><th>Thời gian</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for claim in pendingClaims %}
+              <tr>
+                <td><b>{{ claim.userDisplayName or claim.userEmail }}</b><br><small>{{ claim.userEmail }}</small></td>
+                <td>{{ claim.missionTitle }}</td>
+                <td>{{ 'Trọn đời' if claim.periodKey == 'LIFETIME' else claim.periodKey }}</td>
+                <td>{{ claim.progressValue }}</td>
+                <td>{{ claim.rewardAmountVnd | vnd }}</td>
+                <td>{{ claim.createdAt | datetime }}</td>
+                <td>
+                  <div class="review-actions">
+                    <form
+                      method="post"
+                      action="/backoffice/missions/claims/{{ claim.id }}/approve"
+                      data-confirm-form
+                      data-confirm-message="Duyệt và cộng {{ claim.rewardAmountVnd | vnd }} vào ví người dùng này?"
+                    >
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button type="submit" class="button button-primary button-small">Duyệt &amp; cộng tiền</button>
+                    </form>
+                    <form method="post" action="/backoffice/missions/claims/{{ claim.id }}/reject">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button type="submit" class="button button-ghost button-small">Từ chối</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">THÊM MỚI</span><h2>Tạo mốc nhiệm vụ</h2></div>
+      </header>
+      {{ mission_form('/backoffice/missions', null, 'mission-new') }}
+    </section>
+  {% endif %}
+
+  <section class="panel">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">DANH SÁCH</span><h2>Các mốc đang thiết lập</h2></div>
+    </header>
+    {% if definitions.length %}
+      <div class="mission-grid">
+        {% for def in definitions %}
+          <article>
+            <div class="mission-card {{ 'mission-card-done' if def.status == 'ACTIVE' }}">
+              <div class="mission-card-main">
+                <div class="mission-card-head">
+                  <b>{{ def.title }}</b>
+                  {{ status_badge(def.status) }}
+                </div>
+                <p class="mission-card-desc">
+                  {{ 'Mốc giới thiệu' if def.type == 'REFERRAL_MILESTONE' else 'Mốc mua hàng/tháng' }}
+                  · Đạt {{ def.threshold }} · Thưởng {{ def.rewardAmountVnd | vnd }}
+                </p>
+              </div>
+              {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+                <div class="mission-card-side">
+                  <button type="button" class="button button-ghost button-small" data-panel-toggle="mission-edit-{{ def.id }}">Sửa</button>
+                  <form method="post" action="/backoffice/missions/{{ def.id }}/delete" data-confirm-form data-confirm-message="Xóa mốc nhiệm vụ &quot;{{ def.title }}&quot;?">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <button type="submit" class="button button-danger button-small">Xóa</button>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
+            {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+              <div id="mission-edit-{{ def.id }}" class="mission-edit-panel" hidden>
+                {{ mission_form('/backoffice/missions/' ~ def.id ~ '/edit', def, 'mission-edit-form-' ~ def.id) }}
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ empty_state("Chưa có mốc nhiệm vụ nào", "Tạo mốc đầu tiên ở form phía trên.", compact=true) }}
+    {% endif %}
+  </section>
+{% endblock %}
