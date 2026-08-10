@@ -14,6 +14,7 @@ import {
   BANKS,
 } from "../services/bank.js";
 import { getBusinessConfig } from "../services/business-config.js";
+import { listOrderHistory } from "../services/order-history.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard } from "../services/app-dashboard.js";
 import { buildSeriesLineChart } from "../services/chart-data.js";
@@ -334,70 +335,26 @@ export async function registerAppRoutes(
       ? String(queryParams.status)
       : "ALL";
     const filterStatus = status === "PAID" ? "APPROVED" : status;
+    // Tab "Đã về ví" chỉ gồm đơn đã hết thời gian giữ tiền và đã cộng vào
+    // số dư khả dụng; tab "Đã duyệt" là đơn hoàn thành còn đang chờ.
+    const releasedFilter =
+      status === "PAID" ? "RELEASED" : status === "APPROVED" ? "HELD" : "ALL";
     const searchTerm = String(queryParams.q ?? "").trim().slice(0, 120);
-    const orders = await query<{
-      id: string;
-      platform: string;
-      platform_order_id: string;
-      status: string;
-      order_amount_vnd: string;
-      commission_vnd: string;
-      cashback_vnd: string;
-      purchased_at: Date | null;
-      created_at: Date;
-      product_name: string | null;
-      product_image_url: string | null;
-      product_price_vnd: string | null;
-      product_original_price_vnd: string | null;
-      cashback_rate_percent: string | null;
-      estimated_payout_at: Date | null;
-    }>(
-      deps.db,
-      `
-        SELECT o.id, o.platform, o.platform_order_id, o.status,
-          o.order_amount_vnd::text, o.commission_vnd::text,
-          o.cashback_vnd::text, o.purchased_at, o.created_at,
-          COALESCE(oi.item_name, l.product_name) AS product_name,
-          COALESCE(oi.item_image_url, l.product_image_url) AS product_image_url,
-          COALESCE(oi.amount_vnd, l.product_price_vnd)::text AS product_price_vnd,
-          CASE
-            WHEN oi.source = 'REPORT' THEN NULL
-            WHEN l.product_original_price_vnd > l.product_price_vnd
-            THEN l.product_original_price_vnd::text
-            ELSE NULL
-          END AS product_original_price_vnd,
-          CASE
-            WHEN o.order_amount_vnd > 0
-            THEN trim(to_char((o.cashback_vnd::numeric / o.order_amount_vnd::numeric) * 100, 'FM999990.0'))
-            ELSE NULL
-          END AS cashback_rate_percent,
-          COALESCE(o.approved_at, o.purchased_at + interval '7 days', o.created_at + interval '7 days')
-            AS estimated_payout_at
-        FROM orders o
-        LEFT JOIN affiliate_links l ON l.id = o.affiliate_link_id
-        LEFT JOIN LATERAL (
-          SELECT item_name, item_image_url, amount_vnd, source
-          FROM order_items
-          WHERE order_id = o.id
-          ORDER BY CASE source WHEN 'REPORT' THEN 0 ELSE 1 END, id
-          LIMIT 1
-        ) oi ON true
-        WHERE o.user_id = $1
-          AND ($2 = 'ALL' OR o.status = $2)
-          AND (
-            $3 = ''
-            OR o.platform_order_id ILIKE '%' || $3 || '%'
-            OR COALESCE(oi.item_name, l.product_name, '') ILIKE '%' || $3 || '%'
-          )
-        ORDER BY COALESCE(o.purchased_at, o.created_at) DESC
-        LIMIT 100
-      `,
-      [userId(request), filterStatus, searchTerm],
-    );
+    // Bấm "Mua ngay" tạo ngay một bản ghi affiliate_links. Trước khi báo cáo
+    // sàn trả về mã đơn thật, bản ghi đó hiện trong lịch sử dưới dạng lượt mua
+    // "chờ sàn xác nhận" và tự biến mất khi đồng bộ gán được đơn cho link.
+    const businessConfig = await getBusinessConfig(deps.db, deps.config);
+    const orders = await listOrderHistory(deps.db, {
+      userId: userId(request),
+      status: filterStatus,
+      released: releasedFilter,
+      searchTerm,
+      attributionDays: businessConfig.affiliateAttributionDays,
+    });
     return reply.view("app/orders.njk", {
       pageTitle: "Đơn hoàn tiền",
       appSection: "orders",
-      orders: orders.rows,
+      orders,
       selectedStatus: status,
       searchTerm,
     });

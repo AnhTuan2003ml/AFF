@@ -189,6 +189,7 @@
                     <summary>Đối chứng</summary>
                     <dl class="evidence-grid">
                       <div><dt>Tài khoản</dt><dd>{{ order.full_name }}<small>{{ order.email }}</small></dd></div>
+                      <div><dt>Mã người mua</dt><dd><code>{{ order.tracking_code }}</code></dd></div>
                       <div><dt>Order ID</dt><dd><code>{{ order.platform_order_id }}</code></dd></div>
                       <div><dt>Affiliate ID</dt><dd><code>{{ order.affiliate_id or '—' }}</code></dd></div>
                       <div><dt>Mã khớp</dt><dd>{{ order.attribution_method or '—' }}<small>{{ order.attribution_value or 'Không có' }}</small></dd></div>

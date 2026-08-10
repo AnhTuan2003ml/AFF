@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLazadaAffiliateUrl,
   buildShopeeAffiliateUrl,
+  buildSubIdParts,
   isPlatformPurchaseEnabled,
   isSafeAffiliateRedirect,
   resolveProductUrl,
@@ -95,9 +96,7 @@ describe("Affiliate link safety", () => {
     expect(parsed.searchParams.get("origin_link")).toBe(
       "https://shopee.vn/product/123/456",
     );
-    expect(result.subId).toMatch(
-      /^cabcDEF_123-youtube-video01-v2$/,
-    );
+    expect(result.subId).toMatch(/^cabcDEF_123-youtube-video01$/);
     expect(result.subId).not.toContain("0f1df62e");
     expect(isSafeAffiliateRedirect(result.affiliateUrl)).toBe(true);
     expect(
@@ -106,6 +105,72 @@ describe("Affiliate link safety", () => {
   });
 });
 
+
+describe("Sub ID mang mã người mua và mã sản phẩm", () => {
+  it("ghép đúng thứ tự c/u/p rồi tới nguồn và chiến dịch", () => {
+    expect(
+      buildSubIdParts({
+        clickId: "abcDEF_123",
+        userCode: "9f2c71a04b8d",
+        productId: "43508358436",
+        source: "app",
+        campaign: "instantbuy",
+      }),
+    ).toEqual([
+      "cabcDEF_123",
+      "u9f2c71a04b8d",
+      "p43508358436",
+      "app",
+      "instantbuy",
+    ]);
+  });
+
+  it("bỏ qua mảnh thiếu thay vì chèn chỗ trống gây lệch thứ tự", () => {
+    expect(
+      buildSubIdParts({ clickId: "click01", source: "web", campaign: "direct" }),
+    ).toEqual(["cclick01", "web", "direct"]);
+    expect(
+      buildSubIdParts({
+        clickId: "click01",
+        userCode: "abc123456789",
+        productId: null,
+      }),
+    ).toEqual(["cclick01", "uabc123456789", "web", "direct"]);
+  });
+
+  it("loại ký tự sàn không chấp nhận khỏi từng mảnh", () => {
+    expect(
+      buildSubIdParts({
+        clickId: "aB-cD_eF",
+        userCode: "9f2c71a04b8d",
+        productId: "435-083",
+        source: "app store",
+        campaign: "instant/buy",
+      }),
+    ).toEqual([
+      "caBcD_eF",
+      "u9f2c71a04b8d",
+      "p435083",
+      "appstore",
+      "instantbuy",
+    ]);
+  });
+
+  it("Sub ID Shopee là các mảnh nối bằng dấu gạch ngang", () => {
+    const result = buildShopeeAffiliateUrl({
+      productUrl: "https://shopee.vn/product/123/456",
+      affiliateId: "14354840000",
+      clickId: "click01",
+      userCode: "9f2c71a04b8d",
+      productId: "43508358436",
+      source: "app",
+      campaign: "instantbuy",
+    });
+    expect(result.subId).toBe(
+      "cclick01-u9f2c71a04b8d-p43508358436-app-instantbuy",
+    );
+  });
+});
 
 describe("Lazada Affiliate Master Link", () => {
   it("tạo link theo Master Link chính thức và loại tracking cũ", () => {

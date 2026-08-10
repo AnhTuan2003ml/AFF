@@ -6,6 +6,10 @@ import {
   isPlatformPurchaseEnabled,
   isSafeAffiliateRedirect,
 } from "../services/affiliate.js";
+import {
+  buildUserPolicy,
+  loadUserPolicyFacts,
+} from "../services/user-policy.js";
 
 interface PublicRouteDeps {
   db: Database;
@@ -38,6 +42,26 @@ export async function registerPublicRoutes(
       policyVersion: deps.config.PRIVACY_VERSION,
     }),
   );
+
+  app.get("/chinh-sach-nguoi-dung", async (_request, reply) => {
+    const policy = buildUserPolicy(
+      await loadUserPolicyFacts(deps.db, deps.config),
+    );
+    return reply.view("legal/user-policy.njk", {
+      pageTitle: policy.title,
+      policy,
+    });
+  });
+
+  // Mảnh HTML cho modal đọc nhanh mở từ hyperlink ở chân trang (không layout).
+  app.get("/chinh-sach-nguoi-dung/noi-dung", async (_request, reply) => {
+    const policy = buildUserPolicy(
+      await loadUserPolicyFacts(deps.db, deps.config),
+    );
+    return reply
+      .type("text/html; charset=utf-8")
+      .view("legal/user-policy-body.njk", { policy });
+  });
 
   app.get<{
     Params: { clickId: string };

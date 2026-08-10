@@ -1,5 +1,9 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import type { AppConfig } from "../config.js";
+import {
+  renderUserPolicyEmail,
+  type UserPolicyFacts,
+} from "./user-policy.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -71,6 +75,39 @@ export class EmailService {
           <p style="color:#5f6f6c">Không chia sẻ mã này với bất kỳ ai. ShopTik không bao giờ hỏi OTP ngân hàng.</p>
         </div>
       `,
+    });
+  }
+
+  /**
+   * Gửi bộ chính sách người dùng ngay khi tài khoản được đăng ký. Nội dung lấy
+   * từ src/services/user-policy.ts — cùng nguồn với trang /chinh-sach-nguoi-dung.
+   */
+  async sendUserPolicy(params: {
+    to: string;
+    fullName: string;
+    facts: UserPolicyFacts;
+  }): Promise<void> {
+    const mail = renderUserPolicyEmail({
+      fullName: params.fullName,
+      facts: params.facts,
+    });
+
+    if (!this.transporter) {
+      if (this.config.NODE_ENV !== "production") {
+        console.info(`[EMAIL DEV] ${params.to} | ${mail.subject}`);
+      }
+      return;
+    }
+
+    await this.transporter.sendMail({
+      from: {
+        name: this.config.SMTP_FROM_NAME,
+        address: this.config.SMTP_FROM_EMAIL,
+      },
+      to: params.to,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
     });
   }
 }

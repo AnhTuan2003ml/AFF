@@ -24,7 +24,8 @@ export async function registerAccountApiRoutes(
       `
         SELECT o.id, o.platform, o.platform_order_id, o.status,
           o.order_amount_vnd, o.commission_vnd, o.cashback_vnd,
-          o.purchased_at, o.approved_at, o.created_at,
+          o.purchased_at, o.approved_at, o.created_at, o.completed_at,
+          o.cancel_reason, o.cashback_available_at, o.cashback_released_at,
           COALESCE(oi.item_name, l.product_name) AS product_name,
           COALESCE(oi.item_image_url, l.product_image_url) AS product_image_url,
           COALESCE(oi.amount_vnd, l.product_price_vnd) AS product_price_vnd,

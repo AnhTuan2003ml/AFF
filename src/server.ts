@@ -24,6 +24,7 @@ import {
   formatDateTime,
   formatVnd,
 } from "./lib/format.js";
+import { startSyncScheduler } from "./jobs/sync-scheduler.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerPublicRoutes } from "./routes/public.js";
 import { registerAppRoutes } from "./routes/app.js";
@@ -317,6 +318,10 @@ try {
       },
       "Đã đồng bộ tài khoản admin từ ENV",
     );
+  }
+  if (config.ENABLE_SYNC_SCHEDULER) {
+    const scheduler = startSyncScheduler(db, config, app.log);
+    app.addHook("onClose", async () => scheduler.stop());
   }
   await app.listen({ host: config.HOST, port: config.PORT });
 } catch (error) {

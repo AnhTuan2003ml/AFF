@@ -4,6 +4,21 @@
   const root = document.querySelector("[data-entry-promo]");
   if (!(root instanceof HTMLElement)) return;
 
+  const skipButton = root.querySelector("[data-entry-promo-skip]");
+
+  // Nếu hôm nay người dùng đã bấm "Bỏ qua" thì không hiện quảng cáo nữa trên
+  // mọi tab cho đến hết ngày (localStorage lưu theo ngày).
+  const today = new Date();
+  const skipKey =
+    `shoptik-entry-promo-skip:${today.getFullYear()}-` +
+    `${String(today.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(today.getDate()).padStart(2, "0")}`;
+  let skippedToday = false;
+  try {
+    skippedToday = localStorage.getItem(skipKey) === "1";
+  } catch (e) {}
+  if (skippedToday) return;
+
   const closeButton = root.querySelector("[data-entry-promo-close]");
   const imageLink = root.querySelector("[data-entry-promo-image-link]");
   const image = root.querySelector("[data-entry-promo-image]");
@@ -68,6 +83,15 @@
   };
 
   closeButton.addEventListener("click", close);
+
+  if (skipButton instanceof HTMLButtonElement) {
+    skipButton.addEventListener("click", () => {
+      try {
+        localStorage.setItem(skipKey, "1");
+      } catch (e) {}
+      close();
+    });
+  }
 
   const setText = (element, value) => {
     element.textContent = value || "";
@@ -171,6 +195,8 @@
     }
 
     setImage(promo.imageUrl, promo.title, promo.targetUrl);
+    // Quảng cáo có ảnh → hiện nút "Bỏ qua" ngay dưới ảnh.
+    if (skipButton instanceof HTMLButtonElement) skipButton.hidden = false;
   };
 
   fetch("/app/entry-promo", { headers: { "x-requested-with": "fetch" } })
@@ -183,8 +209,8 @@
       if (!promo || typeof promo.id !== "string") return;
 
       // Quảng cáo chỉ hiển thị dưới dạng ảnh — bỏ qua nếu chưa có ảnh, tránh
-      // hiện popup chỉ toàn chữ. Không còn nhớ "đã xem" qua sessionStorage:
-      // mỗi lần tải lại trang phải hiện lại theo đúng yêu cầu.
+      // hiện popup chỉ toàn chữ. Đã bấm "Bỏ qua" hôm nay thì đã return từ đầu
+      // file (skipKey), nên tới đây là còn phép hiện quảng cáo.
       if (typeof promo.imageUrl !== "string" || promo.imageUrl.trim().length === 0) return;
 
       bindPromo(promo);

@@ -17,14 +17,35 @@ PostgreSQL, Redis, server-rendered Nunjucks. Node 22+. Import nội bộ luôn d
    **Không ghi DB ở bước này.**
 2. Bấm **Mua ngay** → `POST /api/v1/products/purchase` với `previewId`
    → `createPurchaseIntent` (`src/services/affiliate.ts`): build link Affiliate
-   (Shopee: `generateShortLink` qua Open API kèm subIds `[cClickId, source, campaign]`,
+   (Shopee: `generateShortLink` qua Open API kèm subIds do `buildSubIdParts`
+   dựng — `[c<clickId>, u<users.tracking_code>, p<productId>, source, campaign]`,
    fallback `s.shopee.vn/an_redir`; TikTok/Lazada qua partner API "convert"),
    ghi `affiliate_programs` + `affiliate_links`, trả `buyUrl = /go/:clickId`.
 3. Trình duyệt mở `buyUrl` → `GET /go/:clickId` (`src/routes/public.ts`):
    kiểm tra allowlist redirect, ghi `click_events`, 302 sang link Affiliate.
-4. Đơn về qua import CSV đối soát (`src/services/order-import.ts`, backoffice)
-   → cộng tiền qua bút toán ledger cân bằng (`src/services/ledger.ts`) — không bao giờ
-   sửa trực tiếp số dư.
+   Ngay từ bước 2, lượt mua đã hiện trong `/app/orders` dưới dạng bản ghi
+   "Chờ sàn xác nhận" (`listOrderHistory` trong `src/services/order-history.ts`
+   gộp `orders` với các `affiliate_links` campaign `instantbuy` chưa có đơn
+   khớp); bản ghi này tự biến mất khi bước 4 gán được đơn thật cho link.
+4. Đơn về theo hai đường, cùng đổ vào `importOrderRow` (`src/services/order-import.ts`):
+   - **Tự động (chính)**: `src/jobs/sync-scheduler.ts` → `runShopeeOrderSync`
+     (`src/services/shopee-order-sync.ts`) gọi báo cáo chuyển đổi Shopee
+     (`src/services/shopee-report.ts`, cookie + tần suất do admin đặt ở
+     `/backoffice/sync`, lưu mã hóa trong `platform_sync_settings`; mặc định
+     60 phút/lượt, lấy đơn 30 ngày gần nhất). Sub ID nằm ở `utm_content`, các
+     mảnh nối bằng "-" và có thể bị sàn cắt bớt đuôi. `resolveUser` đối soát
+     theo thứ tự: mã lượt click → Sub ID nguyên vẹn → cặp
+     `u<tracking_code>` + `p<productId>` (chọn lượt bấm mua gần nhất trước giờ
+     mua và CHƯA gắn đơn nào). Không bao giờ suy ra người mua từ email.
+   - **Thủ công**: import CSV ở `/backoffice/reconciliation`.
+   Trạng thái: `COMPLETED`→APPROVED, `CANCEL`→CANCELLED (đảo khoản + hiện lý do),
+   còn lại→PENDING (đang duyệt, hỏi lại ở lượt sau).
+5. Cộng tiền qua bút toán ledger cân bằng (`src/services/ledger.ts`) — không bao giờ
+   sửa trực tiếp số dư. Đơn Hoàn thành nằm ở ví CHỜ thêm `cashback_hold_days`
+   (Cấu hình nghiệp vụ) tính từ `orders.completed_at`; `releaseDueCashback`
+   (`src/services/cashback-release.ts`) mới chuyển sang KHẢ DỤNG để rút.
+   Khi sàn sửa hoa hồng lúc đơn còn chờ, hệ thống đảo khoản cũ rồi ghi khoản mới
+   ở `cashback_revision` kế tiếp (khóa idempotency có hậu tố `:revN`).
 
 Frontend của luồng này: `views/app/dashboard.njk` + `public/purchase.js` +
 `public/instant-purchase.css`. JS shell chung (sidebar/theme/menu): `public/app.js`.
@@ -60,6 +81,12 @@ Frontend của luồng này: `views/app/dashboard.njk` + `public/purchase.js` +
 - Link/redirect Affiliate phải qua allowlist host (`isSafeAffiliateRedirect`).
 - Thông báo lỗi người dùng bằng tiếng Việt, qua `AppError(code, message, statusCode)`.
 - Không tự bịa số tiền hoàn khi sàn chưa trả hoa hồng — hiển thị "Đang cập nhật".
+- Chính sách người dùng chỉ có MỘT nguồn: `src/services/user-policy.ts`. Cùng nội
+  dung đó phục vụ trang `/chinh-sach-nguoi-dung`, mảnh HTML
+  `/chinh-sach-nguoi-dung/noi-dung` (modal mở từ hyperlink chân trang) và email
+  gửi ngay khi đăng ký (`EmailService.sendUserPolicy`). Các con số trong chính
+  sách lấy từ `business_config` nên luôn khớp cách hệ thống tính tiền; sửa nội
+  dung ảnh hưởng quyền lợi thì tăng `USER_POLICY_VERSION`.
 
 ## Lệnh
 

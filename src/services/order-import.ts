@@ -28,12 +28,30 @@ type AttributionMethod = "CLICK_ID" | "SUB_ID" | "EMAIL";
 type EvidenceStatus = "VERIFIED" | "MANUAL_REVIEW";
 type ItemSource = "REPORT" | "CLICK_SNAPSHOT";
 
+/**
+ * Mặt hàng lấy trực tiếp từ báo cáo sàn (một đơn có thể nhiều sản phẩm).
+ * Chỉ dùng cho luồng đồng bộ API; luồng CSV vẫn giữ các cột phẳng bên dưới.
+ */
+export interface OrderImportItem {
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  amount_vnd: number;
+  item_image_url?: string | null;
+}
+
 export interface OrderImportRow {
   platform?: ProductPlatform | string;
   platform_order_id: string;
   status: ImportOrderStatus;
   order_amount_vnd: string;
   commission_vnd: string;
+  /** Trạng thái gốc của sàn, hiển thị lại cho người dùng và đội vận hành. */
+  external_status?: string;
+  cancel_reason?: string;
+  /** Mốc sàn ghi nhận đơn Hoàn thành — gốc để tính ngày giải ngân. */
+  completed_at?: string;
+  items?: OrderImportItem[];
   click_id?: string;
   sub_id?: string;
   sub_id1?: string;
@@ -315,15 +333,30 @@ function normalizedShopeeSubToken(value: string): string {
   return value.replace(/[^a-zA-Z0-9]/g, "");
 }
 
-function trackingValues(row: OrderImportRow): {
+interface TrackingValues {
   clickIds: string[];
   subIds: string[];
   normalizedSubTokens: string[];
+  /** Mã định danh người mua tách từ mảnh `u<tracking_code>` của Sub ID. */
+  userCodes: string[];
+  /** Mã sản phẩm tách từ mảnh `p<productId>` của Sub ID. */
+  productIds: string[];
   hasTracking: boolean;
-} {
+}
+
+/**
+ * Tách mọi manh mối định danh từ Sub ID/Click ID của một dòng báo cáo.
+ *
+ * Sub ID do ShopTik dựng có dạng `c<clickId>-u<userCode>-p<productId>-...`.
+ * Shopee trả lại các mảnh này đã nối bằng "-" trong `utm_content` và có thể
+ * cắt bớt đuôi, nên phải duyệt từng mảnh thay vì so khớp cả chuỗi.
+ */
+function trackingValues(row: OrderImportRow): TrackingValues {
   const clickIds = new Set<string>();
   const subIds = new Set<string>();
   const normalizedSubTokens = new Set<string>();
+  const userCodes = new Set<string>();
+  const productIds = new Set<string>();
   const directClick = cleanTrackingValue(row.click_id);
   if (directClick) clickIds.add(directClick);
 
@@ -341,17 +374,41 @@ function trackingValues(row: OrderImportRow): {
       subIds.add(part);
       const normalizedToken = normalizedShopeeSubToken(part);
       if (normalizedToken) normalizedSubTokens.add(normalizedToken);
-      // Shopee Open API nhận subIds tách rời; subId đầu tiên của ShopTik là
-      // "c" + clickId. Chỉ bỏ đúng ký tự c đầu, không đoán từ chuỗi ghép dài.
+
+      // Duyệt từng mảnh: mảnh đầu là "c" + clickId, các mảnh sau mang tiền tố
+      // "u" (người mua) và "p" (sản phẩm).
+      const segments = part.split("-").map((entry) => entry.trim()).filter(Boolean);
+      for (const [index, segment] of segments.entries()) {
+        if (index === 0 && segment !== part) {
+          const headToken = normalizedShopeeSubToken(segment);
+          if (headToken) normalizedSubTokens.add(headToken);
+        }
+        if (/^u[a-z0-9]{6,32}$/i.test(segment)) {
+          userCodes.add(segment.slice(1).toLowerCase());
+        }
+        if (/^p[0-9]{3,32}$/.test(segment)) {
+          productIds.add(segment.slice(1));
+        }
+      }
+      // Chỉ bỏ đúng ký tự c đầu, không đoán từ chuỗi ghép dài.
       if (/^c[A-Za-z0-9_-]{3,64}$/.test(part)) {
         clickIds.add(part.slice(1));
       }
     }
   }
+
+  // Báo cáo có thể trả mã sản phẩm ở cột riêng — cũng là manh mối đối soát.
+  for (const reported of [row.item_id, ...(row.items ?? []).map((i) => i.item_id)]) {
+    const value = String(reported ?? "").trim();
+    if (/^[0-9]{3,32}$/.test(value)) productIds.add(value);
+  }
+
   return {
     clickIds: [...clickIds],
     subIds: [...subIds],
     normalizedSubTokens: [...normalizedSubTokens],
+    userCodes: [...userCodes],
+    productIds: [...productIds],
     hasTracking: clickIds.size > 0 || subIds.size > 0,
   };
 }
@@ -367,6 +424,65 @@ async function findActiveUserByEmail(
     [normalizeEmail(email)],
   );
   return user.rows[0]?.id;
+}
+
+/**
+ * Tìm lượt bấm mua theo cặp (mã người mua, mã sản phẩm) lấy từ Sub ID.
+ *
+ * Chỉ dùng khi mã lượt click không khớp. Nếu người dùng bấm mua cùng một sản
+ * phẩm nhiều lần, chọn lượt gần nhất TRƯỚC thời điểm mua và chưa gắn đơn nào
+ * — không bao giờ gán một lượt click đã có đơn cho đơn thứ hai.
+ */
+async function resolveLinkByUserAndProduct(
+  db: Database,
+  tracking: TrackingValues,
+  platform: ProductPlatform,
+  row: OrderImportRow,
+): Promise<
+  | {
+      link: AffiliateLinkAttributionRow;
+      matchedBy: { userCode: string; productId: string };
+    }
+  | undefined
+> {
+  if (!tracking.userCodes.length || !tracking.productIds.length) return undefined;
+
+  const links = await query<
+    AffiliateLinkAttributionRow & { tracking_code: string }
+  >(
+    db,
+    `
+      SELECT l.id, l.user_id, l.platform, l.click_id, l.sub_id, l.campaign,
+        l.product_id, l.product_name, l.product_image_url,
+        l.product_price_vnd::text, u.tracking_code
+      FROM affiliate_links l
+      JOIN users u ON u.id = l.user_id
+      WHERE u.tracking_code = ANY($1::text[])
+        AND l.platform = $2
+        AND l.product_id = ANY($3::text[])
+        AND NOT EXISTS (
+          SELECT 1 FROM orders o WHERE o.affiliate_link_id = l.id
+        )
+        AND ($4 = '' OR l.created_at <= $4::timestamptz)
+      ORDER BY l.created_at DESC
+      LIMIT 1
+    `,
+    [
+      tracking.userCodes,
+      platform,
+      tracking.productIds,
+      row.purchased_at ?? "",
+    ],
+  );
+  const link = links.rows[0];
+  if (!link) return undefined;
+  return {
+    link,
+    matchedBy: {
+      userCode: link.tracking_code,
+      productId: link.product_id ?? tracking.productIds[0]!,
+    },
+  };
 }
 
 async function resolveUser(
@@ -396,7 +512,14 @@ async function resolveUser(
         `Mã theo dõi của đơn ${row.platform_order_id} khớp nhiều link. Hãy kiểm tra lại Sub ID.`,
       );
     }
-    const link = links.rows[0];
+    // Dự phòng: mã lượt click không khớp (sàn cắt bớt Sub ID, hoặc người dùng
+    // mua ở phiên sau) nhưng vẫn còn mã người mua + mã sản phẩm. Cặp này đủ
+    // để chỉ ra chính xác một lượt bấm mua, nên vẫn coi là bằng chứng hợp lệ.
+    const fallback = links.rows[0]
+      ? undefined
+      : await resolveLinkByUserAndProduct(db, tracking, platform, row);
+    const matchedByUserProduct = fallback?.matchedBy;
+    const link = links.rows[0] ?? fallback?.link;
     if (!link) {
       throw new AppError(
         "ORDER_TRACKING_NOT_FOUND",
@@ -425,7 +548,12 @@ async function resolveUser(
       ? link.sub_id
       : row.click_id && row.click_id === link.click_id
         ? link.click_id
-        : matchedOpenApiToken ?? `c${link.click_id}`;
+        : matchedOpenApiToken ??
+          // Khớp qua cặp người mua + sản phẩm: ghi lại đúng manh mối đã dùng
+          // để đội vận hành đọc được vì sao đơn thuộc về tài khoản này.
+          (matchedByUserProduct
+            ? `u${matchedByUserProduct.userCode}-p${matchedByUserProduct.productId}`
+            : `c${link.click_id}`);
 
     let buyerUserId = link.user_id;
     let linkSharerUserId: string | undefined;
@@ -529,31 +657,18 @@ function normalizePlatform(value: string | undefined): ProductPlatform {
   return platform as ProductPlatform;
 }
 
-async function upsertOrderItem(
+async function writeOrderItem(
   db: Database,
   params: {
     orderId: string;
-    row: OrderImportRow;
-    owner: ResolvedOrderOwner;
-    orderAmount: number;
+    externalItemKey: string;
+    itemName: string;
+    quantity: number;
+    amountVnd: number;
+    source: ItemSource;
+    imageUrl: string | null;
   },
 ): Promise<void> {
-  const reportName = String(params.row.item_name ?? "").trim();
-  const reportId = String(params.row.item_id ?? "").trim();
-  const hasReportItem = Boolean(reportName || reportId);
-  const itemName = reportName || params.owner.productName;
-  if (!itemName) return;
-
-  const source: ItemSource = hasReportItem ? "REPORT" : "CLICK_SNAPSHOT";
-  const externalItemKey =
-    reportId ||
-    params.owner.productId ||
-    `${source.toLowerCase()}:${params.owner.linkId ?? params.orderId}`;
-  const amountVnd = params.row.item_amount_vnd
-    ? parseVnd(params.row.item_amount_vnd, "Giá sản phẩm")
-    : params.owner.productPriceVnd ?? params.orderAmount;
-  const quantity = parseQuantity(params.row.quantity);
-
   await query(
     db,
     `
@@ -579,18 +694,75 @@ async function upsertOrderItem(
           WHEN EXCLUDED.source = 'REPORT' THEN 'REPORT'
           ELSE order_items.source
         END,
-        item_image_url = COALESCE(order_items.item_image_url, EXCLUDED.item_image_url)
+        item_image_url = COALESCE(
+          EXCLUDED.item_image_url, order_items.item_image_url
+        )
     `,
     [
       params.orderId,
-      externalItemKey.slice(0, 250),
-      itemName.slice(0, 500),
-      quantity,
-      amountVnd,
-      source,
-      params.owner.productImageUrl,
+      params.externalItemKey.slice(0, 250),
+      params.itemName.slice(0, 500),
+      params.quantity,
+      params.amountVnd,
+      params.source,
+      params.imageUrl,
     ],
   );
+}
+
+async function upsertOrderItem(
+  db: Database,
+  params: {
+    orderId: string;
+    row: OrderImportRow;
+    owner: ResolvedOrderOwner;
+    orderAmount: number;
+  },
+): Promise<void> {
+  // Báo cáo API trả sẵn danh sách mặt hàng thật — ưu tiên tuyệt đối.
+  if (params.row.items?.length) {
+    for (const item of params.row.items) {
+      const itemName = String(item.item_name ?? "").trim();
+      const itemId = String(item.item_id ?? "").trim();
+      if (!itemName && !itemId) continue;
+      await writeOrderItem(db, {
+        orderId: params.orderId,
+        externalItemKey: itemId || itemName,
+        itemName: itemName || `Sản phẩm ${itemId}`,
+        quantity: Math.max(1, Math.trunc(item.quantity) || 1),
+        amountVnd: Math.max(0, Math.trunc(item.amount_vnd) || 0),
+        source: "REPORT",
+        imageUrl: item.item_image_url ?? null,
+      });
+    }
+    return;
+  }
+
+  const reportName = String(params.row.item_name ?? "").trim();
+  const reportId = String(params.row.item_id ?? "").trim();
+  const hasReportItem = Boolean(reportName || reportId);
+  const itemName = reportName || params.owner.productName;
+  if (!itemName) return;
+
+  const source: ItemSource = hasReportItem ? "REPORT" : "CLICK_SNAPSHOT";
+  const externalItemKey =
+    reportId ||
+    params.owner.productId ||
+    `${source.toLowerCase()}:${params.owner.linkId ?? params.orderId}`;
+  const amountVnd = params.row.item_amount_vnd
+    ? parseVnd(params.row.item_amount_vnd, "Giá sản phẩm")
+    : params.owner.productPriceVnd ?? params.orderAmount;
+  const quantity = parseQuantity(params.row.quantity);
+
+  await writeOrderItem(db, {
+    orderId: params.orderId,
+    externalItemKey,
+    itemName,
+    quantity,
+    amountVnd,
+    source,
+    imageUrl: params.owner.productImageUrl,
+  });
 }
 
 export async function importOrderRow(
@@ -615,6 +787,7 @@ export async function importOrderRow(
   const commission = parseVnd(row.commission_vnd, "Hoa hồng");
   const owner = await resolveUser(db, { ...row, platform_order_id: platformOrderId }, platform);
   const businessConfig = await getBusinessConfig(db, config);
+  const holdDays = Math.max(0, businessConfig.cashbackHoldDays);
 
   const manualSharer = businessConfig.enableShareLink
     ? await resolveSharer(db, row.sharer_email, owner.userId)
@@ -676,13 +849,26 @@ export async function importOrderRow(
       status: ImportOrderStatus;
       cashback_vnd: string;
       evidence_status: EvidenceStatus;
+      cashback_revision: number;
+      cashback_released_at: Date | null;
+      entry_user_amount_vnd: string | null;
+      entry_referral_amount_vnd: string | null;
+      entry_platform_amount_vnd: string | null;
+      entry_sharer_user_id: string | null;
     }>(
       db,
       `
-        SELECT id, user_id, affiliate_link_id, status, cashback_vnd::text,
-          evidence_status
-        FROM orders
-        WHERE platform = $1 AND platform_order_id = $2
+        SELECT o.id, o.user_id, o.affiliate_link_id, o.status,
+          o.cashback_vnd::text, o.evidence_status, o.cashback_revision,
+          o.cashback_released_at,
+          ce.user_amount_vnd::text AS entry_user_amount_vnd,
+          ce.referral_amount_vnd::text AS entry_referral_amount_vnd,
+          ce.platform_amount_vnd::text AS entry_platform_amount_vnd,
+          ce.sharer_user_id AS entry_sharer_user_id
+        FROM orders o
+        LEFT JOIN commission_entries ce
+          ON ce.order_id = o.id AND ce.user_id = o.user_id
+        WHERE o.platform = $1 AND o.platform_order_id = $2
       `,
       [platform, platformOrderId],
     );
@@ -699,11 +885,52 @@ export async function importOrderRow(
         `Đơn ${platformOrderId} đã được gán cho tài khoản khác. Không tự động chuyển chủ đơn.`,
       );
     }
-    if (existing && Number(existing.cashback_vnd) !== cashback) {
+
+    // Sàn có thể cập nhật lại hoa hồng khi đơn còn đang chờ (hoàn một phần,
+    // đổi tỷ lệ...). Khi tiền chưa giải ngân, hệ thống đảo khoản cũ rồi ghi
+    // khoản mới ở revision kế tiếp; nếu đã giải ngân thì bắt buộc đối soát tay.
+    const previousCashback = existing ? Number(existing.cashback_vnd) : cashback;
+    const cashbackChanged = Boolean(existing) && previousCashback !== cashback;
+    const alreadyReleased = Boolean(existing?.cashback_released_at);
+    if (cashbackChanged && alreadyReleased) {
       throw new AppError(
         "CASHBACK_CHANGED",
-        "Hoa hồng của đơn đã thay đổi. Hãy đối soát và tạo điều chỉnh có phê duyệt.",
+        `Hoa hồng của đơn ${platformOrderId} thay đổi sau khi đã cộng vào số dư khả dụng. Hãy đối soát và tạo điều chỉnh có phê duyệt.`,
       );
+    }
+    const previousRevision = Number(existing?.cashback_revision ?? 0);
+    // Đơn chuyển sang trạng thái kết thúc (hủy/không hợp lệ) thì không ghi
+    // khoản mới nữa — giữ nguyên revision để khối đảo khoản bên dưới xử lý.
+    const closingStatus = ["INVALID", "CANCELLED", "REVERSED"].includes(
+      row.status,
+    );
+    const revision =
+      cashbackChanged && !closingStatus ? previousRevision + 1 : previousRevision;
+    const previousAllocation: CommissionAllocation | null = existing
+      ? {
+          buyerUserId: existing.user_id,
+          buyerVnd: Number(existing.entry_user_amount_vnd ?? 0),
+          ...(existing.entry_sharer_user_id
+            ? { sharerUserId: existing.entry_sharer_user_id }
+            : {}),
+          sharerVnd: Number(existing.entry_referral_amount_vnd ?? 0),
+          platformVnd: Number(existing.entry_platform_amount_vnd ?? 0),
+        }
+      : null;
+    const previousCredited = Boolean(
+      existing &&
+        existing.evidence_status === "VERIFIED" &&
+        ["PENDING", "APPROVED"].includes(existing.status),
+    );
+
+    if (cashbackChanged && !closingStatus && previousCredited && previousAllocation) {
+      await reverseSplitCashback(db, {
+        orderId: existing!.id,
+        allocation: previousAllocation,
+        source: "PENDING",
+        createdBy: actorId,
+        revision: previousRevision,
+      });
     }
 
     const upserted = await query<{ id: string }>(
@@ -714,17 +941,40 @@ export async function importOrderRow(
           status, order_amount_vnd, commission_vnd, cashback_vnd,
           purchased_at, approved_at, raw_conversion_id,
           attribution_method, attribution_value, attributed_at,
-          evidence_status, evidence_verified_at
+          evidence_status, evidence_verified_at,
+          completed_at, cashback_available_at, external_status,
+          cancel_reason, cashback_revision
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8,
           NULLIF($9, '')::timestamptz,
           CASE WHEN $5 = 'APPROVED' THEN now() ELSE NULL END,
           $10, $11, $12, now(), $13,
-          CASE WHEN $13 = 'VERIFIED' THEN now() ELSE NULL END
+          CASE WHEN $13 = 'VERIFIED' THEN now() ELSE NULL END,
+          CASE
+            WHEN $5 = 'APPROVED'
+            THEN COALESCE(NULLIF($14, '')::timestamptz, now())
+            ELSE NULLIF($14, '')::timestamptz
+          END,
+          CASE
+            WHEN $5 = 'APPROVED'
+            THEN COALESCE(NULLIF($14, '')::timestamptz, now())
+              + ($15::text || ' days')::interval
+            ELSE NULL
+          END,
+          NULLIF($16, ''), NULLIF($17, ''), $18
         )
         ON CONFLICT (platform, platform_order_id)
         DO UPDATE SET
           status = EXCLUDED.status,
+          completed_at = COALESCE(orders.completed_at, EXCLUDED.completed_at),
+          cashback_available_at = CASE
+            WHEN EXCLUDED.status = 'APPROVED'
+            THEN COALESCE(orders.cashback_available_at, EXCLUDED.cashback_available_at)
+            ELSE orders.cashback_available_at
+          END,
+          external_status = COALESCE(EXCLUDED.external_status, orders.external_status),
+          cancel_reason = COALESCE(EXCLUDED.cancel_reason, orders.cancel_reason),
+          cashback_revision = EXCLUDED.cashback_revision,
           order_amount_vnd = EXCLUDED.order_amount_vnd,
           commission_vnd = EXCLUDED.commission_vnd,
           cashback_vnd = EXCLUDED.cashback_vnd,
@@ -762,6 +1012,11 @@ export async function importOrderRow(
         owner.attributionMethod,
         owner.attributionValue,
         owner.evidenceStatus,
+        row.completed_at ?? "",
+        holdDays,
+        row.external_status ?? "",
+        row.cancel_reason ?? "",
+        revision,
       ],
     );
     const orderId = upserted.rows[0]!.id;
@@ -796,6 +1051,30 @@ export async function importOrderRow(
           split.sharerPercent,
         ],
       );
+    } else if (cashbackChanged) {
+      // Hoa hồng được sàn cập nhật lại: ghi đè bản chụp chia tiền cho khớp
+      // với bút toán vừa tạo ở revision mới.
+      await query(
+        db,
+        `
+          UPDATE commission_entries
+          SET sharer_user_id = $2, user_amount_vnd = $3,
+            referral_amount_vnd = $4, platform_amount_vnd = $5,
+            buyer_percent = $6, platform_percent = $7, sharer_percent = $8,
+            status = 'PENDING'
+          WHERE order_id = $1
+        `,
+        [
+          orderId,
+          sharerUserId ?? null,
+          split.buyerVnd,
+          split.sharerVnd,
+          split.platformVnd,
+          split.buyerPercent,
+          split.platformPercent,
+          split.sharerPercent,
+        ],
+      );
     }
 
     const allocation: CommissionAllocation = {
@@ -816,27 +1095,51 @@ export async function importOrderRow(
         orderId,
         allocation,
         createdBy: actorId,
+        revision,
       });
     }
     if (commission > 0 && verifiedForPayout && row.status === "APPROVED") {
-      await moveSplitPendingToAvailable(db, {
-        orderId,
-        allocation,
-        createdBy: actorId,
-      });
-      await query(
-        db,
-        "UPDATE commission_entries SET status = 'AVAILABLE' WHERE order_id = $1",
-        [orderId],
-      );
+      // Đơn Hoàn thành chỉ được cộng vào số dư khả dụng sau khi qua thời gian
+      // giữ tiền (cashback_hold_days) tính từ mốc hoàn thành. Trong lúc chờ,
+      // tiền nằm ở ví CHỜ và job `releaseDueCashback` sẽ giải ngân đúng hạn.
+      if (holdDays === 0) {
+        await moveSplitPendingToAvailable(db, {
+          orderId,
+          allocation,
+          createdBy: actorId,
+          revision,
+        });
+        await query(
+          db,
+          "UPDATE commission_entries SET status = 'AVAILABLE' WHERE order_id = $1",
+          [orderId],
+        );
+        await query(
+          db,
+          `
+            UPDATE orders
+            SET cashback_available_at = COALESCE(cashback_available_at, now()),
+              cashback_released_at = COALESCE(cashback_released_at, now())
+            WHERE id = $1
+          `,
+          [orderId],
+        );
+      }
       await maybeRewardReferral(db, config, businessConfig, {
         buyerUserId: owner.userId,
         orderId,
         actorId,
       });
     }
+    // Đảo khoản phải dùng đúng số tiền ĐÃ ghi nhận trước đó: đơn hủy thường
+    // được sàn trả về với hoa hồng bằng 0 nên không thể lấy split mới.
+    const reversalAllocation = previousAllocation ?? allocation;
+    const reversalTotal =
+      reversalAllocation.buyerVnd +
+      reversalAllocation.sharerVnd +
+      reversalAllocation.platformVnd;
     if (
-      commission > 0 &&
+      reversalTotal > 0 &&
       ["INVALID", "CANCELLED", "REVERSED"].includes(row.status) &&
       existing &&
       existing.evidence_status === "VERIFIED" &&
@@ -844,9 +1147,10 @@ export async function importOrderRow(
     ) {
       await reverseSplitCashback(db, {
         orderId,
-        allocation,
-        source: existing.status === "APPROVED" ? "AVAILABLE" : "PENDING",
+        allocation: reversalAllocation,
+        source: existing.cashback_released_at ? "AVAILABLE" : "PENDING",
         createdBy: actorId,
+        revision,
       });
       await query(
         db,

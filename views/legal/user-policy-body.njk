@@ -1,0 +1,25 @@
+{# Nội dung chính sách người dùng — dùng chung cho trang /chinh-sach-nguoi-dung
+   và cho modal đọc nhanh mở từ hyperlink ở chân trang. Dữ liệu do
+   src/services/user-policy.ts dựng nên web và email không bao giờ lệch nhau. #}
+<div class="policy-doc">
+  <p class="policy-lead">{{ policy.lead }}</p>
+  {% for section in policy.sections %}
+    <section class="policy-section" id="chinh-sach-{{ section.id }}">
+      <h2>{{ section.heading }}</h2>
+      {% for paragraph in section.paragraphs %}
+        <p>{{ paragraph }}</p>
+      {% endfor %}
+      {% if section.items.length %}
+        <ul class="policy-list">
+          {% for item in section.items %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  {% endfor %}
+  <p class="policy-foot">
+    Xem thêm <a href="/dieu-khoan">Điều khoản sử dụng</a> và
+    <a href="/quyen-rieng-tu">Chính sách quyền riêng tư</a>.
+  </p>
+</div>

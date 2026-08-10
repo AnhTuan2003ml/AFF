@@ -31,6 +31,7 @@
   <script src="/assets/app.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/ux-integrity.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/backoffice-integrity.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/user-policy.js?v={{ assetVersion }}" defer></script>
   {% block page_scripts %}{% endblock %}
 </head>
 <body class="{{ bodyClass or '' }}">
@@ -54,11 +55,13 @@
         <img class="brand-image brand-image-footer" src="/assets/images/logo.png" alt="ShopTik">
       </div>
       <nav aria-label="Thông tin pháp lý">
+        <a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách người dùng</a>
         <a href="/dieu-khoan">Điều khoản</a>
         <a href="/quyen-rieng-tu">Quyền riêng tư</a>
         <a href="/dang-nhap">Đăng nhập</a>
       </nav>
     </footer>
   {% endblock %}
+  {% include "partials/user-policy-modal.njk" %}
 </body>
 </html>

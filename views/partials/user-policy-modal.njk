@@ -1,0 +1,21 @@
+{# Modal đọc nhanh chính sách người dùng. Nội dung được nạp lần đầu khi mở
+   (fetch /chinh-sach-nguoi-dung/noi-dung) nên không làm nặng mọi trang.
+   Nếu JS không chạy, hyperlink ở chân trang vẫn mở trang đầy đủ. #}
+<div class="policy-modal-scrim" data-policy-modal hidden inert>
+  <section class="policy-modal" role="dialog" aria-modal="true" aria-labelledby="policy-modal-title">
+    <header class="policy-modal-head">
+      <div>
+        <span class="eyebrow">CHÍNH SÁCH ĐANG CÓ HIỆU LỰC</span>
+        <h2 id="policy-modal-title">Chính sách người dùng</h2>
+      </div>
+      <button type="button" class="policy-modal-close" data-policy-modal-close aria-label="Đóng chính sách">×</button>
+    </header>
+    <div class="policy-modal-body" data-policy-modal-body tabindex="0">
+      <p class="policy-modal-state" data-policy-modal-state>Đang tải nội dung chính sách…</p>
+    </div>
+    <footer class="policy-modal-foot">
+      <a href="/chinh-sach-nguoi-dung" target="_blank" rel="noopener">Mở trang đầy đủ</a>
+      <button type="button" class="button button-primary button-small" data-policy-modal-close>Đã hiểu</button>
+    </footer>
+  </section>
+</div>

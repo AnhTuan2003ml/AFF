@@ -13,7 +13,9 @@
     "start": "node dist/src/server.js",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
+    "data:clear-demo": "tsx scripts/clear-demo-data.ts",
     "admin:create": "tsx scripts/create-admin.ts",
+    "shopee:report:test": "tsx scripts/test-shopee-report.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

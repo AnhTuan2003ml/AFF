@@ -279,6 +279,21 @@ export interface CommissionAllocation {
 }
 
 /**
+ * Khóa idempotency theo đơn. Khi hoa hồng của đơn được sàn cập nhật lại lúc
+ * còn đang chờ, hệ thống đảo khoản cũ rồi ghi khoản mới ở một "revision" khác
+ * nên phải có hậu tố riêng; revision 0 giữ nguyên khóa cũ để tương thích.
+ */
+function orderIdempotencyKey(
+  prefix: string,
+  orderId: string,
+  revision = 0,
+): string {
+  return revision > 0
+    ? `${prefix}:${orderId}:rev${revision}`
+    : `${prefix}:${orderId}`;
+}
+
+/**
  * Ghi nhận hoa hồng đơn hàng đã chia 3 phần (người mua / chủ link chia sẻ /
  * nền tảng) vào một bút toán cân bằng duy nhất: tổng ghi nợ CASHBACK_CLEARING
  * luôn bằng tổng ghi có của các bên nhận — không trả tiền theo click, chỉ
@@ -286,7 +301,12 @@ export interface CommissionAllocation {
  */
 export async function creditSplitCashback(
   db: Database,
-  params: { orderId: string; allocation: CommissionAllocation; createdBy?: string },
+  params: {
+    orderId: string;
+    allocation: CommissionAllocation;
+    createdBy?: string;
+    revision?: number;
+  },
 ): Promise<void> {
   const { allocation } = params;
   const total =
@@ -338,7 +358,11 @@ export async function creditSplitCashback(
       type: "CASHBACK_PENDING",
       referenceType: "ORDER",
       referenceId: params.orderId,
-      idempotencyKey: `cashback:pending:${params.orderId}`,
+      idempotencyKey: orderIdempotencyKey(
+        "cashback:pending",
+        params.orderId,
+        params.revision,
+      ),
       description: "Ghi nhận hoa hồng đơn hàng đang chờ đối tác duyệt",
       ...(params.createdBy ? { createdBy: params.createdBy } : {}),
       entries,
@@ -348,7 +372,12 @@ export async function creditSplitCashback(
 
 export async function moveSplitPendingToAvailable(
   db: Database,
-  params: { orderId: string; allocation: CommissionAllocation; createdBy?: string },
+  params: {
+    orderId: string;
+    allocation: CommissionAllocation;
+    createdBy?: string;
+    revision?: number;
+  },
 ): Promise<void> {
   const { allocation } = params;
   await withTransaction(db, async (client) => {
@@ -384,7 +413,11 @@ export async function moveSplitPendingToAvailable(
       type: "CASHBACK_APPROVED",
       referenceType: "ORDER",
       referenceId: params.orderId,
-      idempotencyKey: `cashback:approved:${params.orderId}`,
+      idempotencyKey: orderIdempotencyKey(
+        "cashback:approved",
+        params.orderId,
+        params.revision,
+      ),
       description: "Chuyển hoa hồng đã duyệt sang số dư khả dụng",
       ...(params.createdBy ? { createdBy: params.createdBy } : {}),
       entries,
@@ -399,6 +432,7 @@ export async function reverseSplitCashback(
     allocation: CommissionAllocation;
     source: "PENDING" | "AVAILABLE";
     createdBy?: string;
+    revision?: number;
   },
 ): Promise<void> {
   const { allocation } = params;
@@ -451,7 +485,11 @@ export async function reverseSplitCashback(
       type: "CASHBACK_REVERSED",
       referenceType: "ORDER",
       referenceId: params.orderId,
-      idempotencyKey: `cashback:reversed:${params.orderId}`,
+      idempotencyKey: orderIdempotencyKey(
+        "cashback:reversed",
+        params.orderId,
+        params.revision,
+      ),
       description: "Đảo hoa hồng do đơn hủy hoặc không hợp lệ",
       ...(params.createdBy ? { createdBy: params.createdBy } : {}),
       entries,

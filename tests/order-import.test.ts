@@ -4,6 +4,7 @@ import {
   normalizeOrderImportRecord,
 } from "../src/services/order-import.js";
 import { getWalletBalances } from "../src/services/ledger.js";
+import { releaseDueCashback } from "../src/services/cashback-release.js";
 import { createTestDb, testConfig } from "./helpers.js";
 
 let cleanup: (() => Promise<void>) | undefined;
@@ -24,6 +25,18 @@ async function seedUser(
     [email, email, referralCode],
   );
   return inserted.rows[0]!.id;
+}
+
+/** Giả lập đã qua thời gian giữ tiền để kiểm tra bước giải ngân. */
+async function fastForwardHold(
+  db: Awaited<ReturnType<typeof createTestDb>>["db"],
+  platformOrderId: string,
+): Promise<void> {
+  await db.query(
+    `UPDATE orders SET cashback_available_at = now() - interval '1 minute'
+     WHERE platform_order_id = $1`,
+    [platformOrderId],
+  );
 }
 
 async function seedDirectLink(
@@ -64,6 +77,14 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
       },
       buyerId,
     );
+
+    // Đơn Hoàn thành vẫn phải chờ hết `cashback_hold_days` mới khả dụng.
+    const heldBalances = await getWalletBalances(db, buyerId);
+    expect(heldBalances.pending).toBe(80_000);
+    expect(heldBalances.available).toBe(0);
+
+    await fastForwardHold(db, "ORDER-DIRECT-1");
+    await releaseDueCashback(db);
 
     const balances = await getWalletBalances(db, buyerId);
     expect(balances.available).toBe(80_000);
@@ -124,6 +145,9 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
       buyerId,
     );
 
+    await fastForwardHold(db, "ORDER-REFERRED-1");
+    await releaseDueCashback(db);
+
     // B nhận 80%, A (người giới thiệu) nhận 4%, nền tảng còn 16%.
     const buyerBalances = await getWalletBalances(db, buyerId);
     expect(buyerBalances.available).toBe(8_000);
@@ -176,6 +200,9 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
       },
       buyerId,
     );
+
+    await fastForwardHold(db, "ORDER-SHARED-1");
+    await releaseDueCashback(db);
 
     const buyerBalances = await getWalletBalances(db, buyerId);
     const sharerBalances = await getWalletBalances(db, sharerId);
@@ -257,6 +284,174 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
   });
 });
 
+
+describe("importOrderRow — đối soát bằng mã người mua + mã sản phẩm", () => {
+  async function seedProductLink(
+    db: Awaited<ReturnType<typeof createTestDb>>["db"],
+    userId: string,
+    clickId: string,
+    productId: string,
+  ): Promise<void> {
+    await db.query(
+      `INSERT INTO affiliate_links (
+        user_id, platform, click_id, original_url, normalized_url,
+        affiliate_url, sub_id, source, campaign, product_id, product_name,
+        product_price_vnd
+      ) VALUES (
+        $1, 'SHOPEE', $2, 'https://shopee.vn/product/1/1',
+        'https://shopee.vn/product/1/1', 'https://s.shopee.vn/x',
+        $3, 'app', 'instantbuy', $4, 'Combo chân gà rút xương', 132995
+      )`,
+      [userId, clickId, `c${clickId}-app-instantbuy`, productId],
+    );
+  }
+
+  async function trackingCodeOf(
+    db: Awaited<ReturnType<typeof createTestDb>>["db"],
+    userId: string,
+  ): Promise<string> {
+    const result = await db.query<{ tracking_code: string }>(
+      "SELECT tracking_code FROM users WHERE id = $1",
+      [userId],
+    );
+    return result.rows[0]!.tracking_code;
+  }
+
+  it("mã lượt click bị sàn cắt mất, vẫn gán đúng người mua nhờ u+p", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const buyerId = await seedUser(db, "up-buyer@example.com", "UPBUYER1");
+    await seedProductLink(db, buyerId, "LostClick001", "43508358436");
+    const code = await trackingCodeOf(db, buyerId);
+
+    await importOrderRow(
+      db,
+      testConfig(),
+      {
+        platform: "SHOPEE",
+        platform_order_id: "ORDER-UP-1",
+        status: "PENDING",
+        order_amount_vnd: "132995",
+        commission_vnd: "17953",
+        // Shopee chỉ trả về phần đuôi Sub ID, mất hẳn mảnh c<clickId>.
+        sub_id: `u${code}-p43508358436-app-instantbuy`,
+        purchased_at: new Date().toISOString(),
+      },
+      buyerId,
+    );
+
+    const order = await db.query<{
+      user_id: string;
+      evidence_status: string;
+      attribution_value: string;
+    }>(
+      `SELECT user_id, evidence_status, attribution_value
+       FROM orders WHERE platform_order_id = 'ORDER-UP-1'`,
+    );
+    expect(order.rows[0]).toMatchObject({
+      user_id: buyerId,
+      evidence_status: "VERIFIED",
+      attribution_value: `u${code}-p43508358436`,
+    });
+    expect((await getWalletBalances(db, buyerId)).pending).toBe(14_362);
+  });
+
+  it("mã người mua đúng nhưng sản phẩm khác thì không gán bừa", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const buyerId = await seedUser(db, "up-wrong@example.com", "UPBUYER2");
+    await seedProductLink(db, buyerId, "OtherClick01", "11111111");
+    const code = await trackingCodeOf(db, buyerId);
+
+    await expect(
+      importOrderRow(
+        db,
+        testConfig(),
+        {
+          platform: "SHOPEE",
+          platform_order_id: "ORDER-UP-2",
+          status: "PENDING",
+          order_amount_vnd: "100000",
+          commission_vnd: "10000",
+          sub_id: `u${code}-p99999999-app-instantbuy`,
+        },
+        buyerId,
+      ),
+    ).rejects.toThrow(/Không tìm thấy link ShopTik/);
+  });
+
+  it("một lượt bấm mua chỉ nhận đúng một đơn", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const config = testConfig();
+    const buyerId = await seedUser(db, "up-once@example.com", "UPBUYER3");
+    await seedProductLink(db, buyerId, "OnceClick001", "43508358436");
+    const code = await trackingCodeOf(db, buyerId);
+    const row = {
+      platform: "SHOPEE" as const,
+      status: "PENDING" as const,
+      order_amount_vnd: "132995",
+      commission_vnd: "17953",
+      sub_id: `u${code}-p43508358436-app-instantbuy`,
+    };
+
+    await importOrderRow(
+      db,
+      config,
+      { ...row, platform_order_id: "ORDER-UP-3A" },
+      buyerId,
+    );
+    // Đơn thứ hai cùng sản phẩm: lượt bấm mua kia đã có đơn nên không tái sử dụng.
+    await expect(
+      importOrderRow(
+        db,
+        config,
+        { ...row, platform_order_id: "ORDER-UP-3B" },
+        buyerId,
+      ),
+    ).rejects.toThrow(/Không tìm thấy link ShopTik/);
+  });
+
+  it("mã sản phẩm lấy từ danh sách mặt hàng của báo cáo cũng dùng để đối soát", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const buyerId = await seedUser(db, "up-items@example.com", "UPBUYER4");
+    await seedProductLink(db, buyerId, "ItemsClick01", "43508358436");
+    const code = await trackingCodeOf(db, buyerId);
+
+    await importOrderRow(
+      db,
+      testConfig(),
+      {
+        platform: "SHOPEE",
+        platform_order_id: "ORDER-UP-4",
+        status: "PENDING",
+        order_amount_vnd: "132995",
+        commission_vnd: "17953",
+        // Sub ID chỉ còn mã người mua; mã sản phẩm đến từ mặt hàng của đơn.
+        sub_id: `u${code}-app-instantbuy`,
+        items: [
+          {
+            item_id: "43508358436",
+            item_name: "Combo chân gà rút xương",
+            quantity: 1,
+            amount_vnd: 132995,
+          },
+        ],
+      },
+      buyerId,
+    );
+
+    const order = await db.query<{ user_id: string; evidence_status: string }>(
+      `SELECT user_id, evidence_status FROM orders
+       WHERE platform_order_id = 'ORDER-UP-4'`,
+    );
+    expect(order.rows[0]).toMatchObject({
+      user_id: buyerId,
+      evidence_status: "VERIFIED",
+    });
+  });
+});
 
 describe("importOrderRow — định vị tài khoản bằng Shopee Sub ID", () => {
   it("chuẩn hóa cột báo cáo Shopee và trạng thái về cấu trúc nội bộ", () => {

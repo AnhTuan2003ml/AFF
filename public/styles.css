@@ -4623,6 +4623,132 @@ tbody tr:hover {
   color: var(--ink-soft);
 }
 
+/* Chính sách người dùng — dùng chung cho trang đầy đủ và modal đọc nhanh */
+.policy-lead {
+  margin-bottom: 2rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.policy-section + .policy-section {
+  margin-top: 1.75rem;
+}
+
+.policy-section h2 {
+  margin-bottom: 0.6rem;
+  font-size: 1.15rem;
+  line-height: 1.4;
+}
+
+.policy-doc p {
+  margin-bottom: 0.7rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.policy-list {
+  margin: 0 0 0.7rem;
+  padding-left: 1.15rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.policy-list li {
+  margin-bottom: 0.35rem;
+}
+
+.policy-foot {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+
+.policy-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 28px);
+  background: rgba(8, 14, 28, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.policy-modal-scrim[hidden] {
+  display: none !important;
+}
+
+.policy-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  max-height: min(84svh, 760px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.policy-modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem clamp(1.1rem, 3vw, 1.9rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.policy-modal-head h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1.3rem;
+}
+
+.policy-modal-head .eyebrow {
+  display: block;
+}
+
+.policy-modal-close {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.policy-modal-close:hover {
+  background: var(--line);
+}
+
+.policy-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem clamp(1.1rem, 3vw, 1.9rem);
+  overscroll-behavior: contain;
+}
+
+.policy-modal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem clamp(1.1rem, 3vw, 1.9rem);
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.policy-modal-state {
+  color: var(--muted);
+}
+
 .error-page {
   display: grid;
   min-height: 65vh;
@@ -6163,6 +6289,33 @@ body.is-entry-promo-open {
   font-size: 1rem;
 }
 
+/* Nút "Bỏ qua" nằm ngay bên dưới ảnh quảng cáo — như thanh footer của popup.
+   Không hiện nếu trang vẫn giữ thuộc tính hidden (JS tự bỏ hidden khi có ảnh). */
+.entry-promo-skip {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  background: #f45f20;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.entry-promo-skip[hidden] {
+  display: none;
+}
+
+.entry-promo-skip:hover,
+.entry-promo-skip:focus-visible {
+  background: #d94f12;
+  color: #fff;
+  outline: none;
+}
+
 @media (max-width: 720px) {
   .entry-promo-scrim {
     padding: 12px;
@@ -6199,6 +6352,11 @@ body.is-entry-promo-open {
 
   .entry-promo-placeholder {
     padding: 22px 18px 6px;
+  }
+
+  .entry-promo-skip {
+    min-height: 44px;
+    font-size: 0.92rem;
   }
 }
 

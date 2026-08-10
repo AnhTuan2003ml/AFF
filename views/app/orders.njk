@@ -7,13 +7,19 @@
 {% endmacro %}
 
 {% macro order_status(order) %}
-  {% if order.status == 'APPROVED' and selectedStatus == 'PAID' %}
+  {% if order.status == 'AWAITING' %}
+    <span class="orders-history-status is-pending">{{ icon('refresh') }} Chờ sàn xác nhận</span>
+  {% elif order.status == 'UNTRACKED' %}
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Không ghi nhận</span>
+  {% elif order.status == 'APPROVED' and order.cashback_released_at %}
     <span class="orders-history-status is-paid">{{ icon('orders') }} Đã về ví</span>
   {% elif order.status == 'APPROVED' %}
-    <span class="orders-history-status is-approved">{{ icon('orders') }} Sàn đã duyệt</span>
+    <span class="orders-history-status is-approved">{{ icon('orders') }} Hoàn thành, chờ về ví</span>
   {% elif order.status == 'PENDING' %}
-    <span class="orders-history-status is-pending">{{ icon('orders') }} Đang chờ đối soát</span>
-  {% elif order.status in ['CANCELLED', 'INVALID', 'REVERSED'] %}
+    <span class="orders-history-status is-pending">{{ icon('orders') }} Đang duyệt</span>
+  {% elif order.status == 'CANCELLED' %}
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Đã hủy</span>
+  {% elif order.status in ['INVALID', 'REVERSED'] %}
     <span class="orders-history-status is-cancelled">{{ icon('warning') }} Không hợp lệ</span>
   {% else %}
     <span class="orders-history-status is-pending">{{ order.status }}</span>
@@ -60,7 +66,7 @@
 
               <div class="orders-history-info">
                 <div class="orders-history-meta">
-                  <span class="orders-history-code">#{{ order.platform_order_id }}</span>
+                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}Chưa có mã đơn{% endif %}</span>
                   <span class="orders-history-platform">{% if order.platform == 'TIKTOK' %}TikTok{% elseif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
                 </div>
 
@@ -68,8 +74,27 @@
 
                 <div class="orders-history-dates">
                   <span>{{ (order.purchased_at or order.created_at) | date }}</span>
-                  <i aria-hidden="true">•</i>
-                  <span>Dự kiến về ví: <b>{{ (order.estimated_payout_at or order.purchased_at or order.created_at) | date }}</b></span>
+                  {% if order.status == 'AWAITING' %}
+                    <i aria-hidden="true">•</i>
+                    <span>Sàn thường gửi dữ liệu sau vài giờ tới 24 giờ</span>
+                  {% elif order.status == 'UNTRACKED' %}
+                    <i aria-hidden="true">•</i>
+                    <span>Sàn chưa ghi nhận đơn nào cho lượt mua này</span>
+                  {% elif order.status in ['CANCELLED', 'INVALID', 'REVERSED'] %}
+                    {% if order.cancel_reason %}
+                      <i aria-hidden="true">•</i>
+                      <span>Lý do: <b>{{ order.cancel_reason }}</b></span>
+                    {% endif %}
+                  {% elif order.cashback_released_at %}
+                    <i aria-hidden="true">•</i>
+                    <span>Đã về ví: <b>{{ order.cashback_released_at | date }}</b></span>
+                  {% elif order.status == 'APPROVED' %}
+                    <i aria-hidden="true">•</i>
+                    <span>Về ví: <b>{{ order.estimated_payout_at | date }}</b>{% if order.hold_days_left %} (còn {{ order.hold_days_left }} ngày){% endif %}</span>
+                  {% else %}
+                    <i aria-hidden="true">•</i>
+                    <span>Dự kiến về ví: <b>{{ (order.estimated_payout_at or order.purchased_at or order.created_at) | date }}</b></span>
+                  {% endif %}
                 </div>
 
                 {% if order.product_price_vnd %}
@@ -84,10 +109,10 @@
             <aside class="orders-history-payout">
               {{ order_status(order) }}
               <div>
-                <small>Hoàn tiền{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
+                <small>{% if order.record_kind == 'INTENT' %}Hoàn tiền dự kiến{% else %}Hoàn tiền{% endif %}{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
                 <strong>+{{ order.cashback_vnd | vnd }}</strong>
               </div>
-              <a class="button button-small button-ghost" href="/app/support?orderId={{ order.platform_order_id }}&platform={{ order.platform }}">Hỗ trợ</a>
+              <a class="button button-small button-ghost" href="/app/support?platform={{ order.platform }}{% if order.platform_order_id %}&orderId={{ order.platform_order_id }}{% endif %}">Hỗ trợ</a>
             </aside>
           </article>
         {% endfor %}

@@ -10,6 +10,9 @@ coverage/
 .vscode/
 tmp/
 uploads/
+secrets/
+shopee-cookies*.txt
+shopee-report*.json
 *.zip
 __pycache__/
 *.pyc

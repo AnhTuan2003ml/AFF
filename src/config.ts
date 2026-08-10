@@ -139,6 +139,17 @@ const configSchema = z.object({
   ENABLE_SHARE_LINK: booleanFromStringDefault("true"),
   ENABLE_REFERRAL_PROGRAM: booleanFromStringDefault("true"),
 
+  // Tiến trình nền: đồng bộ báo cáo sàn và giải ngân tiền hoàn đến hạn.
+  // Tần suất đồng bộ từng sàn do admin đặt trong Backoffice > Đồng bộ sàn;
+  // biến này chỉ điều khiển nhịp kiểm tra của scheduler.
+  ENABLE_SYNC_SCHEDULER: booleanFromStringDefault("true"),
+  SYNC_SCHEDULER_TICK_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(30)
+    .max(3600)
+    .default(60),
+
   // Mốc thưởng nhiệm vụ (JSON mảng {threshold, rewardVnd, title}) — chỉ dùng
   // để SEED bảng mission_definitions khi bảng còn trống lần đầu; sau đó admin
   // sửa trong Backoffice > Nhiệm vụ, DB là nguồn thật.

@@ -51,6 +51,7 @@
               <a href="/backoffice/products" class="{% if backofficeSection == 'products' %}active{% endif %}">Khám phá</a>
               <a href="/backoffice/missions" class="{% if backofficeSection == 'missions' %}active{% endif %}">Nhiệm vụ{% if backofficeMissionsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
               <a href="/backoffice/revenue" class="{% if backofficeSection == 'revenue' %}active{% endif %}">Doanh thu</a>
+              <a href="/backoffice/sync" class="{% if backofficeSection == 'sync' %}active{% endif %}">Đồng bộ sàn</a>
               <a href="/backoffice/config" class="{% if backofficeSection == 'config' %}active{% endif %}">Cấu hình</a>
               <a href="/backoffice/audit" class="{% if backofficeSection == 'audit' %}active{% endif %}">Nhật ký</a>
               <a href="/app/settings">Tài khoản</a>
@@ -103,6 +104,7 @@
         <a href="/backoffice/missions" class="{% if backofficeSection == 'missions' %}active{% endif %}"><span>{{ icon('mission') }}</span><b class="nav-link-label">Nhiệm vụ</b>{% if backofficeMissionsPendingCount > 0 %}<em class="nav-notification-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
         <a href="/backoffice/revenue" class="{% if backofficeSection == 'revenue' %}active{% endif %}"><span>{{ icon('wallet') }}</span>Doanh thu</a>
         <p>Hệ thống</p>
+        <a href="/backoffice/sync" class="{% if backofficeSection == 'sync' %}active{% endif %}"><span>{{ icon('refresh') }}</span>Đồng bộ sàn</a>
         <a href="/backoffice/config" class="{% if backofficeSection == 'config' %}active{% endif %}"><span>{{ icon('settings') }}</span>Cấu hình nghiệp vụ</a>
         <a href="/backoffice/audit" class="{% if backofficeSection == 'audit' %}active{% endif %}"><span>{{ icon('audit') }}</span>Nhật ký</a>
       </nav>

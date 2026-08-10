@@ -12,6 +12,7 @@ import type { CurrentUser } from "../types/fastify.js";
 import { revokeAllUserSessions } from "../auth/session.js";
 import type { EmailService } from "./email.js";
 import { issueOtp, verifyOtp } from "./otp.js";
+import { loadUserPolicyFacts } from "./user-policy.js";
 
 interface UserAuthRow {
   id: string;
@@ -133,6 +134,19 @@ export async function registerWithEmail(
   });
 
   await issueOtp(db, emailService, config, email, "REGISTER");
+
+  // Bộ chính sách người dùng đi kèm ngay lượt đăng ký. Gửi sau OTP và không để
+  // lỗi gửi thư làm hỏng đăng ký — người dùng vẫn xem được tại /chinh-sach-nguoi-dung.
+  try {
+    const facts = await loadUserPolicyFacts(db, config);
+    await emailService.sendUserPolicy({
+      to: email,
+      fullName: params.fullName,
+      facts,
+    });
+  } catch (error) {
+    console.error("Không gửi được email chính sách người dùng", error);
+  }
 }
 
 export async function verifyRegistration(

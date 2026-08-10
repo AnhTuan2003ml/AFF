@@ -1,0 +1,142 @@
+{% extends "backoffice/base.njk" %}
+
+{% macro status_pill(status) %}
+  {% if status == 'SUCCESS' %}
+    <span class="status-badge status-positive">Thành công</span>
+  {% elif status == 'PARTIAL' %}
+    <span class="status-badge status-pending">Có đơn lỗi</span>
+  {% elif status == 'ERROR' %}
+    <span class="status-badge status-negative">Thất bại</span>
+  {% else %}
+    <span class="status-badge status-neutral">Chưa chạy</span>
+  {% endif %}
+{% endmacro %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">ĐỐI SOÁT TỰ ĐỘNG TỪ BÁO CÁO SÀN</span>
+      <h1>Đồng bộ sàn</h1>
+      <p>Hệ thống định kỳ gọi báo cáo chuyển đổi Shopee Affiliate, đối chiếu Sub ID để gán đơn về đúng tài khoản và cập nhật trạng thái đơn trong lịch sử người dùng.</p>
+    </div>
+  </section>
+
+  <section class="order-summary-grid" aria-label="Kết quả lượt đồng bộ gần nhất">
+    <a href="/backoffice/sync">
+      <span>Lượt gần nhất</span>
+      <strong>{{ status_pill(syncSettings.shopeeLastStatus) }}</strong>
+      <small>{% if syncSettings.shopeeLastRunAt %}{{ syncSettings.shopeeLastRunAt | datetime }}{% else %}Chưa chạy lần nào{% endif %}</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Đơn lấy về</span>
+      <strong>{{ syncSettings.shopeeLastFetchedCount }}</strong>
+      <small>Đơn có trong báo cáo Shopee</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Đơn ghi nhận</span>
+      <strong>{{ syncSettings.shopeeLastImportedCount }}</strong>
+      <small>Đã gán được về tài khoản ShopTik</small>
+    </a>
+    <a href="/backoffice/reconciliation">
+      <span>Đơn lỗi</span>
+      <strong>{{ syncSettings.shopeeLastFailedCount }}</strong>
+      <small>Cần đối soát thủ công</small>
+    </a>
+  </section>
+
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">VẬN HÀNH</span><h2>Chạy đồng bộ thủ công</h2></div>
+    </header>
+    {% if syncSettings.shopeeLastError %}
+      <aside class="info-strip"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ syncSettings.shopeeLastError }}</p></div></aside>
+    {% endif %}
+    {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+      <form method="post" action="/backoffice/sync/run" class="config-save-bar">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <span class="config-saved-state">Chạy ngay một lượt, không phụ thuộc lịch định kỳ.</span>
+        <button class="button button-dark" type="submit" data-submit-button>Đồng bộ ngay</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <aside class="info-strip">
+    <span>i</span>
+    <div>
+      <b>Cách đơn được gán về đúng người mua</b>
+      <p>Khi người dùng bấm <b>Mua ngay</b>, link Affiliate được gắn Sub ID dạng <code>c&lt;mã lượt click&gt;-u&lt;mã người mua&gt;-p&lt;mã sản phẩm&gt;-&lt;nguồn&gt;-&lt;chiến dịch&gt;</code>. Mỗi lượt đồng bộ đọc lại Sub ID trong báo cáo sàn: khớp mã lượt click trước, nếu sàn cắt mất thì đối chiếu tiếp cặp <b>mã người mua + mã sản phẩm</b>. Không suy đoán từ email.</p>
+    </div>
+  </aside>
+
+  <aside class="info-strip">
+    <span>i</span>
+    <div>
+      <b>Cách tiền hoàn được cộng</b>
+      <p>Đơn <b>Hoàn thành</b> phải chờ thêm <b>{{ cashbackHoldDays }} ngày</b> (đặt ở Cấu hình nghiệp vụ) mới chuyển từ ví chờ sang số dư khả dụng để rút. Đơn <b>Đã hủy</b> bị đảo khoản và báo lý do cho người dùng. Đơn còn lại giữ trạng thái <b>Đang duyệt</b> và sẽ được hỏi lại ở lượt đồng bộ sau.</p>
+    </div>
+  </aside>
+
+  {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+    <aside class="info-strip"><span>i</span><div><b>Chỉ xem</b><p>Vai trò của bạn chỉ được xem cấu hình đồng bộ.</p></div></aside>
+  {% endif %}
+
+  <form method="post" action="/backoffice/sync" class="config-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <fieldset {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}disabled{% endif %}>
+
+      <section class="panel config-section">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">SHOPEE</span><h2>Phiên đăng nhập Affiliate</h2></div>
+        </header>
+        <div class="stack-form">
+          <label for="sync-shopee-cookie-input">Cookie affiliate.shopee.vn
+            <textarea id="sync-shopee-cookie-input" name="shopeeCookie" rows="4" autocomplete="off" spellcheck="false" placeholder="SPC_F=...; SPC_EC=...; SPC_ST=..."></textarea>
+            <small>
+              {% if syncSettings.shopeeHasCookie %}
+                Đang dùng cookie <b>{{ syncSettings.shopeeCookieHint }}</b>, lưu lúc {{ syncSettings.shopeeCookieUpdatedAt | datetime }}. Bỏ trống ô này để giữ nguyên.
+              {% else %}
+                Chưa có cookie. Mở affiliate.shopee.vn &rarr; DevTools &rarr; Network &rarr; sao chép header <code>cookie</code> rồi dán vào đây.
+              {% endif %}
+            </small>
+            <small class="field-error" id="sync-shopee-cookie-input-error" hidden></small>
+          </label>
+          {% if syncSettings.shopeeHasCookie %}
+            <label class="switch-row">
+              <input type="checkbox" name="clearShopeeCookie">
+              <span>Xóa cookie đang lưu<small>Đồng bộ tự động sẽ dừng cho tới khi nhập cookie mới.</small></span>
+            </label>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="panel config-section">
+        <header class="admin-section-heading">
+          <div><span class="admin-kicker">LỊCH CHẠY</span><h2>Tần suất và phạm vi</h2></div>
+        </header>
+        <div class="stack-form">
+          <label for="sync-interval-input">Tần suất đồng bộ (phút)
+            <input id="sync-interval-input" type="number" name="shopeeIntervalMinutes" min="5" max="1440" value="{{ syncSettings.shopeeIntervalMinutes }}" required data-required-message="Vui lòng nhập tần suất." data-min-message="Tối thiểu 5 phút." data-max-message="Tối đa 1440 phút.">
+            <small>Khoảng cách giữa hai lần gọi báo cáo Shopee. Gọi quá dày dễ bị sàn chặn.</small>
+            <small class="field-error" id="sync-interval-input-error" hidden></small>
+          </label>
+          <label for="sync-lookback-input">Phạm vi truy hồi (ngày)
+            <input id="sync-lookback-input" type="number" name="shopeeLookbackDays" min="1" max="180" value="{{ syncSettings.shopeeLookbackDays }}" required data-required-message="Vui lòng nhập số ngày." data-min-message="Tối thiểu 1 ngày." data-max-message="Tối đa 180 ngày.">
+            <small>Mỗi lượt chạy lấy lại các đơn phát sinh trong khoảng này để cập nhật đơn còn đang duyệt.</small>
+            <small class="field-error" id="sync-lookback-input-error" hidden></small>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" name="shopeeEnabled" {% if syncSettings.shopeeEnabled %}checked{% endif %}>
+            <span>Bật đồng bộ tự động<small>Khi tắt, chỉ còn nút &ldquo;Đồng bộ ngay&rdquo; chạy thủ công.</small></span>
+          </label>
+        </div>
+      </section>
+
+      <div class="config-save-bar">
+        <span class="config-saved-state">Cập nhật lúc {{ syncSettings.updatedAt | datetime }}</span>
+        {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+          <button class="button button-primary" type="submit" data-submit-button>Lưu cấu hình</button>
+        {% endif %}
+      </div>
+    </fieldset>
+  </form>
+{% endblock %}

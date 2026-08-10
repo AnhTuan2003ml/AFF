@@ -169,6 +169,7 @@ export async function registerAdminOrderRoutes(
         raw_received_at: Date | null;
         email: string;
         full_name: string;
+        tracking_code: string;
         status: string;
         order_amount_vnd: string;
         commission_vnd: string;
@@ -191,7 +192,8 @@ export async function registerAdminOrderRoutes(
               AS valid_click_count,
             raw.source AS raw_source, raw.checksum AS raw_checksum,
             raw.received_at AS raw_received_at,
-            u.email, u.full_name, o.status, o.order_amount_vnd::text,
+            u.email, u.full_name, u.tracking_code, o.status,
+            o.order_amount_vnd::text,
             o.commission_vnd::text, o.cashback_vnd::text, o.review_reason,
             reviewer.email AS reviewer_email, o.purchased_at, o.updated_at,
             count(*) OVER()::text AS total_count
@@ -222,6 +224,7 @@ export async function registerAdminOrderRoutes(
               OR u.full_name ILIKE '%' || $2 || '%'
               OR COALESCE(l.click_id, '') ILIKE '%' || $2 || '%'
               OR COALESCE(l.sub_id, '') ILIKE '%' || $2 || '%'
+              OR u.tracking_code ILIKE '%' || $2 || '%'
               OR COALESCE(o.attribution_value, '') ILIKE '%' || $2 || '%'
               OR COALESCE(p.affiliate_id, '') ILIKE '%' || $2 || '%'
               OR COALESCE(oi.item_name, l.product_name, '') ILIKE '%' || $2 || '%'

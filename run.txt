@@ -1,3 +1,1 @@
-docker compose down                                                                                   7.3s
-docker compose build --no-cache web                                                                                          7.2s
-docker compose up -d --force-recreate web
+docker compose up -d --build web

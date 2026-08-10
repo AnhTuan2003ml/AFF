@@ -316,26 +316,49 @@ function cleanSubIdPart(value: string, fallback: string): string {
   return cleaned || fallback;
 }
 
-function buildSubId(params: {
+export interface SubIdParts {
   clickId: string;
+  /** Mã định danh cố định của người mua (`users.tracking_code`). */
+  userCode?: string;
+  /** Mã sản phẩm trên sàn, để đối soát khi mã lượt click không khớp. */
+  productId?: string | null;
   source?: string;
   campaign?: string;
-}): string {
-  return [
-    cleanSubIdPart(`c${params.clickId}`, "click"),
-    cleanSubIdPart(params.source ?? "web", "web"),
-    cleanSubIdPart(params.campaign ?? "direct", "direct"),
-    "v2",
-  ].join("-");
 }
 
-export function buildShopeeAffiliateUrl(params: {
+/**
+ * Sub ID gửi kèm link Affiliate, ghép từ các mảnh có tiền tố nhận dạng:
+ *
+ *   c<clickId>-u<userCode>-p<productId>-<source>-<campaign>
+ *
+ * Mỗi mảnh tự mô tả nên khi báo cáo sàn trả về `utm_content` (các mảnh nối
+ * bằng "-", đôi khi bị cắt bớt đuôi) vẫn tách ngược được: `c` cho lượt click,
+ * `u` cho người mua, `p` cho sản phẩm. Chỉ giữ [a-zA-Z0-9_] vì Shopee loại bỏ
+ * ký tự khác — đó cũng là lý do phải đối chiếu ở dạng đã chuẩn hóa.
+ */
+export function buildSubIdParts(params: SubIdParts): string[] {
+  const productId = String(params.productId ?? "").trim();
+  return [
+    cleanSubIdPart(`c${params.clickId}`, "click"),
+    ...(params.userCode ? [cleanSubIdPart(`u${params.userCode}`, "user")] : []),
+    ...(productId ? [cleanSubIdPart(`p${productId}`, "item")] : []),
+    cleanSubIdPart(params.source ?? "web", "web"),
+    cleanSubIdPart(params.campaign ?? "direct", "direct"),
+  ];
+}
+
+function buildSubId(params: SubIdParts): string {
+  return buildSubIdParts(params).join("-");
+}
+
+/** Tham số chung của mọi hàm dựng link mua. */
+interface BuildLinkParams extends SubIdParts {
   productUrl: string;
-  affiliateId: string;
-  clickId: string;
-  source?: string;
-  campaign?: string;
-}): { affiliateUrl: string; subId: string } {
+}
+
+export function buildShopeeAffiliateUrl(
+  params: BuildLinkParams & { affiliateId: string },
+): { affiliateUrl: string; subId: string } {
   if (!/^[a-zA-Z0-9_-]{3,64}$/.test(params.affiliateId)) {
     throw new AppError(
       "AFFILIATE_NOT_CONFIGURED",
@@ -363,13 +386,7 @@ export function buildShopeeAffiliateUrl(params: {
  */
 async function buildShopeeBuyUrl(
   config: AppConfig,
-  params: {
-    productUrl: string;
-    affiliateId: string;
-    clickId: string;
-    source?: string;
-    campaign?: string;
-  },
+  params: BuildLinkParams & { affiliateId: string },
   fetcher: Fetcher,
 ): Promise<{ affiliateUrl: string; subId: string }> {
   const subId = buildSubId(params);
@@ -378,11 +395,9 @@ async function buildShopeeBuyUrl(
       config,
       {
         originUrl: params.productUrl,
-        subIds: [
-          cleanSubIdPart(`c${params.clickId}`, "click"),
-          cleanSubIdPart(params.source ?? "web", "web"),
-          cleanSubIdPart(params.campaign ?? "direct", "direct"),
-        ],
+        // Shopee nhận tối đa 5 mảnh và nối lại thành `utm_content` trong báo
+        // cáo — đúng thứ tự buildSubIdParts nên tách ngược được khi đối soát.
+        subIds: buildSubIdParts(params).slice(0, 5),
       },
       fetcher,
     );
@@ -448,12 +463,7 @@ function lazadaProgramAffiliateId(config: AppConfig): string {
 
 export function buildLazadaAffiliateUrl(
   config: AppConfig,
-  params: {
-    productUrl: string;
-    clickId: string;
-    source?: string;
-    campaign?: string;
-  },
+  params: BuildLinkParams,
 ): { affiliateUrl: string; subId: string } {
   const masterLink = configuredLazadaMasterLink(config);
   if (!masterLink) {
@@ -479,29 +489,19 @@ export function buildLazadaAffiliateUrl(
     "sub_aff_id",
     cleanSubIdPart(params.source ?? "shoptik", "shoptik"),
   );
-  affiliateUrl.searchParams.set(
-    "sub_id1",
-    cleanSubIdPart(`c${params.clickId}`, "click"),
-  );
-  affiliateUrl.searchParams.set(
-    "sub_id2",
-    cleanSubIdPart(params.source ?? "web", "web"),
-  );
-  affiliateUrl.searchParams.set(
-    "sub_id3",
-    cleanSubIdPart(params.campaign ?? "direct", "direct"),
-  );
+  // Lazada tách sub_id thành từng ô riêng: rải đúng các mảnh đã dựng
+  // (c<clickId>, u<userCode>, p<productId>, source, campaign).
+  buildSubIdParts(params)
+    .slice(0, 4)
+    .forEach((part, index) => {
+      affiliateUrl.searchParams.set(`sub_id${index + 1}`, part);
+    });
   return { affiliateUrl: affiliateUrl.toString(), subId };
 }
 
 async function buildTikTokBuyUrl(
   config: AppConfig,
-  params: {
-    productUrl: string;
-    clickId: string;
-    source?: string;
-    campaign?: string;
-  },
+  params: BuildLinkParams,
   fetcher: Fetcher,
 ): Promise<{ affiliateUrl: string; subId: string }> {
   const subId = buildSubId(params);
@@ -571,12 +571,7 @@ function findAffiliateUrl(payload: unknown): string | undefined {
 async function buildPartnerAffiliateUrl(
   config: AppConfig,
   platform: Exclude<ProductPlatform, "SHOPEE">,
-  params: {
-    productUrl: string;
-    clickId: string;
-    source?: string;
-    campaign?: string;
-  },
+  params: BuildLinkParams,
   fetcher: Fetcher,
 ): Promise<{ affiliateUrl: string; subId: string }> {
   const integration = integrationConfig(config, platform);
@@ -718,9 +713,19 @@ export async function createPurchaseIntent(
   const clickId = randomClickId();
   const source = params.source ?? "web";
   const campaign = params.campaign ?? "direct";
+  // Mã định danh cố định của người mua: nhờ nó mà báo cáo sàn vẫn chỉ đúng
+  // chủ đơn kể cả khi mã lượt click trong Sub ID bị sàn cắt bớt.
+  const trackingCode = await query<{ tracking_code: string }>(
+    db,
+    "SELECT tracking_code FROM users WHERE id = $1",
+    [params.userId],
+  );
+  const userCode = trackingCode.rows[0]?.tracking_code;
   const buildParams = {
     productUrl: resolved.normalizedUrl,
     clickId,
+    ...(userCode ? { userCode } : {}),
+    productId: params.product.productId,
     source,
     campaign,
   };

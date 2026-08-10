@@ -43,6 +43,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   CONTENT_ITEM_UPDATED: "Sửa nội dung",
   CONTENT_ITEM_DELETED: "Xóa nội dung",
   ORDERS_IMPORTED: "Nhập báo cáo đơn hàng",
+  PLATFORM_SYNC_CONFIG_UPDATED: "Đổi cấu hình đồng bộ sàn",
+  PLATFORM_SYNC_RUN: "Chạy đồng bộ báo cáo sàn",
   TICKET_STATUS_CHANGED: "Cập nhật yêu cầu hỗ trợ",
   USER_CREATED_BY_ADMIN: "Tạo tài khoản người dùng",
   USER_DELETED: "Xóa tài khoản người dùng",
