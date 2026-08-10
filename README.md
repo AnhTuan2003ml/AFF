@@ -1,149 +1,107 @@
-# ShopTik
+# ShopTik — Nền tảng hoàn tiền Affiliate đa sàn
 
-MVP máy chủ web cho hành trình: đăng ký bằng email → dán link sản phẩm → xem ảnh, giá và tiền hoàn dự kiến → bấm Mua ngay qua Affiliate → theo dõi đơn → rút tiền.
+ShopTik là MVP web hoàn tiền (cashback) cho người mua hàng trên **Shopee / TikTok Shop / Lazada**:
+người dùng dán link sản phẩm → xem tiền hoàn dự kiến → bấm Mua ngay qua link Affiliate →
+hệ thống tự đối soát đơn với sàn → cộng tiền vào ví → rút về tài khoản ngân hàng.
 
-## Luồng mua hoàn tiền
+> 📚 **Người mới bắt đầu ở đây:** đọc [`docs/README.md`](docs/README.md) — bộ tài liệu đầy đủ
+> (tổng quan, luồng nghiệp vụ, cấu trúc mã nguồn, CSDL, cài đặt, API, quy ước).
+> AI/agent làm việc với repo: xem thêm [`CLAUDE.md`](CLAUDE.md) (bản đồ dự án cô đọng).
 
-1. Dán link sản phẩm tại `/app` → bấm **Tra cứu** → `POST /api/v1/products/preview`
-   trả tên, ảnh, giá gốc và tiền hoàn dự kiến kèm `previewId` (không ghi DB).
-2. Bấm **Mua ngay** → `POST /api/v1/products/purchase` đổi `previewId` lấy
-   `buyUrl = /go/:clickId` (lúc này mới tạo bản ghi `affiliate_links`).
-3. `/go/:clickId` ghi nhận click rồi chuyển hướng sang link Affiliate của sàn.
+## Luồng nghiệp vụ trong 30 giây
 
-Chi tiết kiến trúc dành cho dev/AI: xem `CLAUDE.md`.
-
-## Cấu trúc chính
-
-- `src/auth`: phiên đăng nhập, CSRF và phân quyền.
-- `src/routes`: web người dùng (`app.ts`), API JSON (`api/`), trung tâm vận hành (`backoffice.ts`, `admin-*.ts`).
-- `src/services`: OTP/email, Affiliate, tra cứu sản phẩm, đơn, ledger, ngân hàng và rút tiền.
-- `migrations`: cấu trúc PostgreSQL, trigger tạo ví và kiểm tra bút toán cân bằng.
-- `views` + `public`: giao diện server-rendered responsive, không phụ thuộc CDN.
-- `docs/openapi.yaml`: hợp đồng API MVP.
-- `tests`: kiểm tra mã hóa, mật khẩu, link, template và schema PostgreSQL.
-- `infra`: cấu hình reverse proxy mẫu.
-
-Google Login chưa được kích hoạt. Bảng `auth_identities` và ranh giới module đã sẵn để bổ sung sau mà không thay đổi mô hình người dùng hiện tại.
-
-## Chạy local
-
-Yêu cầu: Node.js 22+, PostgreSQL 16+ và Redis 7+.
-
-1. Kiểm tra `.env`, cấu hình PostgreSQL, SMTP và Shopee Affiliate.
-2. Không ghi đè các khóa bí mật hoặc danh sách admin đang có.
-3. Cài thư viện: `npm ci`.
-4. Tạo bảng: `npm run db:migrate`.
-5. Tạo dữ liệu nội dung mẫu: `npm run db:seed`.
-6. Đặt tạm `ADMIN_INITIAL_PASSWORD` trong môi trường rồi tạo quản trị:
-   `ADMIN_INITIAL_PASSWORD='MatKhauManh123!' npm run admin:create -- admin@example.com`.
-   Xóa biến này ngay sau khi tạo xong.
-7. Chạy: `npm run dev`.
-
-Mở `http://localhost:3000`. Khu vận hành ở `/backoffice`.
-
-## Dữ liệu sản phẩm và hoa hồng
-
-Nguồn chính thức là **Shopee Affiliate Open API** (cùng cơ chế các nền tảng
-hoàn tiền lớn sử dụng). Đăng nhập [affiliate.shopee.vn](https://affiliate.shopee.vn)
-→ Công cụ → API để lấy AppId và Secret (tài khoản Affiliate phải được duyệt
-quyền API), rồi đặt:
-
-```env
-SHOPEE_OPEN_API_APP_ID=15394330000
-SHOPEE_OPEN_API_SECRET=chuoi-secret-shopee-cap
+```
+Dán link sản phẩm ──▶ Xem tiền hoàn (preview, không ghi DB)
+        │
+        ▼
+   Bấm "Mua ngay" ──▶ Tạo link Affiliate + clickId ──▶ Redirect sang sàn
+        │
+        ▼
+  Đơn về từ sàn (tự động sync báo cáo Shopee / import CSV thủ công)
+        │
+        ▼
+  Đối soát Sub ID ──▶ Gán đơn cho đúng người ──▶ Ghi bút toán ledger
+        │
+        ▼
+  Ví CHỜ ──(hết hạn giữ tiền)──▶ Ví KHẢ DỤNG ──▶ Rút tiền về ngân hàng
 ```
 
-Khi có 2 giá trị này: tra cứu trả tên, ảnh, giá và tỷ lệ hoa hồng thật từ
-`productOfferV2`; nút Mua tạo short link chính thức `generateShortLink` kèm
-subIds (`cClickId-source-campaign`) để đối soát đơn. Nếu chưa có, hệ thống
-lùi về đọc trang công khai (Shopee thường chặn bot nên ảnh/giá có thể trống).
+Chi tiết từng bước (file nào xử lý, đối soát ra sao): [`docs/02-luong-nghiep-vu.md`](docs/02-luong-nghiep-vu.md).
 
-Tùy chọn bổ sung — endpoint nội bộ trả `productName`, `imageUrl`, `priceVnd`,
-`affiliateCommissionVnd`:
+## Công nghệ
 
-```env
-SHOPEE_PRODUCT_API_URL=https://api-noi-bo.example.com/shopee/product
-SHOPEE_PRODUCT_API_TOKEN=token-cua-he-thong
-SHOPEE_DEFAULT_COMMISSION_RATE_BPS=0
-SHOPEE_PRODUCT_LOOKUP_TIMEOUT_MS=8000
-```
+| Thành phần | Lựa chọn |
+| --- | --- |
+| Runtime | Node.js 22+, TypeScript ESM (import nội bộ luôn có đuôi `.js`) |
+| Web framework | Fastify 5 (helmet, rate-limit, cookie, CSRF) |
+| Giao diện | Server-rendered Nunjucks + CSS/JS thuần trong `public/` (không CDN, CSP `self`) |
+| CSDL | PostgreSQL 16+ (migration SQL thuần), Redis 7+ |
+| Kiểm thử | Vitest + PGlite (không cần Postgres thật khi chạy test) |
+| Tích hợp sàn | Shopee Affiliate Open API (chính), TikTok Shop / Lazada Open API |
 
-Không đặt tỷ lệ mặc định nếu chưa được sàn xác nhận. Khi API chưa trả hoa hồng,
-giao diện vẫn cho mua nhưng hiển thị “Đang cập nhật”, không tự bịa số tiền.
+## Chạy local nhanh
 
-## Chạy production trên Windows
-
-Production không chạy bằng `npm run dev`. Cần có domain HTTPS đã trỏ qua
-reverse proxy hoặc Cloudflare Tunnel và Docker Desktop đang hoạt động.
-
-Mở PowerShell tại thư mục dự án rồi chạy:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\setup-production.ps1
-```
-
-Script sẽ yêu cầu domain HTTPS, Gmail gửi OTP, App Password, Affiliate ID và
-tài khoản quản trị đầu tiên. Sau đó script tự:
-
-- tạo các khóa bí mật ngẫu nhiên đúng chuẩn;
-- sao lưu `.env` hiện tại rồi tạo `.env` production;
-- build image production;
-- khởi động PostgreSQL và Redis không mở cổng ra Internet;
-- chạy migration trước khi web được phép khởi động;
-- tạo dữ liệu nền và tài khoản quản trị;
-- kiểm tra endpoint sẵn sàng.
-
-Các lần chạy sau chỉ cần:
-
-```powershell
-docker compose up -d --build web
-```
-
-Xem trạng thái và log:
-
-```powershell
-docker compose ps
-docker compose logs -f web
-```
-
-Không hạ yêu cầu HTTPS hoặc đổi cookie production sang không bảo mật để chạy
-localhost. Nếu mới kiểm tra trên máy chưa có domain, giữ
-`NODE_ENV=development` nhưng vẫn có thể đặt `EMAIL_MODE=smtp` để gửi OTP thật.
-
-## Gửi OTP bằng Gmail
-
-Không dùng mật khẩu đăng nhập Gmail thông thường. Bật xác minh 2 bước, tạo App Password, rồi đặt:
-
-```env
-EMAIL_MODE=smtp
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=mail-gui@example.com
-SMTP_PASS=mat-khau-ung-dung
-SMTP_FROM_EMAIL=mail-gui@example.com
-```
-
-Với nhà cung cấp khác, thay host, port và chế độ TLS theo tài liệu của nhà cung cấp. Trước production cần cấu hình SPF, DKIM và DMARC cho tên miền gửi.
-
-## Nguyên tắc production
-
-- Chỉ dùng HTTPS; đặt `NODE_ENV=production`, `APP_ORIGIN` đúng domain và `TRUST_PROXY=true` sau reverse proxy tin cậy.
-- PostgreSQL và Redis không mở trực tiếp ra Internet.
-- Quản lý secret bằng secret manager; không đưa `.env` vào Git hoặc ZIP chia sẻ công khai.
-- Tài khoản ngân hàng được mã hóa AES-256-GCM và chỉ hiển thị 4 số cuối.
-- Máy chủ lưu phiên bằng token ngẫu nhiên đã băm; cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
-- Mật khẩu dùng Argon2id; OTP có hạn dùng, giới hạn lần gửi/lần thử và không lưu dạng rõ.
-- Tiền chỉ thay đổi qua bút toán cân bằng. Không sửa trực tiếp số dư.
-- Chưa mở chi tiền tự động khi chưa có hợp đồng, khóa production, webhook và đối soát thật với đối tác chi hộ.
-
-## Kiểm tra trước bàn giao
+Yêu cầu: Node.js 22+, PostgreSQL 16+, Redis 7+.
 
 ```bash
-npm run typecheck
-npm test
-npm run build
+# 1. Cài thư viện
+npm ci
+
+# 2. Tạo file .env (xem danh sách biến ở docs/05-cai-dat-va-van-hanh.md)
+#    Tối thiểu: DATABASE_URL, APP_SECRET, OTP_PEPPER, IP_HASH_PEPPER,
+#    FIELD_ENCRYPTION_KEY (base64 32 byte), TERMS_VERSION, PRIVACY_VERSION.
+
+# 3. Tạo bảng + dữ liệu mẫu
+npm run db:migrate
+npm run db:seed
+
+# 4. Tạo tài khoản quản trị (xóa biến ADMIN_INITIAL_PASSWORD ngay sau đó)
+ADMIN_INITIAL_PASSWORD='MatKhauManh123!' npm run admin:create -- admin@example.com
+
+# 5. Chạy dev
+npm run dev
 ```
 
-Đặc tả API tổng quan nằm tại `docs/openapi.yaml`.
+Mở `http://localhost:3000` — trang người dùng ở `/app`, trung tâm vận hành ở `/backoffice`.
+Ở chế độ dev, OTP/email in ra console (`EMAIL_MODE=console`), không cần SMTP.
+
+## Lệnh thường dùng
+
+```bash
+npm run dev            # chạy dev (tsx watch)
+npm run typecheck      # tsc --noEmit
+npm test               # vitest run (DB test dùng PGlite)
+npm run db:migrate     # chạy migrations
+npm run db:seed        # dữ liệu nội dung mẫu
+npm run build          # build production vào dist/
+npm run admin:create   # tạo tài khoản admin
+npm run data:clear-demo        # dọn dữ liệu demo
+npm run shopee:report:test     # thử kéo báo cáo chuyển đổi Shopee
+```
+
+## Tài liệu
+
+| Tài liệu | Nội dung |
+| --- | --- |
+| [`docs/01-tong-quan.md`](docs/01-tong-quan.md) | Bài toán, mô hình chia tiền, kiến trúc tổng thể |
+| [`docs/02-luong-nghiep-vu.md`](docs/02-luong-nghiep-vu.md) | Luồng mua hoàn tiền end-to-end, đối soát đơn, giải ngân |
+| [`docs/03-cau-truc-ma-nguon.md`](docs/03-cau-truc-ma-nguon.md) | Bản đồ thư mục, routes, services, views |
+| [`docs/04-du-lieu-va-ledger.md`](docs/04-du-lieu-va-ledger.md) | Schema CSDL, mô hình ledger kế toán kép, 4 ví |
+| [`docs/05-cai-dat-va-van-hanh.md`](docs/05-cai-dat-va-van-hanh.md) | Biến môi trường, SMTP/OTP, tích hợp sàn, production |
+| [`docs/06-api-va-routes.md`](docs/06-api-va-routes.md) | Toàn bộ endpoint API + trang web |
+| [`docs/07-quy-uoc-phat-trien.md`](docs/07-quy-uoc-phat-trien.md) | Quy ước code, tiền tệ, bảo mật, kiểm thử |
+
+## Nguyên tắc bất di bất dịch
+
+- **Tiền VND là số nguyên**, hoa hồng tính bằng bps (1/10000), làm tròn xuống.
+- **Mọi thay đổi số dư đi qua bút toán ledger cân bằng** DEBIT/CREDIT — không bao giờ sửa trực tiếp số dư.
+- **Không bịa số tiền hoàn** khi sàn chưa trả hoa hồng — hiển thị "Đang cập nhật".
+- **Redirect Affiliate phải qua allowlist host** (`isSafeAffiliateRedirect`).
+- **Không suy ra người mua từ email** — chỉ đối soát qua clickId / Sub ID / tracking code.
+- Thông báo lỗi cho người dùng bằng tiếng Việt, qua `AppError(code, message, statusCode)`.
+
+## Kiểm tra trước khi bàn giao
+
+```bash
+npm run typecheck && npm test && npm run build
+```
