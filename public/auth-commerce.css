@@ -94,11 +94,25 @@
   color: #e44a2b;
 }
 
+/* tokens.css có rule chung `h1,h2,h3,h4,strong,b { color: var(--text) }`
+   khiến <b>SHOP</b> ăn màu mực tối và chìm vào ảnh nền tối — phải khai báo
+   màu trắng trực tiếp, không dựa vào kế thừa từ .auth-commerce-brand. */
+.auth-commerce-brand b {
+  color: #fff;
+}
+
+/* Bóng chữ mỏng giữ wordmark đọc được kể cả trên vùng sáng của ảnh. */
+.auth-commerce-brand b,
+.auth-commerce-brand strong {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 4px 14px rgba(0, 0, 0, .35);
+}
+
 .auth-commerce-brand small {
   position: absolute;
   top: calc(100% + 7px);
   left: 1px;
-  color: rgba(255, 255, 255, .58);
+  color: rgba(255, 255, 255, .78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
   font: 750 8px/1 "Segoe UI", Arial, sans-serif;
   letter-spacing: .34em;
 }
@@ -437,4 +451,65 @@
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ======================================================================
+   Checkbox đồng ý điều khoản (trang Tạo tài khoản) — làm lại theo hệ
+   thương hiệu: ô 20px viền control rõ, tick trắng trên nền cam khi chọn,
+   focus ring mềm; căn thẳng tâm với dòng chữ đầu tiên.
+   ====================================================================== */
+
+.auth-commerce .check-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.auth-commerce .check-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid #96938c;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.auth-commerce .check-row input[type="checkbox"]:hover {
+  border-color: #c9371d;
+}
+
+.auth-commerce .check-row input[type="checkbox"]:checked {
+  border-color: #c9371d;
+  background: #c9371d;
+}
+
+/* Tick vẽ lại theo kích thước ô 20px (tick gốc canh cho ô 16px bị lệch). */
+.auth-commerce .check-row input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  background: transparent;
+  transform: rotate(45deg);
+}
+
+.auth-commerce .check-row input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 55, 29, .25);
+}
+
+.auth-commerce .check-row input[type="checkbox"].field-invalid,
+.auth-commerce .check-row input[type="checkbox"][aria-invalid="true"] {
+  border-color: #c9371d;
+  box-shadow: 0 0 0 3px rgba(201, 55, 29, .15);
+}
+
+.auth-commerce .check-row > span {
+  font-size: 13.5px;
+  line-height: 1.55;
 }

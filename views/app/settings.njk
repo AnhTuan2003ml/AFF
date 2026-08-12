@@ -13,7 +13,7 @@
   <div class="settings-grid">
     <section class="panel">
       <header class="panel-heading"><div><span class="eyebrow">HỒ SƠ</span><h2>Thông tin cá nhân</h2></div></header>
-      <form method="post" action="/app/settings/profile" class="stack-form" data-validate-form novalidate>
+      <form method="post" action="/app/settings/profile" class="stack-form" data-validate-form data-disable-until-dirty novalidate>
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         <label for="settings-fullname-input">Họ và tên
           <input id="settings-fullname-input" type="text" name="fullName" value="{{ currentUser.fullName }}" minlength="2" maxlength="100" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">

@@ -1,0 +1,78 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import status_badge, ticket_type_label %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <h1>Ticket #{{ ticket.id | truncate(8, true, '') }}</h1>
+      <p><a class="st-back-link" href="/backoffice/support">← Quay lại danh sách</a></p>
+    </div>
+  </section>
+
+  <div class="st-ticket-detail">
+    <section class="panel st-ticket-info">
+      <header class="panel-heading"><div><h2>{{ ticket.subject }}</h2></div></header>
+      <dl class="st-ticket-facts">
+        <div><dt>Người gửi</dt><dd>{{ ticket.full_name }}<br><small>{{ ticket.email }}</small></dd></div>
+        <div><dt>Loại yêu cầu</dt><dd>{{ ticket_type_label(ticket.type) }}</dd></div>
+        <div><dt>Trạng thái</dt><dd>{{ status_badge(ticket.status) }}</dd></div>
+        <div>
+          <dt>SLA</dt>
+          <dd>
+            {% if ticket.overdue %}<b class="st-ticket-sla-overdue">Quá hạn ({{ ticket.sla_at | datetime }})</b>
+            {% else %}{{ ticket.sla_at | datetime }}{% endif %}
+          </dd>
+        </div>
+        {% if ticket.related_order_id %}
+          <div><dt>Đơn liên quan</dt><dd>#{{ ticket.related_order_id }}</dd></div>
+        {% endif %}
+        <div><dt>Gửi lúc</dt><dd>{{ ticket.created_at | datetime }}</dd></div>
+        <div><dt>Cập nhật</dt><dd>{{ ticket.updated_at | datetime }}</dd></div>
+      </dl>
+
+      {% if currentUser.role != 'AUDITOR' %}
+        <form method="post" action="/backoffice/support/{{ ticket.id }}/status" class="row-actions st-ticket-status-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label class="sr-only" for="ticket-status-select">Đổi trạng thái ticket</label>
+          <select id="ticket-status-select" name="status" aria-label="Đổi trạng thái ticket">
+            <option value="OPEN" {% if ticket.status == 'OPEN' %}selected{% endif %}>Mới tiếp nhận</option>
+            <option value="IN_PROGRESS" {% if ticket.status == 'IN_PROGRESS' %}selected{% endif %}>Đang xử lý</option>
+            <option value="WAITING_PARTNER" {% if ticket.status == 'WAITING_PARTNER' %}selected{% endif %}>Chờ đối tác</option>
+            <option value="RESOLVED" {% if ticket.status == 'RESOLVED' %}selected{% endif %}>Đã giải quyết</option>
+            <option value="CLOSED" {% if ticket.status == 'CLOSED' %}selected{% endif %}>Đã đóng</option>
+          </select>
+          <button class="button button-primary" type="submit">Lưu trạng thái</button>
+        </form>
+      {% endif %}
+    </section>
+
+    <section class="panel st-ticket-thread">
+      <header class="panel-heading"><div><h2>Trao đổi với người dùng</h2></div></header>
+      <ol class="st-thread">
+        <li class="st-thread-item st-thread-user">
+          <b>{{ ticket.email }}</b>
+          <p>{{ ticket.description }}</p>
+          <time>{{ ticket.created_at | datetime }}</time>
+        </li>
+        {% for reply in replies %}
+          <li class="st-thread-item {{ 'st-thread-staff' if reply.author_role == 'STAFF' else 'st-thread-user' }}">
+            <b>{{ reply.author_email }}{% if reply.author_role == 'STAFF' %} · Nhân viên{% endif %}</b>
+            <p>{{ reply.body }}</p>
+            <time>{{ reply.created_at | datetime }}</time>
+          </li>
+        {% endfor %}
+      </ol>
+
+      {% if currentUser.role != 'AUDITOR' %}
+        <form method="post" action="/backoffice/support/{{ ticket.id }}/reply" class="stack-form st-thread-form" data-validate-form novalidate>
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label for="ticket-reply-input">Phản hồi người dùng
+            <textarea id="ticket-reply-input" name="body" rows="3" minlength="2" maxlength="3000" required data-required-message="Vui lòng nhập nội dung phản hồi."></textarea>
+            <small class="field-error" id="ticket-reply-input-error" hidden></small>
+          </label>
+          <button class="button button-primary" type="submit" data-submit-button>Gửi phản hồi</button>
+        </form>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

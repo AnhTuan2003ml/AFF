@@ -2,27 +2,39 @@
 {% from "partials/macros.njk" import empty_state %}
 
 {% block app_content %}
-  <section class="page-heading page-heading-refined">
-    <div>
-      <span class="eyebrow">TÀI CHÍNH</span>
-      <h1>Số dư hoàn tiền</h1>
-      <p>Theo dõi số dư khả dụng, lệnh rút đang xử lý và toàn bộ biến động ví trên cùng một màn hình.</p>
-    </div>
-  </section>
-
   <section class="wallet-hero wallet-hero-wallet" aria-label="Số dư có thể rút">
     <div>
       <span>Có thể rút</span>
       <strong>{{ balances.available | vnd }}</strong>
       <small>Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.</small>
     </div>
-    <a class="button button-primary" href="/app/withdrawals">Rút tiền <span aria-hidden="true">→</span></a>
+    {% if balances.available > 0 %}
+      <a class="button button-primary" href="/app/withdrawals">Rút tiền <span aria-hidden="true">→</span></a>
+    {% else %}
+      <a class="button" href="/app/withdrawals">Xem điều kiện rút tiền</a>
+    {% endif %}
   </section>
 
-  <section class="balance-grid balance-grid-3 balance-grid-refined">
-    <article class="balance-card"><span>Đang chờ đối soát</span><strong>{{ balances.pending | vnd }}</strong><small>Đơn chưa được đối tác duyệt</small></article>
-    <article class="balance-card"><span>Đang xử lý rút</span><strong>{{ balances.held | vnd }}</strong><small>Đã tạo yêu cầu, chờ chuyển khoản</small></article>
-    <article class="balance-card"><span>Đã nhận</span><strong>{{ balances.paid | vnd }}</strong><small>Tổng đã chuyển vào ngân hàng</small></article>
+  {# Dòng tiền hoàn trình bày theo tiến trình thay vì 3 card trắng lặp
+     nhau: Đang chờ → Có thể rút → Đã nhận, mỗi bước một màu ngữ nghĩa. #}
+  <section class="st-money-flow" aria-label="Dòng tiền hoàn">
+    <article class="st-flow-step st-flow-wait">
+      <span>Đang chờ đối soát</span>
+      <strong>{{ balances.pending | vnd }}</strong>
+      <small>Đơn chưa được sàn duyệt</small>
+    </article>
+    <i class="st-flow-arrow" aria-hidden="true">→</i>
+    <article class="st-flow-step st-flow-ready">
+      <span>Có thể rút</span>
+      <strong>{{ balances.available | vnd }}</strong>
+      <small>{% if balances.held > 0 %}Lệnh rút đang xử lý: {{ balances.held | vnd }}{% else %}Sẵn sàng tạo lệnh rút{% endif %}</small>
+    </article>
+    <i class="st-flow-arrow" aria-hidden="true">→</i>
+    <article class="st-flow-step st-flow-paid">
+      <span>Đã nhận</span>
+      <strong>{{ balances.paid | vnd }}</strong>
+      <small>Tổng đã chuyển vào ngân hàng</small>
+    </article>
   </section>
 
   <section class="panel wallet-ledger-panel">

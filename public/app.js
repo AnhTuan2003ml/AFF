@@ -115,6 +115,12 @@
       button.removeAttribute("aria-busy");
       button.innerHTML = initialHtml;
     });
+    // Hàm này chạy ở pageshow (SAU khởi tạo form) và vừa bật lại mọi nút —
+    // các form [data-validate-form] phải tính lại trạng thái khóa của nút
+    // gửi, không thì nút luôn bấm được dù trường bắt buộc còn trống.
+    document
+      .querySelectorAll("[data-validate-form]")
+      .forEach((form) => form.dispatchEvent(new CustomEvent("st:revalidate")));
   };
 
   const sidebar = document.querySelector("[data-sidebar]");
@@ -149,6 +155,15 @@
 
   const applyTheme = (theme) => {
     if (theme !== "light" && theme !== "dark") return;
+    // Đổi theme không được làm trang nhảy vị trí cuộn. Hai lớp bảo vệ:
+    // 1) Đóng băng mọi transition/animation trong lúc swap (class
+    //    st-theme-switching + CSS trong app-shell.css) — hàng trăm phần tử
+    //    còn transition mặc định "all" sẽ animate cả kích thước khi màu
+    //    đổi, làm scroll trôi dần trên trang dài (lỗi đo được ở Quản trị).
+    // 2) Khóa vị trí cuộn và khôi phục qua vài khung hình liên tiếp.
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    root.classList.add("st-theme-switching");
     root.setAttribute("data-theme", theme);
     document
       .querySelectorAll("[data-theme-toggle]")
@@ -157,12 +172,37 @@
         b.setAttribute("aria-pressed", dark);
         b.setAttribute("aria-checked", dark);
       });
+    const restore = () => window.scrollTo(scrollX, scrollY);
+    restore();
+    requestAnimationFrame(() => {
+      restore();
+      requestAnimationFrame(() => {
+        restore();
+        root.classList.remove("st-theme-switching");
+      });
+    });
+    // Bảo hiểm cho các cú scroll muộn (trình duyệt kéo phần tử đang focus
+    // vào tầm nhìn sau khi recalc xong toàn bộ stylesheet).
+    window.setTimeout(restore, 120);
+    window.setTimeout(restore, 320);
+    // Nhãn của nút theme mô tả HÀNH ĐỘNG sắp tới.
+    const nextLabel =
+      theme === "dark" ? "Bật giao diện sáng" : "Bật giao diện tối";
+    document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
+      b.setAttribute("aria-label", nextLabel);
+      b.setAttribute("title", nextLabel);
+    });
   };
 
   document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
     const dark = String(isDarkNow());
     button.setAttribute("aria-pressed", dark);
     button.setAttribute("aria-checked", dark);
+    const initialLabel = isDarkNow()
+      ? "Bật giao diện sáng"
+      : "Bật giao diện tối";
+    button.setAttribute("aria-label", initialLabel);
+    button.setAttribute("title", initialLabel);
     button.addEventListener("click", () => {
       const next = isDarkNow() ? "light" : "dark";
       applyTheme(next);
@@ -404,8 +444,17 @@
         }
       });
       field.addEventListener("change", updateSubmitState);
+      // Rời ô chỉ báo lỗi ĐỊNH DẠNG khi người dùng đã nhập nội dung; ô còn
+      // trống chưa đụng tới thì không đỏ (lỗi "bắt buộc" chỉ hiện lúc bấm
+      // nút gửi). Tránh cảnh vừa click từ Email sang Mật khẩu đã đỏ cả hai.
       field.addEventListener("blur", () => {
-        if (!field.checkValidity()) showFieldError(field, fieldErrorMessage(field));
+        const hasValue =
+          field instanceof HTMLInputElement && field.type === "checkbox"
+            ? field.checked
+            : field.value.trim().length > 0;
+        if (hasValue && !field.checkValidity()) {
+          showFieldError(field, fieldErrorMessage(field));
+        }
       });
     });
     updateSubmitState();
@@ -416,6 +465,41 @@
       requiredFields.forEach((field) => showFieldError(field, ""));
       window.setTimeout(updateSubmitState, 0);
     });
+
+    // resetSubmitButtons (pageshow) bật lại nút gửi — tính lại ngay.
+    form.addEventListener("st:revalidate", updateSubmitState);
+
+    // Form có [data-disable-until-dirty]: nút gửi chỉ bật khi dữ liệu THẬT
+    // SỰ khác giá trị ban đầu (vd. "Lưu thay đổi" ở trang Tài khoản).
+    if (form.hasAttribute("data-disable-until-dirty")) {
+      const snapshot = () =>
+        Array.from(form.elements)
+          .filter(
+            (el) =>
+              (el instanceof HTMLInputElement ||
+                el instanceof HTMLSelectElement ||
+                el instanceof HTMLTextAreaElement) &&
+              el.name &&
+              el.type !== "hidden",
+          )
+          .map((el) =>
+            el instanceof HTMLInputElement && el.type === "checkbox"
+              ? `${el.name}=${el.checked}`
+              : `${el.name}=${el.value}`,
+          )
+          .join("|");
+      const initial = snapshot();
+      const updateDirty = () => {
+        if (!(submit instanceof HTMLButtonElement)) return;
+        if (snapshot() === initial) submit.disabled = true;
+      };
+      updateDirty();
+      form.addEventListener("input", () => {
+        updateSubmitState();
+        updateDirty();
+      });
+      form.addEventListener("st:revalidate", updateDirty);
+    }
 
     form.addEventListener("submit", (event) => {
       let firstInvalid = null;
@@ -762,6 +846,7 @@
   const closeSupportFab = () => {
     if (supportFabPanel instanceof HTMLElement) supportFabPanel.hidden = true;
     supportFabTrigger?.setAttribute("aria-expanded", "false");
+    supportFabTrigger?.setAttribute("aria-label", "Mở hỗ trợ nhanh");
   };
   let isDraggingFab = false;
   let dragMovedFab = false;
@@ -809,6 +894,10 @@
     const willOpen = supportFabPanel.hidden;
     supportFabPanel.hidden = !willOpen;
     supportFabTrigger.setAttribute("aria-expanded", String(willOpen));
+    supportFabTrigger.setAttribute(
+      "aria-label",
+      willOpen ? "Đóng hỗ trợ nhanh" : "Mở hỗ trợ nhanh",
+    );
   });
   supportFabTrigger?.addEventListener("pointercancel", stopFabDrag);
   supportFabDismiss?.addEventListener("click", closeSupportFab);
@@ -896,144 +985,27 @@
     });
   });
 
-  // Gợn mặt nước dùng cho TOÀN SITE (app, quản trị, trang công khai) — trước
-  // đây chỉ bật khi có .dv13-commerce-shell (chỉ tồn tại ở /app/*) nên
-  // desktop quản trị/trang công khai không có hiệu ứng gì. Gắn lớp hiệu ứng
-  // thẳng vào <body> (không phải shell) để tránh bị "nhốt" trong ngữ cảnh
-  // xếp lớp riêng (isolation:isolate) của .commerce-hero — cùng lỗi từng
-  // gặp với thanh menu ghim. Lớp hiệu ứng không nhận chuột; rê chuột tạo vệt
-  // nhỏ, chạm nền tạo vòng lớn và nút có vòng phản hồi nằm gọn bên trong. Tự
-  // tắt khi hệ điều hành yêu cầu giảm chuyển động.
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-  if (!reduceMotion) {
-    const waterLayer = document.createElement("div");
-    waterLayer.className = "commerce-water-layer";
-    waterLayer.setAttribute("aria-hidden", "true");
-    body.appendChild(waterLayer);
-
-    const animateRipple = (ripple, keyframes, options) => {
-      if (typeof ripple.animate !== "function") {
-        ripple.remove();
-        return;
+  // Ảnh thẻ Khám phá: mục tiêu quảng cáo nên ảnh phải thấy trọn. Ảnh
+  // dọc/vuông (chiều cao ≥ 85% chiều rộng) chuyển sang object-fit:contain
+  // (class .is-contain) để không bị khung ngang cắt cụt; ảnh ngang giữ
+  // cover phủ kín khung.
+  document.querySelectorAll(".discover-card-media img").forEach((img) => {
+    if (!(img instanceof HTMLImageElement)) return;
+    const mark = () => {
+      if (
+        img.naturalWidth > 0 &&
+        img.naturalHeight >= img.naturalWidth * 0.85
+      ) {
+        img.classList.add("is-contain");
       }
-      ripple
-        .animate(keyframes, options)
-        .finished.catch(() => undefined)
-        .finally(() => ripple.remove());
     };
+    if (img.complete) mark();
+    else img.addEventListener("load", mark, { once: true });
+  });
 
-    const createWaterRipple = (x, y, kind, delay = 0) => {
-      const ripple = document.createElement("span");
-      ripple.className = `commerce-water-ripple commerce-water-ripple-${kind}`;
-      waterLayer.appendChild(ripple);
-      const base = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, -50%)`;
-      const isSplash = kind === "splash";
-      animateRipple(
-        ripple,
-        [
-          {
-            opacity: isSplash ? 0.72 : 0.42,
-            transform: `${base} scale(0.1)`,
-          },
-          {
-            opacity: isSplash ? 0.34 : 0.16,
-            offset: 0.52,
-            transform: `${base} scale(0.68)`,
-          },
-          { opacity: 0, transform: `${base} scale(1)` },
-        ],
-        {
-          duration: isSplash ? 1080 : 760,
-          delay,
-          easing: "cubic-bezier(.16,.78,.2,1)",
-          fill: "both",
-        },
-      );
-    };
-
-    const createSplash = (x, y) => {
-      createWaterRipple(x, y, "splash");
-      createWaterRipple(x, y, "splash", 105);
-      createWaterRipple(x, y, "splash", 210);
-    };
-
-    const createControlRipple = (target, x, y) => {
-      if (target.matches("[disabled], [aria-disabled='true']")) return;
-      // .commerce-water-control chỉ cần overflow:hidden để gợn sóng không
-      // tràn ra ngoài nút — KHÔNG được tự ý đổi position, vì nhiều nút (như
-      // nút Đóng của popup quảng cáo) đã dùng position:absolute để neo đúng
-      // góc; ép về relative sẽ làm nó rơi về đầu luồng tài liệu (nhảy sang
-      // góc trái). Chỉ thêm position:relative khi phần tử đang là static.
-      if (getComputedStyle(target).position === "static") {
-        target.style.position = "relative";
-      }
-      const rect = target.getBoundingClientRect();
-      const ripple = document.createElement("span");
-      ripple.className = "commerce-control-water-ripple";
-      target.classList.add("commerce-water-control");
-      target.appendChild(ripple);
-      const base = `translate3d(${Math.round(x - rect.left)}px, ${Math.round(y - rect.top)}px, 0) translate(-50%, -50%)`;
-      animateRipple(
-        ripple,
-        [
-          { opacity: 0.68, transform: `${base} scale(0.1)` },
-          { opacity: 0.28, offset: 0.46, transform: `${base} scale(10)` },
-          { opacity: 0, transform: `${base} scale(22)` },
-        ],
-        {
-          duration: 760,
-          easing: "cubic-bezier(.18,.72,.2,1)",
-          fill: "forwards",
-        },
-      );
-    };
-
-    const finePointer = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    ).matches;
-    let wakeFrame = 0;
-    let lastWakeAt = 0;
-    let lastWakeX = -100;
-    let lastWakeY = -100;
-
-    window.addEventListener(
-      "pointermove",
-      (event) => {
-        if (!finePointer || event.pointerType !== "mouse" || wakeFrame) return;
-        wakeFrame = window.requestAnimationFrame(() => {
-          wakeFrame = 0;
-          const now = performance.now();
-          const distance = Math.hypot(
-            event.clientX - lastWakeX,
-            event.clientY - lastWakeY,
-          );
-          if (now - lastWakeAt < 58 || distance < 14) return;
-          lastWakeAt = now;
-          lastWakeX = event.clientX;
-          lastWakeY = event.clientY;
-          createWaterRipple(event.clientX, event.clientY, "wake");
-        });
-      },
-      { passive: true },
-    );
-
-    document.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (!(event.target instanceof Element)) return;
-        const control = event.target.closest("button, a, [role='button']");
-        if (control instanceof HTMLElement) {
-          createControlRipple(control, event.clientX, event.clientY);
-          createSplash(event.clientX, event.clientY);
-          return;
-        }
-        if (!event.target.closest("input, select, textarea, label")) {
-          createSplash(event.clientX, event.clientY);
-        }
-      },
-      { passive: true },
-    );
-  }
+  // Hiệu ứng gợn nước toàn site đã bị gỡ theo kết luận nghiệm thu:
+  // (1) chèn phần tử động vào DOM ở mỗi lần bấm (kể cả nút đổi theme) gây
+  // rối mắt và góp phần làm trôi vị trí cuộn; (2) tự đổi position của nút
+  // đang bấm. Phản hồi thao tác giờ chỉ dùng đổi màu nền/viền 150ms trong
+  // CSS (app-shell.css).
 })();

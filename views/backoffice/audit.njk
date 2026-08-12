@@ -13,7 +13,7 @@
 
   <section class="admin-filter-bar">
     <form method="get" action="/backoffice/audit" class="admin-filters admin-filters-wrap">
-      <label class="admin-search-field">{{ icon("search") }}<input name="actor" value="{{ filters.actor }}" placeholder="Email người thao tác"></label>
+      <label class="admin-search-field">{{ icon("search") }}<input name="actor" value="{{ filters.actor }}" placeholder="Email người thao tác" aria-label="Email người thao tác"></label>
       <label><span>Nhóm hành động</span>
         <select name="targetType">
           <option value="ALL"{% if filters.targetType == 'ALL' %} selected{% endif %}>Tất cả</option>
@@ -30,7 +30,7 @@
           <option value="NEUTRAL"{% if filters.tone == 'NEUTRAL' %} selected{% endif %}>Cập nhật</option>
         </select>
       </label>
-      <label class="admin-date-range"><span>Từ</span><input type="date" name="dateFrom" value="{{ filters.dateFrom }}"><span>đến</span><input type="date" name="dateTo" value="{{ filters.dateTo }}"></label>
+      <label class="admin-date-range"><span>Từ</span><input type="date" name="dateFrom" value="{{ filters.dateFrom }}" aria-label="Lọc từ ngày"><span>đến</span><input type="date" name="dateTo" value="{{ filters.dateTo }}" aria-label="Lọc đến ngày"></label>
       <div class="admin-filters-actions">
         <button class="button button-dark" type="submit" data-submit-button>Lọc</button>
         <a class="button button-ghost" href="/backoffice/audit">Đặt lại</a>

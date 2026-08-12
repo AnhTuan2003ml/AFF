@@ -89,15 +89,19 @@
 
   const scrollToProductContext = () => {
     const isMobile = window.matchMedia("(max-width: 680px)").matches;
-    const anchor = isMobile ? platformTabs : buyFlow;
+    // Mobile: đưa NGƯỜI DÙNG THẲNG XUỐNG THẺ SẢN PHẨM vừa tra được (ảnh +
+    // giá + nút mua) — không dừng ở danh sách sàn, vì màn hình nhỏ dán link
+    // xong là muốn thấy hàng ngay. Desktop giữ cả cụm tra cứu trong khung nhìn.
+    const anchor = isMobile
+      ? result instanceof HTMLElement && !result.hidden
+        ? result
+        : platformTabs
+      : buyFlow;
     if (!(anchor instanceof HTMLElement)) return;
 
-    // Desktop giữ cả tiêu đề, ô dán link, tab sàn và sản phẩm trong cùng một
-    // nhịp nhìn. Mobile bắt đầu từ danh sách sàn để sản phẩm hiện ngay bên dưới.
-    // Cả hai đều cuộn qua phần header nhưng không đẩy thẻ sản phẩm sát mép quá mức.
     const top = Math.max(
       0,
-      window.scrollY + anchor.getBoundingClientRect().top - (isMobile ? 12 : 14),
+      window.scrollY + anchor.getBoundingClientRect().top - (isMobile ? 8 : 14),
     );
     window.scrollTo({
       top,
@@ -122,14 +126,58 @@
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
-      const error = new Error(
-        payload?.error?.message || "Hệ thống đang bận. Vui lòng thử lại.",
-      );
+      // "Hệ thống đang bận" chỉ dành cho lỗi máy chủ thật (5xx); lỗi dữ
+      // liệu luôn ưu tiên thông báo tiếng Việt cụ thể từ server.
+      const fallback =
+        response.status >= 500
+          ? "Hệ thống đang bận. Vui lòng thử lại sau ít phút."
+          : "Không xử lý được yêu cầu. Hãy kiểm tra lại link sản phẩm.";
+      const error = new Error(payload?.error?.message || fallback);
       error.code = payload?.error?.code;
+      error.status = response.status;
       throw error;
     }
     return payload;
   };
+
+  // Nhận diện sàn ngay tại client để (1) chặn sớm link sai/không hỗ trợ với
+  // thông báo đúng nguyên nhân, (2) đồng bộ tab sàn tức thì khi vừa dán.
+  const CLIENT_PLATFORM_HOSTS = {
+    SHOPEE: ["shopee.vn", "s.shopee.vn", "shp.ee", "shope.ee"],
+    TIKTOK: ["tiktok.com", "vt.tiktok.com", "vm.tiktok.com", "shop.tiktok.com"],
+    LAZADA: ["lazada.vn", "s.lazada.vn", "c.lazada.vn", "pages.lazada.vn"],
+  };
+
+  const detectClientPlatform = (value) => {
+    let url;
+    try {
+      url = new URL(value);
+    } catch {
+      return { error: "INVALID" };
+    }
+    if (url.protocol !== "https:") return { error: "INVALID" };
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    for (const [platform, hosts] of Object.entries(CLIENT_PLATFORM_HOSTS)) {
+      if (hosts.some((h) => host === h || host.endsWith(`.${h}`))) {
+        return { platform };
+      }
+    }
+    return { error: "UNSUPPORTED" };
+  };
+
+  // Lỗi thuộc về DỮ LIỆU link (người dùng cần sửa link, không phải thử lại).
+  const DATA_ERROR_CODES = new Set([
+    "VALIDATION",
+    "INVALID_PRODUCT_URL",
+    "UNSAFE_PRODUCT_URL",
+    "UNSUPPORTED_PLATFORM",
+    "PLATFORM_MISMATCH",
+    "ALREADY_AFFILIATE_URL",
+    "PRODUCT_NOT_FOUND",
+    "SHORT_LINK_UNAVAILABLE",
+    "SHORT_LINK_UNRESOLVED",
+    "URL_TOO_LONG",
+  ]);
 
   const formatVnd = (value) =>
     Number.isFinite(Number(value))
@@ -241,13 +289,37 @@
     }
   };
 
-  const showError = (message, title) => {
+  // kind: "data" (người dùng phải sửa link → nút "Sửa link", focus input)
+  //       "server" (lỗi mạng/máy chủ → nút "Thử lại" gửi lại yêu cầu).
+  let lastErrorKind = "server";
+
+  const showError = (message, title, kind = "server") => {
+    lastErrorKind = kind;
     if (errorTitle) errorTitle.textContent = title || "Chưa tìm được sản phẩm";
     if (errorMessage) {
       errorMessage.textContent =
         message || "Hãy kiểm tra lại link sản phẩm rồi thử lại.";
     }
+    if (retryButton) {
+      retryButton.textContent = kind === "data" ? "Sửa link" : "Thử lại";
+    }
+    if (urlInput instanceof HTMLInputElement) {
+      urlInput.setAttribute("aria-invalid", kind === "data" ? "true" : "false");
+      urlInput.setAttribute(
+        "aria-describedby",
+        kind === "data"
+          ? "product-url-hint product-error-message"
+          : "product-url-hint",
+      );
+    }
     setView("error");
+  };
+
+  const clearInputErrorState = () => {
+    if (urlInput instanceof HTMLInputElement) {
+      urlInput.setAttribute("aria-invalid", "false");
+      urlInput.setAttribute("aria-describedby", "product-url-hint");
+    }
   };
 
   const renderProduct = (product) => {
@@ -258,11 +330,24 @@
     if (el.platform) el.platform.textContent = label;
     if (el.name) el.name.textContent = product.productName;
     if (el.shop) el.shop.textContent = product.shopName || `Gian hàng ${label}`;
+    // 3 mức trung thực của kết quả: Đầy đủ / Đang cập nhật (có dữ liệu thật
+    // nhưng thiếu một phần) / CHƯA XÁC MINH (không lấy được bất kỳ dữ liệu
+    // thật nào từ sàn — thẻ chỉ dựng từ URL, không được trình bày như một
+    // kết quả tra cứu thành công).
+    const verified = product.dataVerified !== false;
     if (el.status) {
       const complete = product.dataStatus === "COMPLETE";
-      el.status.textContent = complete ? "Đầy đủ" : "Đang cập nhật";
-      el.status.classList.toggle("is-complete", complete);
-      el.status.classList.toggle("is-partial", !complete);
+      el.status.textContent = !verified
+        ? "Chưa xác minh"
+        : complete
+          ? "Đầy đủ"
+          : "Đang cập nhật";
+      el.status.classList.toggle("is-complete", verified && complete);
+      el.status.classList.toggle("is-partial", verified && !complete);
+      el.status.classList.toggle("is-unverified", !verified);
+    }
+    if (result instanceof HTMLElement) {
+      result.classList.toggle("is-unverified", !verified);
     }
     if (receipt.price) {
       receipt.price.textContent =
@@ -319,21 +404,32 @@
     if (el.buy instanceof HTMLButtonElement) {
       el.buy.disabled = !purchaseEnabled;
       el.buy.classList.toggle("is-soon", !purchaseEnabled);
-      el.buy.innerHTML = purchaseEnabled ? buyDefaultHtml : "Sắp mở";
+      el.buy.innerHTML = !purchaseEnabled
+        ? "Sắp mở"
+        : verified
+          ? buyDefaultHtml
+          : `Mở trên ${label} để kiểm tra`;
+    }
+    if (!verified) {
+      if (receipt.commission) receipt.commission.textContent = "Chưa xác minh";
+      if (receipt.total) receipt.total.textContent = "Chưa xác minh";
     }
     if (cashbackNote) {
-      cashbackNote.textContent = !purchaseEnabled
-        ? ""
-        : product.buyerCashbackVnd === null
-          ? "Tiền hoàn đang cập nhật."
-          : "Cộng vào ví sau khi sàn duyệt.";
+      cashbackNote.textContent =
+        !purchaseEnabled || !verified
+          ? ""
+          : product.buyerCashbackVnd === null
+            ? "Tiền hoàn đang cập nhật."
+            : "Cộng vào ví sau khi sàn duyệt.";
     }
     if (sourceNote) {
-      sourceNote.textContent = !purchaseEnabled
-        ? `${label} sắp mở mua hàng — bạn có thể xem trước giá, chưa mua được ngay lúc này.`
-        : product.dataStatus === "PARTIAL"
-          ? "Một số dữ liệu đang cập nhật."
-          : "";
+      sourceNote.textContent = !verified
+        ? `ShopTik chưa lấy được dữ liệu từ ${label} nên CHƯA xác minh được sản phẩm này có tồn tại. Nếu bạn chắc link đúng, có thể mở trên sàn để kiểm tra — tiền hoàn (nếu mua) vẫn đối soát theo đơn thực tế.`
+        : !purchaseEnabled
+          ? `${label} sắp mở mua hàng — bạn có thể xem trước giá, chưa mua được ngay lúc này.`
+          : product.dataStatus === "PARTIAL"
+            ? "Một số dữ liệu đang cập nhật."
+            : "";
     }
     if (el.image instanceof HTMLImageElement) {
       el.image.src = product.imageUrl || "/assets/images/logo.png";
@@ -363,9 +459,12 @@
     }
   };
 
+  let lookupSeq = 0;
+
   const lookup = async (value) => {
     activeRequest?.abort();
     activeRequest = new AbortController();
+    const seq = ++lookupSeq;
     lastSubmittedUrl = value;
     setBusy(true);
     try {
@@ -377,39 +476,93 @@
         { productUrl: value },
         activeRequest.signal,
       );
+      if (seq !== lookupSeq) return;
       if (!payload?.product || !payload.previewId) {
         throw new Error("Chưa đọc được thông tin sản phẩm. Hãy thử lại.");
       }
       previewId = payload.previewId;
+      clearInputErrorState();
       renderProduct(payload.product);
     } catch (error) {
+      if (seq !== lookupSeq) return;
       if (error?.name !== "AbortError") {
+        const isDataError =
+          DATA_ERROR_CODES.has(error?.code) ||
+          (typeof error?.status === "number" &&
+            error.status >= 400 &&
+            error.status < 500);
         showError(
           error instanceof Error
             ? error.message
             : "Không lấy được thông tin sản phẩm.",
+          isDataError ? "Link chưa dùng được" : "Chưa tìm được sản phẩm",
+          isDataError ? "data" : "server",
         );
       }
     } finally {
-      setBusy(false);
+      // Chỉ yêu cầu MỚI NHẤT được phép mở khóa nút — tránh cảnh yêu cầu cũ
+      // bị hủy chạy finally muộn, bật nút trong khi skeleton còn chạy.
+      if (seq === lookupSeq) setBusy(false);
     }
   };
 
-  // Bước 1: dán link → tra cứu.
+  // Bước 1: dán link → tra cứu. Chặn sớm tại client các lỗi có thể biết
+  // ngay (trống / sai định dạng / ngoài 3 sàn) với thông báo đúng nguyên
+  // nhân — không đẩy lên server để rồi nhận thông báo chung chung.
   finder.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!(urlInput instanceof HTMLInputElement)) return;
     const value = urlInput.value.trim();
     previewId = null;
     if (!value) {
-      showError("Hãy dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada.");
+      showError(
+        "Hãy dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada.",
+        "Chưa có link",
+        "data",
+      );
       urlInput.focus();
       return;
     }
+    const detected = detectClientPlatform(value);
+    if (detected.error === "INVALID") {
+      showError(
+        "Link chưa đúng định dạng. Hãy dán link đầy đủ bắt đầu bằng https:// từ Shopee, TikTok Shop hoặc Lazada.",
+        "Link chưa dùng được",
+        "data",
+      );
+      urlInput.focus();
+      return;
+    }
+    if (detected.error === "UNSUPPORTED") {
+      showError(
+        "ShopTik chỉ nhận link Shopee, TikTok Shop hoặc Lazada Việt Nam.",
+        "Sàn chưa được hỗ trợ",
+        "data",
+      );
+      urlInput.focus();
+      return;
+    }
+    // Đồng bộ tab sàn NGAY khi biết — không chờ kết quả trả về.
+    if (detected.platform) activatePlatformTab(detected.platform);
     await lookup(value);
   });
 
   retryButton?.addEventListener("click", () => {
+    if (lastErrorKind === "data") {
+      // Lỗi thuộc về link: đưa người dùng về input để sửa, không gửi lại
+      // chính link sai. focus không được kéo trang cuộn — chỉ cuộn khi ô
+      // nhập thực sự nằm ngoài viewport.
+      setView("empty");
+      if (urlInput instanceof HTMLInputElement) {
+        urlInput.focus({ preventScroll: true });
+        urlInput.select();
+        const rect = urlInput.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+          urlInput.scrollIntoView({ block: "center", behavior: "auto" });
+        }
+      }
+      return;
+    }
     if (lastSubmittedUrl) void lookup(lastSubmittedUrl);
   });
 
@@ -496,17 +649,36 @@
   // Nút dán hiện sẵn khi trình duyệt cho phép đọc clipboard — cố tình KHÔNG
   // gọi urlInput.focus() sau khi dán, vì trên mobile việc focus vào input sẽ
   // bật bàn phím ảo lên dù người dùng chỉ muốn bấm 1 nút rồi xem kết quả.
+  const pasteHint = finder.querySelector("[data-paste-hint]");
+  let pasteHintTimer = 0;
+  const showPasteHint = (message) => {
+    if (!(pasteHint instanceof HTMLElement)) return;
+    pasteHint.textContent = message;
+    pasteHint.hidden = false;
+    window.clearTimeout(pasteHintTimer);
+    pasteHintTimer = window.setTimeout(() => {
+      pasteHint.hidden = true;
+    }, 4000);
+  };
+
   if (navigator.clipboard?.readText && pasteButton instanceof HTMLElement) {
     pasteButton.hidden = false;
     pasteButton.addEventListener("click", async () => {
       try {
-        const text = await navigator.clipboard.readText();
-        if (text && urlInput instanceof HTMLInputElement) {
-          urlInput.value = text.trim();
+        const text = (await navigator.clipboard.readText()).trim();
+        if (!text) {
+          // Clipboard trống: giữ nguyên trang, KHÔNG dùng lại link cũ.
+          showPasteHint("Bộ nhớ tạm chưa có đường link.");
+          return;
+        }
+        if (urlInput instanceof HTMLInputElement) {
+          urlInput.value = text;
           submitIfLink();
         }
       } catch {
-        // Người dùng từ chối quyền đọc clipboard — họ tự dán bằng tay.
+        showPasteHint(
+          "Trình duyệt chưa cho phép đọc clipboard — hãy dán bằng Ctrl+V.",
+        );
       }
     });
   }
@@ -556,4 +728,20 @@
   urlInput?.addEventListener("paste", () => {
     window.setTimeout(submitIfLink, 40);
   });
+
+  // Nút Tra cứu chỉ bật khi ô nhập có nội dung; gõ lại là xóa cờ lỗi ARIA.
+  const updateSubmitEnabled = () => {
+    if (
+      submitButton instanceof HTMLButtonElement &&
+      urlInput instanceof HTMLInputElement
+    ) {
+      submitButton.disabled = urlInput.value.trim().length === 0;
+    }
+  };
+  urlInput?.addEventListener("input", () => {
+    clearInputErrorState();
+    if (pasteHint instanceof HTMLElement) pasteHint.hidden = true;
+    updateSubmitEnabled();
+  });
+  updateSubmitEnabled();
 })();

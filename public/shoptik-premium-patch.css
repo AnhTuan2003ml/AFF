@@ -167,39 +167,6 @@
  * .dv13-commerce-shell trong 2 rule style riêng cho nút/link, để hiệu ứng
  * click trên nút cũng hiện đúng màu ở quản trị/trang công khai.
  */
-/*
- * KHÔNG đặt position ở đây — nhiều nút (như nút Đóng popup quảng cáo, các
- * nút mở dropdown...) vốn đã dùng position:absolute/fixed để neo đúng chỗ.
- * app.js chỉ tự thêm position:relative qua inline style khi phát hiện nút
- * đang là static, tránh phá vị trí các nút đã định vị sẵn.
- */
-.commerce-water-control {
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.commerce-control-water-ripple {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 0;
-  width: 18px;
-  height: 18px;
-  pointer-events: none;
-  border: 2px solid rgba(228, 74, 43, .62);
-  border-radius: 50%;
-  background: rgba(228, 74, 43, .16);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 0 18px rgba(228, 74, 43, .2);
-  mix-blend-mode: normal;
-  will-change: transform, opacity;
-}
-
-:root[data-theme="dark"] .commerce-control-water-ripple {
-  border-color: rgba(104, 211, 240, .68);
-  background: rgba(104, 211, 240, .18);
-  box-shadow: 0 0 0 1px rgba(255, 125, 91, .24), 0 0 20px rgba(104, 211, 240, .2);
-}
-
 /* ======================================================================
    1. MOBILE APP — lấy ngôn ngữ thị giác desktop làm chuẩn
    ====================================================================== */
@@ -823,7 +790,7 @@
     padding: 4px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, .15) !important;
-    border-radius: 0 !important;
+    border-radius: var(--r-pill, 999px) !important;
     background: linear-gradient(145deg, #171e27, #0b1016) !important;
     box-shadow: inset 0 1px rgba(255, 255, 255, .06), 0 8px 22px rgba(0, 0, 0, .22);
   }
@@ -833,7 +800,7 @@
     height: 100%;
     padding: 0 9px;
     border: 1px solid transparent;
-    border-radius: 0 !important;
+    border-radius: var(--r-pill, 999px) !important;
     color: #929ba8;
     font-size: 11px;
     font-weight: 800;
@@ -1096,14 +1063,14 @@
   height: 42px;
   padding: 4px;
   border-color: rgba(255, 255, 255, .12);
-  border-radius: 0;
+  border-radius: var(--r-pill, 999px);
   background: #090e14;
 }
 
 .backoffice-shell .sidebar-utility .mode-switch-option {
   height: 100%;
   padding: 0 9px;
-  border-radius: 0;
+  border-radius: var(--r-pill, 999px);
   color: #8f99a6;
 }
 
@@ -1670,16 +1637,34 @@
  * .commerce-navbar-wrap nằm lồng trong .commerce-hero (cao ~180-300px) nên
  * position:sticky bị giới hạn trong đúng khối cha ngắn đó rồi trôi mất theo
  * — không thể dính suốt trang chỉ bằng CSS. public/sticky-navbar.js đo vị
- * trí gốc rồi chuyển sang position:fixed đúng lúc cuộn qua khỏi, kèm ô đệm
- * (.commerce-navbar-spacer) để nội dung phía dưới không giật lên.
+ * trí gốc rồi bật .is-pinned (position:fixed) đúng lúc cuộn qua khỏi, kèm ô
+ * đệm (.commerce-navbar-spacer) để nội dung phía dưới không giật lên.
+ *
+ * Chống nháy nền tận gốc: nền thanh menu là MỘT màu đặc duy nhất cho mọi
+ * trạng thái (thường/ghim, desktop/mobile, app/quản trị). Không gradient mờ
+ * trên ảnh hero, không lớp fade lúc ghim — ghim chỉ đổi position nên không
+ * còn thứ gì để đổi nền. .commerce-hero được nâng z-index để lớp fixed bên
+ * trong luôn nằm trên nội dung trang nhưng vẫn dưới drawer/scrim/modal
+ * (z-index 150-160); nhờ vậy KHÔNG được bứng node sang <body> khi ghim
+ * (mỗi lần bứng là một lần chớp khung hình).
  */
+.dv13-commerce-shell .commerce-hero,
+.backoffice-shell .commerce-hero {
+  z-index: 30;
+}
+
+.commerce-navbar-wrap {
+  background: #090d12;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+}
+
 .commerce-navbar-wrap.is-pinned {
   position: fixed !important;
   top: 0 !important;
   right: 0 !important;
   left: 0 !important;
   z-index: 150;
-  background: var(--chrome-bg) !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .3);
 }
 
 .commerce-navbar-spacer {
@@ -1691,32 +1676,137 @@
   .commerce-header-mode {
     display: none;
   }
+
+  /* Mobile không đặt Đăng xuất ngoài giao diện làm việc — hành động này
+     nằm trong drawer (chân drawer app + chân sidebar quản trị), tránh bấm
+     nhầm và bớt chật header. */
+  .commerce-navbar-actions .commerce-logout-form {
+    display: none;
+  }
 }
 
 /* ======================================================================
-   5. VUÔNG GÓC TOÀN SITE — không bo viền cho khối điều hướng (chuẩn
-   DV13: menu, thẻ, nút đều vuông góc), và thu gọn công tắc Ứng dụng/Quản
-   trị để 2 lựa chọn không bị tách xa nhau trên mobile.
+   5. BO VIỀN TOÀN SITE — chuyển ngôn ngữ thị giác từ vuông góc DV13 sang
+   bo tròn thân thiện. Một thang bán kính duy nhất cho cả app lẫn quản trị:
+   - --r-s (10px): nút, ô nhập, link menu, phần tử nhỏ.
+   - --r-m (14px): dropdown, dải thông tin, khối phụ.
+   - --r-l (18px): thẻ, panel, hero phụ, khối lớn.
+   - --r-pill (999px): công tắc, tab chip, badge dạng viên thuốc.
+   dv13-commerce.css ép vuông bằng !important nên các override dưới đây
+   dùng đúng selector gốc (cùng độ ưu tiên, nạp sau nên thắng).
+   Kèm thu gọn công tắc Ứng dụng/Quản trị để 2 lựa chọn không bị tách xa
+   nhau trên mobile.
    ====================================================================== */
 
+/* Thang radius chuẩn toàn site: điều hướng 8 / control 10 / card-panel 12 /
+   badge 999 — không dùng các giá trị lẻ 13-24px nữa. */
+:root {
+  --r-s: 10px;
+  --r-m: 12px;
+  --r-l: 12px;
+  --r-pill: 999px;
+}
+
+/* Nút và điều khiển nhỏ */
+.dv13-commerce-shell .button,
+.dv13-commerce-shell button[type="submit"],
+.dv13-commerce-shell .discover-primary-action {
+  border-radius: var(--r-s) !important;
+}
+
+.dv13-commerce-shell input,
+.dv13-commerce-shell select,
+.dv13-commerce-shell textarea {
+  border-radius: var(--r-s) !important;
+}
+
+.dv13-commerce-shell .notification-trigger,
+.dv13-commerce-shell .account-trigger,
+.commerce-logout-button,
+.commerce-menu-button,
+.dv13-commerce-shell .sidebar-close-button,
+.backoffice-sidebar-close {
+  border-radius: var(--r-s);
+}
+
+/* Công tắc + tab dạng viên thuốc */
 .mode-switch,
-.dv13-commerce-shell .mobile-bottom-nav,
-.dv13-commerce-shell .mobile-bottom-nav a,
-.dv13-commerce-shell .mobile-bottom-nav a span,
-.dv13-commerce-shell .mobile-bottom-nav button,
-.dv13-commerce-shell .mobile-bottom-nav button span,
-.dv13-commerce-shell .mobile-bottom-nav a.active::after,
-.backoffice-mobile-nav,
-.backoffice-mobile-nav a,
-.backoffice-mobile-nav a span,
-.backoffice-mobile-nav button,
-.backoffice-mobile-nav button span,
-.commerce-mobile-drawer .app-nav a,
-.commerce-mobile-drawer .app-nav a span,
-.backoffice-sidebar .backoffice-nav a,
-.backoffice-sidebar .backoffice-nav a > span,
+.commerce-mobile-drawer .mode-switch,
 .mode-switch-option {
-  border-radius: 0 !important;
+  border-radius: var(--r-pill) !important;
+}
+
+.dv13-commerce-shell .discover-platform-tabs button,
+.dv13-commerce-shell .discover-category-tabs button,
+.dv13-commerce-shell .mission-tabs button {
+  border-radius: var(--r-pill) !important;
+}
+
+/* Link menu trong drawer và sidebar quản trị */
+.commerce-mobile-drawer .app-nav a,
+.backoffice-sidebar .backoffice-nav a {
+  border-radius: var(--r-s) !important;
+}
+
+/* Menu dưới cùng trên mobile: thanh giữ vuông (tràn mép), phần tử bo nhẹ */
+.dv13-commerce-shell .mobile-bottom-nav a,
+.dv13-commerce-shell .mobile-bottom-nav button,
+.backoffice-mobile-nav a,
+.backoffice-mobile-nav button {
+  border-radius: var(--r-s) !important;
+}
+
+/* Dropdown và khối nổi */
+.dv13-commerce-shell .notification-dropdown,
+.dv13-commerce-shell .account-dropdown {
+  border-radius: var(--r-m);
+  overflow: hidden;
+}
+
+/* Thẻ, panel, khối nội dung lớn */
+.dv13-commerce-shell .mission-panel,
+.dv13-commerce-shell .orders-history-card,
+.dv13-commerce-shell .discover-filters,
+.dv13-commerce-shell .discover-card,
+.dv13-commerce-shell .shopping-panel,
+.dv13-commerce-shell .buy-skeleton,
+.dv13-commerce-shell .buy-error,
+.dv13-commerce-shell .product-card,
+.dv13-commerce-shell .orders-history-hero,
+.dv13-commerce-shell .stat-card,
+.dv13-commerce-shell .discover-hero,
+.dv13-commerce-shell .wallet-hero-wallet,
+.dv13-commerce-shell .referral-hero,
+.dv13-commerce-shell .bank-visual-card,
+.dv13-commerce-shell .feature-gate,
+.dv13-commerce-shell .empty-state,
+.dv13-commerce-shell .receipt {
+  border-radius: var(--r-l) !important;
+}
+
+/* Chi tiết trong thẻ */
+.dv13-commerce-shell .product-media,
+.dv13-commerce-shell .discover-card-media,
+.dv13-commerce-shell .orders-history-thumb {
+  border-radius: var(--r-s) !important;
+}
+
+.dv13-commerce-shell .discover-price-box,
+.dv13-commerce-shell .discover-info-strip,
+.dv13-commerce-shell .security-note,
+.dv13-commerce-shell .info-strip,
+.dv13-commerce-shell .platform-grid .platform-tab,
+.dv13-commerce-shell .withdraw-steps li > span {
+  border-radius: var(--r-s) !important;
+}
+
+/* Drawer: bo mép phải của panel trượt + nút Đăng xuất ở chân drawer */
+.dv13-commerce-shell .commerce-mobile-drawer {
+  border-radius: 0 var(--r-l) var(--r-l) 0;
+}
+
+.commerce-mobile-footer button {
+  border-radius: var(--r-s);
 }
 
 /*

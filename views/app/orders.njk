@@ -3,7 +3,7 @@
 {% from "partials/macros.njk" import empty_state %}
 
 {% macro order_tab(status, label) %}
-  <a href="/app/orders?status={{ status }}{% if searchTerm %}&q={{ searchTerm }}{% endif %}" class="{% if selectedStatus == status %}active{% endif %}">{{ label }}</a>
+  <a href="/app/orders?status={{ status }}{% if searchTerm %}&q={{ searchTerm }}{% endif %}" {% if selectedStatus == status %}class="active" aria-current="page"{% endif %}>{{ label }}</a>
 {% endmacro %}
 
 {% macro order_status(order) %}
@@ -32,23 +32,26 @@
       <div class="orders-history-title">
         <span class="orders-history-icon">{{ icon('orders') }}</span>
         <div>
-          <h1>Lịch sử đơn hàng hoàn tiền</h1>
-          <p>Danh sách các đơn hàng đã thực hiện qua liên kết ShopTik Affiliate</p>
+          <h1>Đơn hàng</h1>
+          <p>{{ orders.length }} đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik Affiliate</p>
         </div>
       </div>
 
-      <nav class="orders-history-tabs" aria-label="Lọc trạng thái đơn">
-        {{ order_tab('ALL', 'Tất cả') }}
-        {{ order_tab('PENDING', 'Đang chờ') }}
-        {{ order_tab('APPROVED', 'Đã duyệt') }}
-        {{ order_tab('PAID', 'Đã về ví') }}
-      </nav>
+      <div class="orders-history-controls">
+        <form class="orders-history-search" method="get" action="/app/orders">
+          <input type="hidden" name="status" value="{{ selectedStatus }}">
+          <label class="sr-only" for="orders-search-input">Tìm đơn hàng theo mã đơn hoặc tên sản phẩm</label>
+          <span aria-hidden="true">{{ icon('search') }}</span>
+          <input id="orders-search-input" type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn, tên sản phẩm" autocomplete="off">
+        </form>
 
-      <form class="orders-history-search" method="get" action="/app/orders">
-        <input type="hidden" name="status" value="{{ selectedStatus }}">
-        <span>{{ icon('search') }}</span>
-        <input type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn hàng, tên sản phẩm..." autocomplete="off">
-      </form>
+        <nav class="orders-history-tabs" aria-label="Lọc trạng thái đơn">
+          {{ order_tab('ALL', 'Tất cả') }}
+          {{ order_tab('PENDING', 'Đang chờ') }}
+          {{ order_tab('APPROVED', 'Đã duyệt') }}
+          {{ order_tab('PAID', 'Đã về ví') }}
+        </nav>
+      </div>
     </header>
 
     {% if orders.length %}

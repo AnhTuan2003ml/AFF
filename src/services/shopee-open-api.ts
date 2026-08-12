@@ -161,13 +161,25 @@ const OFFER_FIELDS_FULL =
 const OFFER_FIELDS_MINIMAL =
   "itemId productName imageUrl price commissionRate offerLink";
 
-export async function fetchShopeeProductOffer(
+export interface ShopeeOfferLookup {
+  offer: ShopeeProductOffer | null;
+  /**
+   * true khi Shopee TRẢ LỜI HỢP LỆ nhưng không có offer nào cho itemId —
+   * tức sản phẩm không tồn tại/không bán qua Affiliate. Khác với trường
+   * hợp gọi API lỗi (mạng/chữ ký/rate-limit) — khi đó vẫn là false để
+   * caller không kết luận nhầm "không tồn tại".
+   */
+  confirmedMissing: boolean;
+}
+
+export async function lookupShopeeProductOffer(
   config: AppConfig,
   itemId: string,
   fetcher: Fetcher = fetch,
-): Promise<ShopeeProductOffer | null> {
-  if (!isShopeeOpenApiConfigured(config)) return null;
-  if (!/^\d{1,20}$/.test(itemId)) return null;
+): Promise<ShopeeOfferLookup> {
+  if (!isShopeeOpenApiConfigured(config) || !/^\d{1,20}$/.test(itemId)) {
+    return { offer: null, confirmedMissing: false };
+  }
 
   // Thử bộ field đầy đủ trước; nếu schema phía Shopee khác (field không tồn
   // tại → GraphQL error) thì lùi về bộ field tối thiểu chắc chắn có.
@@ -177,10 +189,20 @@ export async function fetchShopeeProductOffer(
     });
     const data = await callGraphql(config, payload, fetcher);
     const offer = parseProductOfferPayload(data, itemId);
-    if (offer) return offer;
-    if (data) break; // Có data hợp lệ nhưng không có node → sản phẩm không có offer.
+    if (offer) return { offer, confirmedMissing: false };
+    // Có data hợp lệ nhưng không có node → sản phẩm không có offer.
+    if (data) return { offer: null, confirmedMissing: true };
   }
-  return null;
+  return { offer: null, confirmedMissing: false };
+}
+
+export async function fetchShopeeProductOffer(
+  config: AppConfig,
+  itemId: string,
+  fetcher: Fetcher = fetch,
+): Promise<ShopeeProductOffer | null> {
+  const result = await lookupShopeeProductOffer(config, itemId, fetcher);
+  return result.offer;
 }
 
 export async function generateShopeeShortLink(

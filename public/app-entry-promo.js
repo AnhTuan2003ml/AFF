@@ -4,10 +4,8 @@
   const root = document.querySelector("[data-entry-promo]");
   if (!(root instanceof HTMLElement)) return;
 
-  const skipButton = root.querySelector("[data-entry-promo-skip]");
-
-  // Nếu hôm nay người dùng đã bấm "Bỏ qua" thì không hiện quảng cáo nữa trên
-  // mọi tab cho đến hết ngày (localStorage lưu theo ngày).
+  // Nút X là cách đóng DUY NHẤT (nút "Bỏ qua" đã bỏ): bấm X là không hiện
+  // lại quảng cáo trên mọi tab cho đến hết ngày (localStorage lưu theo ngày).
   const today = new Date();
   const skipKey =
     `shoptik-entry-promo-skip:${today.getFullYear()}-` +
@@ -69,6 +67,12 @@
   };
 
   const close = () => {
+    // Nút X và "Bỏ qua" phải cùng một hành vi: đã đóng là không bật lại
+    // khi điều hướng nội bộ (lưu theo ngày, giống nút Bỏ qua) — trước đây
+    // X chỉ đóng ở trang hiện tại khiến popup hiện lại ở trang kế tiếp.
+    try {
+      localStorage.setItem(skipKey, "1");
+    } catch (e) {}
     // Đưa focus ra ngoài dialog trước khi ẩn. Nhờ vậy trình duyệt không còn
     // cảnh báo aria-hidden vì nút X vẫn giữ focus trong phần tử bị ẩn.
     if (previousFocus && document.contains(previousFocus)) {
@@ -83,15 +87,6 @@
   };
 
   closeButton.addEventListener("click", close);
-
-  if (skipButton instanceof HTMLButtonElement) {
-    skipButton.addEventListener("click", () => {
-      try {
-        localStorage.setItem(skipKey, "1");
-      } catch (e) {}
-      close();
-    });
-  }
 
   const setText = (element, value) => {
     element.textContent = value || "";
@@ -195,8 +190,6 @@
     }
 
     setImage(promo.imageUrl, promo.title, promo.targetUrl);
-    // Quảng cáo có ảnh → hiện nút "Bỏ qua" ngay dưới ảnh.
-    if (skipButton instanceof HTMLButtonElement) skipButton.hidden = false;
   };
 
   fetch("/app/entry-promo", { headers: { "x-requested-with": "fetch" } })

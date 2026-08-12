@@ -2,14 +2,6 @@
 {% from "partials/macros.njk" import status_badge, empty_state %}
 
 {% block app_content %}
-  <section class="page-heading">
-    <div>
-      <span class="eyebrow">BƯỚC 4 · NHẬN TIỀN</span>
-      <h1>Rút tiền</h1>
-      <p>Chỉ số dư khả dụng mới được dùng để tạo yêu cầu.</p>
-    </div>
-  </section>
-
   <div class="withdraw-layout">
     <section class="withdraw-action">
       <span>Số dư có thể rút</span>
@@ -68,9 +60,11 @@
     <aside class="withdraw-steps">
       <h2>Yêu cầu đi qua 4 điểm kiểm soát</h2>
       <ol>
-        <li class="active"><span>1</span><div><b>Xác nhận OTP email</b><small>Chứng minh đúng chủ tài khoản ShopTik</small></div></li>
+        {# Bước 1 chỉ sáng khi người dùng thực sự bắt đầu được (đã có ngân
+           hàng xác minh và còn số dư khả dụng). #}
+        <li {% if accounts.length and balances.available > 0 %}class="active"{% endif %}><span>1</span><div><b>Xác nhận qua email</b><small>Xác minh chủ tài khoản ShopTik</small></div></li>
         <li><span>2</span><div><b>Giữ số dư</b><small>Ngăn rút trùng trong khi xử lý</small></div></li>
-        <li><span>3</span><div><b>Kiểm tra rủi ro</b><small>Vận hành duyệt theo hạn mức</small></div></li>
+        <li><span>3</span><div><b>Kiểm tra rủi ro</b><small>Hệ thống kiểm tra và duyệt theo hạn mức</small></div></li>
         <li><span>4</span><div><b>Chuyển khoản</b><small>Cập nhật khi tiền đã chuyển vào tài khoản ngân hàng</small></div></li>
       </ol>
     </aside>

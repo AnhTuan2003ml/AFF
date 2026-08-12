@@ -46,6 +46,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   PLATFORM_SYNC_CONFIG_UPDATED: "Đổi cấu hình đồng bộ sàn",
   PLATFORM_SYNC_RUN: "Chạy đồng bộ báo cáo sàn",
   TICKET_STATUS_CHANGED: "Cập nhật yêu cầu hỗ trợ",
+  TICKET_REPLIED: "Phản hồi yêu cầu hỗ trợ",
   USER_CREATED_BY_ADMIN: "Tạo tài khoản người dùng",
   USER_DELETED: "Xóa tài khoản người dùng",
   USER_ROLE_CHANGED: "Đổi vai trò người dùng",
@@ -58,6 +59,14 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ADMIN_ENV_SYNC_UPDATE: "Cập nhật tài khoản quản trị hệ thống",
   ADMIN_ENV_PASSWORD_RESET: "Đặt lại mật khẩu quản trị hệ thống",
   ADMIN_ENV_REVOKE: "Thu hồi quyền quản trị hệ thống",
+  ADMIN_DEFAULT_BOOTSTRAP_CREATE: "Khởi tạo quản trị viên mặc định",
+  ADMIN_DEFAULT_BOOTSTRAP_SYNC: "Đồng bộ quản trị viên mặc định",
+  MISSION_CLAIM_SENT: "Gửi yêu cầu nhận thưởng nhiệm vụ",
+  MISSION_CLAIM_APPROVED: "Duyệt thưởng nhiệm vụ",
+  MISSION_CLAIM_REJECTED: "Từ chối thưởng nhiệm vụ",
+  MISSION_DEFINITION_CREATED: "Tạo mốc nhiệm vụ",
+  MISSION_DEFINITION_UPDATED: "Cập nhật mốc nhiệm vụ",
+  MISSION_DEFINITION_DELETED: "Xóa mốc nhiệm vụ",
 };
 
 const AUDIT_ACTION_NEGATIVE = new Set([

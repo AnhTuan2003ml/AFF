@@ -1,45 +1,84 @@
 <section
-  class="shopping-panel shopping-panel-refined"
+  class="shopping-panel shopping-panel-refined st-home-hero"
   id="shop-search"
   data-buy-flow
   data-platform-purchase='{{ platformAvailability | dump | safe }}'
   aria-label="Mua sắm hoàn tiền"
 >
-  <header class="home-section-title home-section-title-refined">
-    <div class="section-heading-rule" aria-hidden="true"></div>
-    <div class="home-section-copy">
-      <span class="home-section-kicker">DÁN LINK · XEM TIỀN HOÀN</span>
-      <div class="home-section-heading-row">
-        <h2>TÌM SẢN PHẨM</h2>
+  {# Hero 2 cột: trái = tác vụ dán link (giữ nguyên mọi hook JS của luồng
+     mua), phải = minh họa túi mua sắm + ví dụ tiền hoàn trực quan. #}
+  <div class="st-home-hero-grid">
+    <div class="st-home-hero-main">
+      <header class="home-section-title home-section-title-refined">
+        <div class="home-section-copy">
+          <span class="home-section-kicker">Tra cứu hoàn tiền</span>
+          <div class="home-section-heading-row">
+            <h1>Dán link — nhận tiền hoàn</h1>
+          </div>
+          <p>Dán link Shopee, TikTok Shop hoặc Lazada. ShopTik sẽ nhận diện sàn và tính tiền hoàn dự kiến.</p>
+        </div>
+      </header>
+
+      <form class="buy-form" data-product-finder novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="platform" value="{{ defaultPlatform }}" data-platform-input>
+        <label class="buy-input-label" for="product-url">Link sản phẩm</label>
+        {# Nhập/dán là MỘT nhóm (icon dán nằm trong ô nhập); Tra cứu là CTA
+           chính đứng riêng bên phải. #}
+        <div class="buy-input-row buy-input-row-emphasis">
+          <div class="buy-input-field">
+            <input
+              id="product-url"
+              type="url"
+              name="productUrl"
+              inputmode="url"
+              autocomplete="off"
+              maxlength="2048"
+              placeholder="Dán link sản phẩm vào đây..."
+              required
+              aria-describedby="product-url-hint"
+              data-product-url
+            >
+            <button type="button" class="buy-paste-button" data-product-paste hidden aria-label="Dán từ bộ nhớ tạm" title="Dán từ bộ nhớ tạm">{{ icon('paste') }}</button>
+          </div>
+          <button type="submit" data-product-submit><span data-product-submit-text>Tra cứu</span></button>
+        </div>
+        <span class="buy-form-hint" id="product-url-hint">Dán link là tự động tra cứu — hỗ trợ Shopee, TikTok Shop và Lazada.</span>
+        <small class="field-error" data-paste-hint hidden>Bộ nhớ tạm chưa có đường link.</small>
+      </form>
+
+      <div class="platform-tabs platform-grid" role="tablist" aria-label="Chọn sàn">
+        {% include "app/dashboard/platform-tabs.njk" %}
       </div>
-      <p>Dán link Shopee, TikTok Shop hoặc Lazada. ShopTik sẽ nhận diện sàn và tính tiền hoàn dự kiến.</p>
     </div>
-  </header>
 
-  <form class="buy-form" data-product-finder novalidate>
-    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-    <input type="hidden" name="platform" value="{{ defaultPlatform }}" data-platform-input>
-    <label class="sr-only" for="product-url">Dán link sản phẩm</label>
-    <div class="buy-input-row buy-input-row-emphasis">
-      <input
-        id="product-url"
-        type="url"
-        name="productUrl"
-        inputmode="url"
-        autocomplete="off"
-        maxlength="2048"
-        placeholder="Dán link sản phẩm vào đây..."
-        required
-        data-product-url
-      >
-      <button type="button" class="buy-paste-button" data-product-paste hidden aria-label="Dán link từ bộ nhớ tạm">{{ icon('paste') }}</button>
-      <button type="submit" data-product-submit><span data-product-submit-text>Tra cứu</span></button>
+    <div class="st-home-hero-visual" aria-hidden="true">
+      {# Màu vẽ qua class trong app-shell.css: dv13 có rule chung
+         `svg { fill:none; stroke:currentColor }` đè presentation attribute,
+         còn CSP style-src 'self' chặn inline style. #}
+      <svg viewBox="0 0 220 170" class="st-home-hero-art">
+        <ellipse class="hh-shadow" cx="110" cy="152" rx="78" ry="10"/>
+        {# Toạ độ gốc vẽ lệch trái 2-6 đơn vị so với tâm viewBox (110) —
+           dịch riêng từng phần tử về đúng trục, không dịch cả SVG vì bóng
+           dưới túi vốn đã đúng tâm. #}
+        <path class="hh-bag" transform="translate(2 0)" d="M62 62h84a8 8 0 0 1 8 6.6l9 66a8 8 0 0 1-7.9 9.4H60.9a8 8 0 0 1-7.9-9.4l9-66A8 8 0 0 1 62 62z"/>
+        <path class="hh-bag-top" transform="translate(6 0)" d="M62 62h84a8 8 0 0 1 8 6.6l2.2 16.4H51.8L54 68.6A8 8 0 0 1 62 62z"/>
+        <path class="hh-handle" transform="translate(6 0)" d="M82 74V52a22 22 0 0 1 44 0v22"/>
+        <circle class="hh-coin" cx="110" cy="112" r="17"/>
+        <text class="hh-coin-text" x="110" y="118" text-anchor="middle" font-size="16" font-weight="800">₫</text>
+        <circle class="hh-coin" cx="150" cy="60" r="13"/>
+        <text class="hh-coin-text" x="150" y="65" text-anchor="middle" font-size="12" font-weight="800">₫</text>
+        <circle class="hh-check" cx="47" cy="44" r="10"/>
+        <path class="hh-check-mark" d="m42.6 44 3 3 5-5.6"/>
+        <path class="hh-spark" d="M178 96c6-2 10 2 8 8"/>
+        <path class="hh-spark" d="M30 96c-6-2-10 2-8 8"/>
+      </svg>
+      <div class="st-home-hero-example">
+        <span>Ví dụ thực tế</span>
+        <b>Mua 500.000 ₫</b>
+        <em>Dự kiến hoàn <strong>40.000 ₫</strong> về ví</em>
+      </div>
     </div>
-    <span class="buy-form-hint">Dán link là tự động tra cứu — hỗ trợ Shopee, TikTok Shop và Lazada.</span>
-  </form>
-
-  <div class="platform-tabs platform-grid" role="tablist" aria-label="Chọn sàn">
-    {% include "app/dashboard/platform-tabs.njk" %}
   </div>
 
   {% include "app/dashboard/product-states.njk" %}
@@ -67,7 +106,7 @@
 <section class="commerce-home-links">
   <div class="commerce-section-heading">
     <span>MUA SẮM THÔNG MINH</span>
-    <h2>TẤT CẢ CÔNG CỤ BẠN CẦN</h2>
+    <h2>Tiện ích thường dùng</h2>
   </div>
   <div class="commerce-home-link-grid">
     <a href="/app/discover"><span>{{ icon('discover') }}</span><b>Khám phá ưu đãi</b><small>Xem deal và voucher mới</small><i>→</i></a>

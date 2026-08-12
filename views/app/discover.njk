@@ -8,33 +8,16 @@
 
 {% block app_content %}
   <div class="discover-page" data-discover-page>
-    <section class="discover-title-row" aria-labelledby="discover-title">
-      <div>
-        <span class="discover-eyebrow">NỘI DUNG TỪ QUẢN TRỊ</span>
-        <h1 id="discover-title">Khám phá</h1>
-        <p>Tất cả voucher, sản phẩm và nội dung nổi bật được hiển thị chung, lọc nhanh theo danh mục.</p>
-      </div>
+    {# Trang bán hàng: vào là thấy hàng — một dòng tiêu đề gọn, không kicker,
+       không hero giới thiệu. #}
+    <section class="st-shop-head" aria-labelledby="discover-title">
+      <h1 id="discover-title">Săn deal hôm nay</h1>
       {% if maxCashbackRate > 0 %}
-        <span class="discover-max-cashback">Hoàn tiền đến {{ maxCashbackRate }}%</span>
+        <span class="st-shop-head-badge">Hoàn tiền đến {{ maxCashbackRate }}%</span>
       {% endif %}
     </section>
 
     {% if items.length %}
-      <section class="discover-hero" aria-label="Tổng quan deal nổi bật">
-        <div class="discover-hero-copy">
-          <span class="discover-hero-chip"><b aria-hidden="true">⚡</b> DEAL MỚI MỖI NGÀY</span>
-          <h2>Săn deal HOT{% if maxCashbackRate > 0 %} — Hoàn tiền đến {{ maxCashbackRate }}%{% endif %}</h2>
-          <p>Voucher và sản phẩm nổi bật từ Shopee, TikTok Shop và Lazada.</p>
-        </div>
-        <div class="discover-hero-stats" aria-label="Thống kê nội dung">
-          <div><strong>{{ items.length }}</strong><span>Tổng nội dung</span></div>
-          <div><strong>{{ productCount }}</strong><span>Sản phẩm</span></div>
-          <div><strong>{{ voucherCount }}</strong><span>Voucher</span></div>
-        </div>
-        <i class="discover-hero-orb discover-hero-orb-one" aria-hidden="true"></i>
-        <i class="discover-hero-orb discover-hero-orb-two" aria-hidden="true"></i>
-      </section>
-
       <section class="discover-filters" aria-label="Tìm kiếm và lọc nội dung">
         <div class="discover-filter-main">
           <label class="discover-search">
@@ -45,7 +28,7 @@
 
           {% if platforms.length %}
             <div class="discover-platform-tabs" role="group" aria-label="Lọc theo sàn">
-              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả</button>
+              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
               {% for platform in platforms %}
                 <button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>
               {% endfor %}
@@ -56,7 +39,7 @@
         <div class="discover-category-row">
           <span><b aria-hidden="true">◇</b> Danh mục:</span>
           <div class="discover-category-tabs" role="group" aria-label="Lọc theo danh mục">
-            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
+            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả danh mục</button>
             {% for category in categories %}
               <button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>
             {% endfor %}
@@ -88,8 +71,12 @@
                 </div>
               {% endif %}
 
+              {# Tối đa 2 badge, không lặp cùng một chữ (Voucher/HOT trùng
+                 danh mục hoặc tiêu đề từng xuất hiện 3-4 lần trên một thẻ). #}
               <div class="discover-card-badges">
-                <span class="discover-category-badge">{{ item.category }}</span>
+                {% if item.category and item.category | lower != (item.typeLabel or '') | lower %}
+                  <span class="discover-category-badge">{{ item.category }}</span>
+                {% endif %}
                 {% if item.platformName %}
                   <span class="discover-platform-badge platform-{{ item.platform }}">{{ item.platformName }}</span>
                 {% else %}
@@ -97,10 +84,8 @@
                 {% endif %}
               </div>
 
-              {% if item.badge %}
-                <span class="discover-hot-badge"><b aria-hidden="true">⚡</b>{{ item.badge }}</span>
-              {% endif %}
-
+              {# Tối đa 2 badge trên thẻ: sàn + loại nội dung — HOT/Nổi bật
+                 bỏ hẳn vì lặp thông tin và gây nhiễu. #}
               {% if item.isProduct and item.cashbackRate is not none and item.cashbackRate > 0 %}
                 <span class="discover-cashback-badge">Hoàn +{{ item.cashbackRate }}%</span>
               {% endif %}
@@ -108,12 +93,14 @@
 
             <div class="discover-card-body">
               <div class="discover-card-meta">
-                <span>{{ item.typeLabel }}</span>
                 <time>{{ item.published_at | date }}</time>
               </div>
 
               <h2>{{ item.title }}</h2>
-              <p class="discover-card-description">{{ item.description }}</p>
+              {# Không lặp lại tiêu đề khi mô tả trùng nội dung. #}
+              {% if item.description and item.description | trim | lower != item.title | trim | lower %}
+                <p class="discover-card-description">{{ item.description }}</p>
+              {% endif %}
 
               {% if item.isProduct %}
                 <div class="discover-price-box">
@@ -126,18 +113,15 @@
                     <b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}Kiểm tra khi mua{% endif %}</b>
                   </p>
                 </div>
-              {% else %}
-                <div class="discover-info-strip">
-                  <span>{{ item.typeLabel }}</span>
-                  {% if item.badge %}<b>{{ item.badge }}</b>{% else %}<b>{{ item.category }}</b>{% endif %}
-                </div>
               {% endif %}
+              {# Dải typeLabel/badge phụ đã bỏ — thông tin trùng với badge
+                 trên ảnh, chỉ gây lặp "Voucher → HOT → Voucher". #}
             </div>
 
             <footer class="discover-card-footer">
               {% if item.isProduct and item.target_url %}
                 <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}">
-                  <span aria-hidden="true">▣</span><b data-buy-label>Mua &amp; Nhận Hoàn Tiền</b><span aria-hidden="true">↗</span>
+                  <b data-buy-label>Mua và nhận hoàn tiền</b><span aria-hidden="true">↗</span>
                 </button>
               {% elif item.target_url %}
                 <a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer">

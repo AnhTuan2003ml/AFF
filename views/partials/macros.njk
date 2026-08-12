@@ -37,7 +37,7 @@
 {# Nhãn tiếng Việt + hạng màu cho vai trò tài khoản — dùng ở thẻ tài khoản
    trong sidebar và mọi nơi cần hiển thị vai trò nhất quán. #}
 {% macro role_label(role) -%}
-  {%- if role == 'SUPER_ADMIN' -%}Quản trị cao nhất
+  {%- if role == 'SUPER_ADMIN' -%}Quản trị viên cấp cao
   {%- elif role == 'ADMIN' -%}Quản trị viên
   {%- elif role == 'SUPPORT' -%}Chăm sóc khách hàng
   {%- elif role == 'FINANCE' -%}Tài chính

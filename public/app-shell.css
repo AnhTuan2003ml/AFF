@@ -1,0 +1,3234 @@
+/*
+ * ShopTik · App Shell — LỚP CHROME + TOKEN DUY NHẤT cho app và quản trị.
+ *
+ * Kiến trúc sau hợp nhất:
+ * - Chrome (sidebar/topbar/tabbar/footer) dùng class mới `st-*` — mọi rule
+ *   chrome cũ trong dv13-commerce.css / shoptik-premium-patch.css nhắm vào
+ *   commerce-hero/commerce-navbar-wrap... không còn khớp phần tử nào nên
+ *   tự vô hiệu, không cần ghi đè qua lại.
+ * - Token màu định nghĩa MỘT lần tại đây (nạp cuối): bảng --sh-* cho shell
+ *   (có bản dark), đồng thời gán lại --dv-* để CSS nội dung trang cũ dùng
+ *   chung một nguồn màu.
+ * - Dark mode: shell dùng bảng --sh-* dark; nội dung dùng hệ dark sẵn có
+ *   của dv13 (token --dv-* được dv13 đổi giá trị trong scope dark). Mọi
+ *   phần tử nội dung phải lấy màu qua token — phần tử nào hard-code nền
+ *   sáng sẽ bị guard ở cuối file ép về token (nguồn lỗi trắng-trên-trắng).
+ *
+ * Quy tắc hiệu ứng: transition 150ms chỉ cho màu nền/viền; card nâng tối đa
+ * translateY(-2px); không animation lặp; tôn trọng prefers-reduced-motion.
+ */
+
+/* ====================================================================== */
+/* 1. TOKEN — một nguồn duy nhất                                           */
+/* ====================================================================== */
+
+:root {
+  /* Shell (đổi theo theme) — bảng màu ấm có năng lượng mua sắm */
+  --sh-bg: #f5f6f1;
+  --sh-surface: #ffffff;
+  --sh-hover: #f0f1ec;
+  --sh-ink: #1f231e;
+  --sh-copy: #43463f;
+  --sh-muted: #6f706a;
+  --sh-line: #d6dcd2;
+  --sh-line-strong: #c2c9bd;
+  --sh-shadow: 0 1px 2px rgba(15, 15, 15, .04), 0 6px 18px rgba(15, 15, 15, .05);
+
+  /* Hành động chính: đạt 5.19:1 với chữ trắng. Cam nhận diện #ee4d2d chỉ
+     dùng cho icon/điểm nhấn, không làm nền chữ trắng. Đỏ KHÔNG dùng cho
+     icon/kẻ/nhãn thường — các trạng thái có màu ngữ nghĩa riêng. */
+  --sh-primary: #c9371d;
+  --sh-primary-hover: #b22f16;
+  --sh-accent: #ee4d2d;
+  --sh-accent-soft: #fff0eb;
+  --sh-accent-text: #b22f16;
+  --sh-accent-strong-bg: #ffe1d3;
+  --sh-success: #16845b;
+  --sh-success-soft: #ddf4e9;
+  --sh-info: #245c8a;
+  --sh-info-soft: #ddeeff;
+  --sh-warn: #8a5a00;
+  --sh-warn-soft: #ffe8a3;
+
+  --sh-radius-s: 8px;
+  --sh-radius-m: 10px;
+  --sh-radius-l: 12px;
+  /* Viền control (input/select) phải đậm hơn viền card để nhận ra trường
+     nhập trên nền trắng (viền card #E6E4DF chỉ để chia nhóm). */
+  --sh-control-border: #96938c;
+  --sh-sidebar-w: 224px;
+  --sh-topbar-h: 56px;
+
+  /* Token nội dung (dv13 tự đổi giá trị trong scope dark) */
+  --dv-ink: #252420;
+  --dv-ink-2: #252420;
+  --dv-charcoal: #44433d;
+  --dv-orange: #c9371d;
+  --dv-orange-2: #b22f16;
+  --dv-orange-soft: #fff0eb;
+  --dv-paper: #ffffff;
+  --dv-canvas: #f5f6f1;
+  --dv-line: #d6dcd2;
+  --dv-line-strong: #c2c9bd;
+  --dv-line-dark: #d6dcd2;
+  --dv-copy: #44433d;
+  --dv-muted: #6f706a;
+  --dv-shadow: 0 1px 2px rgba(15, 15, 15, .04), 0 6px 18px rgba(15, 15, 15, .05);
+  --dv-inverse-surface: #191918;
+  --dv-inverse-surface-hover: #37352f;
+  --dv-on-inverse: #ffffff;
+
+  /* Token cũ còn được tham chiếu rải rác ở các lớp trước. */
+  --chrome-bg: var(--sh-surface);
+  --paper: var(--dv-paper);
+  --surface: var(--dv-paper);
+  --text: var(--dv-copy);
+  --muted: var(--dv-muted);
+  --line: var(--dv-line);
+}
+
+:root[data-theme="dark"] {
+  --sh-bg: #161616;
+  --sh-surface: #1f1f1f;
+  --sh-hover: #2a2a2a;
+  --sh-ink: #ececec;
+  --sh-copy: #d6d6d6;
+  --sh-muted: #a0a0a0;
+  --sh-line: #2e2e2e;
+  --sh-line-strong: #3d3d3d;
+  --sh-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 22px rgba(0, 0, 0, .4);
+  --sh-accent: #ff6a45;
+  --sh-accent-soft: rgba(238, 77, 45, .16);
+  --sh-accent-text: #ff8a66;
+  --sh-control-border: #66727e;
+}
+
+/*
+ * P0 dark mode — nguyên tắc: token --dv-* đã có giá trị dark nhất quán
+ * (dv13-commerce.css định nghĩa lại trong scope dark), nên MỌI phần tử nội
+ * dung phải lấy màu qua token, tuyệt đối không hard-code nền sáng. Các
+ * guard dưới đây vá đúng những phần tử nằm ngoài hệ dark cũ — thủ phạm
+ * trắng-trên-trắng đo được ở Đơn hàng / Số dư / Lịch sử rút tiền.
+ */
+
+/* Trạng thái trống: bỏ nền sáng hard-code, dùng token theo theme; viền
+   nét liền — nét đứt dễ hiểu nhầm là ô kéo-thả file. */
+.st-app .st-content .empty-state,
+:root[data-theme="dark"] .st-app .st-content .empty-state {
+  border: 1px solid var(--dv-line-strong) !important;
+  color: var(--dv-muted) !important;
+  background: var(--dv-canvas) !important;
+}
+
+/* Heading trong nội dung luôn lấy mực theo theme (thắng rule dark cũ
+   nhắm heading bằng hex). */
+:root[data-theme="dark"] .st-app .st-content :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--dv-ink);
+}
+
+/* Các bề mặt lớn chuẩn hóa về giấy theo theme — trong dark, --dv-paper đã
+   là màu tối từ hệ dark cũ nên rule này đồng thời dọn các nền sáng
+   hard-code còn sót. */
+:root[data-theme="dark"] .st-app .st-content :is(.panel, .balance-card,
+  .orders-history-card, .orders-history-hero, .stat-card, .mission-panel,
+  .discover-card, .discover-filters, .product-card, .shopping-panel,
+  .feature-gate, .receipt, .page-heading) {
+  color: var(--dv-copy);
+  border-color: var(--dv-line) !important;
+  background: var(--dv-paper) !important;
+}
+
+:root[data-theme="dark"] .st-app .st-content .page-heading {
+  background: transparent !important;
+}
+
+/* ====================================================================== */
+/* 2. KHUNG TRANG                                                          */
+/* ====================================================================== */
+
+body {
+  background: var(--sh-bg);
+}
+
+.st-app {
+  /* Đè mọi rule display/grid cũ còn nhắm vào .dv13-commerce-shell hoặc
+     .backoffice-shell — bố cục giờ nằm ở .st-layout bên trong. */
+  display: block !important;
+  min-height: 100dvh;
+  color: var(--sh-copy);
+  background: var(--sh-bg);
+  font-family: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.st-layout {
+  display: grid;
+  grid-template-columns: var(--sh-sidebar-w) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.st-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.st-content {
+  flex: 1;
+  width: min(100% - 48px, 1120px);
+  margin-inline: auto;
+  padding: 28px 0 48px;
+}
+
+/* Tiêu đề trang trong nội dung */
+.st-page-head {
+  margin-bottom: 24px;
+}
+
+.st-page-head h1 {
+  margin: 0 0 6px;
+  color: var(--dv-ink);
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.st-page-head p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--dv-muted);
+  font-size: 15px;
+}
+
+/* Tab con trong một giao diện gộp (Tài chính: Số dư / Rút tiền / Ngân
+   hàng). Tab active chỉ đổi màu + vạch chân — kích thước không đổi nên
+   không xê dịch bố cục. */
+.st-subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--sh-line);
+  overflow-x: auto;
+}
+
+.st-subtabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-bottom: 2px solid transparent;
+  color: var(--sh-muted);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s ease, background .15s ease;
+}
+
+.st-subtabs a:hover {
+  color: var(--sh-ink);
+  background: var(--sh-hover);
+}
+
+.st-subtabs a.active {
+  color: var(--sh-accent-text);
+  border-bottom-color: var(--sh-primary);
+}
+
+/* Tiêu đề nội bộ của các trang cũ: bỏ nhãn in hoa, đưa cỡ chữ về chuẩn. */
+.st-app .page-heading .eyebrow {
+  display: none;
+}
+
+.st-app .page-heading h1 {
+  margin: 0 0 6px;
+  color: var(--dv-ink);
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  text-transform: none;
+}
+
+.st-app .page-heading p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--dv-muted);
+  font-size: 15px;
+}
+
+/* Chữ trong nội dung luôn lấy qua token (token đổi giá trị theo theme). */
+.st-content,
+.st-content p,
+.st-content li,
+.st-content td {
+  color: var(--dv-copy);
+}
+
+.st-content :is(h1, h2, h3, h4) {
+  color: var(--dv-ink);
+}
+
+/* ====================================================================== */
+/* 3. SIDEBAR — 4 nhóm chức năng                                           */
+/* ====================================================================== */
+
+.st-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100dvh;
+  padding: 14px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid var(--sh-line);
+  background: var(--sh-surface);
+}
+
+.st-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+}
+
+.st-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--sh-ink);
+  white-space: nowrap;
+  font-family: "Bahnschrift SemiCondensed", "Arial Narrow", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.st-brand img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.st-brand small {
+  align-self: flex-end;
+  margin-left: 2px;
+  color: var(--sh-accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.st-sidebar-close {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--sh-line-strong);
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-ink);
+  background: var(--sh-surface);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.st-nav-group {
+  margin: 10px 8px 4px;
+  color: var(--sh-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.st-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-copy);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.st-nav a svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--sh-muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-nav a:hover {
+  color: var(--sh-ink);
+  background: var(--sh-hover);
+}
+
+.st-nav a.active {
+  color: var(--sh-accent-text);
+  background: var(--sh-accent-soft);
+}
+
+.st-nav a.active svg {
+  color: var(--sh-accent-text);
+}
+
+.st-nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--sh-primary);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  text-align: center;
+}
+
+/* ====================================================================== */
+/* 3b. MENU TÀI KHOẢN + NÚT THEME TRÊN TOPBAR                              */
+/*     Sidebar chỉ còn điều hướng; ba chức năng khác nhóm (thiết lập hiển   */
+/*     thị / chuyển không gian làm việc / thao tác tài khoản) tách về:      */
+/*     nút theme đứng riêng, còn "Mở quản trị / Về ứng dụng" và Đăng xuất   */
+/*     nằm trong menu tài khoản.                                           */
+/* ====================================================================== */
+
+/* Nút theme: icon mô tả hành động sắp tới (sáng → mặt trăng, tối → mặt
+   trời). Không track, không thumb, không glow. */
+/* Cùng cỡ 18px với icon chuông để hàng nút topbar đồng nhất. */
+.st-theme-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.st-theme-button .st-theme-icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .st-theme-button .st-theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .st-theme-button .st-theme-icon-sun {
+  display: block;
+}
+
+.st-menu {
+  position: relative;
+}
+
+.st-menu-caret {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--sh-muted);
+}
+
+.st-menu-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  display: none;
+  min-width: 240px;
+  padding: 6px;
+  border: 1px solid var(--sh-line);
+  border-radius: 12px;
+  background: var(--sh-surface);
+  box-shadow: var(--sh-shadow);
+}
+
+.st-menu-panel.open {
+  display: block;
+}
+
+.st-menu-panel form {
+  margin: 0;
+}
+
+.st-menu-head {
+  padding: 10px 12px 8px;
+}
+
+.st-menu-head b {
+  display: block;
+  color: var(--sh-ink);
+  font-size: 13px;
+}
+
+.st-menu-head small {
+  display: block;
+  overflow: hidden;
+  color: var(--sh-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-menu-panel a,
+.st-menu-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--sh-copy);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.st-menu-panel a svg,
+.st-menu-logout svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--sh-muted);
+}
+
+.st-menu-panel a:hover {
+  color: var(--sh-ink);
+  background: var(--sh-hover);
+}
+
+/* Đăng xuất: mặc định trung tính; hover mới chuyển đỏ nhạt. Khóa bằng
+   selector (0,3,1) vì dv13 có rule `button[type="submit"]` (0,2,1)
+   !important ép nền đỏ CTA lên mọi nút submit. */
+.st-app button.st-menu-logout[type="submit"],
+.backoffice-shell button.st-menu-logout[type="submit"],
+.st-menu-logout {
+  border: 0 !important;
+  color: var(--sh-copy) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+}
+
+.st-app button.st-menu-logout[type="submit"]:hover,
+.backoffice-shell button.st-menu-logout[type="submit"]:hover,
+.st-menu-logout:hover {
+  color: var(--sh-accent-text) !important;
+  background: var(--sh-accent-soft) !important;
+}
+
+.st-menu-logout:hover svg {
+  color: var(--sh-accent-text);
+}
+
+.st-menu-divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--sh-line);
+}
+
+/* ====================================================================== */
+/* 4. TOPBAR — mỏng, dính, MỘT nền đặc (không thể nháy khi cuộn)           */
+/* ====================================================================== */
+
+.st-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--sh-topbar-h);
+  padding: 0 20px;
+  border-bottom: 1px solid var(--sh-line);
+  background: var(--sh-surface);
+}
+
+/* Các nút vuông 44px trên topbar không được co lại khi hẹp chỗ — co ép
+   là nguyên nhân icon lệch tâm trên mobile (nút 44px bị bóp còn 37px).
+   Chỉ chip số dư được phép co (có ellipsis riêng bên dưới). */
+.st-topbar-open,
+.st-topbar-brand,
+.st-topbar .notification-menu,
+.st-topbar .st-icon-button,
+.st-topbar .st-menu {
+  flex: 0 0 auto;
+}
+
+.st-topbar-open {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--sh-line-strong);
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-ink);
+  background: var(--sh-surface);
+  cursor: pointer;
+}
+
+.st-topbar-open span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  margin: 2px auto;
+  background: currentColor;
+}
+
+.st-topbar-brand {
+  display: none;
+}
+
+.st-topbar-spacer {
+  flex: 1;
+}
+
+.st-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--sh-line);
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-muted);
+  background: var(--sh-bg);
+  font-size: 12.5px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.st-balance b {
+  overflow: hidden;
+  color: var(--sh-ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-topbar .notification-menu {
+  position: relative;
+}
+
+/* Nút chuông thông báo — thông số chốt theo nghiệm thu. dv13 còn rule
+   `.dv13-commerce-shell .notification-trigger { color:#fff; background:
+   rgba(0,0,0,.18) }` (di sản header tối) nên phải khóa bằng !important.
+   Trạng thái: mặc định nền lõm nhẹ + icon xám đậm; hover nền cam nhạt +
+   icon cam đậm; đang mở nền cam hành động + icon trắng. Không glow. */
+.st-app .st-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e6e4df !important;
+  border-radius: var(--sh-radius-m) !important;
+  color: #57534e !important;
+  background: #f7f7f5 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.st-app .st-icon-button:hover {
+  border-color: #f2c8bd !important;
+  color: #b22f16 !important;
+  background: #fdeee9 !important;
+}
+
+.st-app .st-icon-button[aria-expanded="true"] {
+  border-color: var(--sh-primary) !important;
+  color: #fff !important;
+  background: var(--sh-primary) !important;
+}
+
+:root[data-theme="dark"] .st-app .st-icon-button {
+  border-color: #46505a !important;
+  color: #d2d6da !important;
+  background: #171b20 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-icon-button:hover {
+  border-color: #b22f16 !important;
+  color: #ff8a66 !important;
+  background: rgba(238, 77, 45, .16) !important;
+}
+
+:root[data-theme="dark"] .st-app .st-icon-button[aria-expanded="true"] {
+  border-color: var(--sh-primary) !important;
+  color: #fff !important;
+  background: var(--sh-primary) !important;
+}
+
+.st-icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Badge chỉ render khi có thông báo chưa đọc (template điều kiện); nằm
+   ngoài hình chuông, viền 2px cùng màu topbar để tách khỏi nền nút. */
+.st-icon-button .notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 1px 4px;
+  border: 2px solid var(--sh-surface);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--sh-primary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.st-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--sh-line-strong);
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-ink);
+  background: var(--sh-surface);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.st-account:hover {
+  background: var(--sh-hover);
+}
+
+.st-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--sh-accent-text);
+  background: var(--sh-accent-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.st-account-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dropdown thông báo (dùng lại markup + JS cũ, chỉ định nghĩa lại bề mặt) */
+.st-topbar .notification-dropdown {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  display: none;
+  width: min(340px, calc(100vw - 32px));
+  border: 1px solid var(--sh-line);
+  border-radius: var(--sh-radius-l);
+  background: var(--sh-surface);
+  box-shadow: var(--sh-shadow);
+  overflow: hidden;
+}
+
+.st-topbar .notification-dropdown.open {
+  display: block;
+}
+
+.st-topbar .notification-dropdown-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sh-line);
+  color: var(--sh-ink);
+}
+
+.st-topbar .notification-list {
+  max-height: 320px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.st-topbar .notification-list li {
+  padding: 10px;
+  border-radius: var(--sh-radius-s);
+  color: var(--sh-copy);
+}
+
+.st-topbar .notification-list li.unread {
+  background: var(--sh-accent-soft);
+}
+
+.st-topbar .notification-list b {
+  display: block;
+  color: var(--sh-ink);
+  font-size: 13px;
+}
+
+.st-topbar .notification-list p {
+  margin: 2px 0;
+  color: var(--sh-muted);
+  font-size: 12.5px;
+}
+
+.st-topbar .notification-list time {
+  color: var(--sh-muted);
+  font-size: 11.5px;
+}
+
+.st-topbar .notification-empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--sh-muted);
+  font-size: 13px;
+}
+
+@media (pointer: coarse) {
+  .st-icon-button,
+  .st-topbar-open,
+  .st-account {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ====================================================================== */
+/* 5. FOOTER MỘT DÒNG                                                      */
+/* ====================================================================== */
+
+.st-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: min(100% - 48px, 1120px);
+  margin-inline: auto;
+  padding: 14px 0 18px;
+  border-top: 1px solid var(--sh-line);
+  color: var(--sh-muted);
+  font-size: 12.5px;
+}
+
+.st-footer a {
+  color: var(--sh-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.st-footer a:hover {
+  color: var(--sh-ink);
+}
+
+/* ====================================================================== */
+/* 6. TABBAR MOBILE                                                        */
+/* ====================================================================== */
+
+.st-tabbar {
+  position: fixed;
+  z-index: 120;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  min-height: 56px;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--sh-line);
+  background: var(--sh-surface);
+}
+
+.st-tabbar a,
+.st-tabbar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 0;
+  color: var(--sh-muted);
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.st-tabbar svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-tabbar a.active {
+  color: var(--sh-accent-text);
+}
+
+/* ====================================================================== */
+/* 7. SCRIM + DRAWER MOBILE                                                */
+/* ====================================================================== */
+
+.st-scrim {
+  position: fixed;
+  z-index: 150;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: rgba(15, 15, 15, .4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .15s ease;
+  cursor: pointer;
+}
+
+.st-scrim.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.no-scroll {
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .st-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .st-sidebar {
+    position: fixed;
+    z-index: 160;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 86vw);
+    height: 100dvh;
+    transform: translateX(-102%);
+    transition: transform .18s ease;
+    box-shadow: none;
+  }
+
+  .st-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--sh-shadow);
+  }
+
+  .st-sidebar-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .st-topbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .st-topbar-open {
+    display: block;
+  }
+
+  .st-topbar-brand {
+    display: inline-flex;
+  }
+
+  /* Chip số dư: chỉ nó được co khi thiếu chỗ, số tiền cắt bằng ellipsis
+     thay vì xuống dòng đè lên logo. */
+  .st-balance {
+    flex: 0 1 auto;
+    max-width: 132px;
+    padding: 0 10px;
+  }
+
+  .st-tabbar {
+    display: grid;
+  }
+
+  .st-content {
+    width: min(100% - 28px, 1120px);
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .st-footer {
+    width: min(100% - 28px, 1120px);
+    margin-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+
+  .st-balance span {
+    display: none;
+  }
+
+  /* Mobile: mọi mục điều hướng đạt vùng chạm 44px */
+  .st-nav a {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .st-content {
+    padding-top: 18px;
+  }
+
+  .st-page-head h1,
+  .st-app .page-heading h1 {
+    font-size: 24px;
+  }
+
+  .st-page-head p,
+  .st-app .page-heading p {
+    font-size: 14px;
+  }
+
+  /* Tab Tài chính chia đều bề ngang trên mobile */
+  .st-subtabs {
+    margin-inline: -2px;
+  }
+
+  .st-subtabs a {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Tabbar: mục đang chọn có vạch nhấn phía trên, không đổi kích thước */
+  .st-tabbar a.active {
+    box-shadow: inset 0 2px 0 var(--sh-primary);
+  }
+}
+
+@media (max-width: 640px) {
+  .st-account-email {
+    display: none;
+  }
+
+  .st-topbar {
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  /* Điện thoại hẹp: giữ logo, ẩn chữ SHOPTIK — tên đầy đủ vẫn còn trong
+     drawer; nhờ đó 4 nút 44px + chip số dư đứng thẳng hàng không bị ép. */
+  .st-topbar-brand span {
+    display: none;
+  }
+
+  /* Nút tài khoản gọn thành ô vuông avatar cùng hệ 44px với các nút icon. */
+  .st-menu-caret {
+    display: none;
+  }
+
+  .st-account {
+    width: 44px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-sidebar,
+  .st-scrim,
+  .st-nav a,
+  .st-icon-button,
+  .st-account,
+  .st-logout {
+    transition: none;
+  }
+}
+
+/* ====================================================================== */
+/* 8. CHUẨN HÓA COMPONENT DÙNG CHUNG (đè các lớp cũ, nạp cuối)             */
+/* ====================================================================== */
+
+/* Nút chính: một màu hành động duy nhất, đủ tương phản. Loại trừ nút
+   Đăng xuất trong menu tài khoản — cũng là type=submit nhưng phải là mục
+   menu trung tính, không phải CTA đỏ. */
+.st-app .button-primary,
+.st-app button[type="submit"]:not(.st-menu-logout),
+.backoffice-shell .button-primary,
+.backoffice-shell button[type="submit"]:not(.st-menu-logout) {
+  border: 1px solid var(--sh-primary) !important;
+  border-radius: var(--sh-radius-m) !important;
+  color: #fff !important;
+  background: var(--sh-primary) !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.st-app .button-primary:hover,
+.st-app button[type="submit"]:not(.st-menu-logout):hover,
+.backoffice-shell .button-primary:hover,
+.backoffice-shell button[type="submit"]:not(.st-menu-logout):hover {
+  border-color: var(--sh-primary-hover) !important;
+  background: var(--sh-primary-hover) !important;
+  transform: none !important;
+}
+
+/* Nút phụ trung tính */
+.st-app .button:not(.button-primary),
+.backoffice-shell .button:not(.button-primary) {
+  border: 1px solid var(--dv-line-strong) !important;
+  border-radius: var(--sh-radius-m) !important;
+  color: var(--dv-ink) !important;
+  background: var(--dv-paper) !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.st-app .button:not(.button-primary):hover,
+.backoffice-shell .button:not(.button-primary):hover {
+  background: var(--dv-canvas) !important;
+  transform: none !important;
+}
+
+/* Ô nhập: 44px, viền control đủ tương phản, focus rõ */
+.st-app input,
+.st-app select,
+.st-app textarea,
+.backoffice-shell input,
+.backoffice-shell select,
+.backoffice-shell textarea {
+  min-height: 44px;
+  border: 1px solid var(--sh-control-border) !important;
+  border-radius: var(--sh-radius-m) !important;
+  color: var(--dv-ink);
+  background: var(--dv-paper) !important;
+  box-shadow: none !important;
+}
+
+.st-app :is(input, select, textarea):focus-visible,
+.backoffice-shell :is(input, select, textarea):focus-visible {
+  outline: 2px solid rgba(201, 55, 29, .45);
+  outline-offset: 1px;
+}
+
+/* Card chuẩn: radius 12, viền 1px, bóng rất nhẹ, không glow */
+.st-app :is(.mission-panel, .orders-history-card, .discover-filters,
+  .discover-card, .shopping-panel, .product-card, .stat-card,
+  .bank-visual-card, .feature-gate, .empty-state, .receipt,
+  .orders-history-hero) {
+  border: 1px solid var(--dv-line) !important;
+  border-radius: var(--sh-radius-l) !important;
+  background: var(--dv-paper);
+  box-shadow: none !important;
+}
+
+.st-app :is(.discover-card, .product-card):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--dv-shadow) !important;
+}
+
+/* Bỏ chữ in hoa dài + glow của các panel trình bày cũ */
+.st-app :is(.shopping-panel, .stat-card, .orders-history-hero) :is(h1, h2, h3) {
+  text-transform: none !important;
+  letter-spacing: -.01em !important;
+}
+
+/* Nhóm Tài chính (giao diện gộp): các panel trình bày tối chuyển về card
+   trung tính — phân cấp thị giác trả về đúng khu thao tác; chỉ bước hiện
+   tại của quy trình rút tiền mang màu hành động. */
+.st-app .wallet-hero,
+.st-app .wallet-hero-wallet,
+.st-app .withdraw-steps,
+:root[data-theme="dark"] .st-app .wallet-hero-wallet,
+:root[data-theme="dark"] .st-app .withdraw-steps {
+  color: var(--dv-copy);
+  border: 1px solid var(--dv-line) !important;
+  border-radius: var(--sh-radius-l) !important;
+  background: var(--dv-paper) !important;
+  box-shadow: none !important;
+}
+
+.st-app :is(.wallet-hero, .wallet-hero-wallet) :is(span, small) {
+  color: var(--dv-muted) !important;
+}
+
+.st-app :is(.wallet-hero, .wallet-hero-wallet) strong {
+  color: var(--dv-ink) !important;
+}
+
+.st-app .withdraw-steps h2,
+:root[data-theme="dark"] .st-app .withdraw-steps h2 {
+  color: var(--dv-ink);
+  font-size: 18px;
+  text-transform: none;
+  letter-spacing: -.01em;
+}
+
+.st-app .withdraw-steps li b,
+:root[data-theme="dark"] .st-app .withdraw-steps li b {
+  color: var(--dv-ink);
+}
+
+.st-app .withdraw-steps li small,
+:root[data-theme="dark"] .st-app .withdraw-steps li small {
+  color: var(--dv-muted);
+}
+
+.st-app .withdraw-steps li > span {
+  border: 1px solid var(--dv-line);
+  color: var(--dv-muted);
+  background: var(--dv-canvas);
+}
+
+.st-app .withdraw-steps li.active > span {
+  border-color: var(--sh-primary);
+  color: #fff;
+  background: var(--sh-primary);
+}
+
+/* Trang Đơn hàng: hàng điều khiển — search trái, bộ lọc trạng thái phải;
+   icon kính lúp 18px cách trái 16px, chữ nhập lùi 48px nên không chồng;
+   bộ lọc cao 44px, trạng thái chọn không glow. */
+.st-app .orders-history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.st-app .orders-history-search {
+  position: relative;
+  flex: 1 1 300px;
+  max-width: 440px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.st-app .orders-history-search > span {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  display: inline-flex;
+  transform: translateY(-50%);
+  color: var(--dv-muted);
+  pointer-events: none;
+}
+
+.st-app .orders-history-search svg {
+  width: 18px;
+  height: 18px;
+}
+
+.st-app .orders-history-search input {
+  width: 100%;
+  min-height: 44px;
+  padding-left: 48px !important;
+}
+
+.st-app .orders-history-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 !important;
+}
+
+.st-app .orders-history-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  box-shadow: none !important;
+}
+
+.st-app .orders-history-tabs a.active {
+  box-shadow: none !important;
+}
+
+@media (max-width: 640px) {
+  .st-app .orders-history-search {
+    max-width: none;
+  }
+}
+
+/* Trang Hỗ trợ: form gọn bên trái (tối đa 420px), danh sách ticket chiếm
+   phần còn lại; ticket là card ngang — tiêu đề + mã + loại bên trái,
+   trạng thái + hạn phản hồi bên phải. */
+.st-app .support-layout {
+  display: grid !important;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr) !important;
+  gap: 20px !important;
+  align-items: start;
+}
+
+.st-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.st-ticket {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--dv-line);
+  border-radius: var(--sh-radius-l);
+  background: var(--dv-paper);
+}
+
+.st-ticket-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.st-ticket-subject {
+  color: var(--dv-ink);
+  font-size: 14.5px;
+  overflow-wrap: anywhere;
+}
+
+.st-ticket-meta {
+  color: var(--dv-muted);
+  font-size: 13px;
+}
+
+.st-ticket-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.st-ticket-sla {
+  color: var(--dv-muted);
+  font-size: 12.5px;
+}
+
+.st-ticket-sla-overdue {
+  color: var(--sh-primary);
+  font-weight: 650;
+}
+
+@media (max-width: 960px) {
+  .st-app .support-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .st-ticket-side {
+    align-items: flex-start;
+  }
+}
+
+/* Nút hỗ trợ nổi: đồng bộ hệ radius, nền trung tính mặc định — chỉ dùng
+   cam khi hover/đang mở; panel bo 12px, bóng nhẹ. */
+.st-app .support-fab-trigger {
+  border: 1px solid var(--sh-line-strong) !important;
+  border-radius: var(--sh-radius-l) !important;
+  color: var(--sh-ink) !important;
+  background: var(--sh-surface) !important;
+  box-shadow: var(--sh-shadow) !important;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.st-app .support-fab-trigger:hover,
+.st-app .support-fab-trigger[aria-expanded="true"] {
+  border-color: var(--sh-primary) !important;
+  color: #fff !important;
+  background: var(--sh-primary) !important;
+}
+
+.st-app .support-fab-panel {
+  border: 1px solid var(--sh-line) !important;
+  border-radius: var(--sh-radius-l) !important;
+  background: var(--sh-surface) !important;
+  box-shadow: var(--sh-shadow) !important;
+}
+
+/* Bảng: kẻ mảnh, header dịu */
+.st-app th,
+.backoffice-shell th {
+  color: var(--dv-muted);
+  background: var(--dv-canvas);
+}
+
+.st-app th,
+.st-app td,
+.backoffice-shell th,
+.backoffice-shell td {
+  border-bottom: 1px solid var(--dv-line);
+}
+
+/* ====================================================================== */
+/* 9. NGHIỆM THU VÒNG 4 — cuộn khi đổi theme, disabled/focus,              */
+/*    chuẩn hóa radius/viền, dark quản trị                                 */
+/* ====================================================================== */
+
+/* Trình duyệt không tự điều chỉnh scroll khi nội dung phía trên đổi kích
+   thước (scroll anchoring) — một nguồn trôi vị trí khi đổi theme. */
+html {
+  overflow-anchor: none;
+}
+
+/* Đóng băng toàn bộ chuyển động trong lúc swap theme (class do app.js
+   gắn/tháo trong 2 khung hình). */
+:root.st-theme-switching *,
+:root.st-theme-switching *::before,
+:root.st-theme-switching *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Nhiều lớp cũ dùng transition dạng ngắn (mặc định "all") — giới hạn lại
+   về đúng các thuộc tính tương tác; thời lượng/easing giữ nguyên của từng
+   rule nên hiệu ứng hợp lệ không đổi. */
+.st-app *,
+.st-app *::before,
+.st-app *::after,
+.backoffice-shell *,
+.backoffice-shell *::before,
+.backoffice-shell *::after {
+  transition-property: background-color, border-color, color, box-shadow,
+    transform, opacity !important;
+}
+
+/* Trạng thái disabled/chỉ đọc phải nhìn ra ngay — nền xám sáng, chữ xám,
+   không shadow (palette chốt theo nghiệm thu). Hai selector đầu nhân tạo
+   (0,6,1) để thắng rule CTA của dv13 vốn là
+   button[type=submit]:not(×3 class) = (0,5,1) !important. */
+.st-app button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost),
+.backoffice-shell button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost),
+.st-app button:disabled,
+.st-app .button:disabled,
+.st-app button[type="submit"]:disabled,
+.backoffice-shell button:disabled,
+.backoffice-shell button[type="submit"]:disabled,
+.st-app [aria-disabled="true"] {
+  border-color: #e0e3de !important;
+  color: #92978f !important;
+  background: #e8eae7 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+.st-app input[readonly],
+.st-app input:disabled,
+.backoffice-shell input[readonly],
+.backoffice-shell input:disabled {
+  border-color: var(--dv-line) !important;
+  color: var(--dv-muted) !important;
+  background: var(--dv-canvas) !important;
+}
+
+/* Focus cụm tra cứu: MỘT tín hiệu duy nhất trên chính ô nhập (viền cam +
+   ring mềm bằng box-shadow, không outline lệch offset). Dập mọi ring cũ
+   trên hàng/khung bao để không còn 2-3 lớp viền lồng nhau khi click. */
+.st-app .shopping-panel .buy-input-row:focus-within,
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis:focus-within,
+.st-app .shopping-panel .buy-form:focus-within {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.st-app .shopping-panel .buy-input-field input:focus,
+.st-app .shopping-panel .buy-input-field input:focus-visible,
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field input:focus-visible {
+  border-color: var(--sh-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(201, 55, 29, .22) !important;
+}
+
+.st-app .shopping-panel .buy-input-field .buy-paste-button:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(201, 55, 29, .4) !important;
+}
+
+/* Tiêu đề trang Đơn hàng bị dv13 ẩn (display:none) — trả lại cho người
+   nhìn, không chỉ trong DOM. */
+.st-app .orders-history-title {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Trạng thái trống: một tín hiệu duy nhất — icon xám trung tính trong ô
+   tròn nền nhạt; bỏ viền xanh, nền đỏ và chấm đỏ (ba tín hiệu trạng thái
+   không liên quan), viền đổi nét liền để không giống ô kéo-thả. */
+.st-app .empty-orbit,
+.backoffice-shell .empty-orbit {
+  border: 1px solid var(--dv-line-strong) !important;
+  color: var(--dv-muted) !important;
+  background: var(--dv-canvas) !important;
+}
+
+.st-app .empty-orbit::before,
+.st-app .empty-orbit::after,
+.backoffice-shell .empty-orbit::before,
+.backoffice-shell .empty-orbit::after {
+  content: none !important;
+}
+
+/* Nút theme: track từng vẽ thêm ký tự ☀/☾ chồng lên icon SVG — bỏ bản ký
+   tự, giữ SVG. */
+.theme-toggle-track::before,
+.theme-toggle-track::after {
+  content: none !important;
+}
+
+/* Chuẩn hóa radius: panel/card 12px, kể cả các panel đang vuông (Tài
+   chính, Hỗ trợ, Tài khoản). */
+.st-app .panel,
+.st-app .balance-card,
+.backoffice-shell .panel {
+  border-radius: 12px !important;
+}
+
+.st-app .balance-card {
+  border: 1px solid var(--dv-line) !important;
+  box-shadow: none !important;
+}
+
+/* Icon trong nút quản trị 16px, icon FAB 20px. */
+.backoffice-shell .button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.st-app .support-fab-trigger svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* Quản trị: hero/KPI/panel về 12px; bỏ thanh gradient + vòng tròn trang
+   trí lặp trên 6 KPI (đỏ chỉ dành cho cảnh báo/hành động). */
+.backoffice-shell .kpi-card,
+.backoffice-shell .page-heading,
+.backoffice-shell .admin-hero {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.backoffice-shell .kpi-card::before,
+.backoffice-shell .kpi-card::after,
+.backoffice-shell .page-heading::after {
+  content: none !important;
+}
+
+/* Nhật ký: bỏ card-lồng-card — khung bảng trong panel không viền/bóng
+   riêng nữa, chỉ giữ kẻ hàng. */
+.backoffice-shell .panel .responsive-table {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Dark mode quản trị: backoffice không có hệ token dark riêng nên panel
+   trắng rất chói — chuyển các bề mặt nội dung sang surface tối của shell. */
+:root[data-theme="dark"] .backoffice-shell .st-content {
+  color: var(--sh-copy);
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content :is(h1, h2, h3, h4) {
+  color: var(--sh-ink);
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content
+  :is(.panel, .kpi-card, .empty-state, .page-heading, .admin-hero) {
+  color: var(--sh-copy) !important;
+  border-color: var(--sh-line) !important;
+  background: var(--sh-surface) !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content th {
+  color: var(--sh-muted);
+  background: var(--sh-bg);
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content :is(th, td) {
+  border-bottom-color: var(--sh-line);
+  color: var(--sh-copy);
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content
+  :is(input, select, textarea) {
+  border-color: var(--sh-line-strong) !important;
+  color: var(--sh-ink);
+  background: var(--sh-surface) !important;
+}
+
+/* ====================================================================== */
+/* 10. NGHIỆM THU VÒNG 5 — giao diện sáng thân thiện chuẩn Nô Tì           */
+/* ====================================================================== */
+
+/* Tiêu đề trong nội dung không viết hoa toàn bộ — chỉ nhãn nhỏ 11-12px
+   (kicker/eyebrow) được phép uppercase. */
+.st-app .st-content :is(h1, h2, h3, h4, legend),
+.backoffice-shell .st-content :is(h1, h2, h3, h4, legend) {
+  text-transform: none !important;
+}
+
+/* Khối "Tìm sản phẩm" thu gọn: tác vụ chỉ có dán link + chọn sàn + bấm
+   Tra cứu — không cần chiếm nửa màn hình; tiêu đề về 30-34px. */
+.st-app .shopping-panel {
+  min-height: 0 !important;
+  padding: 26px !important;
+}
+
+.st-app .shopping-panel h2 {
+  font-size: clamp(26px, 3vw, 32px) !important;
+  line-height: 1.15 !important;
+}
+
+.st-app .shopping-panel .home-section-kicker {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: .02em;
+}
+
+/* Thẻ sàn đang chọn: hết nền đen — nền cam nhạt + gạch chân cam, chữ mực. */
+.st-app .platform-grid .platform-tab.active {
+  color: var(--sh-ink) !important;
+  background: var(--sh-accent-soft) !important;
+  box-shadow: inset 0 -3px var(--sh-accent) !important;
+}
+
+.st-app .platform-grid .platform-tab.active small {
+  color: var(--sh-muted) !important;
+}
+
+/* Hero Khám phá: bỏ nền đen + glow đỏ — banner cam đào nhẹ nhàng, chữ
+   mực, gọn lại. */
+.st-app .discover-hero {
+  min-height: 0 !important;
+  padding: 28px !important;
+  border: 1px solid #f5d9cd !important;
+  border-radius: 12px !important;
+  color: var(--sh-ink) !important;
+  background: linear-gradient(135deg, #fff0eb, #fff7ee) !important;
+  box-shadow: none !important;
+}
+
+.st-app .discover-hero::before,
+.st-app .discover-hero::after {
+  content: none !important;
+}
+
+.st-app .discover-hero :is(h2, p, strong, b) {
+  color: var(--sh-ink) !important;
+  text-shadow: none !important;
+}
+
+.st-app .discover-hero p {
+  color: var(--sh-copy) !important;
+}
+
+/* Nhãn 3 ô thống kê trong hero còn kế thừa chữ trắng từ nền tối cũ. */
+.st-app .discover-hero span:not(.discover-hero-chip),
+.st-app .discover-hero small {
+  color: var(--sh-muted) !important;
+  text-shadow: none !important;
+}
+
+.st-app .discover-hero-chip {
+  border: 1px solid #f0cdbd !important;
+  border-radius: 999px !important;
+  color: var(--sh-accent-text) !important;
+  background: #fff !important;
+  font-size: 12px !important;
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+}
+
+/* Thẻ Khám phá: khung ảnh 4:3 đủ cao để quảng cáo sản phẩm nhìn rõ
+   (16:9/190px cũ cắt cụt banner dọc và ảnh vuông). */
+.st-app .discover-card-media {
+  aspect-ratio: 4 / 3;
+  max-height: 340px;
+  background: #f2f4ef;
+}
+
+/* ====================================================================== */
+/* 11. BOLDER + COLORIZE — điểm neo mỗi trang, màu theo chức năng          */
+/* ====================================================================== */
+
+/* Hero Trang chủ: nền cam đào ấm, 2 cột — tác vụ dán link bên trái,
+   minh họa + ví dụ tiền hoàn bên phải. */
+.st-app .st-home-hero {
+  border: 1px solid #f2c9b4 !important;
+  background: linear-gradient(120deg, #ffe1d3 0%, #fff3ec 62%, #fff8f1 100%) !important;
+}
+
+.st-home-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(220px, .75fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.st-home-hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* dv13 có rule chung `svg { width:1.25em; fill:none; stroke:currentColor }`
+   cho MỌI svg — minh họa vẽ màu bằng class dưới đây (CSP chặn inline style). */
+.st-app .st-home-hero-art {
+  width: min(100%, 230px) !important;
+  height: auto !important;
+}
+
+.st-app .st-home-hero-art .hh-shadow {
+  fill: #f0c9b2 !important;
+  stroke: none !important;
+  opacity: .45;
+}
+
+.st-app .st-home-hero-art .hh-bag {
+  fill: #ee4d2d !important;
+  stroke: none !important;
+}
+
+.st-app .st-home-hero-art .hh-bag-top {
+  fill: #c9371d !important;
+  stroke: none !important;
+}
+
+.st-app .st-home-hero-art .hh-handle {
+  fill: none !important;
+  stroke: #8a2913 !important;
+  stroke-width: 7 !important;
+  stroke-linecap: round !important;
+}
+
+.st-app .st-home-hero-art .hh-coin {
+  fill: #ffe8a3 !important;
+  stroke: #e0b83f !important;
+  stroke-width: 3 !important;
+}
+
+.st-app .st-home-hero-art .hh-coin-text {
+  fill: #8a5a00 !important;
+  stroke: none !important;
+}
+
+.st-app .st-home-hero-art .hh-check {
+  fill: #ddf4e9 !important;
+  stroke: #16845b !important;
+  stroke-width: 2.5 !important;
+}
+
+.st-app .st-home-hero-art .hh-check-mark {
+  fill: none !important;
+  stroke: #16845b !important;
+  stroke-width: 2.5 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Hai nét cong đỏ hai bên túi tách rời khỏi thân hình, tạo cảm giác minh
+   họa bị tràn/cắt — bỏ hẳn. */
+.st-app .st-home-hero-art .hh-spark {
+  display: none;
+}
+
+
+.st-home-hero-example {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+  padding: 12px 16px;
+  border: 1px solid #f2c9b4;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--sh-shadow);
+}
+
+.st-home-hero-example span {
+  color: var(--sh-muted);
+  font-size: 11.5px;
+}
+
+.st-home-hero-example b {
+  color: var(--sh-ink);
+  font-size: 14.5px;
+}
+
+.st-home-hero-example em {
+  color: var(--sh-copy);
+  font-size: 12.5px;
+  font-style: normal;
+}
+
+.st-home-hero-example strong {
+  color: var(--sh-success);
+}
+
+/* Ô ví dụ "Mua 500K hoàn ~40K" đã bỏ khỏi template; rule ẩn giữ lại làm
+   lưới an toàn cho bản template còn cache phía server. */
+.st-app .st-example-tile {
+  display: none !important;
+}
+
+/* Mobile: khối minh họa + card ví dụ lớn ẨN HẲN; 3 sàn nén về MỘT hàng
+   ngang — cả cụm tra cứu gọn trong màn hình đầu tiên, nhường diện tích
+   cho thẻ sản phẩm. */
+@media (max-width: 960px) {
+  .st-home-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .st-app .st-home-hero-visual {
+    display: none !important;
+  }
+
+  .st-app .shopping-panel.st-home-hero {
+    padding: 18px !important;
+  }
+
+  .st-app .st-home-hero .home-section-copy h1 {
+    font-size: 24px;
+  }
+
+  .st-app .st-home-hero .home-section-copy p {
+    font-size: 13.5px;
+  }
+
+  .st-app .platform-tabs.platform-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .st-app .platform-grid .platform-tab {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-height: 0 !important;
+    padding: 10px 4px !important;
+  }
+
+  /* Khung logo phải thu theo ảnh: dv13 để span 40×40 cho desktop, nếu giữ
+     nguyên thì ảnh 26px nằm lệch góc trong khung 40px — chính là lỗi logo
+     sàn lệch trên mobile. */
+  .st-app .platform-grid .platform-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0 !important;
+  }
+
+  .st-app .platform-grid .platform-logo img {
+    display: block;
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  /* dv13 đặt align-self:end/start cho lưới 2 cột desktop — trong cột flex
+     mobile, end nghĩa là dạt phải nên tên sàn lệch khỏi logo; ép về giữa. */
+  .st-app .platform-grid .platform-tab strong {
+    align-self: center !important;
+    font-size: 12px !important;
+    letter-spacing: 0 !important;
+    text-align: center !important;
+  }
+
+  /* Dòng "Hoàn tiền lên tới 80%" và badge HOT/LIVE bỏ trên mobile — chính
+     chúng khiến mỗi thẻ sàn cao và cả cụm bị kéo dài. */
+  .st-app .platform-grid .platform-tab small,
+  .st-app .platform-grid .platform-card-badge {
+    display: none !important;
+  }
+
+}
+
+/* Bốn ô lợi ích: mỗi ô một nền pastel theo nghĩa, icon 24px cùng tông. */
+.st-app .commerce-benefits article {
+  border-radius: 12px !important;
+  border: 0 !important;
+}
+
+.st-app .commerce-benefits article span svg {
+  width: 24px;
+  height: 24px;
+}
+
+.st-app .commerce-benefits article:nth-of-type(1) {
+  background: var(--sh-info-soft) !important;
+}
+
+.st-app .commerce-benefits article:nth-of-type(1) span {
+  color: var(--sh-info);
+}
+
+.st-app .commerce-benefits article:nth-of-type(2) {
+  background: var(--sh-accent-soft) !important;
+}
+
+.st-app .commerce-benefits article:nth-of-type(2) span {
+  color: var(--sh-accent-text);
+}
+
+.st-app .commerce-benefits article:nth-of-type(3) {
+  background: var(--sh-success-soft) !important;
+}
+
+.st-app .commerce-benefits article:nth-of-type(3) span {
+  color: var(--sh-success);
+}
+
+.st-app .commerce-benefits article:nth-of-type(4) {
+  background: var(--sh-warn-soft) !important;
+}
+
+.st-app .commerce-benefits article:nth-of-type(4) span {
+  color: var(--sh-warn);
+}
+
+/* Ba tiện ích: icon chip có màu riêng theo đích đến. */
+.st-app .commerce-home-link-grid a:nth-of-type(1) span {
+  color: var(--sh-accent-text);
+  background: var(--sh-accent-soft);
+}
+
+.st-app .commerce-home-link-grid a:nth-of-type(2) span {
+  color: var(--sh-info);
+  background: var(--sh-info-soft);
+}
+
+.st-app .commerce-home-link-grid a:nth-of-type(3) span {
+  color: var(--sh-success);
+  background: var(--sh-success-soft);
+}
+
+/* Khung thẻ sàn: lớp cũ đặt gap/padding 1px + nền xám nên nền cha lộ ra ở
+   khe và 4 góc bo của thẻ con — bỏ nền khung, giãn khe thật. */
+.st-app .platform-tabs.platform-grid {
+  gap: 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* Lớp cũ có border: 0 !important trên thẻ — phải khôi phục đủ width+style,
+   chỉ khai báo border-color là chưa đủ. */
+.st-app .platform-tabs.platform-grid .platform-tab {
+  border-width: 1px !important;
+  border-style: solid !important;
+  overflow: hidden;
+}
+
+/* Thẻ sàn mang màu nhận diện riêng thay vì chỉ đổi logo. */
+.st-app .platform-tab.platform-shopee {
+  background: #fff0eb !important;
+  border-color: #f5c9b6 !important;
+}
+
+.st-app .platform-tab.platform-tiktok {
+  background: #e9f7f8 !important;
+  border-color: #bfe7ea !important;
+}
+
+.st-app .platform-tab.platform-lazada {
+  background: #efecff !important;
+  border-color: #d4ccf5 !important;
+}
+
+.st-app .platform-grid .platform-tab.platform-shopee.active {
+  background: #ffe1d3 !important;
+  box-shadow: inset 0 -3px #ee4d2d !important;
+}
+
+.st-app .platform-grid .platform-tab.platform-tiktok.active {
+  background: #d8f1f3 !important;
+  box-shadow: inset 0 -3px #0f9ba8 !important;
+}
+
+.st-app .platform-grid .platform-tab.platform-lazada.active {
+  background: #e2dcfb !important;
+  box-shadow: inset 0 -3px #6c4bd3 !important;
+}
+
+/* Empty state: minh họa đủ lớn để mang thông điệp. */
+.st-app .empty-orbit,
+.backoffice-shell .empty-orbit {
+  width: 96px !important;
+  height: 96px !important;
+}
+
+.st-app .empty-orbit svg,
+.backoffice-shell .empty-orbit svg {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+/* Khám phá: lưới lấp đầy chiều ngang, không dồn trái. */
+.st-app .discover-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+}
+
+/* Nhiệm vụ: tab active theo hệ cam nhạt, không còn đen lạc hệ. */
+.st-app .mission-tabs button.active {
+  border-color: var(--sh-accent) !important;
+  color: var(--sh-accent-text) !important;
+  background: var(--sh-accent-soft) !important;
+  box-shadow: none !important;
+}
+
+/* Dòng tiền trang Tài chính: 3 bước có màu ngữ nghĩa. */
+.st-money-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.st-flow-step {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.st-flow-step span {
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.st-flow-step strong {
+  font-size: 20px;
+  letter-spacing: -.01em;
+}
+
+.st-flow-step small {
+  font-size: 12px;
+  opacity: .8;
+}
+
+.st-flow-wait {
+  color: var(--sh-warn);
+  background: var(--sh-warn-soft);
+}
+
+.st-flow-ready {
+  color: var(--sh-success);
+  background: var(--sh-success-soft);
+}
+
+.st-flow-paid {
+  color: var(--sh-info);
+  background: var(--sh-info-soft);
+}
+
+.st-flow-arrow {
+  align-self: center;
+  color: var(--sh-muted);
+  font-size: 18px;
+  font-style: normal;
+}
+
+@media (max-width: 760px) {
+  .st-money-flow {
+    flex-direction: column;
+  }
+
+  .st-flow-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* Phiên đăng nhập: chấm đỏ chỉ dành cho bất thường — phiên khác dùng xám,
+   phiên hiện tại xanh thành công. */
+.st-app .session-dot {
+  background: var(--sh-line-strong) !important;
+  box-shadow: none !important;
+}
+
+.st-app .session-dot.is-current {
+  background: var(--sh-success) !important;
+}
+
+/* ====================================================================== */
+/* 12. NGHIỆM THU VÒNG 8 — dark trên nền pastel, hệ H1, đồng nhất trang    */
+/* ====================================================================== */
+
+/* dv13 ẩn mọi tiêu đề trang (display:none !important) vì thiết kế cũ dùng
+   hero — mở lại: mỗi trang đúng một H1 nhìn thấy được. */
+.st-app .page-heading,
+.st-app .page-head,
+.st-app .discover-title-row {
+  display: block !important;
+}
+
+.st-app .page-head {
+  margin-bottom: 20px;
+}
+
+.st-app .page-head .eyebrow {
+  display: none;
+}
+
+.st-app .page-head h1 {
+  margin: 0 0 6px;
+  color: var(--dv-ink);
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  text-transform: none;
+}
+
+.st-app .page-head h1 em {
+  color: var(--sh-accent-text);
+  font-style: normal;
+}
+
+.st-app .page-head p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--dv-muted);
+  font-size: 15px;
+}
+
+/* Tiêu đề section không được to hơn H1 của trang. */
+.st-app .commerce-section-heading h2 {
+  font-size: 22px !important;
+}
+
+.st-app .st-home-hero .home-section-copy h1 {
+  margin: 0 0 6px;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 750;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+/*
+ * DARK TRÊN NỀN PASTEL (P0): các bề mặt pastel (hero, ô lợi ích, thẻ sàn,
+ * dòng tiền, card ví dụ) giữ NGUYÊN màu nền ở cả hai theme — nên mọi chữ
+ * bên trong phải ghim màu mực HẰNG SỐ, tuyệt đối không dùng token đổi theo
+ * theme (nguồn lỗi 1.09:1 đo được ở dark mode).
+ */
+.st-app .st-flow-step span,
+.st-app .st-flow-step strong,
+.st-app .st-flow-step small {
+  color: inherit !important;
+}
+
+.st-app .st-home-hero-example span {
+  color: #6f706a !important;
+}
+
+.st-app .st-home-hero-example b {
+  color: #1f231e !important;
+}
+
+.st-app .st-home-hero-example em {
+  color: #43463f !important;
+}
+
+.st-app .st-home-hero-example strong {
+  color: #16845b !important;
+}
+
+.st-app .st-home-hero .home-section-copy :is(h1, h2) {
+  color: #1f231e !important;
+}
+
+.st-app .st-home-hero .home-section-copy p {
+  color: #43463f !important;
+}
+
+.st-app .st-home-hero .home-section-kicker {
+  color: #b22f16 !important;
+}
+
+.st-app .commerce-benefits article h2 {
+  color: #1f231e !important;
+}
+
+.st-app .commerce-benefits article p {
+  color: #43463f !important;
+}
+
+.st-app .platform-tab strong {
+  color: #1f231e !important;
+}
+
+.st-app .platform-tab small {
+  color: #6f706a !important;
+}
+
+.st-app .discover-hero :is(h1, h2, strong, b) {
+  color: #1f231e !important;
+}
+
+.st-app .discover-hero p {
+  color: #43463f !important;
+}
+
+.st-app .discover-hero span:not(.discover-hero-chip),
+.st-app .discover-hero small {
+  color: #6f706a !important;
+}
+
+/* Giới thiệu: bỏ hero đen — cùng ngôn ngữ cam đào với Trang chủ. */
+.st-app .referral-hero {
+  border: 1px solid #f2c9b4 !important;
+  color: #1f231e !important;
+  background: linear-gradient(120deg, #ffe1d3, #fff8f1) !important;
+  box-shadow: none !important;
+}
+
+.st-app .referral-hero::before,
+.st-app .referral-hero::after {
+  content: none !important;
+}
+
+.st-app .referral-hero :is(h1, h2, b, strong) {
+  color: #1f231e !important;
+  text-shadow: none !important;
+}
+
+.st-app .referral-hero :is(p, li) {
+  color: #43463f !important;
+}
+
+.st-app .referral-hero :is(span, small) {
+  color: #6f706a !important;
+}
+
+/* Khám phá: nút lọc đang chọn theo cam thương hiệu, không còn đen. */
+.st-app .discover-platform-tabs button.active,
+.st-app .discover-category-tabs button.active,
+:root[data-theme="dark"] .st-app .discover-platform-tabs button.active,
+:root[data-theme="dark"] .st-app .discover-category-tabs button.active {
+  border-color: var(--sh-accent) !important;
+  color: #b22f16 !important;
+  background: #ffe1d3 !important;
+  box-shadow: none !important;
+}
+
+/* Ảnh thẻ Khám phá — mục tiêu là QUẢNG CÁO sản phẩm nên ảnh phải thấy rõ:
+   khung 4:3 đủ cao; ảnh ngang phủ kín (cover), ảnh dọc/vuông được JS gắn
+   class .is-contain để hiển thị TRỌN trên nền nhạt thay vì bị cắt cụt
+   (banner voucher 580×720 từng chỉ còn một dải giữa trong khung 190px).
+   Icon giỏ hàng làm placeholder khi ảnh chưa tải/lỗi. */
+.st-app .discover-card-media {
+  background-color: #f0f1ec;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c2c9bd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6h15l-1.7 8.5a2 2 0 0 1-2 1.5H8.6a2 2 0 0 1-2-1.6L4.4 3.8A1.5 1.5 0 0 0 3 2.6H1.8'/%3E%3Ccircle cx='9.5' cy='20' r='1.6'/%3E%3Ccircle cx='17.5' cy='20' r='1.6'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 52px;
+}
+
+.st-app .discover-card-media img.is-contain {
+  object-fit: contain !important;
+  padding: 10px;
+}
+
+/* Nhiệm vụ: tiến độ nhìn thấy rõ, phần thưởng nổi màu thành công. */
+.st-app .mission-progress-bar {
+  height: 8px !important;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.st-app .mission-progress-bar::-webkit-progress-bar {
+  background: #e8ebe4 !important;
+}
+
+.st-app .mission-progress-bar::-webkit-progress-value {
+  background: linear-gradient(90deg, #ee4d2d, #c9371d) !important;
+}
+
+.st-app .mission-progress-bar::-moz-progress-bar {
+  background: #c9371d !important;
+}
+
+.st-app .mission-row-reward b {
+  color: #16845b !important;
+  font-size: 15px;
+}
+
+/* Nền pastel phải là HẰNG SỐ ở cả dark mode — rule dark của dv13 (specificity
+   cao hơn) đang đổi các bề mặt này về xám tối làm chữ mực đã ghim bị chìm.
+   Ghim lại nền với scope dark thắng rule cũ. */
+/* .st-content trong selector để thắng cả guard dark nội bộ
+   (background: var(--dv-paper) !important trên .shopping-panel). */
+:root[data-theme="dark"] .st-app .st-content .st-home-hero,
+:root[data-theme="dark"] .st-app .st-home-hero,
+:root[data-theme="dark"] .dv13-commerce-shell .st-home-hero {
+  border-color: #f2c9b4 !important;
+  background: linear-gradient(120deg, #ffe1d3 0%, #fff3ec 62%, #fff8f1 100%) !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint {
+  color: #6f706a !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits,
+:root[data-theme="dark"] .st-app .commerce-benefits {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(1) {
+  background: #ddeeff !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(2) {
+  background: #fff0eb !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(3) {
+  background: #ddf4e9 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(4) {
+  background: #ffe8a3 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-shopee {
+  background: #fff0eb !important;
+  border-color: #f5c9b6 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-tiktok {
+  background: #e9f7f8 !important;
+  border-color: #bfe7ea !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-lazada {
+  background: #efecff !important;
+  border-color: #d4ccf5 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-shopee.active {
+  background: #ffe1d3 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-tiktok.active {
+  background: #d8f1f3 !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-lazada.active {
+  background: #e2dcfb !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .discover-hero,
+:root[data-theme="dark"] .st-app .discover-hero {
+  border-color: #f5d9cd !important;
+  background: linear-gradient(135deg, #fff0eb, #fff7ee) !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .referral-hero,
+:root[data-theme="dark"] .st-app .referral-hero {
+  border-color: #f2c9b4 !important;
+  background: linear-gradient(120deg, #ffe1d3, #fff8f1) !important;
+}
+
+/* Chữ trên thẻ sàn và hero Giới thiệu trong dark: rule dark cũ specificity
+   cao hơn pin thường — thêm bản dark-scope. */
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab strong {
+  color: #1f231e !important;
+}
+
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab small {
+  color: #6f706a !important;
+}
+
+:root[data-theme="dark"] .st-app .st-content .referral-hero :is(span, small, .eyebrow),
+:root[data-theme="dark"] .dv13-commerce-shell .referral-hero :is(span, small, .eyebrow) {
+  color: #8a5a2b !important;
+  text-shadow: none !important;
+}
+
+/* ====================================================================== */
+/* 13. NGHIỆM THU VÒNG 9 — clipboard, ticket, a11y, tương phản, 44px       */
+/* ====================================================================== */
+
+/* (Các rule bố cục hàng nhập cũ đã hợp nhất vào section 15 — một khối
+   quyết định duy nhất, tránh 2 thế hệ rule giành nhau width/viền.) */
+
+/* Label ô link hiển thị cho người nhìn (trước đây chỉ có sr-only, mất chữ
+   dẫn khi placeholder ẩn lúc focus). */
+.st-app .buy-input-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #43463f;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.st-app .shopping-panel .buy-input-row button[type="submit"] {
+  font-size: 14px !important;
+}
+
+.st-app .shopping-panel [data-paste-hint] {
+  display: block;
+  margin-top: 6px;
+  color: var(--sh-accent-text);
+  font-size: 12.5px;
+}
+
+/* Vùng trạng thái tra cứu trong dark: chữ hướng dẫn phải đủ tương phản
+   trên bề mặt tối của khối kết quả. */
+:root[data-theme="dark"] .st-app .shopping-panel :is(.buy-empty, [data-product-empty]) :is(p, small, span) {
+  color: #b8bcb4 !important;
+}
+
+/* Badge HOT/LIVE trên thẻ sàn: 8px mờ → 10px nền đặc đủ tương phản. */
+.st-app .platform-card-badge {
+  padding: 2px 7px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: #fff !important;
+  background: #c9371d !important;
+  font-size: 10px !important;
+  letter-spacing: .04em;
+}
+
+/* Kicker hero dark 2.91:1 → nâu đậm hằng số trên nền đào. */
+.st-app .st-home-hero .home-section-kicker {
+  color: #8a2913 !important;
+}
+
+/* Trang chủ: rút khoảng trống trước "Tiện ích thường dùng", tile thôi
+   viết hoa, giấu kicker section. */
+.st-app .commerce-home-links {
+  margin-top: 20px !important;
+  padding-top: 0 !important;
+}
+
+.st-app .commerce-section-heading {
+  margin: 6px 0 14px !important;
+}
+
+.st-app .commerce-section-heading span {
+  display: none;
+}
+
+.st-app .commerce-home-link-grid a b {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* Khám phá: ảnh phủ kín khung, tỉ lệ thống nhất; hệ tiêu đề đúng cấp. */
+.st-app .discover-card-media img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.st-app .discover-title-row h1 {
+  font-size: 30px !important;
+}
+
+.st-app .discover-hero h2 {
+  font-size: 26px !important;
+}
+
+.st-app .discover-card-badges span {
+  border: 1px solid rgba(31, 35, 30, .14) !important;
+  color: #1f231e !important;
+  background: rgba(255, 255, 255, .95) !important;
+  font-size: 11px !important;
+}
+
+/* Dòng tiền: chữ xanh "Có thể rút" 4.06:1 → xanh đậm hơn. */
+.st-flow-ready {
+  color: #116647;
+}
+
+/* Quản trị: mọi nút thao tác hàng đạt 44px; nhãn phụ đủ tương phản. */
+.backoffice-shell .st-content .button,
+.backoffice-shell .st-content button:not(.st-menu-logout) {
+  min-height: 44px;
+}
+
+.backoffice-shell .st-content .eyebrow {
+  color: #8a2913 !important;
+}
+
+.backoffice-shell .st-content .kpi-card small,
+.backoffice-shell .st-content .panel small,
+.backoffice-shell .st-content .field-hint,
+.backoffice-shell .st-content label small {
+  color: #565b54 !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content .kpi-card small,
+:root[data-theme="dark"] .backoffice-shell .st-content .panel small,
+:root[data-theme="dark"] .backoffice-shell .st-content .field-hint,
+:root[data-theme="dark"] .backoffice-shell .st-content label small {
+  color: #b8bcb4 !important;
+}
+
+/* Disabled trong dark phải tối đi — bản sáng #E8EAE7 nhìn như nút active. */
+:root[data-theme="dark"] .st-app button:disabled,
+:root[data-theme="dark"] .st-app .button:disabled,
+:root[data-theme="dark"] .st-app button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost),
+:root[data-theme="dark"] .backoffice-shell button:disabled,
+:root[data-theme="dark"] .backoffice-shell button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost) {
+  border-color: #3d3d3d !important;
+  color: #8a8a82 !important;
+  background: #2a2a2a !important;
+}
+
+/* ====================================================================== */
+/* 14. NGHIỆM THU VÒNG 10 — ảnh Khám phá, stat-grid, dark pastel, missions */
+/* ====================================================================== */
+
+/* Ảnh Khám phá phủ hết bề ngang card (đang chỉ chiếm 66%). */
+.st-app .discover-card-media,
+.st-app .discover-card-media img {
+  display: block;
+  width: 100% !important;
+}
+
+.st-app .discover-card-media {
+  border-radius: 12px 12px 0 0;
+}
+
+/* Cùng lỗi lộ nền như thẻ sàn: .stat-grid (Link chia sẻ, Giới thiệu) có
+   gap/padding 1px + nền xám, card con bo 12px. */
+.st-app .stat-grid {
+  gap: 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.st-app .stat-grid .stat-card {
+  border: 1px solid var(--dv-line) !important;
+}
+
+/* Bốn thẻ lợi ích: tách khe thật thay vì chạm nhau lộ nền ở góc bo. */
+.st-app .commerce-benefits {
+  gap: 12px !important;
+  margin-top: 24px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* Khung icon lợi ích bo theo hệ card; icon tiện ích tăng 24px. */
+.st-app .commerce-benefits article span {
+  border-radius: 10px;
+}
+
+.st-app .commerce-home-link-grid a > span svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* Dark mode: khối nhập link trong hero pastel không được chuyển đen —
+   toàn bộ cụm form là bề mặt hằng số sáng ở CẢ hai theme. */
+:root[data-theme="dark"] .st-app .st-home-hero .buy-form,
+:root[data-theme="dark"] .dv13-commerce-shell .st-home-hero .shopping-panel .buy-form,
+:root[data-theme="dark"] .st-app .st-home-hero .buy-input-row,
+:root[data-theme="dark"] .dv13-commerce-shell .st-home-hero .shopping-panel .buy-input-row {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .buy-input-field input,
+:root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input {
+  border-color: var(--sh-control-border) !important;
+  color: #1f231e !important;
+  background: #fff !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input::placeholder {
+  color: #6f706a;
+}
+
+/* Hint nằm trên nền đào hằng số → màu hằng số, không phụ thuộc theme. */
+.st-app .st-home-hero .buy-form-hint,
+:root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint,
+:root[data-theme="dark"] .dv13-commerce-shell .st-home-hero .buy-form-hint {
+  color: #565b54 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero-example {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+}
+
+/* Mô tả thẻ sàn đậm hơn (đo 4.04-4.31:1 trong dark trên nền pastel). */
+.st-app .platform-tab small,
+:root[data-theme="dark"] .dv13-commerce-shell .platform-tab small {
+  color: #565b54 !important;
+}
+
+/* Trạng thái thẻ sàn đang chọn rõ hơn: viền đậm cùng màu gạch chân. */
+.st-app .platform-grid .platform-tab.platform-shopee.active {
+  border-color: #ee4d2d !important;
+}
+
+.st-app .platform-grid .platform-tab.platform-tiktok.active {
+  border-color: #0f9ba8 !important;
+}
+
+.st-app .platform-grid .platform-tab.platform-lazada.active {
+  border-color: #6c4bd3 !important;
+}
+
+/* Nhiệm vụ: thanh tiến độ nhìn thấy thật, mốc có màu, icon quà, CTA. */
+.st-app .mission-meter-track {
+  position: relative;
+  height: 10px !important;
+  border-radius: 999px;
+  background: #e8ebe4 !important;
+  overflow: visible;
+}
+
+.st-app .mission-meter-fill {
+  height: 100% !important;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ee4d2d, #c9371d) !important;
+}
+
+.st-app .mission-meter-tick {
+  width: 14px !important;
+  height: 14px !important;
+  border: 2px solid #fff !important;
+  border-radius: 50%;
+  background: #c2c9bd !important;
+}
+
+.st-app .mission-meter-tick-done {
+  background: #16845b !important;
+}
+
+.st-app .mission-reward-gift svg {
+  width: 18px;
+  height: 18px;
+  color: var(--sh-accent-text);
+}
+
+.st-mission-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--dv-line);
+}
+
+.st-mission-cta span {
+  color: var(--dv-muted);
+  font-size: 13px;
+}
+
+/* Hỗ trợ (phía người dùng): tin của CHÍNH MÌNH nằm bên phải theo quy ước
+   chat; tin nhân viên bên trái nền trung tính. Backoffice giữ chiều ngược
+   (nhân viên là "mình"). */
+.st-app:not(.backoffice-shell) .st-thread-user {
+  align-self: flex-end;
+  background: var(--sh-accent-soft);
+}
+
+.st-app:not(.backoffice-shell) .st-thread-staff {
+  align-self: flex-start;
+  background: var(--dv-canvas);
+}
+
+/* Minh họa hero ≤560px giữ 130px như mốc 960 — không phóng ngược khi màn
+   hình nhỏ hơn. */
+@media (max-width: 560px) {
+  .st-app .st-home-hero-art {
+    width: 130px !important;
+  }
+}
+
+/* ====================================================================== */
+/* 15. NGHIỆM THU VÒNG 12 — cụm nhập/dán/tra cứu + trạng thái Chưa xác minh */
+/* ====================================================================== */
+
+/* Bố cục chốt: [ input trắng, icon dán bên trong ] [ Tra cứu cam 150px ]
+   đặt TRỰC TIẾP trên nền hero đào — bỏ hộp xám bao ngoài (.buy-form) vốn
+   lệch tông. Selector chuỗi dài + !important để thắng dứt điểm mọi lớp cũ
+   (ui-refresh/dv13/patch) từng giành width/viền của cụm này. */
+.st-app .shopping-panel .buy-form,
+.st-app .st-home-hero .buy-form {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.st-app .shopping-panel .buy-input-row,
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  /* Hàng cha bị lớp cũ nống cao 62px — canh các phần tử theo MÉP TRÊN để
+     input (52px) và nút Tra cứu (52px) cùng một đường ngang, không để nút
+     bị đẩy xuống 5px vì căn giữa theo 62px. */
+  align-items: flex-start !important;
+  min-height: 52px !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.st-app .shopping-panel .buy-input-field {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.st-app .shopping-panel .buy-input-field input,
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field input {
+  box-sizing: border-box;
+  display: block;
+  width: 100% !important;
+  min-width: 100% !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  padding: 0 56px 0 16px !important;
+  border: 1px solid var(--sh-control-border) !important;
+  border-radius: 12px !important;
+  color: #1f231e !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(31, 35, 30, .05) !important;
+  font-size: 14.5px !important;
+}
+
+/* Icon dán nằm gọn trong ô nhập — tiện ích phụ, không cạnh tranh CTA.
+   Neo top cứng theo input (cao 52, nút 40 → top 6px) thay vì top:50% của
+   khung .buy-input-field — khung này bị lớp cũ nống cao hơn input 10px
+   khiến icon tụt xuống dưới tâm ô. */
+.st-app .shopping-panel .buy-input-field .buy-paste-button {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 44px !important;
+  height: 44px !important;
+  max-height: 44px !important;
+  min-height: 44px !important;
+  min-width: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  color: #565b54 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.st-app .shopping-panel .buy-input-field .buy-paste-button:hover {
+  color: #1f231e !important;
+  background: #f0f1ec !important;
+}
+
+.st-app .shopping-panel .buy-input-field .buy-paste-button svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+.st-app .shopping-panel .buy-input-row button[type="submit"],
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis button[type="submit"] {
+  flex: 0 0 auto !important;
+  align-self: flex-start !important;
+  /* 160px đủ chỗ cho "Đang tra cứu…" trên MỘT dòng. */
+  width: 160px !important;
+  min-width: 160px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  margin: 0 !important;
+  border-radius: 12px !important;
+  font-size: 14.5px !important;
+  white-space: nowrap !important;
+}
+
+/* Mobile: ô nhập link + nút Tra cứu đứng CÙNG một dòng (lớp vá ≤760px cũ
+   xếp chồng hai hàng làm nút tụt xuống). Nút Dán neo theo ô nhập —
+   không theo cả hàng — nên không đè lên nút Tra cứu. */
+@media (max-width: 760px) {
+  .st-app .shopping-panel .buy-input-row,
+  .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    align-items: stretch;
+  }
+
+  .st-app .shopping-panel .buy-input-field {
+    position: relative;
+  }
+
+  .st-app .shopping-panel .buy-input-row > button[type="submit"],
+  .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis > button[type="submit"] {
+    /* instant-purchase ≤600px trải nút full hàng (grid-column: 1/-1) —
+       ghim lại cột 2 hàng 1 để đứng cạnh ô nhập. */
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 16px !important;
+    white-space: nowrap;
+  }
+}
+
+/* Kết quả CHƯA XÁC MINH: không được trông như tra cứu thành công — viền
+   vàng cảnh báo + badge riêng. */
+.st-app .product-card.is-unverified {
+  border-color: #e0b83f !important;
+}
+
+.st-app .product-card.is-unverified [data-product-source-note] {
+  color: #8a5a00 !important;
+  font-weight: 600;
+}
+
+.st-app [data-product-status].is-unverified {
+  color: #8a5a00 !important;
+  background: #ffe8a3 !important;
+  border-color: #e0b83f !important;
+}
+
+/* Mọi nút hành động trong nội dung app tối thiểu 44px (Lưu thay đổi,
+   Đăng xuất tất cả thiết bị... đang 42px). */
+.st-app .st-content .button,
+.st-app .st-content button[type="submit"]:not(.st-menu-logout) {
+  min-height: 44px;
+}
+
+/* page-heading quản trị: bỏ banner hero đen của lớp cũ — tiêu đề phẳng
+   cùng hệ với ứng dụng. */
+.backoffice-shell .st-content .page-heading {
+  margin: 0 0 20px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--dv-ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.backoffice-shell .st-content .page-heading h1 {
+  color: var(--dv-ink) !important;
+  font-size: 30px !important;
+  text-transform: none !important;
+}
+
+.backoffice-shell .st-content .page-heading p {
+  color: var(--dv-muted) !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content .page-heading h1 {
+  color: var(--sh-ink) !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content .page-heading p {
+  color: var(--sh-muted) !important;
+}
+
+/* Chi tiết ticket: 2 cột thông tin + luồng trao đổi dạng bong bóng. */
+.st-ticket-detail {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .st-ticket-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.st-back-link {
+  color: var(--dv-muted);
+  text-decoration: none;
+}
+
+.st-back-link:hover {
+  color: var(--dv-ink);
+  text-decoration: underline;
+}
+
+.st-ticket-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.st-ticket-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.st-ticket-facts dt {
+  color: var(--dv-muted);
+  font-size: 13px;
+}
+
+.st-ticket-facts dd {
+  margin: 0;
+  color: var(--dv-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.st-ticket-status-form {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.st-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.st-thread-item {
+  max-width: 85%;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.st-thread-user {
+  align-self: flex-start;
+  background: var(--dv-canvas);
+}
+
+.st-thread-staff {
+  align-self: flex-end;
+  background: var(--sh-accent-soft);
+}
+
+.st-thread-item b {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--dv-ink);
+  font-size: 12.5px;
+}
+
+.st-thread-item p {
+  margin: 0 0 6px;
+  color: var(--dv-copy);
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.st-thread-item time {
+  color: var(--dv-muted);
+  font-size: 11.5px;
+}
+
+.st-thread-closed {
+  color: var(--dv-muted);
+}
+
+.st-ticket-open {
+  color: var(--sh-accent-text);
+  font-weight: 650;
+}
+
+.st-app .st-ticket-link {
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.st-app .st-ticket-link:hover {
+  border-color: var(--sh-accent) !important;
+  background: var(--sh-accent-soft);
+}
+
+/* Dark mode Quản trị: chữ mô tả trong panel/empty-state phải theo token
+   shell (token --dv-* ở quản trị là hằng sáng nên bị chìm trên nền tối). */
+:root[data-theme="dark"] .backoffice-shell .st-content .empty-state {
+  border-color: var(--sh-line-strong) !important;
+  color: var(--sh-muted) !important;
+  background: var(--sh-bg) !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content .empty-state :is(h3, p),
+:root[data-theme="dark"] .backoffice-shell .st-content .panel :is(p, small, li) {
+  color: var(--sh-copy) !important;
+}
+
+:root[data-theme="dark"] .backoffice-shell .st-content .empty-orbit {
+  border-color: var(--sh-line-strong) !important;
+  color: var(--sh-muted) !important;
+  background: var(--sh-surface) !important;
+}
+
+/* ====================================================================== */
+/* 16. KHÁM PHÁ — trình bày chuẩn trang bán hàng (marketplace)             */
+/*     Lưới 4 cột thẻ compact như Shopee/Lazada: ảnh 1:1 là nhân vật       */
+/*     chính, tên 2 dòng, giá đỏ đậm, tiền hoàn xanh, CTA gọn.             */
+/* ====================================================================== */
+
+.st-app .discover-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
+  gap: 14px !important;
+  align-items: stretch;
+}
+
+.st-app .discover-card {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.st-app .discover-card-media {
+  aspect-ratio: 1 / 1 !important;
+  max-height: none !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.st-app .discover-card-media img.is-contain {
+  padding: 8px;
+}
+
+.st-app .discover-card-badges span {
+  padding: 2px 8px !important;
+  font-size: 10.5px !important;
+}
+
+.st-app .discover-cashback-badge {
+  font-size: 10.5px !important;
+  padding: 2px 8px !important;
+}
+
+.st-app .discover-card-body {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  padding: 10px 12px 12px !important;
+}
+
+.st-app .discover-card-body h2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+.st-app .discover-card-meta {
+  margin: 0 !important;
+  color: var(--dv-muted);
+  font-size: 11px !important;
+}
+
+.st-app .discover-card-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 !important;
+  color: var(--dv-muted);
+  font-size: 12.5px !important;
+  line-height: 1.4 !important;
+}
+
+/* Giá kiểu sàn TMĐT: đỏ đậm + gạch giá gốc; dòng hoàn tiền xanh. */
+.st-app .discover-price-box {
+  margin: 2px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.st-app .discover-price-box strong {
+  color: #c9371d !important;
+  font-size: 17px !important;
+  font-weight: 750 !important;
+}
+
+.st-app .discover-price-box del {
+  margin-left: 6px;
+  color: var(--dv-muted);
+  font-size: 12px;
+}
+
+.st-app .discover-price-box p {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  margin: 2px 0 0 !important;
+  font-size: 12px !important;
+}
+
+.st-app .discover-price-box p span {
+  color: var(--dv-muted);
+}
+
+.st-app .discover-price-box p b {
+  color: #16845b !important;
+  font-weight: 700;
+}
+
+.st-app .discover-card-footer {
+  margin-top: auto !important;
+  padding: 0 12px 12px !important;
+  border: 0 !important;
+}
+
+.st-app .discover-card-footer .discover-primary-action {
+  width: 100%;
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+}
+
+/* Đầu trang bán hàng: một dòng tiêu đề + badge hoàn tiền, vào là thấy
+   hàng ngay (hero giới thiệu và kicker đã gỡ khỏi template). */
+.st-app .st-shop-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.st-app .st-shop-head h1 {
+  margin: 0 !important;
+  font-size: 24px !important;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+.st-app .st-shop-head-badge {
+  padding: 5px 12px;
+  border: 1px solid #f2c9b4;
+  border-radius: 999px;
+  color: #8a2913;
+  background: #ffe1d3;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* Nút X đóng quảng cáo — cách đóng duy nhất (nút "Bỏ qua" đã gỡ): 44px
+   tròn nền trắng viền mảnh, không còn khối 52px che góc ảnh; bấm là tắt
+   quảng cáo đến hết ngày. */
+.st-app .entry-promo-close {
+  top: 12px !important;
+  right: 12px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border: 1px solid var(--sh-line) !important;
+  border-radius: 999px !important;
+  color: #1f231e !important;
+  background: rgba(255, 255, 255, .95) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18) !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+
+.st-app .entry-promo-close:hover {
+  border-color: var(--sh-line-strong) !important;
+  background: #fff !important;
+}
+
+.st-app .entry-promo-close:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(201, 55, 29, .35) !important;
+}
+
+/* ====================================================================== */
+/* FOCUS CỤM TRA CỨU — đặt CUỐI FILE để thắng tie specificity với khối    */
+/* bố cục §15. :focus-within phủ cả click chuột lẫn bàn phím.             */
+/* ====================================================================== */
+
+.st-app .shopping-panel .buy-input-field:focus-within input,
+.st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field:focus-within input {
+  border-color: var(--sh-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(201, 55, 29, .22) !important;
+}

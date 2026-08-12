@@ -24,6 +24,7 @@
     </div>
 
     <div class="mission-row-reward">
+      <span class="mission-reward-gift" aria-hidden="true">{{ icon('gift') }}</span>
       <span>Thưởng</span>
       <b>{{ item.definition.rewardAmountVnd | vnd }}</b>
     </div>
@@ -87,8 +88,7 @@
 {% block app_content %}
   <header class="page-head">
     <div>
-      <span class="eyebrow">NHIỆM VỤ</span>
-      <h1>Đạt mốc, <em>nhận thưởng</em></h1>
+      <h1>Nhiệm vụ và <em>phần thưởng</em></h1>
       <p>Đạt mốc rồi bấm "Nhận thưởng" — ShopTik sẽ kiểm tra và duyệt trước khi cộng vào ví.</p>
     </div>
   </header>
@@ -101,10 +101,18 @@
   <section class="mission-panel" data-mission-panel="referral">
     <p class="mission-panel-hint">Tính theo tổng số người bạn giới thiệu thành công, cộng dồn trọn đời — không reset theo tháng.</p>
     {{ mission_group(referralGroup, 'người') }}
+    <div class="st-mission-cta">
+      <a class="button button-primary" href="/app/referrals">Mời bạn bè ngay</a>
+      <span>Gửi mã giới thiệu để tiến gần mốc thưởng tiếp theo.</span>
+    </div>
   </section>
 
   <section class="mission-panel" data-mission-panel="purchase" hidden>
     <p class="mission-panel-hint">Tính theo số đơn đã được duyệt trong tháng hiện tại — mốc tự reset vào đầu tháng sau.</p>
     {{ mission_group(purchaseGroup, 'đơn') }}
+    <div class="st-mission-cta">
+      <a class="button button-primary" href="/app">Tìm sản phẩm để mua</a>
+      <span>Mỗi đơn được duyệt trong tháng tính vào tiến độ.</span>
+    </div>
   </section>
 {% endblock %}

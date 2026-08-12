@@ -34,27 +34,44 @@
           <small class="field-error" id="support-subject-input-error" hidden></small>
         </label>
         <label for="support-order-input">Mã đơn liên quan
-          <input id="support-order-input" type="text" name="relatedOrderId" maxlength="100" value="{{ supportPrefill.orderId or '' }}">
+          <select id="support-order-input" name="relatedOrderId">
+            <option value="">Không gắn với đơn cụ thể</option>
+            {% for order in orderOptions %}
+              <option value="{{ order.platform_order_id }}" {% if supportPrefill.orderId == order.platform_order_id %}selected{% endif %}>
+                #{{ order.platform_order_id }} · {{ order.platform }}{% if order.order_amount_vnd | int > 0 %} · {{ order.order_amount_vnd | int | vnd }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          {% if not orderOptions.length %}<small class="field-hint">Bạn chưa có đơn hàng nào — có thể gửi yêu cầu không gắn đơn.</small>{% endif %}
         </label>
         <label for="support-description-input">Mô tả
           <textarea id="support-description-input" name="description" rows="6" minlength="20" maxlength="3000" placeholder="Mô tả vấn đề cần hỗ trợ" required data-required-message="Vui lòng mô tả chi tiết vấn đề." data-minlength-message="Mô tả cần ít nhất 20 ký tự.">{{ supportPrefill.description or '' }}</textarea>
           <small class="field-error" id="support-description-input-error" hidden></small>
         </label>
-        <button class="button button-primary button-block" type="submit" data-submit-button>Gửi hỗ trợ</button>
+        <button class="button button-primary button-block" type="submit" data-submit-button>Gửi yêu cầu hỗ trợ</button>
       </form>
     </section>
 
     <section class="panel support-history-panel">
       <header class="panel-heading"><div><h2>Yêu cầu của bạn</h2></div></header>
       {% if tickets.length %}
-        <div class="ticket-list">
+        <div class="st-ticket-list">
           {% for ticket in tickets %}
-            <article>
-              <span class="ticket-id">#{{ ticket.id | truncate(8, true, '') }}</span>
-              <div><b>{{ ticket.subject }}</b><small>{{ ticket_type_label(ticket.type) }} · {{ ticket.created_at | datetime }}</small></div>
-              {{ status_badge(ticket.status) }}
-              <small class="ticket-sla">Dự kiến phản hồi trước {{ ticket.sla_at | datetime }}</small>
-            </article>
+            <a class="st-ticket st-ticket-link" href="/app/support/{{ ticket.id }}">
+              <div class="st-ticket-main">
+                <b class="st-ticket-subject">{{ ticket.subject }}</b>
+                <small class="st-ticket-meta">#{{ ticket.id | truncate(8, true, '') }} · {{ ticket_type_label(ticket.type) }} · {{ ticket.created_at | datetime }}</small>
+              </div>
+              <div class="st-ticket-side">
+                {{ status_badge(ticket.status) }}
+                {% if ticket.overdue %}
+                  <small class="st-ticket-sla st-ticket-sla-overdue">Quá hạn phản hồi ({{ ticket.sla_at | datetime }})</small>
+                {% else %}
+                  <small class="st-ticket-sla">Phản hồi trước {{ ticket.sla_at | datetime }}</small>
+                {% endif %}
+                <small class="st-ticket-open">Xem chi tiết →</small>
+              </div>
+            </a>
           {% endfor %}
         </div>
       {% else %}

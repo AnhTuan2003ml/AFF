@@ -7,7 +7,7 @@ import {
   type ProductPlatform,
 } from "./affiliate.js";
 import {
-  fetchShopeeProductOffer,
+  lookupShopeeProductOffer,
   type ShopeeProductOffer,
 } from "./shopee-open-api.js";
 import { fetchLazadaProductItem, type LazadaProductItem } from "./lazada-open-api.js";
@@ -25,6 +25,8 @@ export type CommissionSource =
   | "UNAVAILABLE";
 
 export interface ProductPreview {
+  /** false = thẻ chỉ dựng từ URL, chưa có dữ liệu thật nào từ sàn/API. */
+  dataVerified: boolean;
   platform: ProductPlatform;
   platformLabel: string;
   normalizedUrl: string;
@@ -1078,10 +1080,10 @@ export async function lookupProductPreview(
   // Lazada GetProductItem / TikTok Affiliate Creator — có hoa hồng nếu sàn
   // trả) → partner API tự cấu hình → API sàn/HTML công khai (thường bị
   // chặn bot, đặc biệt TikTok Shop).
-  const [openApiOffer, lazadaItem, tikTokProduct, partner, nativeProduct, pageProduct] =
+  const [shopeeOfferLookup, lazadaItem, tikTokProduct, partner, nativeProduct, pageProduct] =
     await Promise.all([
       platform === "SHOPEE" && identity
-        ? fetchShopeeProductOffer(config, identity.productId, fetcher)
+        ? lookupShopeeProductOffer(config, identity.productId, fetcher)
         : Promise.resolve(null),
       platform === "LAZADA" && identity
         ? fetchLazadaProductItem(config, identity.productId, identity.skuId, fetcher)
@@ -1106,13 +1108,68 @@ export async function lookupProductPreview(
       ? { ...lazadaUrlData, originalPriceVnd: pageData.priceVnd }
       : lazadaUrlData;
   const officialOffer =
-    offerToProductData(openApiOffer) ??
+    offerToProductData(shopeeOfferLookup?.offer ?? null) ??
     lazadaItemToProductData(lazadaItem) ??
     tikTokAffiliateToProductData(tikTokProduct);
   const product = mergeProductData(
     lazadaUrlDataWithOriginal,
     mergeProductData(officialOffer, mergeProductData(partner, pageData)),
   );
+
+  // Link không tồn tại thường bị sàn chuyển về trang chủ/trang lỗi — title
+  // scrape được khi đó là tiêu đề chung của sàn, không phải tên sản phẩm.
+  // Loại bỏ để không "chứng thực" nhầm một sản phẩm không có thật.
+  const GENERIC_PLATFORM_TITLES = [
+    /^shopee việt nam/i,
+    /mua và bán trên ứng dụng/i,
+    /^shopee\b.*(online|website)/i,
+    /^lazada(\.vn)?\b/i,
+    /mua sắm (online|trực tuyến)/i,
+    /^tiktok(\s|$)/i,
+    /^tiktok shop($|\s*[|—-])/i,
+  ];
+  const isGenericPlatformTitle = (value: string): boolean =>
+    GENERIC_PLATFORM_TITLES.some((pattern) => pattern.test(value.trim()));
+  if (product.productName && isGenericPlatformTitle(product.productName)) {
+    delete product.productName;
+  }
+  if (product.shopName && isGenericPlatformTitle(product.shopName)) {
+    delete product.shopName;
+  }
+
+  // Xác minh dữ liệu: cần ít nhất tên/ảnh/giá(>0) THẬT từ sàn. Riêng con số
+  // hoa hồng đứng một mình (thường là 0 nhặt từ JSON của trang lỗi/trang
+  // chủ) KHÔNG chứng thực được sản phẩm — và phải loại bỏ để không hiển thị
+  // "hoàn 0 ₫" như thể đã tính toán thật.
+  const hasVerifiedData =
+    Boolean(product.productName) ||
+    Boolean(product.imageUrl) ||
+    (product.priceVnd !== undefined && product.priceVnd > 0);
+  if (!hasVerifiedData) {
+    delete product.affiliateCommissionVnd;
+    delete product.commissionRateBps;
+    delete product.priceVnd;
+    delete product.originalPriceVnd;
+  }
+
+  // Xác minh tồn tại (P0): Shopee Open API trả lời hợp lệ rằng itemId này
+  // KHÔNG có offer, và không nguồn nào khác (partner/HTML) có dữ liệu thật
+  // → không dựng thẻ sản phẩm từ URL nữa. Chỉ áp khi sàn xác nhận rõ; lỗi
+  // gọi API vẫn rơi về luồng cũ để không chặn nhầm sản phẩm thật.
+  if (
+    platform === "SHOPEE" &&
+    shopeeOfferLookup?.confirmedMissing &&
+    !product.productName &&
+    !product.imageUrl &&
+    product.priceVnd === undefined &&
+    product.affiliateCommissionVnd === undefined
+  ) {
+    throw new AppError(
+      "PRODUCT_NOT_FOUND",
+      "Shopee không tìm thấy sản phẩm với link này. Hãy mở đúng trang sản phẩm trên Shopee rồi sao chép lại link.",
+      422,
+    );
+  }
   const derivedName = deriveProductName(normalizedUrl, platform);
 
   if (
@@ -1152,7 +1209,11 @@ export async function lookupProductPreview(
     Boolean(product.productName ?? derivedName) &&
     Boolean(product.imageUrl) &&
     product.priceVnd !== undefined;
+  // Phân biệt với thẻ chỉ dựng từ chính URL (tên suy từ slug). Frontend
+  // dùng cờ này để trình bày trạng thái "Chưa xác minh" thay vì một kết
+  // quả tra cứu thành công.
   return {
+    dataVerified: hasVerifiedData,
     platform,
     platformLabel: platformLabel(platform),
     normalizedUrl,

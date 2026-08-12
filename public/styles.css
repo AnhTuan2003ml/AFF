@@ -6434,3 +6434,11 @@ body.is-entry-promo-open {
     aspect-ratio: 16 / 10;
   }
 }
+
+/* Placeholder chỉ là gợi ý — ẩn ngay khi focus để không bị hiểu nhầm là
+   dữ liệu có sẵn trong ô (áp dụng toàn site, kể cả trang đăng nhập). */
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: transparent;
+  opacity: 0;
+}

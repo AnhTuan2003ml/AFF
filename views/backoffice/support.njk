@@ -11,26 +11,32 @@
           <tbody>
             {% for ticket in tickets %}
               <tr>
-                <td><b>#{{ ticket.id | truncate(8, true, '') }}</b><br><small>{{ ticket.created_at | datetime }}</small></td>
+                <td><a href="/backoffice/support/{{ ticket.id }}"><b>#{{ ticket.id | truncate(8, true, '') }}</b></a><br><small>{{ ticket.created_at | datetime }}</small></td>
                 <td>{{ ticket.email }}</td>
                 <td>{{ ticket_type_label(ticket.type) }}</td>
-                <td>{{ ticket.subject }}</td>
-                <td>{{ ticket.sla_at | datetime }}</td>
+                <td><a href="/backoffice/support/{{ ticket.id }}">{{ ticket.subject }}</a></td>
+                <td>
+                  {% if ticket.overdue %}<b class="st-ticket-sla-overdue">Quá hạn</b><br>{% endif %}
+                  {{ ticket.sla_at | datetime }}
+                </td>
                 <td>{{ status_badge(ticket.status) }}</td>
                 <td>
-                  {% if currentUser.role != 'AUDITOR' %}
-                    <form method="post" action="/backoffice/support/{{ ticket.id }}/status" class="row-actions">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <select name="status">
-                        <option value="OPEN">Mới tiếp nhận</option>
-                        <option value="IN_PROGRESS">Đang xử lý</option>
-                        <option value="WAITING_PARTNER">Chờ đối tác</option>
-                        <option value="RESOLVED">Đã giải quyết</option>
-                        <option value="CLOSED">Đã đóng</option>
-                      </select>
-                      <button class="button button-small button-primary" type="submit">Lưu</button>
-                    </form>
-                  {% else %}—{% endif %}
+                  <div class="row-actions">
+                    <a class="button" href="/backoffice/support/{{ ticket.id }}">Mở ticket</a>
+                    {% if currentUser.role != 'AUDITOR' %}
+                      <form method="post" action="/backoffice/support/{{ ticket.id }}/status" class="row-actions">
+                        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                        <select name="status" aria-label="Đổi trạng thái ticket #{{ ticket.id | truncate(8, true, '') }}">
+                          <option value="OPEN" {% if ticket.status == 'OPEN' %}selected{% endif %}>Mới tiếp nhận</option>
+                          <option value="IN_PROGRESS" {% if ticket.status == 'IN_PROGRESS' %}selected{% endif %}>Đang xử lý</option>
+                          <option value="WAITING_PARTNER" {% if ticket.status == 'WAITING_PARTNER' %}selected{% endif %}>Chờ đối tác</option>
+                          <option value="RESOLVED" {% if ticket.status == 'RESOLVED' %}selected{% endif %}>Đã giải quyết</option>
+                          <option value="CLOSED" {% if ticket.status == 'CLOSED' %}selected{% endif %}>Đã đóng</option>
+                        </select>
+                        <button class="button button-small button-primary" type="submit">Lưu</button>
+                      </form>
+                    {% endif %}
+                  </div>
                 </td>
               </tr>
             {% endfor %}

@@ -474,12 +474,142 @@ export async function registerBackofficeRoutes(
         LIMIT 200
       `,
     );
+    const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
     return reply.view("backoffice/support.njk", {
       pageTitle: "Yêu cầu hỗ trợ",
       backofficeSection: "support",
-      tickets: tickets.rows,
+      tickets: tickets.rows.map((ticket) => ({
+        ...ticket,
+        overdue:
+          openStatuses.has(ticket.status) &&
+          ticket.sla_at.getTime() < Date.now(),
+      })),
     });
   });
+
+  // Chi tiết ticket: thông tin người gửi, đơn liên quan, nội dung gốc,
+  // timeline phản hồi và ô trả lời của nhân viên.
+  app.get<{ Params: { id: string } }>(
+    "/support/:id",
+    async (request, reply) => {
+      const { id } = parseInput(
+        z.object({ id: z.string().uuid() }),
+        request.params,
+      );
+      const ticket = await query<{
+        id: string;
+        user_id: string;
+        email: string;
+        full_name: string;
+        type: string;
+        subject: string;
+        description: string;
+        related_order_id: string | null;
+        status: string;
+        sla_at: Date;
+        created_at: Date;
+        updated_at: Date;
+      }>(
+        deps.db,
+        `
+          SELECT t.id, t.user_id, u.email, u.full_name, t.type, t.subject,
+            t.description, t.related_order_id, t.status, t.sla_at,
+            t.created_at, t.updated_at
+          FROM support_tickets t
+          JOIN users u ON u.id = t.user_id
+          WHERE t.id = $1
+        `,
+        [id],
+      );
+      if (!ticket.rows[0]) {
+        throw new AppError("NOT_FOUND", "Không tìm thấy ticket.", 404);
+      }
+      const replies = await query<{
+        author_role: string;
+        author_email: string;
+        body: string;
+        created_at: Date;
+      }>(
+        deps.db,
+        `
+          SELECT r.author_role, a.email AS author_email, r.body, r.created_at
+          FROM support_ticket_replies r
+          JOIN users a ON a.id = r.author_id
+          WHERE r.ticket_id = $1 ORDER BY r.created_at
+        `,
+        [id],
+      );
+      const row = ticket.rows[0];
+      const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
+      return reply.view("backoffice/support-detail.njk", {
+        pageTitle: `Ticket #${row.id.slice(0, 8)}`,
+        backofficeSection: "support",
+        ticket: {
+          ...row,
+          overdue:
+            openStatuses.has(row.status) && row.sla_at.getTime() < Date.now(),
+        },
+        replies: replies.rows,
+      });
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/support/:id/reply",
+    async (request, reply) => {
+      if (request.currentUser!.role === "AUDITOR") {
+        throw new AppError("FORBIDDEN", "Kiểm toán chỉ có quyền xem.", 403);
+      }
+      const { id } = parseInput(
+        z.object({ id: z.string().uuid() }),
+        request.params,
+      );
+      try {
+        const input = parseInput(
+          z.object({ body: z.string().trim().min(2).max(3000) }),
+          request.body,
+        );
+        const exists = await query<{ id: string; status: string }>(
+          deps.db,
+          `SELECT id, status FROM support_tickets WHERE id = $1`,
+          [id],
+        );
+        if (!exists.rows[0]) {
+          throw new AppError("NOT_FOUND", "Không tìm thấy ticket.", 404);
+        }
+        await query(
+          deps.db,
+          `
+            INSERT INTO support_ticket_replies (ticket_id, author_id, author_role, body)
+            VALUES ($1, $2, 'STAFF', $3)
+          `,
+          [id, request.currentUser!.id, input.body],
+        );
+        // Trả lời lần đầu tự chuyển ticket "Mới tiếp nhận" sang "Đang xử lý".
+        await query(
+          deps.db,
+          `
+            UPDATE support_tickets
+            SET updated_at = now(),
+              assigned_to = COALESCE(assigned_to, $2),
+              status = CASE WHEN status = 'OPEN' THEN 'IN_PROGRESS' ELSE status END
+            WHERE id = $1
+          `,
+          [id, request.currentUser!.id],
+        );
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: "TICKET_REPLIED",
+          targetType: "SUPPORT_TICKET",
+          targetId: id,
+          after: { length: input.body.length },
+        });
+        setFlash(reply, deps.config, "success", "Đã gửi phản hồi cho người dùng.");
+      } catch (error) {
+        flashError(reply, deps.config, error);
+      }
+      return reply.redirect(`/backoffice/support/${id}`);
+    },
+  );
 
   app.post<{ Params: { id: string } }>(
     "/support/:id/status",
@@ -519,7 +649,12 @@ export async function registerBackofficeRoutes(
       } catch (error) {
         flashError(reply, deps.config, error);
       }
-      return reply.redirect("/backoffice/support");
+      const referer = String(request.headers.referer ?? "");
+      return reply.redirect(
+        referer.includes(`/backoffice/support/${request.params.id}`)
+          ? `/backoffice/support/${request.params.id}`
+          : "/backoffice/support",
+      );
     },
   );
 
