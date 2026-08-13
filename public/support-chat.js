@@ -180,6 +180,12 @@
     }
   });
 
+  // Form "gửi yêu cầu theo mẫu" bắn sự kiện này sau khi gửi thành công để
+  // tin nhắn chuẩn hóa hiện ngay trong khung chat, không phải chờ lượt poll.
+  document.addEventListener("support-chat:append", function (event) {
+    if (event.detail && appendMessage(event.detail)) scrollToBottom();
+  });
+
   autosize();
   scrollToBottom();
   startPolling();

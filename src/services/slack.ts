@@ -5,6 +5,7 @@ import type { AppConfig } from "../config.js";
 // không được làm hỏng thao tác của người dùng.
 
 const SLACK_POST_MESSAGE_URL = "https://slack.com/api/chat.postMessage";
+const SLACK_DELETE_MESSAGE_URL = "https://slack.com/api/chat.delete";
 const SLACK_TIMEOUT_MS = 8000;
 // Chặn replay theo khuyến nghị của Slack.
 const SIGNATURE_MAX_AGE_SECONDS = 300;
@@ -17,6 +18,12 @@ export interface SlackPostResult {
   ok: boolean;
   ts: string;
   channel: string;
+  /**
+   * true khi thread đích không còn tồn tại (tin gốc bị xóa trên Slack).
+   * Lưu ý: Slack có thể vẫn trả ok và đăng tin RA NGOÀI kênh thay vì báo
+   * lỗi — trường hợp đó `ok` vẫn true kèm `threadBroken` true.
+   */
+  threadBroken: boolean;
 }
 
 export function isSlackSupportEnabled(config: AppConfig): boolean {
@@ -40,7 +47,12 @@ export async function postSupportMessage(
     logger?: SlackLogger | undefined;
   } = {},
 ): Promise<SlackPostResult> {
-  const failed: SlackPostResult = { ok: false, ts: "", channel: "" };
+  const failed: SlackPostResult = {
+    ok: false,
+    ts: "",
+    channel: "",
+    threadBroken: false,
+  };
   if (!isSlackSupportEnabled(config)) return failed;
   try {
     const response = await fetch(SLACK_POST_MESSAGE_URL, {
@@ -63,18 +75,66 @@ export async function postSupportMessage(
       error?: string;
       ts?: string;
       channel?: string;
+      message?: { thread_ts?: string };
     };
     if (!data.ok) {
       options.logger?.warn(
         { slackError: data.error ?? `HTTP ${response.status}` },
         "Gửi tin nhắn hỗ trợ sang Slack thất bại.",
       );
-      return failed;
+      return {
+        ...failed,
+        threadBroken:
+          data.error === "thread_not_found" ||
+          data.error === "message_not_found",
+      };
     }
-    return { ok: true, ts: data.ts ?? "", channel: data.channel ?? "" };
+    // Thread gốc bị xóa: Slack vẫn trả ok nhưng đăng tin ra ngoài kênh
+    // (message.thread_ts trống) — coi như thread đã chết để bên gọi tự chữa.
+    const threadBroken = Boolean(
+      options.threadTs &&
+        data.message !== undefined &&
+        data.message.thread_ts !== options.threadTs,
+    );
+    return {
+      ok: true,
+      ts: data.ts ?? "",
+      channel: data.channel ?? "",
+      threadBroken,
+    };
   } catch (error) {
     options.logger?.warn({ err: error }, "Không gọi được Slack API.");
     return failed;
+  }
+}
+
+/** Xóa một tin nhắn do bot đăng (dọn tin lạc thread) — best effort. */
+export async function deleteSlackMessage(
+  config: AppConfig,
+  channel: string,
+  ts: string,
+  logger?: SlackLogger,
+): Promise<void> {
+  if (!isSlackSupportEnabled(config) || !channel || !ts) return;
+  try {
+    const response = await fetch(SLACK_DELETE_MESSAGE_URL, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${config.SLACK_BOT_TOKEN}`,
+        "content-type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({ channel, ts }),
+      signal: AbortSignal.timeout(SLACK_TIMEOUT_MS),
+    });
+    const data = (await response.json()) as { ok?: boolean; error?: string };
+    if (!data.ok) {
+      logger?.warn(
+        { slackError: data.error ?? `HTTP ${response.status}` },
+        "Không xóa được tin nhắn Slack.",
+      );
+    }
+  } catch (error) {
+    logger?.warn({ err: error }, "Không gọi được Slack API (chat.delete).");
   }
 }
 

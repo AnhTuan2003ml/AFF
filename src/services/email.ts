@@ -79,6 +79,65 @@ export class EmailService {
   }
 
   /**
+   * Báo cho khách khi đội CSKH phản hồi: nhắc lại vấn đề họ hỏi và nội dung
+   * trả lời, kèm link mở trang Hỗ trợ để trao đổi tiếp.
+   */
+  async sendSupportReply(params: {
+    to: string;
+    fullName: string;
+    /** Tin nhắn/yêu cầu gần nhất của khách (có thể trống). */
+    question: string;
+    reply: string;
+  }): Promise<void> {
+    const subject = `${this.config.APP_NAME} — Đội hỗ trợ đã phản hồi bạn`;
+    if (!this.transporter) {
+      if (this.config.NODE_ENV !== "production") {
+        console.info(`[EMAIL DEV] ${params.to} | ${subject}`);
+      }
+      return;
+    }
+
+    const supportUrl = `${this.config.APP_ORIGIN}/app/support`;
+    const safeName = escapeHtml(params.fullName);
+    const safeQuestion = escapeHtml(params.question);
+    const safeReply = escapeHtml(params.reply);
+    await this.transporter.sendMail({
+      from: {
+        name: this.config.SMTP_FROM_NAME,
+        address: this.config.SMTP_FROM_EMAIL,
+      },
+      to: params.to,
+      subject,
+      text: [
+        `Chào ${params.fullName},`,
+        "",
+        ...(params.question
+          ? ["Vấn đề bạn gửi:", params.question, ""]
+          : []),
+        "Phản hồi của đội hỗ trợ:",
+        params.reply,
+        "",
+        `Xem và trả lời tại: ${supportUrl}`,
+      ].join("\n"),
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#163333">
+          <h1 style="font-size:20px">Đội hỗ trợ đã phản hồi bạn</h1>
+          <p>Chào ${safeName},</p>
+          ${
+            params.question
+              ? `<p style="margin-bottom:4px;color:#5f6f6c">Vấn đề bạn gửi:</p>
+          <div style="background:#f4f6f5;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeQuestion}</div>`
+              : ""
+          }
+          <p style="margin-bottom:4px;color:#5f6f6c">Phản hồi của đội hỗ trợ:</p>
+          <div style="background:#edf8f2;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeReply}</div>
+          <p style="margin-top:20px"><a href="${supportUrl}" style="color:#0e7a4f">Mở trang Hỗ trợ để trao đổi tiếp</a></p>
+        </div>
+      `,
+    });
+  }
+
+  /**
    * Gửi bộ chính sách người dùng ngay khi tài khoản được đăng ký. Nội dung lấy
    * từ src/services/user-policy.ts — cùng nguồn với trang /chinh-sach-nguoi-dung.
    */

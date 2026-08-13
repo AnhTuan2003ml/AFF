@@ -151,6 +151,23 @@
   margin-top: 20px;
 }
 
+/* Form "gửi yêu cầu theo mẫu" — dùng chung stack-form, chỉ bổ sung phản hồi. */
+.support-request-form .support-request-success {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sh-success, #16a34a);
+}
+
+.support-request-form [data-support-error] {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.support-request-form [data-support-submit] {
+  justify-self: start;
+  min-width: 160px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

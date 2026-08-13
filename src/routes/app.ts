@@ -33,6 +33,11 @@ import {
   listSupportChatMessages,
   sendSupportChatMessage,
 } from "../services/support-chat.js";
+import {
+  SUPPORT_TOPICS,
+  platformDisplayName,
+  submitSupportRequest,
+} from "../services/support-request.js";
 import { isSlackSupportEnabled } from "../services/slack.js";
 import {
   claimMissionReward,
@@ -914,31 +919,122 @@ export async function registerAppRoutes(
     return reply.send({ ok: true });
   });
 
-  // Hỗ trợ = chat trực tiếp: người dùng nhắn tại đây, tin đổ vào thread Slack
+  // Hỗ trợ gồm hai đường: form theo mẫu (chọn vấn đề + đơn hàng liên quan)
+  // và chat trực tiếp. Cả hai cùng đổ vào một hội thoại, ánh xạ thread Slack
   // CSKH; nhân viên trả lời trong thread và câu trả lời hiện lại ở trang này.
   app.get("/support", async (request, reply) => {
-    const messages = await listSupportChatMessages(deps.db, userId(request));
-    // Đi từ trang Đơn hàng sang: điền sẵn tin nhắn nhờ hỗ trợ đơn đó.
+    const uid = userId(request);
+    const businessConfig = await getBusinessConfig(deps.db, deps.config);
+    const [messages, orderHistory, conversationRow] = await Promise.all([
+      listSupportChatMessages(deps.db, uid),
+      listOrderHistory(deps.db, {
+        userId: uid,
+        status: "ALL",
+        released: "ALL",
+        searchTerm: "",
+        attributionDays: businessConfig.affiliateAttributionDays,
+        limit: 50,
+      }),
+      query<{ notify_email: string }>(
+        deps.db,
+        `SELECT notify_email FROM support_conversations WHERE user_id = $1`,
+        [uid],
+      ),
+    ]);
+    const dateFormat = new Intl.DateTimeFormat("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      dateStyle: "short",
+    });
+    const orderOptions = orderHistory.map((row) => ({
+      key: `${row.record_kind}:${row.id}`,
+      label: [
+        platformDisplayName(row.platform),
+        row.platform_order_id
+          ? `#${row.platform_order_id}`
+          : `mua ngày ${dateFormat.format(new Date(row.purchased_at ?? row.created_at))}`,
+        row.product_name
+          ? row.product_name.length > 48
+            ? `${row.product_name.slice(0, 47)}…`
+            : row.product_name
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    }));
+
+    // Đi từ trang Đơn hàng sang: chọn sẵn đơn đó trong form theo mẫu; nếu
+    // không khớp được bản ghi nào thì lùi về điền sẵn tin nhắn chat như cũ.
     const queryParams = request.query as Record<string, unknown>;
-    const orderId = String(queryParams.orderId ?? "").trim();
-    const platform = String(queryParams.platform ?? "").trim().toUpperCase();
-    const platformLabel =
-      platform === "TIKTOK"
-        ? "TikTok Shop"
-        : platform === "LAZADA"
-          ? "Lazada"
-          : platform === "SHOPEE"
-            ? "Shopee"
-            : "";
+    const requestedOrderId = String(queryParams.orderId ?? "").trim();
+    const requestedPlatform = String(queryParams.platform ?? "")
+      .trim()
+      .toUpperCase();
+    const preselected = requestedOrderId
+      ? orderHistory.find(
+          (row) => row.platform_order_id === requestedOrderId,
+        )
+      : undefined;
+    const platformLabel = requestedPlatform
+      ? platformDisplayName(requestedPlatform)
+      : "";
     return reply.view("app/support.njk", {
       pageTitle: "Hỗ trợ",
       appSection: "support",
       messages,
       chatOnline: isSlackSupportEnabled(deps.config),
-      prefillMessage: orderId
-        ? `Nhờ kiểm tra và hỗ trợ đơn #${orderId}${platformLabel ? ` trên ${platformLabel}` : ""}.`
+      supportTopics: SUPPORT_TOPICS,
+      orderOptions,
+      notifyEmail:
+        conversationRow.rows[0]?.notify_email ||
+        request.currentUser!.email,
+      preselectOrderKey: preselected
+        ? `${preselected.record_kind}:${preselected.id}`
         : "",
+      prefillMessage:
+        requestedOrderId && !preselected
+          ? `Nhờ kiểm tra và hỗ trợ đơn #${requestedOrderId}${platformLabel ? ` trên ${platformLabel}` : ""}.`
+          : "",
     });
+  });
+
+  // Form theo mẫu: validate loại vấn đề + đơn hàng rồi gửi vào hội thoại chat.
+  app.post("/support/requests", async (request, reply) => {
+    try {
+      const input = parseInput(
+        z.object({
+          topic: z.string().trim().min(1).max(50),
+          orderKey: z.string().trim().max(120).optional(),
+          orderCode: z.string().trim().max(100).optional(),
+          description: z.string().trim().min(1).max(3000),
+          notifyEmail: z.string().trim().max(254).optional(),
+        }),
+        request.body,
+      );
+      const message = await submitSupportRequest(deps.db, deps.config, {
+        userId: userId(request),
+        userEmail: request.currentUser!.email,
+        userFullName: request.currentUser!.fullName,
+        topic: input.topic,
+        ...(input.orderKey ? { orderKey: input.orderKey } : {}),
+        ...(input.orderCode ? { orderCode: input.orderCode } : {}),
+        description: input.description,
+        ...(input.notifyEmail !== undefined
+          ? { notifyEmail: input.notifyEmail }
+          : {}),
+        logger: request.log,
+      });
+      reply.header("cache-control", "private, no-store");
+      return reply.code(201).send({ message });
+    } catch (error) {
+      // Endpoint này được gọi bằng fetch — luôn trả JSON thay vì trang lỗi HTML.
+      const appError = asAppError(error);
+      if (appError.statusCode >= 500) {
+        request.log.error({ err: error }, "Lỗi gửi yêu cầu hỗ trợ");
+      }
+      return reply.code(appError.statusCode).send({
+        error: { code: appError.code, message: appError.message },
+      });
+    }
   });
 
   app.post("/support/messages", async (request, reply) => {

@@ -246,7 +246,7 @@ await app.register(
   async (scoped) => registerApiRoutes(scoped, { db, config, emailService }),
   { prefix: "/api/v1" },
 );
-await registerSlackEventRoutes(app, { db, config });
+await registerSlackEventRoutes(app, { db, config, emailService });
 
 app.setNotFoundHandler(async (request, reply) => {
   if (request.url.startsWith("/api/")) {

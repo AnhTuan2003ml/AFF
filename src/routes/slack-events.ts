@@ -1,15 +1,19 @@
 import type { FastifyInstance } from "fastify";
 import type { AppConfig } from "../config.js";
 import type { Database } from "../db.js";
+import type { EmailService } from "../services/email.js";
 import { verifySlackSignature } from "../services/slack.js";
 import {
   receiveSlackReply,
+  warnOffThreadAgentMessage,
   type SlackMessageEvent,
 } from "../services/support-chat.js";
+import { notifySupportReplyByEmail } from "../services/support-notify.js";
 
 interface SlackEventRouteDeps {
   db: Database;
   config: AppConfig;
+  emailService: EmailService;
 }
 
 // Webhook Slack Events API: nhân viên trả lời trong thread → lưu vào hội
@@ -66,7 +70,29 @@ export async function registerSlackEventRoutes(
 
         if (payload.type === "event_callback" && payload.event) {
           try {
-            await receiveSlackReply(deps.db, payload.event);
+            const outcome = await receiveSlackReply(deps.db, payload.event);
+            if (outcome === "STORED") {
+              // Báo qua email cho khách (chạy nền, lỗi chỉ ghi log).
+              void notifySupportReplyByEmail(
+                deps.db,
+                deps.emailService,
+                payload.event,
+                request.log,
+              );
+            }
+            if (outcome === "UNMATCHED") {
+              // Chạy nền để trả 200 cho Slack trong hạn 3 giây (tránh retry).
+              void warnOffThreadAgentMessage(
+                deps.config,
+                payload.event,
+                request.log,
+              ).catch((error) => {
+                request.log.warn(
+                  { err: error },
+                  "Không gửi được nhắc nhở trả lời trong thread.",
+                );
+              });
+            }
           } catch (error) {
             // Trả 200 để Slack không retry vô hạn.
             request.log.error({ err: error }, "Lỗi xử lý sự kiện Slack.");

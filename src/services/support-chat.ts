@@ -2,6 +2,7 @@ import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import {
+  deleteSlackMessage,
   escapeSlackText,
   isSlackSupportEnabled,
   postSupportMessage,
@@ -203,15 +204,59 @@ export async function sendSupportChatMessage(
     );
     if (thread) {
       const sender = escapeSlackText(input.userFullName || input.userEmail);
-      await postSupportMessage(
-        config,
-        `:bust_in_silhouette: *${sender}:* ${escapeSlackText(body)}`,
-        {
-          channel: thread.channel,
-          threadTs: thread.threadTs,
-          logger: input.logger,
-        },
-      );
+      const text = `:bust_in_silhouette: *${sender}:* ${escapeSlackText(body)}`;
+      const posted = await postSupportMessage(config, text, {
+        channel: thread.channel,
+        threadTs: thread.threadTs,
+        logger: input.logger,
+      });
+      let deliveredTs = posted.ok && !posted.threadBroken ? posted.ts : "";
+      if (posted.threadBroken) {
+        // Tin gốc của thread đã bị xóa trên Slack (Slack có thể vẫn trả ok
+        // và đăng tin ra ngoài kênh): dọn tin lạc, mở thread mới rồi gửi lại.
+        input.logger?.warn(
+          { conversationId: conversation.id, threadTs: thread.threadTs },
+          "Thread Slack của hội thoại không còn — tạo thread mới.",
+        );
+        if (posted.ok && posted.ts) {
+          await deleteSlackMessage(config, posted.channel, posted.ts, input.logger);
+        }
+        await query(
+          db,
+          `
+            UPDATE support_conversations
+            SET slack_channel_id = '', slack_thread_ts = '', updated_at = now()
+            WHERE id = $1 AND slack_thread_ts = $2
+          `,
+          [conversation.id, thread.threadTs],
+        );
+        const rebuilt = await ensureSlackThread(
+          db,
+          config,
+          { ...conversation, slack_channel_id: "", slack_thread_ts: "" },
+          input.userId,
+          input.userEmail,
+          input.logger,
+        );
+        if (rebuilt) {
+          const reposted = await postSupportMessage(config, text, {
+            channel: rebuilt.channel,
+            threadTs: rebuilt.threadTs,
+            logger: input.logger,
+          });
+          if (reposted.ok && !reposted.threadBroken) deliveredTs = reposted.ts;
+        }
+      }
+      if (deliveredTs) {
+        // Lưu ts phía Slack của tin vừa gửi: nếu CSKH lỡ trả lời trong thread
+        // của chính tin này (thay vì thread gốc của hội thoại), hệ thống vẫn
+        // định tuyến câu trả lời về đúng khách hàng.
+        await query(
+          db,
+          `UPDATE support_chat_messages SET slack_ts = $1 WHERE id = $2`,
+          [deliveredTs, saved.rows[0]!.id],
+        );
+      }
     }
   }
 
@@ -240,15 +285,35 @@ export interface SlackMessageEvent {
   thread_ts?: string;
 }
 
+/**
+ * Kết quả xử lý một sự kiện tin nhắn từ Slack:
+ * - `STORED`    — đã lưu và sẽ hiện cho khách hàng.
+ * - `DUPLICATE` — Slack gửi lại sự kiện đã xử lý; bỏ qua êm.
+ * - `UNMATCHED` — tin người thật nhưng không nối được với hội thoại nào
+ *                 (ngoài thread, hoặc thread không thuộc khách nào) — nên
+ *                 nhắc nhân viên.
+ * - `IGNORED`   — bot/subtype/thiếu dữ liệu, không cần quan tâm.
+ */
+export type SlackReplyOutcome =
+  | "STORED"
+  | "DUPLICATE"
+  | "UNMATCHED"
+  | "IGNORED";
+
 /** Lưu câu trả lời của nhân viên từ Slack vào đúng hội thoại. */
 export async function receiveSlackReply(
   db: Database,
   event: SlackMessageEvent,
-): Promise<boolean> {
-  // Chỉ nhận tin người thật nằm trong thread; bỏ qua bot và subtype sửa/xóa.
-  if (event.type !== "message" || event.subtype || event.bot_id) return false;
-  if (!event.user || !event.text || !event.channel || !event.ts) return false;
-  if (!event.thread_ts || event.thread_ts === event.ts) return false;
+): Promise<SlackReplyOutcome> {
+  // Chỉ nhận tin người thật; bỏ qua bot và subtype sửa/xóa.
+  if (event.type !== "message" || event.subtype || event.bot_id) {
+    return "IGNORED";
+  }
+  if (!event.user || !event.text || !event.channel || !event.ts) {
+    return "IGNORED";
+  }
+  // Tin gõ thẳng ra kênh (ngoài thread) không thuộc khách nào.
+  if (!event.thread_ts || event.thread_ts === event.ts) return "UNMATCHED";
 
   const conversation = await query<{ id: string }>(
     db,
@@ -258,7 +323,25 @@ export async function receiveSlackReply(
     `,
     [event.channel, event.thread_ts],
   );
-  if (!conversation.rows[0]) return false;
+  let conversationId = conversation.rows[0]?.id ?? null;
+  if (!conversationId) {
+    // CSKH có thể trả lời dưới một tin của khách bị văng ra ngoài kênh
+    // (thread gốc từng bị xóa): tra ngược ts tin đã gửi để tìm hội thoại.
+    const byMessage = await query<{ id: string }>(
+      db,
+      `
+        SELECT c.id
+        FROM support_chat_messages m
+        JOIN support_conversations c ON c.id = m.conversation_id
+        WHERE m.slack_ts = $1
+          AND (c.slack_channel_id = $2 OR c.slack_channel_id = '')
+        LIMIT 1
+      `,
+      [event.thread_ts, event.channel],
+    );
+    conversationId = byMessage.rows[0]?.id ?? null;
+  }
+  if (!conversationId) return "UNMATCHED";
 
   const body = event.text.slice(0, 3000);
   const inserted = await query(
@@ -270,14 +353,35 @@ export async function receiveSlackReply(
       ON CONFLICT (conversation_id, slack_ts) WHERE slack_ts IS NOT NULL
       DO NOTHING
     `,
-    [conversation.rows[0].id, body, event.ts],
+    [conversationId, body, event.ts],
   );
-  if (inserted.rowCount) {
-    await query(
-      db,
-      `UPDATE support_conversations SET updated_at = now() WHERE id = $1`,
-      [conversation.rows[0].id],
-    );
-  }
-  return Boolean(inserted.rowCount);
+  if (!inserted.rowCount) return "DUPLICATE";
+  await query(
+    db,
+    `UPDATE support_conversations SET updated_at = now() WHERE id = $1`,
+    [conversationId],
+  );
+  return "STORED";
+}
+
+/**
+ * Nhân viên nhắn trong kênh CSKH nhưng tin KHÔNG nối được với hội thoại của
+ * khách nào (gõ thẳng ra kênh, hoặc trả lời trong một thread lạ) — nhắc ngay
+ * tại chỗ để họ trả lời lại đúng thread. Chỉ áp dụng cho người thật, đúng
+ * kênh CSKH đã cấu hình.
+ */
+export async function warnOffThreadAgentMessage(
+  config: AppConfig,
+  event: SlackMessageEvent,
+  logger?: SlackLogger,
+): Promise<void> {
+  if (!isSlackSupportEnabled(config)) return;
+  if (event.type !== "message" || event.subtype || event.bot_id) return;
+  if (!event.user || !event.text || !event.channel || !event.ts) return;
+  if (event.channel !== config.SLACK_SUPPORT_CHANNEL) return;
+  await postSupportMessage(
+    config,
+    ":warning: Tin nhắn này KHÔNG được gửi tới khách hàng vì không thuộc thread hội thoại nào. Hãy bấm \"Reply in thread\" trong thread \"Hội thoại hỗ trợ mới\" của khách rồi gửi lại.",
+    { channel: event.channel, threadTs: event.thread_ts ?? event.ts, logger },
+  );
 }
