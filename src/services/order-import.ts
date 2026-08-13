@@ -65,11 +65,7 @@ export interface OrderImportRow {
   item_name?: string;
   quantity?: string;
   item_amount_vnd?: string;
-  /**
-   * Chỉ điền khi đối soát thủ công xác nhận đơn phát sinh qua link chia sẻ
-   * của MỘT NGƯỜI KHÁC (không phải chủ tài khoản mua). Khi link được tạo ở
-   * khu vực "Link chia sẻ", hệ thống tự lấy chủ link làm người chia sẻ.
-   */
+  /** Chỉ điền khi đối soát thủ công xác nhận người chia sẻ KHÁC người mua. */
   sharer_email?: string;
 }
 
@@ -236,11 +232,7 @@ function normalizeImportStatus(value: string | undefined): ImportOrderStatus {
   return String(value ?? "").trim().toUpperCase() as ImportOrderStatus;
 }
 
-/**
- * Chuẩn hóa tiêu đề báo cáo Shopee/đối tác về cấu trúc nội bộ. Hàm này giữ
- * tương thích CSV cũ nhưng chấp nhận cả tên cột tiếng Anh/tiếng Việt thường
- * gặp, đặc biệt các cột Sub ID dùng để định vị đúng tài khoản ShopTik.
- */
+// Chuẩn hóa tên cột báo cáo (Anh/Việt, CSV cũ lẫn mới) về cấu trúc nội bộ.
 export function normalizeOrderImportRecord(
   record: Record<string, unknown>,
 ): OrderImportRow {
@@ -345,11 +337,8 @@ interface TrackingValues {
 }
 
 /**
- * Tách mọi manh mối định danh từ Sub ID/Click ID của một dòng báo cáo.
- *
- * Sub ID do ShopTik dựng có dạng `c<clickId>-u<userCode>-p<productId>-...`.
- * Shopee trả lại các mảnh này đã nối bằng "-" trong `utm_content` và có thể
- * cắt bớt đuôi, nên phải duyệt từng mảnh thay vì so khớp cả chuỗi.
+ * Tách manh mối định danh từ Sub ID `c<clickId>-u<userCode>-p<productId>-...`.
+ * Sàn có thể cắt bớt đuôi utm_content nên duyệt từng mảnh, không so cả chuỗi.
  */
 function trackingValues(row: OrderImportRow): TrackingValues {
   const clickIds = new Set<string>();
@@ -427,11 +416,8 @@ async function findActiveUserByEmail(
 }
 
 /**
- * Tìm lượt bấm mua theo cặp (mã người mua, mã sản phẩm) lấy từ Sub ID.
- *
- * Chỉ dùng khi mã lượt click không khớp. Nếu người dùng bấm mua cùng một sản
- * phẩm nhiều lần, chọn lượt gần nhất TRƯỚC thời điểm mua và chưa gắn đơn nào
- * — không bao giờ gán một lượt click đã có đơn cho đơn thứ hai.
+ * Fallback khi click id không khớp: tìm theo cặp (mã người mua, mã sản phẩm),
+ * chọn lượt bấm gần nhất TRƯỚC giờ mua và chưa gắn đơn nào.
  */
 async function resolveLinkByUserAndProduct(
   db: Database,

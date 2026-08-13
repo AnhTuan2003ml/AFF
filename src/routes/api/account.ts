@@ -4,6 +4,7 @@ import { requireApiUser } from "../../auth/guards.js";
 import { query } from "../../db.js";
 import { parseInput } from "../../lib/validation.js";
 import { getWalletBalances } from "../../services/ledger.js";
+import { sendSupportChatMessage } from "../../services/support-chat.js";
 import type { ApiDeps } from "./deps.js";
 
 export async function registerAccountApiRoutes(
@@ -90,6 +91,8 @@ export async function registerAccountApiRoutes(
     },
   );
 
+  // "Chưa ghi nhận đơn" đi chung đường ống chat hỗ trợ: lưu hội thoại của
+  // người dùng và đổ vào thread Slack — không còn hệ ticket riêng.
   app.post(
     "/support/missing-order",
     { preHandler: requireApiUser },
@@ -101,23 +104,14 @@ export async function registerAccountApiRoutes(
         }),
         request.body,
       );
-      const ticket = await query<{ id: string }>(
-        deps.db,
-        `
-          INSERT INTO support_tickets (
-            user_id, type, subject, description, related_order_id
-          ) VALUES (
-            $1, 'MISSING_ORDER', $2, $3, $4
-          ) RETURNING id
-        `,
-        [
-          request.currentUser!.id,
-          `Chưa ghi nhận đơn ${input.orderId}`,
-          input.description,
-          input.orderId,
-        ],
-      );
-      return reply.code(201).send({ id: ticket.rows[0]!.id, status: "OPEN" });
+      const message = await sendSupportChatMessage(deps.db, deps.config, {
+        userId: request.currentUser!.id,
+        userEmail: request.currentUser!.email,
+        userFullName: request.currentUser!.fullName,
+        body: `[Chưa ghi nhận đơn #${input.orderId}] ${input.description}`,
+        logger: request.log,
+      });
+      return reply.code(201).send({ id: message.id, status: "RECEIVED" });
     },
   );
 }

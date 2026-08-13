@@ -2911,6 +2911,15 @@ html {
   align-items: start;
 }
 
+/* Chặn nội dung dài (chuỗi liền không khoảng trắng) làm nổ bề rộng cột. */
+.st-ticket-detail > .panel {
+  min-width: 0;
+}
+
+.st-ticket-detail .panel-heading h2 {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 960px) {
   .st-ticket-detail {
     grid-template-columns: minmax(0, 1fr);
@@ -2951,6 +2960,8 @@ html {
   font-size: 13.5px;
   font-weight: 600;
   text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .st-ticket-status-form {
@@ -2966,10 +2977,14 @@ html {
   margin: 0 0 16px;
   padding: 0;
   list-style: none;
+  /* Luồng trao đổi dài cuộn trong vùng riêng thay vì kéo dài cả trang. */
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .st-thread-item {
   max-width: 85%;
+  min-width: 0;
   padding: 12px 14px;
   border-radius: 12px;
 }
@@ -2989,6 +3004,7 @@ html {
   margin-bottom: 4px;
   color: var(--dv-ink);
   font-size: 12.5px;
+  overflow-wrap: anywhere;
 }
 
 .st-thread-item p {
@@ -2996,6 +3012,7 @@ html {
   color: var(--dv-copy);
   font-size: 14px;
   white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .st-thread-item time {

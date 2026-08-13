@@ -5,7 +5,7 @@ import { revokeCurrentSession, revokeAllUserSessions } from "../auth/session.js"
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { decryptField, sha256 } from "../lib/crypto.js";
-import { AppError } from "../lib/errors.js";
+import { AppError, asAppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { parseInput } from "../lib/validation.js";
 import {
@@ -29,6 +29,11 @@ import {
   verifyWithdrawalOtp,
 } from "../services/withdrawal.js";
 import { writeAuditLog } from "../services/audit.js";
+import {
+  listSupportChatMessages,
+  sendSupportChatMessage,
+} from "../services/support-chat.js";
+import { isSlackSupportEnabled } from "../services/slack.js";
 import {
   claimMissionReward,
   getUserMissionOverview,
@@ -909,39 +914,11 @@ export async function registerAppRoutes(
     return reply.send({ ok: true });
   });
 
+  // Hỗ trợ = chat trực tiếp: người dùng nhắn tại đây, tin đổ vào thread Slack
+  // CSKH; nhân viên trả lời trong thread và câu trả lời hiện lại ở trang này.
   app.get("/support", async (request, reply) => {
-    const tickets = await query<{
-      id: string;
-      type: string;
-      subject: string;
-      status: string;
-      sla_at: Date;
-      created_at: Date;
-    }>(
-      deps.db,
-      `
-        SELECT id, type, subject, status, sla_at, created_at
-        FROM support_tickets WHERE user_id = $1
-        ORDER BY created_at DESC LIMIT 50
-      `,
-      [userId(request)],
-    );
-    // Combobox "Mã đơn liên quan" chỉ cho chọn từ đơn đã phát sinh của
-    // chính người dùng — không nhập mã tự do.
-    const recentOrders = await query<{
-      platform: string;
-      platform_order_id: string;
-      order_amount_vnd: string;
-      created_at: Date;
-    }>(
-      deps.db,
-      `
-        SELECT platform, platform_order_id, order_amount_vnd, created_at
-        FROM orders WHERE user_id = $1
-        ORDER BY created_at DESC LIMIT 30
-      `,
-      [userId(request)],
-    );
+    const messages = await listSupportChatMessages(deps.db, userId(request));
+    // Đi từ trang Đơn hàng sang: điền sẵn tin nhắn nhờ hỗ trợ đơn đó.
     const queryParams = request.query as Record<string, unknown>;
     const orderId = String(queryParams.orderId ?? "").trim();
     const platform = String(queryParams.platform ?? "").trim().toUpperCase();
@@ -953,191 +930,48 @@ export async function registerAppRoutes(
           : platform === "SHOPEE"
             ? "Shopee"
             : "";
-    const supportPrefill = {
-      type: orderId ? "MISSING_ORDER" : "OTHER",
-      orderId,
-      platform,
-      platformLabel,
-      subject: orderId
-        ? `Hỗ trợ đơn #${orderId}${platformLabel ? ` · ${platformLabel}` : ""}`
-        : "",
-      description: orderId
-        ? `Nhờ kiểm tra và hỗ trợ đơn #${orderId}${platformLabel ? ` trên ${platformLabel}` : ""}.`
-        : "",
-    };
-    const orderOptions = recentOrders.rows.slice();
-    if (
-      orderId &&
-      !orderOptions.some((row) => row.platform_order_id === orderId)
-    ) {
-      orderOptions.unshift({
-        platform: platform || "SHOPEE",
-        platform_order_id: orderId,
-        order_amount_vnd: "0",
-        created_at: new Date(),
-      });
-    }
-    const now = Date.now();
-    const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
     return reply.view("app/support.njk", {
       pageTitle: "Hỗ trợ",
       appSection: "support",
-      tickets: tickets.rows.map((ticket) => ({
-        ...ticket,
-        overdue:
-          openStatuses.has(ticket.status) &&
-          ticket.sla_at instanceof Date &&
-          ticket.sla_at.getTime() < now,
-      })),
-      orderOptions,
-      supportPrefill,
+      messages,
+      chatOnline: isSlackSupportEnabled(deps.config),
+      prefillMessage: orderId
+        ? `Nhờ kiểm tra và hỗ trợ đơn #${orderId}${platformLabel ? ` trên ${platformLabel}` : ""}.`
+        : "",
     });
   });
 
-  app.post("/support", async (request, reply) => {
+  app.post("/support/messages", async (request, reply) => {
     try {
       const input = parseInput(
-        z.object({
-          type: z.enum([
-            "MISSING_ORDER",
-            "WRONG_CASHBACK",
-            "WITHDRAWAL_DELAY",
-            "ACCOUNT",
-            "OTHER",
-          ]),
-          subject: z.string().trim().min(5).max(150),
-          description: z.string().trim().min(20).max(3000),
-          relatedOrderId: z.string().trim().max(100).optional().default(""),
-        }),
+        z.object({ body: z.string().trim().min(1).max(3000) }),
         request.body,
       );
-      await query(
-        deps.db,
-        `
-          INSERT INTO support_tickets (
-            user_id, type, subject, description, related_order_id
-          ) VALUES ($1, $2, $3, $4, NULLIF($5, ''))
-        `,
-        [
-          userId(request),
-          input.type,
-          input.subject,
-          input.description,
-          input.relatedOrderId,
-        ],
-      );
-      setFlash(
-        reply,
-        deps.config,
-        "success",
-        "Yêu cầu hỗ trợ đã được ghi nhận. Bạn có thể theo dõi trạng thái tại đây.",
-      );
+      const message = await sendSupportChatMessage(deps.db, deps.config, {
+        userId: userId(request),
+        userEmail: request.currentUser!.email,
+        userFullName: request.currentUser!.fullName,
+        body: input.body,
+        logger: request.log,
+      });
+      reply.header("cache-control", "private, no-store");
+      return reply.code(201).send({ message });
     } catch (error) {
-      flashError(reply, deps.config, error);
-    }
-    return reply.redirect("/app/support");
-  });
-
-  // Chi tiết một ticket của chính người dùng: nội dung gốc + timeline
-  // phản hồi hai chiều với nhân viên hỗ trợ.
-  app.get("/support/:ticketId", async (request, reply) => {
-    const { ticketId } = parseInput(
-      z.object({ ticketId: z.string().uuid() }),
-      request.params,
-    );
-    const ticket = await query<{
-      id: string;
-      type: string;
-      subject: string;
-      description: string;
-      related_order_id: string | null;
-      status: string;
-      sla_at: Date;
-      created_at: Date;
-    }>(
-      deps.db,
-      `
-        SELECT id, type, subject, description, related_order_id, status,
-          sla_at, created_at
-        FROM support_tickets WHERE id = $1 AND user_id = $2
-      `,
-      [ticketId, userId(request)],
-    );
-    if (!ticket.rows[0]) {
-      throw new AppError("NOT_FOUND", "Không tìm thấy yêu cầu hỗ trợ.", 404);
-    }
-    const replies = await query<{
-      author_role: string;
-      body: string;
-      created_at: Date;
-    }>(
-      deps.db,
-      `
-        SELECT author_role, body, created_at
-        FROM support_ticket_replies
-        WHERE ticket_id = $1 ORDER BY created_at
-      `,
-      [ticketId],
-    );
-    const row = ticket.rows[0];
-    const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
-    return reply.view("app/support-detail.njk", {
-      pageTitle: "Chi tiết yêu cầu hỗ trợ",
-      appSection: "support",
-      ticket: {
-        ...row,
-        overdue:
-          openStatuses.has(row.status) && row.sla_at.getTime() < Date.now(),
-        closed: !openStatuses.has(row.status),
-      },
-      replies: replies.rows,
-    });
-  });
-
-  app.post("/support/:ticketId/reply", async (request, reply) => {
-    const { ticketId } = parseInput(
-      z.object({ ticketId: z.string().uuid() }),
-      request.params,
-    );
-    try {
-      const input = parseInput(
-        z.object({ body: z.string().trim().min(2).max(3000) }),
-        request.body,
-      );
-      const owned = await query<{ id: string }>(
-        deps.db,
-        `
-          SELECT id FROM support_tickets
-          WHERE id = $1 AND user_id = $2
-            AND status IN ('OPEN', 'WAITING_PARTNER', 'IN_PROGRESS')
-        `,
-        [ticketId, userId(request)],
-      );
-      if (!owned.rows[0]) {
-        throw new AppError(
-          "TICKET_NOT_OPEN",
-          "Ticket không tồn tại hoặc đã đóng.",
-          404,
-        );
+      // Endpoint này được gọi bằng fetch — luôn trả JSON thay vì trang lỗi HTML.
+      const appError = asAppError(error);
+      if (appError.statusCode >= 500) {
+        request.log.error({ err: error }, "Lỗi gửi tin nhắn hỗ trợ");
       }
-      await query(
-        deps.db,
-        `
-          INSERT INTO support_ticket_replies (ticket_id, author_id, author_role, body)
-          VALUES ($1, $2, 'USER', $3)
-        `,
-        [ticketId, userId(request), input.body],
-      );
-      await query(
-        deps.db,
-        `UPDATE support_tickets SET updated_at = now() WHERE id = $1`,
-        [ticketId],
-      );
-      setFlash(reply, deps.config, "success", "Đã gửi phản hồi của bạn.");
-    } catch (error) {
-      flashError(reply, deps.config, error);
+      return reply.code(appError.statusCode).send({
+        error: { code: appError.code, message: appError.message },
+      });
     }
-    return reply.redirect(`/app/support/${ticketId}`);
+  });
+
+  app.get("/support/messages", async (request, reply) => {
+    const messages = await listSupportChatMessages(deps.db, userId(request));
+    reply.header("cache-control", "private, no-store");
+    return reply.send({ messages });
   });
 
   app.get("/settings", async (request, reply) => {

@@ -4,19 +4,9 @@ import { formatVnd } from "../lib/format.js";
 import { getBusinessConfig } from "./business-config.js";
 
 /**
- * Bộ chính sách người dùng — NGUỒN DUY NHẤT.
- *
- * Cùng nội dung này được dùng cho ba nơi, không chép lại ở đâu khác:
- *   1. Trang công khai `/chinh-sach-nguoi-dung`.
- *   2. Modal đọc nhanh mở từ hyperlink ở chân trang.
- *   3. Email gửi cho người dùng ngay khi đăng ký.
- *
- * Các con số (tỷ lệ hoàn, số ngày giữ tiền, hạn mức rút…) KHÔNG viết cứng mà
- * lấy từ cấu hình nghiệp vụ đang có hiệu lực, để chính sách hiển thị luôn khớp
- * với cách hệ thống thực sự tính tiền.
- *
- * Khi sửa nội dung có ảnh hưởng tới quyền lợi người dùng, hãy tăng
- * USER_POLICY_VERSION để bản ghi đồng ý và email mới phản ánh đúng phiên bản.
+ * Chính sách người dùng — nguồn duy nhất cho trang công khai, modal chân trang
+ * và email đăng ký. Con số lấy từ cấu hình nghiệp vụ trong DB, không viết cứng.
+ * Sửa nội dung ảnh hưởng quyền lợi thì tăng USER_POLICY_VERSION.
  */
 export const USER_POLICY_VERSION = "2026.08";
 
@@ -32,10 +22,6 @@ export interface UserPolicyFacts {
   communityZaloUrl?: string | undefined;
 }
 
-/**
- * Lấy các con số đang có hiệu lực để chính sách hiển thị đúng cách hệ thống
- * thực sự tính tiền (cấu hình nghiệp vụ trong DB, không phải hằng số trong code).
- */
 export async function loadUserPolicyFacts(
   db: Database | Transaction,
   config: AppConfig,

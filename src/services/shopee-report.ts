@@ -1,12 +1,9 @@
 import { AppError } from "../lib/errors.js";
 
 /**
- * Đọc báo cáo chuyển đổi (Conversion Report) của Shopee Affiliate.
- *
- * Shopee chưa mở endpoint báo cáo đơn trong Open API, nên hệ thống dùng đúng
- * API mà trang affiliate.shopee.vn gọi, kèm cookie phiên đăng nhập do admin
- * cấu hình. Toàn bộ số tiền trong báo cáo được nhân sẵn 100.000 lần
- * (19850000000 = 198.500đ) nên phải chia lại theo `SHOPEE_AMOUNT_SCALE`.
+ * Báo cáo chuyển đổi Shopee Affiliate — dùng API nội bộ của trang
+ * affiliate.shopee.vn kèm cookie admin (Open API chưa có endpoint này).
+ * Mọi số tiền nhân sẵn 100.000 (19850000000 = 198.500đ) → chia SHOPEE_AMOUNT_SCALE.
  */
 
 export const SHOPEE_REPORT_API_URL =
@@ -105,21 +102,102 @@ function idOf(value: unknown): string {
   return stringOf(value);
 }
 
+// Tên cookie hợp lệ theo RFC 6265 (token). Loại nhãn cột như "Name", "Domain".
+const COOKIE_NAME_RE = /^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/;
+const TABLE_HEADER_NAMES = new Set(["name", "cookie", "cookie name"]);
+
+function invalidCookie(): never {
+  throw new AppError(
+    "SHOPEE_COOKIE_INVALID",
+    "Cookie Shopee không hợp lệ. Hãy dán chuỗi cookie hoặc bảng cookie của affiliate.shopee.vn.",
+  );
+}
+
 /**
- * Tách chuỗi cookie từ nội dung admin dán vào: chấp nhận cả dạng "cookie: ..."
- * copy từ DevTools lẫn chuỗi cookie thuần.
+ * Ghép danh sách cặp name=value thành header cookie, khử trùng (dòng sau
+ * thắng), bỏ qua tên không hợp lệ và cookie ngoài Shopee khi biết domain.
+ */
+function buildCookieHeader(
+  pairs: Array<{ name: string; value: string; domain?: string }>,
+): string {
+  const byName = new Map<string, string>();
+  for (const { name, value, domain } of pairs) {
+    if (!COOKIE_NAME_RE.test(name)) continue;
+    if (TABLE_HEADER_NAMES.has(name.toLowerCase())) continue;
+    if (value === "") continue;
+    // Bảng DevTools/Netscape kèm cả cookie google/facebook — chỉ giữ Shopee.
+    if (domain && !/(^|\.)shopee\.vn$/i.test(domain.replace(/^\./, ""))) {
+      continue;
+    }
+    byName.set(name, value); // dòng sau ghi đè dòng trước
+  }
+  return [...byName].map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
+/**
+ * Bảng cookie dạng cột (mỗi dòng một cookie), tách bằng TAB hoặc ≥2 dấu cách:
+ * - DevTools (Application → Cookies): Name, Value, Domain, Path, Expires...
+ * - Netscape cookies.txt: domain, flag, path, secure, expiry, name, value.
+ */
+function parseCookieTable(
+  contents: string,
+): Array<{ name: string; value: string; domain?: string }> {
+  const pairs: Array<{ name: string; value: string; domain?: string }> = [];
+  for (const rawLine of contents.split(/\r?\n/)) {
+    const line = rawLine.replace(/\r$/, "");
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    let cols = line.split("\t");
+    if (cols.length < 2) cols = line.trim().split(/\s{2,}/);
+    if (cols.length < 2) continue;
+    cols = cols.map((col) => col.trim());
+
+    // Netscape: cột 2 và 4 là TRUE/FALSE, cột 5 là số hết hạn.
+    const isNetscape =
+      cols.length >= 7 &&
+      /^(TRUE|FALSE)$/i.test(cols[1] ?? "") &&
+      /^(TRUE|FALSE)$/i.test(cols[3] ?? "");
+    const [name, value, domain] = isNetscape
+      ? [cols[5]!, cols[6]!, cols[0]!]
+      : [cols[0]!, cols[1]!, cols[2]];
+    pairs.push({ name, value, ...(domain ? { domain } : {}) });
+  }
+  return pairs;
+}
+
+/**
+ * Tách chuỗi cookie từ nội dung admin dán vào — hỗ trợ nhiều định dạng:
+ * 1. Chuỗi cookie thuần: `name=value; name2=value2`.
+ * 2. Header sao từ DevTools (Network): `cookie: name=value; ...`.
+ * 3. Bảng cookie DevTools (Application): các cột Name/Value/Domain tách TAB.
+ * 4. File Netscape `cookies.txt` (7 cột tách TAB).
+ * Với dạng bảng, chỉ giữ cookie thuộc domain shopee.vn.
  */
 export function extractShopeeCookie(contents: string): string {
   const trimmed = contents.trim();
-  const cookieHeader = trimmed.match(/(?:^|\r?\n)cookie\s*:\s*(.+)$/im)?.[1];
-  const cookie = (cookieHeader ?? trimmed).replace(/\s*\r?\n\s*/g, " ").trim();
-  if (!cookie.includes("=")) {
-    throw new AppError(
-      "SHOPEE_COOKIE_INVALID",
-      "Cookie Shopee không hợp lệ. Hãy dán nguyên chuỗi cookie của affiliate.shopee.vn.",
-    );
+  if (!trimmed) invalidCookie();
+
+  // Header sao từ tab Network — phần sau "cookie:" là chuỗi cookie thuần.
+  const header = trimmed.match(/(?:^|\r?\n)cookie\s*:\s*(.+)$/is)?.[1]?.trim();
+  if (header) {
+    const cookie = header.replace(/\s*\r?\n\s*/g, " ").trim();
+    if (cookie.includes("=")) return cookie;
   }
-  return cookie;
+
+  // Dạng bảng (có TAB, hoặc nhiều dòng cột không có dấu ';'): ưu tiên nhận
+  // diện trước vì nối dòng bằng dấu cách sẽ phá hỏng chuỗi cookie.
+  const looksLikeTable =
+    trimmed.includes("\t") ||
+    (!trimmed.includes(";") && /\r?\n/.test(trimmed) && /\S\s{2,}\S/.test(trimmed));
+  if (looksLikeTable) {
+    const cookie = buildCookieHeader(parseCookieTable(trimmed));
+    if (cookie) return cookie;
+  }
+
+  // Chuỗi cookie thuần (có thể xuống dòng) — gộp về một dòng.
+  const cookie = trimmed.replace(/\s*\r?\n\s*/g, " ").trim();
+  if (cookie.includes("=")) return cookie;
+
+  return invalidCookie();
 }
 
 function assertReportPage(value: unknown): asserts value is ShopeeReportPage {

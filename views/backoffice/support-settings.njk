@@ -1,0 +1,110 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/backoffice-support.css?v={{ assetVersion }}">
+
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">CHĂM SÓC KHÁCH HÀNG</span>
+      <h1>Hỗ trợ khách hàng</h1>
+      <p>Hội thoại, lịch sử và trả lời thủ công đều nằm trên Slack. Tại đây chỉ cấu hình cách phản hồi tự động.</p>
+    </div>
+  </section>
+
+  <div class="bo-settings-grid">
+    <section class="panel">
+      <header class="panel-heading"><div><h2>Chế độ trả lời</h2></div></header>
+      <form method="post" action="/backoffice/support/settings" class="stack-form bo-settings-form">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+
+        <label for="ar-mode">Chế độ
+          <select id="ar-mode" name="mode">
+            <option value="OFF" {% if settings.mode == 'OFF' %}selected{% endif %}>Thủ công — nhân viên trả lời qua Slack</option>
+            <option value="CANNED" {% if settings.mode == 'CANNED' %}selected{% endif %}>Trả lời mẫu — gửi 1 tin chào/ghi nhận tự động</option>
+            <option value="AI" {% if settings.mode == 'AI' %}selected{% endif %}>AI — tự trả lời bằng model bạn chọn</option>
+          </select>
+        </label>
+
+        <label for="ar-canned">Tin trả lời mẫu <small class="bo-muted">(dùng cho chế độ Trả lời mẫu; gửi tối đa 1 lần/24h mỗi khách)</small>
+          <textarea id="ar-canned" name="cannedMessage" rows="3" maxlength="3000" placeholder="Ví dụ: Cảm ơn bạn đã nhắn tin! Đội CSKH đã nhận được và sẽ phản hồi trong giờ làm việc (8h–22h).">{{ settings.cannedMessage }}</textarea>
+        </label>
+
+        <fieldset class="bo-fieldset">
+          <legend>Cấu hình AI</legend>
+
+          <label for="ar-provider">Provider
+            <select id="ar-provider" name="aiProvider">
+              {% for key, provider in providers %}
+                <option value="{{ key }}" {% if settings.aiProvider == key %}selected{% endif %}>{{ provider.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label for="ar-key">API key
+            <input id="ar-key" type="password" name="aiApiKey" maxlength="500" autocomplete="off"
+              placeholder="{% if settings.hasApiKey %}•••••••• (đã lưu — để trống nếu giữ nguyên){% else %}Dán API key của provider đã chọn{% endif %}">
+            <small class="bo-muted">Key được mã hóa AES-256 trước khi lưu; không hiển thị lại.</small>
+          </label>
+
+          <label for="ar-model">Model
+            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" placeholder="Chọn hoặc gõ tên model">
+            <datalist id="ar-model-list">
+              {% for key, provider in providers %}
+                {% for model in provider.suggestedModels %}
+                  <option value="{{ model }}">{{ provider.label }}</option>
+                {% endfor %}
+              {% endfor %}
+            </datalist>
+          </label>
+
+          <label for="ar-skill">Skill / vai trò của AI <small class="bo-muted">(system prompt — mô tả vai trò, giọng điệu, quy tắc nghiệp vụ)</small>
+            <textarea id="ar-skill" name="aiSystemPrompt" rows="6" maxlength="8000" placeholder="Ví dụ: Bạn là nhân viên CSKH của ShopTik — nền tảng hoàn tiền mua sắm Shopee/TikTok/Lazada. Luôn xưng 'em', gọi khách là 'anh/chị'...">{{ settings.aiSystemPrompt }}</textarea>
+          </label>
+        </fieldset>
+
+        <button class="button button-primary" type="submit">Lưu cấu hình</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <header class="panel-heading">
+        <div>
+          <h2>Tài liệu tham khảo (RAG)</h2>
+          <p class="bo-muted">AI ưu tiên trả lời theo các tài liệu này khi câu hỏi trùng từ khóa — FAQ, chính sách hoàn tiền, hạn mức rút...</p>
+        </div>
+      </header>
+
+      <form method="post" action="/backoffice/support/settings/kb" class="stack-form bo-settings-form">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="kb-title">Tiêu đề
+          <input id="kb-title" type="text" name="title" maxlength="200" required placeholder="Ví dụ: Chính sách thời gian hoàn tiền">
+        </label>
+        <label for="kb-content">Nội dung
+          <textarea id="kb-content" name="content" rows="5" maxlength="20000" required placeholder="Dán nội dung văn bản thuần (FAQ, chính sách...)"></textarea>
+        </label>
+        <button class="button button-primary" type="submit">Thêm tài liệu</button>
+      </form>
+
+      {% if kbDocuments.length %}
+        <div class="bo-kb-list">
+          {% for doc in kbDocuments %}
+            <article class="bo-kb-item">
+              <div class="bo-kb-main">
+                <b>{{ doc.title }}</b>
+                <small class="bo-muted">{{ doc.content.length }} ký tự · {{ doc.created_at | datetime }}</small>
+                <p class="bo-cell-clamp">{{ doc.content }}</p>
+              </div>
+              <form method="post" action="/backoffice/support/settings/kb/{{ doc.id }}/delete">
+                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                <button class="button button-small" type="submit">Xóa</button>
+              </form>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa có tài liệu", "Thêm FAQ/chính sách để AI trả lời chính xác hơn.") }}
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

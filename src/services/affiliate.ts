@@ -327,14 +327,9 @@ export interface SubIdParts {
 }
 
 /**
- * Sub ID gửi kèm link Affiliate, ghép từ các mảnh có tiền tố nhận dạng:
- *
- *   c<clickId>-u<userCode>-p<productId>-<source>-<campaign>
- *
- * Mỗi mảnh tự mô tả nên khi báo cáo sàn trả về `utm_content` (các mảnh nối
- * bằng "-", đôi khi bị cắt bớt đuôi) vẫn tách ngược được: `c` cho lượt click,
- * `u` cho người mua, `p` cho sản phẩm. Chỉ giữ [a-zA-Z0-9_] vì Shopee loại bỏ
- * ký tự khác — đó cũng là lý do phải đối chiếu ở dạng đã chuẩn hóa.
+ * Sub ID dạng c<clickId>-u<userCode>-p<productId>-<source>-<campaign>.
+ * Tiền tố giúp tách ngược từ utm_content dù sàn cắt bớt đuôi; chỉ giữ
+ * [a-zA-Z0-9_] vì Shopee loại ký tự khác.
  */
 export function buildSubIdParts(params: SubIdParts): string[] {
   const productId = String(params.productId ?? "").trim();

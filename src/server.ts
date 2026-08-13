@@ -31,6 +31,7 @@ import { registerAppRoutes } from "./routes/app.js";
 import { registerBackofficeRoutes } from "./routes/backoffice.js";
 import { registerAdminConsoleRoutes } from "./routes/admin-console.js";
 import { registerApiRoutes } from "./routes/api/index.js";
+import { registerSlackEventRoutes } from "./routes/slack-events.js";
 import { EmailService } from "./services/email.js";
 import {
   ensureMissionDefinitionsSeeded,
@@ -157,7 +158,6 @@ app.addHook("preHandler", async (request, reply) => {
   target.locals ??= {};
   let backofficeOrdersPendingCount = 0;
   let backofficeWithdrawalsPendingCount = 0;
-  let backofficeSupportPendingCount = 0;
   let backofficeMissionsPendingCount = 0;
   if (
     request.currentUser &&
@@ -169,7 +169,6 @@ app.addHook("preHandler", async (request, reply) => {
     const backofficeCounts = await query<{
       orders_pending_count: string;
       withdrawals_pending_count: string;
-      support_pending_count: string;
       missions_pending_count: string;
     }>(
       db,
@@ -180,9 +179,6 @@ app.addHook("preHandler", async (request, reply) => {
           (SELECT count(*) FROM withdrawals
             WHERE status IN ('FUNDS_HELD', 'UNKNOWN'))::text
             AS withdrawals_pending_count,
-          (SELECT count(*) FROM support_tickets
-            WHERE status IN ('OPEN', 'WAITING_PARTNER', 'IN_PROGRESS'))::text
-            AS support_pending_count,
           (SELECT count(*) FROM user_mission_claims WHERE status = 'PENDING')::text
             AS missions_pending_count
       `,
@@ -192,9 +188,6 @@ app.addHook("preHandler", async (request, reply) => {
     );
     backofficeWithdrawalsPendingCount = Number(
       backofficeCounts.rows[0]?.withdrawals_pending_count ?? 0,
-    );
-    backofficeSupportPendingCount = Number(
-      backofficeCounts.rows[0]?.support_pending_count ?? 0,
     );
     backofficeMissionsPendingCount = Number(
       backofficeCounts.rows[0]?.missions_pending_count ?? 0,
@@ -219,7 +212,6 @@ app.addHook("preHandler", async (request, reply) => {
     appName: config.APP_NAME,
     assetVersion,
     backofficeOrdersPendingCount,
-    backofficeSupportPendingCount,
     backofficeWithdrawalsPendingCount,
     backofficeMissionsPendingCount,
     communityZaloUrl: config.COMMUNITY_ZALO_URL,
@@ -254,6 +246,7 @@ await app.register(
   async (scoped) => registerApiRoutes(scoped, { db, config, emailService }),
   { prefix: "/api/v1" },
 );
+await registerSlackEventRoutes(app, { db, config });
 
 app.setNotFoundHandler(async (request, reply) => {
   if (request.url.startsWith("/api/")) {

@@ -399,11 +399,8 @@ function roundPercentStep5(value: number): number {
   return Math.round(clamped / 5) * 5;
 }
 
-/**
- * Tiến độ hiện tại của user, gộp theo từng loại nhiệm vụ (giới thiệu / mua
- * hàng) để vẽ 1 thanh tiến độ chung cho cả nhóm. KHÔNG tự tạo yêu cầu nhận
- * thưởng — người dùng phải chủ động bấm "Nhận thưởng" (xem claimMissionReward).
- */
+// Tiến độ gộp theo loại nhiệm vụ; không tự tạo yêu cầu nhận thưởng —
+// người dùng phải bấm "Nhận thưởng" (claimMissionReward).
 export async function getUserMissionOverview(
   db: Database,
   userId: string,
@@ -462,11 +459,8 @@ export async function getUserMissionOverview(
   };
 }
 
-/**
- * User chủ động bấm "Nhận thưởng" cho 1 mốc đã đạt — tạo yêu cầu PENDING gửi
- * admin duyệt (đổi tiền diễn ra ở approveMissionClaim khi admin duyệt, không
- * phải ở đây). Chặn nếu chưa đạt mốc hoặc đã gửi yêu cầu trước đó.
- */
+// Tạo yêu cầu PENDING chờ admin duyệt — tiền chỉ đổi ở approveMissionClaim.
+// Chặn nếu chưa đạt mốc hoặc đã gửi yêu cầu trước đó.
 export async function claimMissionReward(
   db: Database,
   userId: string,

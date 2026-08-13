@@ -649,13 +649,8 @@ function parseJsonLdProduct(html: string): ProductData | null {
 }
 
 /**
- * Trang sản phẩm Lazada không có giá trong JSON-LD (chỉ có tên/ảnh) — giá
- * thực tế nằm trong một biến JS server-render sẵn cho mục đích tracking:
- * `var pdpTrackingData = "{...json đã escape...}";`, chứa `pdt_name` và
- * `pdt_price` (dạng chuỗi có định dạng, ví dụ "121.540 ₫") đúng theo SKU
- * đang xem. Đã xác minh trực tiếp trên trang sản phẩm thật — không cần API
- * nội bộ có chữ ký (khác với hướng "mtop" đã cân nhắc nhưng không dùng vì
- * appKey công khai chưa xác minh được).
+ * JSON-LD của Lazada không có giá — giá đúng theo SKU nằm trong biến JS
+ * `pdpTrackingData` (json escape, chứa pdt_name và pdt_price dạng "121.540 ₫").
  */
 function parseLazadaTrackingData(html: string): ProductData | null {
   const match = html.match(/pdpTrackingData\s*=\s*"((?:[^"\\]|\\.)*)"/);

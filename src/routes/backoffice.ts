@@ -39,6 +39,14 @@ import {
   rejectMissionClaim,
   updateMissionDefinition,
 } from "../services/mission.js";
+import {
+  AI_PROVIDERS,
+  addKbDocument,
+  deleteKbDocument,
+  getAutoReplySettings,
+  listKbDocuments,
+  saveAutoReplySettings,
+} from "../services/support-autoreply.js";
 
 interface BackofficeDeps {
   db: Database;
@@ -452,209 +460,104 @@ export async function registerBackofficeRoutes(
     return reply.redirect("/backoffice/withdrawals");
   });
 
+  // Hỗ trợ khách hàng vận hành hoàn toàn trên Slack (lịch sử, bản ghi, trả
+  // lời đều ở đó). Backoffice chỉ giữ MỘT việc: cấu hình cách phản hồi —
+  // thủ công qua Slack, trả lời mẫu, hoặc AI (kèm kho tài liệu tham khảo).
   app.get("/support", async (_request, reply) => {
-    const tickets = await query<{
-      id: string;
-      email: string;
-      type: string;
-      subject: string;
-      status: string;
-      sla_at: Date;
-      created_at: Date;
-    }>(
-      deps.db,
-      `
-        SELECT t.id, u.email, t.type, t.subject, t.status,
-          t.sla_at, t.created_at
-        FROM support_tickets t
-        JOIN users u ON u.id = t.user_id
-        ORDER BY
-          CASE WHEN t.status IN ('OPEN', 'WAITING_PARTNER', 'IN_PROGRESS') THEN 0 ELSE 1 END,
-          t.created_at DESC
-        LIMIT 200
-      `,
-    );
-    const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
-    return reply.view("backoffice/support.njk", {
-      pageTitle: "Yêu cầu hỗ trợ",
+    const [settings, kbDocuments] = await Promise.all([
+      getAutoReplySettings(deps.db),
+      listKbDocuments(deps.db),
+    ]);
+    return reply.view("backoffice/support-settings.njk", {
+      pageTitle: "Hỗ trợ khách hàng",
       backofficeSection: "support",
-      tickets: tickets.rows.map((ticket) => ({
-        ...ticket,
-        overdue:
-          openStatuses.has(ticket.status) &&
-          ticket.sla_at.getTime() < Date.now(),
-      })),
+      settings,
+      kbDocuments,
+      providers: AI_PROVIDERS,
     });
   });
 
-  // Chi tiết ticket: thông tin người gửi, đơn liên quan, nội dung gốc,
-  // timeline phản hồi và ô trả lời của nhân viên.
-  app.get<{ Params: { id: string } }>(
-    "/support/:id",
-    async (request, reply) => {
-      const { id } = parseInput(
-        z.object({ id: z.string().uuid() }),
-        request.params,
+  // Link cũ /support/settings vẫn dùng được.
+  app.get("/support/settings", async (_request, reply) =>
+    reply.redirect("/backoffice/support"),
+  );
+
+  const requireSupportManager = (role: string): void => {
+    if (!["SUPER_ADMIN", "ADMIN", "SUPPORT"].includes(role)) {
+      throw new AppError(
+        "FORBIDDEN",
+        "Bạn không có quyền thay đổi cấu hình hỗ trợ.",
+        403,
       );
-      const ticket = await query<{
-        id: string;
-        user_id: string;
-        email: string;
-        full_name: string;
-        type: string;
-        subject: string;
-        description: string;
-        related_order_id: string | null;
-        status: string;
-        sla_at: Date;
-        created_at: Date;
-        updated_at: Date;
-      }>(
-        deps.db,
-        `
-          SELECT t.id, t.user_id, u.email, u.full_name, t.type, t.subject,
-            t.description, t.related_order_id, t.status, t.sla_at,
-            t.created_at, t.updated_at
-          FROM support_tickets t
-          JOIN users u ON u.id = t.user_id
-          WHERE t.id = $1
-        `,
-        [id],
+    }
+  };
+
+  app.post("/support/settings", async (request, reply) => {
+    try {
+      requireSupportManager(request.currentUser!.role);
+      const input = parseInput(
+        z.object({
+          mode: z.enum(["OFF", "CANNED", "AI"]),
+          cannedMessage: z.string().trim().max(3000).optional().default(""),
+          aiProvider: z.enum(["openai", "anthropic", "gemini"]),
+          aiModel: z.string().trim().max(120).optional().default(""),
+          aiSystemPrompt: z.string().trim().max(8000).optional().default(""),
+          aiApiKey: z.string().trim().max(500).optional().default(""),
+        }),
+        request.body,
       );
-      if (!ticket.rows[0]) {
-        throw new AppError("NOT_FOUND", "Không tìm thấy ticket.", 404);
-      }
-      const replies = await query<{
-        author_role: string;
-        author_email: string;
-        body: string;
-        created_at: Date;
-      }>(
-        deps.db,
-        `
-          SELECT r.author_role, a.email AS author_email, r.body, r.created_at
-          FROM support_ticket_replies r
-          JOIN users a ON a.id = r.author_id
-          WHERE r.ticket_id = $1 ORDER BY r.created_at
-        `,
-        [id],
-      );
-      const row = ticket.rows[0];
-      const openStatuses = new Set(["OPEN", "WAITING_PARTNER", "IN_PROGRESS"]);
-      return reply.view("backoffice/support-detail.njk", {
-        pageTitle: `Ticket #${row.id.slice(0, 8)}`,
-        backofficeSection: "support",
-        ticket: {
-          ...row,
-          overdue:
-            openStatuses.has(row.status) && row.sla_at.getTime() < Date.now(),
-        },
-        replies: replies.rows,
+      await saveAutoReplySettings(deps.db, deps.config, input);
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "SUPPORT_AUTOREPLY_UPDATED",
+        targetType: "BUSINESS_CONFIG",
+        targetId: "support_autoreply",
+        after: { mode: input.mode, provider: input.aiProvider },
       });
-    },
-  );
+      setFlash(reply, deps.config, "success", "Đã lưu cấu hình phản hồi.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/support");
+  });
+
+  app.post("/support/settings/kb", async (request, reply) => {
+    try {
+      requireSupportManager(request.currentUser!.role);
+      const input = parseInput(
+        z.object({
+          title: z.string().trim().min(1).max(200),
+          content: z.string().trim().min(10).max(20000),
+        }),
+        request.body,
+      );
+      await addKbDocument(deps.db, input);
+      setFlash(reply, deps.config, "success", "Đã thêm tài liệu tham khảo.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/support");
+  });
 
   app.post<{ Params: { id: string } }>(
-    "/support/:id/reply",
+    "/support/settings/kb/:id/delete",
     async (request, reply) => {
-      if (request.currentUser!.role === "AUDITOR") {
-        throw new AppError("FORBIDDEN", "Kiểm toán chỉ có quyền xem.", 403);
-      }
-      const { id } = parseInput(
-        z.object({ id: z.string().uuid() }),
-        request.params,
-      );
       try {
-        const input = parseInput(
-          z.object({ body: z.string().trim().min(2).max(3000) }),
-          request.body,
+        requireSupportManager(request.currentUser!.role);
+        const { id } = parseInput(
+          z.object({ id: z.string().uuid() }),
+          request.params,
         );
-        const exists = await query<{ id: string; status: string }>(
-          deps.db,
-          `SELECT id, status FROM support_tickets WHERE id = $1`,
-          [id],
+        const removed = await deleteKbDocument(deps.db, id);
+        setFlash(
+          reply,
+          deps.config,
+          removed ? "success" : "error",
+          removed ? "Đã xóa tài liệu." : "Không tìm thấy tài liệu.",
         );
-        if (!exists.rows[0]) {
-          throw new AppError("NOT_FOUND", "Không tìm thấy ticket.", 404);
-        }
-        await query(
-          deps.db,
-          `
-            INSERT INTO support_ticket_replies (ticket_id, author_id, author_role, body)
-            VALUES ($1, $2, 'STAFF', $3)
-          `,
-          [id, request.currentUser!.id, input.body],
-        );
-        // Trả lời lần đầu tự chuyển ticket "Mới tiếp nhận" sang "Đang xử lý".
-        await query(
-          deps.db,
-          `
-            UPDATE support_tickets
-            SET updated_at = now(),
-              assigned_to = COALESCE(assigned_to, $2),
-              status = CASE WHEN status = 'OPEN' THEN 'IN_PROGRESS' ELSE status END
-            WHERE id = $1
-          `,
-          [id, request.currentUser!.id],
-        );
-        await writeAuditLog(deps.db, deps.config, request, {
-          action: "TICKET_REPLIED",
-          targetType: "SUPPORT_TICKET",
-          targetId: id,
-          after: { length: input.body.length },
-        });
-        setFlash(reply, deps.config, "success", "Đã gửi phản hồi cho người dùng.");
       } catch (error) {
         flashError(reply, deps.config, error);
       }
-      return reply.redirect(`/backoffice/support/${id}`);
-    },
-  );
-
-  app.post<{ Params: { id: string } }>(
-    "/support/:id/status",
-    async (request, reply) => {
-      if (request.currentUser!.role === "AUDITOR") {
-        throw new AppError("FORBIDDEN", "Kiểm toán chỉ có quyền xem.", 403);
-      }
-      try {
-        const input = parseInput(
-          z.object({
-            status: z.enum([
-              "OPEN",
-              "WAITING_PARTNER",
-              "IN_PROGRESS",
-              "RESOLVED",
-              "CLOSED",
-            ]),
-          }),
-          request.body,
-        );
-        await query(
-          deps.db,
-          `
-            UPDATE support_tickets
-            SET status = $2, assigned_to = $3
-            WHERE id = $1
-          `,
-          [request.params.id, input.status, request.currentUser!.id],
-        );
-        await writeAuditLog(deps.db, deps.config, request, {
-          action: "TICKET_STATUS_CHANGED",
-          targetType: "SUPPORT_TICKET",
-          targetId: request.params.id,
-          after: { status: input.status },
-        });
-        setFlash(reply, deps.config, "success", "Đã cập nhật yêu cầu hỗ trợ.");
-      } catch (error) {
-        flashError(reply, deps.config, error);
-      }
-      const referer = String(request.headers.referer ?? "");
-      return reply.redirect(
-        referer.includes(`/backoffice/support/${request.params.id}`)
-          ? `/backoffice/support/${request.params.id}`
-          : "/backoffice/support",
-      );
+      return reply.redirect("/backoffice/support");
     },
   );
 

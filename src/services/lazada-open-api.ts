@@ -2,24 +2,10 @@ import { createHmac } from "node:crypto";
 import type { AppConfig } from "../config.js";
 
 /**
- * Lazada Open Platform (LazOP) — https://api.lazada.vn/rest
- *
- * Cần đăng ký app tại open.lazada.com và được duyệt mới có App Key/Secret;
- * Access Token lấy qua luồng OAuth của Lazada (app này chưa tự làm luồng
- * OAuth/refresh token — dán token thủ công vào cấu hình và tự gia hạn khi
- * hết hạn, thường ~30 ngày).
- *
- * Xác thực: mọi tham số (trừ `sign`) được sắp xếp theo tên (A→Z), nối thành
- * chuỗi `{apiPath}{key1}{value1}{key2}{value2}...` rồi ký bằng
- * HMAC-SHA256(chuỗi, app_secret), in hoa dạng hex — đúng lược đồ chữ ký
- * "TOP" mà Lazada kế thừa từ Alibaba Open Platform.
- *
- * LƯU Ý: Lazada tuyên bố hoa hồng/commission KHÔNG được chia sẻ cho bên thứ
- * ba nếu chưa có sự đồng ý bằng văn bản của Lazada — endpoint dưới đây chỉ
- * lấy THÔNG TIN SẢN PHẨM (tên/ảnh/giá) qua GetProductItem, không có API
- * công khai để lấy tỷ lệ hoa hồng theo từng sản phẩm. Hoa hồng vẫn tính qua
- * LAZADA_DEFAULT_COMMISSION_RATE_BPS (tỷ lệ đã thoả thuận/khai báo thủ công)
- * cho tới khi có quyền truy cập API hoa hồng chính thức.
+ * Lazada Open Platform. Chữ ký kiểu "TOP": sort tham số A→Z, nối
+ * `{apiPath}{key}{value}...`, HMAC-SHA256 hex in hoa với app_secret.
+ * Lazada không có API công khai cho hoa hồng theo sản phẩm — chỉ lấy
+ * tên/ảnh/giá; hoa hồng dùng LAZADA_DEFAULT_COMMISSION_RATE_BPS.
  */
 
 type Fetcher = typeof fetch;
@@ -95,11 +81,7 @@ function skuIdentifier(sku: JsonObject | null): string | undefined {
   );
 }
 
-/**
- * Payload trả về của GetProductItem có thể khác nhau tuỳ phiên bản API —
- * đọc linh hoạt nhiều tên field thường gặp (giống cách đọc partner API
- * chung ở product-preview.ts) thay vì giả định đúng một cấu trúc cố định.
- */
+// Payload GetProductItem khác nhau tuỳ phiên bản API — đọc linh hoạt nhiều tên field.
 export function parseLazadaProductPayload(
   payload: unknown,
   itemId: string,
@@ -124,10 +106,8 @@ export function parseLazadaProductPayload(
   );
   const images = Array.isArray(data.images) ? data.images : [];
   const imageUrl = optionalString(images[0]) ?? optionalString(firstSku?.Images);
-  // sku.price = giá gốc (list price), sku.special_price = giá đang bán khi có
-  // khuyến mãi (thường bằng giá gốc nếu không giảm) — người mua trả theo
-  // special_price nên đó mới là priceVnd; price chỉ hiển thị gạch ngang khi
-  // thực sự cao hơn.
+  // Người mua trả theo sku.special_price; sku.price là giá gốc, chỉ hiện
+  // gạch ngang khi thực sự cao hơn.
   const listPriceVnd =
     optionalVnd(firstSku?.price) ?? optionalVnd(data.price);
   const priceVnd =

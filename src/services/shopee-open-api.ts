@@ -2,15 +2,9 @@ import { createHash } from "node:crypto";
 import type { AppConfig } from "../config.js";
 
 /**
- * Shopee Affiliate Open Platform — https://open-api.affiliate.shopee.vn/graphql
- *
- * Đây là nguồn dữ liệu chính thức cho affiliate đã được duyệt (cùng cơ chế các
- * nền tảng hoàn tiền như Longhouse dùng):
- * - `productOfferV2`   → tên, ảnh, giá và TỶ LỆ HOA HỒNG sàn trả cho hệ thống.
- * - `generateShortLink`→ link mua đã gắn định danh affiliate + subIds.
- *
- * Xác thực: header `Authorization: SHA256 Credential={AppId}, Timestamp={ts},
- * Signature={sha256(AppId + Timestamp + Payload + Secret)}`.
+ * Shopee Affiliate Open API (GraphQL): productOfferV2 lấy tên/ảnh/giá/hoa hồng,
+ * generateShortLink tạo link mua gắn subIds. Chữ ký header:
+ * SHA256 Credential={AppId}, Timestamp={ts}, Signature=sha256(AppId+Ts+Payload+Secret).
  */
 
 type Fetcher = typeof fetch;
@@ -164,10 +158,8 @@ const OFFER_FIELDS_MINIMAL =
 export interface ShopeeOfferLookup {
   offer: ShopeeProductOffer | null;
   /**
-   * true khi Shopee TRẢ LỜI HỢP LỆ nhưng không có offer nào cho itemId —
-   * tức sản phẩm không tồn tại/không bán qua Affiliate. Khác với trường
-   * hợp gọi API lỗi (mạng/chữ ký/rate-limit) — khi đó vẫn là false để
-   * caller không kết luận nhầm "không tồn tại".
+   * true = Shopee trả lời hợp lệ nhưng không có offer (sản phẩm không bán qua
+   * Affiliate). Lỗi gọi API (mạng/chữ ký) vẫn là false để khỏi kết luận nhầm.
    */
   confirmedMissing: boolean;
 }

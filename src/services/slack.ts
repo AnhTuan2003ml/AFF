@@ -1,0 +1,108 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import type { AppConfig } from "../config.js";
+
+// Slack Web API cho chat hỗ trợ. Lỗi gọi Slack chỉ ghi log cảnh báo,
+// không được làm hỏng thao tác của người dùng.
+
+const SLACK_POST_MESSAGE_URL = "https://slack.com/api/chat.postMessage";
+const SLACK_TIMEOUT_MS = 8000;
+// Chặn replay theo khuyến nghị của Slack.
+const SIGNATURE_MAX_AGE_SECONDS = 300;
+
+export interface SlackLogger {
+  warn: (obj: unknown, msg?: string) => void;
+}
+
+export interface SlackPostResult {
+  ok: boolean;
+  ts: string;
+  channel: string;
+}
+
+export function isSlackSupportEnabled(config: AppConfig): boolean {
+  return Boolean(config.SLACK_BOT_TOKEN && config.SLACK_SUPPORT_CHANNEL);
+}
+
+export function escapeSlackText(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+/** Gửi tin vào kênh CSKH; không ném lỗi — thất bại trả `ok: false`. */
+export async function postSupportMessage(
+  config: AppConfig,
+  text: string,
+  options: {
+    threadTs?: string;
+    channel?: string;
+    logger?: SlackLogger | undefined;
+  } = {},
+): Promise<SlackPostResult> {
+  const failed: SlackPostResult = { ok: false, ts: "", channel: "" };
+  if (!isSlackSupportEnabled(config)) return failed;
+  try {
+    const response = await fetch(SLACK_POST_MESSAGE_URL, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${config.SLACK_BOT_TOKEN}`,
+        "content-type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({
+        channel: options.channel || config.SLACK_SUPPORT_CHANNEL,
+        text,
+        ...(options.threadTs ? { thread_ts: options.threadTs } : {}),
+        unfurl_links: false,
+        unfurl_media: false,
+      }),
+      signal: AbortSignal.timeout(SLACK_TIMEOUT_MS),
+    });
+    const data = (await response.json()) as {
+      ok?: boolean;
+      error?: string;
+      ts?: string;
+      channel?: string;
+    };
+    if (!data.ok) {
+      options.logger?.warn(
+        { slackError: data.error ?? `HTTP ${response.status}` },
+        "Gửi tin nhắn hỗ trợ sang Slack thất bại.",
+      );
+      return failed;
+    }
+    return { ok: true, ts: data.ts ?? "", channel: data.channel ?? "" };
+  } catch (error) {
+    options.logger?.warn({ err: error }, "Không gọi được Slack API.");
+    return failed;
+  }
+}
+
+/** v0=HMAC_SHA256(secret, "v0:<timestamp>:<raw body>"), kèm chặn replay. */
+export function verifySlackSignature(input: {
+  signingSecret: string;
+  rawBody: string;
+  timestamp: string;
+  signature: string;
+  nowSeconds?: number;
+}): boolean {
+  const { signingSecret, rawBody, timestamp, signature } = input;
+  if (!signingSecret || !timestamp || !signature) return false;
+  const requestSeconds = Number(timestamp);
+  const nowSeconds = input.nowSeconds ?? Math.floor(Date.now() / 1000);
+  if (
+    !Number.isFinite(requestSeconds) ||
+    Math.abs(nowSeconds - requestSeconds) > SIGNATURE_MAX_AGE_SECONDS
+  ) {
+    return false;
+  }
+  const expected = `v0=${createHmac("sha256", signingSecret)
+    .update(`v0:${timestamp}:${rawBody}`)
+    .digest("hex")}`;
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(signature);
+  return (
+    expectedBuffer.length === providedBuffer.length &&
+    timingSafeEqual(expectedBuffer, providedBuffer)
+  );
+}

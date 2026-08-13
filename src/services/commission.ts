@@ -14,20 +14,10 @@ export interface CommissionSplit {
 }
 
 /**
- * Chia hoa hồng Shopee thực nhận cho một đơn hàng.
- *
- * Không trả tiền theo click — hàm này chỉ được gọi khi có một đơn hợp lệ với
- * commissionVnd > 0 do Shopee ghi nhận và đối tác duyệt.
- *
- * - Mua trực tiếp (hasSharer=false): người mua nhận buyerCashbackPercent%,
- *   nền tảng giữ phần còn lại (platformSharePercent%).
- * - Mua qua link chia sẻ của người khác (hasSharer=true): người mua vẫn nhận
- *   buyerCashbackPercent%; trong phần nền tảng, chủ link nhận
- *   sharerRewardFromPlatformPercent% (vd 80/20 nền tảng, sharer 20% của 20%
- *   = 4% tổng hoa hồng, nền tảng còn 16%).
- *
- * Làm tròn xuống cho buyer/sharer, phần dư gán cho nền tảng để tổng ba phần
- * luôn khớp chính xác commissionVnd — đảm bảo bút toán ledger cân bằng.
+ * Chia hoa hồng thực nhận của một đơn: buyer nhận buyerCashbackPercent%;
+ * nếu mua qua link chia sẻ, sharer nhận sharerRewardFromPlatformPercent%
+ * trích từ phần nền tảng. Buyer/sharer làm tròn xuống, phần dư về nền tảng
+ * để tổng luôn khớp commissionVnd (ledger cân bằng).
  */
 export function computeCommissionSplit(
   commissionVnd: number,

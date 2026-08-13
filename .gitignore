@@ -12,7 +12,9 @@ tmp/
 uploads/
 secrets/
 shopee-cookies*.txt
-shopee-report*.json
+/shopee-report*.json
+secrets/shopee-report*.json
+!tests/fixtures/shopee-report.sample.json
 *.zip
 __pycache__/
 *.pyc

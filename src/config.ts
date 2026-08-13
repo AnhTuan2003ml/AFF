@@ -63,8 +63,7 @@ const configSchema = z.object({
   SMTP_FROM_NAME: z.string().default("ShopTik"),
   SMTP_FROM_EMAIL: z.string().email().default("no-reply@example.com"),
   SHOPEE_AFFILIATE_ID: z.string().default(""),
-  // Shopee Affiliate Open Platform (open-api.affiliate.shopee.vn).
-  // Lấy AppId + Secret tại affiliate.shopee.vn → Công cụ → API.
+  // Lấy tại affiliate.shopee.vn → Công cụ → API.
   SHOPEE_OPEN_API_APP_ID: z.string().trim().default(""),
   SHOPEE_OPEN_API_SECRET: z.string().trim().default(""),
   SHOPEE_PRODUCT_API_URL: httpsUrlOrEmpty,
@@ -76,30 +75,20 @@ const configSchema = z.object({
   TIKTOK_PRODUCT_API_TOKEN: z.string().default(""),
   TIKTOK_DEFAULT_COMMISSION_RATE_BPS: commissionRateBps,
   TIKTOK_AFFILIATE_REDIRECT_HOSTS: z.string().default(""),
-  // TikTok Shop Open API chính thức (partner.tiktokshop.com) — cần được
-  // duyệt "TikTok Shop Affiliate Partner"/seller app mới có App Key/Secret.
-  // Access token lấy qua luồng OAuth của TikTok, dán thủ công tại đây và tự
-  // gia hạn khi hết hạn (app này chưa tự động refresh token).
+  // Access token TikTok chưa tự refresh — hết hạn phải dán lại.
   TIKTOK_OPEN_API_APP_KEY: z.string().trim().default(""),
   TIKTOK_OPEN_API_APP_SECRET: z.string().trim().default(""),
   TIKTOK_OPEN_API_ACCESS_TOKEN: z.string().trim().default(""),
-  // Campaign ID của General Publisher/TAP nếu TikTok yêu cầu material nằm
-  // trong campaign trước khi tạo sharing link. Có thể để trống nếu app được
-  // cấp quyền tạo link trực tiếp cho Open Collaboration.
+  // Để trống nếu app được tạo link trực tiếp cho Open Collaboration.
   TIKTOK_AFFILIATE_CAMPAIGN_ID: z.string().trim().default(""),
   LAZADA_AFFILIATE_ID: z.string().default(""),
-  // Master Link định danh LazAffiliates, ví dụ https://c.lazada.vn/t/c.xxxxx.
-  // Link chia sẻ s.lazada.vn và mã/referral code không thay thế được Master
-  // Link. Chỉ fallback sang LAZADA_AFFILIATE_ID khi giá trị đó đã là link
-  // đầy đủ hoặc mã đúng dạng c.xxxxx.
+  // Master Link dạng https://c.lazada.vn/t/c.xxxxx; link s.lazada.vn không thay thế được.
   LAZADA_AFFILIATE_MASTER_LINK: z.string().trim().default(""),
   LAZADA_PRODUCT_API_URL: httpsUrlOrEmpty,
   LAZADA_PRODUCT_API_TOKEN: z.string().default(""),
   LAZADA_DEFAULT_COMMISSION_RATE_BPS: commissionRateBps,
   LAZADA_AFFILIATE_REDIRECT_HOSTS: z.string().default(""),
-  // Lazada Open Platform chính thức (open.lazada.com) — cần tạo app + được
-  // duyệt mới có App Key/Secret. Access token lấy qua luồng OAuth của
-  // Lazada, dán thủ công tại đây (app này chưa tự động refresh token).
+  // Access token Lazada chưa tự refresh — hết hạn phải dán lại.
   LAZADA_OPEN_API_APP_KEY: z.string().trim().default(""),
   LAZADA_OPEN_API_APP_SECRET: z.string().trim().default(""),
   LAZADA_OPEN_API_ACCESS_TOKEN: z.string().trim().default(""),
@@ -109,7 +98,10 @@ const configSchema = z.object({
     .min(1000)
     .max(30000)
     .default(8000),
-  // Link nhóm cộng đồng (hiện nút nổi góc phải dưới khi được đặt).
+  // Slack CSKH: thiếu token hoặc kênh là tắt tích hợp, app vẫn chạy bình thường.
+  SLACK_BOT_TOKEN: z.string().trim().default(""),
+  SLACK_SUPPORT_CHANNEL: z.string().trim().default(""),
+  SLACK_SIGNING_SECRET: z.string().trim().default(""),
   COMMUNITY_ZALO_URL: httpsUrlOrEmpty,
   COMMUNITY_TELEGRAM_URL: httpsUrlOrEmpty,
   MIN_WITHDRAWAL_VND: z.coerce.number().int().positive().default(50000),
@@ -117,9 +109,7 @@ const configSchema = z.object({
   TERMS_VERSION: z.string().min(1),
   PRIVACY_VERSION: z.string().min(1),
 
-  // Cấu hình nghiệp vụ hoa hồng/chia sẻ. Đây là giá trị SEED khi khởi tạo lần
-  // đầu (business_config trống) — sau đó giá trị admin lưu trong DB được ưu
-  // tiên và có hiệu lực ngay, không cần sửa .env hay khởi động lại.
+  // Nhóm nghiệp vụ dưới đây chỉ seed lần đầu; sau đó giá trị trong DB được ưu tiên.
   BUYER_CASHBACK_PERCENT: z.coerce.number().int().min(0).max(100).default(80),
   PLATFORM_SHARE_PERCENT: z.coerce.number().int().min(0).max(100).default(20),
   SHARER_REWARD_FROM_PLATFORM_PERCENT: z.coerce
@@ -139,9 +129,7 @@ const configSchema = z.object({
   ENABLE_SHARE_LINK: booleanFromStringDefault("true"),
   ENABLE_REFERRAL_PROGRAM: booleanFromStringDefault("true"),
 
-  // Tiến trình nền: đồng bộ báo cáo sàn và giải ngân tiền hoàn đến hạn.
-  // Tần suất đồng bộ từng sàn do admin đặt trong Backoffice > Đồng bộ sàn;
-  // biến này chỉ điều khiển nhịp kiểm tra của scheduler.
+  // Tần suất đồng bộ từng sàn do admin đặt trong DB; biến này chỉ là nhịp kiểm tra.
   ENABLE_SYNC_SCHEDULER: booleanFromStringDefault("true"),
   SYNC_SCHEDULER_TICK_SECONDS: z.coerce
     .number()
@@ -150,9 +138,7 @@ const configSchema = z.object({
     .max(3600)
     .default(60),
 
-  // Mốc thưởng nhiệm vụ (JSON mảng {threshold, rewardVnd, title}) — chỉ dùng
-  // để SEED bảng mission_definitions khi bảng còn trống lần đầu; sau đó admin
-  // sửa trong Backoffice > Nhiệm vụ, DB là nguồn thật.
+  // JSON [{threshold, rewardVnd, title}] — chỉ seed mission_definitions lần đầu.
   MISSION_REFERRAL_MILESTONES_JSON: z
     .string()
     .default(
@@ -164,7 +150,6 @@ const configSchema = z.object({
       '[{"threshold":3,"rewardVnd":20000,"title":"Mua 3 đơn trong tháng"},{"threshold":10,"rewardVnd":80000,"title":"Mua 10 đơn trong tháng"}]',
     ),
 
-  // Quản lý tài khoản admin từ ENV (allowlist đồng bộ khi khởi động).
   ADMIN_SYNC_FROM_ENV: booleanFromString,
   ADMIN_STRICT_ALLOWLIST: booleanFromStringDefault("true"),
   ADMIN_RESET_PASSWORDS_ON_STARTUP: booleanFromString,

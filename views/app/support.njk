@@ -1,82 +1,55 @@
 {% extends "app/app-base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state, ticket_type_label %}
 
 {% block app_content %}
+  <link rel="stylesheet" href="/assets/support-chat.css?v={{ assetVersion }}">
+
   <section class="page-heading">
     <div>
-      <h1>Hỗ trợ đơn hàng</h1>
-      <p>Gửi yêu cầu để nền tảng và nhân viên trực hỗ trợ xử lý.</p>
+      <h1>Hỗ trợ</h1>
+      <p>Chat trực tiếp với đội chăm sóc khách hàng.</p>
     </div>
   </section>
 
-  <div class="two-column-layout support-layout">
-    <section class="panel support-create-panel">
-      <header class="panel-heading"><div><h2>Tạo yêu cầu hỗ trợ</h2></div></header>
-      {% if supportPrefill.orderId %}
-        <div class="flash flash-info support-prefill-banner" role="status">
-          <span>Đang hỗ trợ đơn <b>#{{ supportPrefill.orderId }}</b>{% if supportPrefill.platform %} · {{ supportPrefill.platformLabel }}{% endif %}</span>
-        </div>
-      {% endif %}
-      <form method="post" action="/app/support" class="stack-form" data-validate-form novalidate>
-        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label for="support-type-input">Loại yêu cầu
-          <select id="support-type-input" name="type" required data-required-message="Vui lòng chọn loại yêu cầu.">
-            <option value="MISSING_ORDER" {% if supportPrefill.type == 'MISSING_ORDER' %}selected{% endif %}>Chưa thấy đơn</option>
-            <option value="WRONG_CASHBACK" {% if supportPrefill.type == 'WRONG_CASHBACK' %}selected{% endif %}>Sai tiền hoàn</option>
-            <option value="WITHDRAWAL_DELAY" {% if supportPrefill.type == 'WITHDRAWAL_DELAY' %}selected{% endif %}>Rút tiền chậm</option>
-            <option value="ACCOUNT" {% if supportPrefill.type == 'ACCOUNT' %}selected{% endif %}>Tài khoản</option>
-            <option value="OTHER" {% if supportPrefill.type == 'OTHER' %}selected{% endif %}>Vấn đề khác</option>
-          </select>
-          <small class="field-error" id="support-type-input-error" hidden></small>
-        </label>
-        <label for="support-subject-input">Tiêu đề
-          <input id="support-subject-input" type="text" name="subject" minlength="5" maxlength="150" required value="{{ supportPrefill.subject or '' }}" data-required-message="Vui lòng nhập tiêu đề." data-minlength-message="Tiêu đề cần ít nhất 5 ký tự.">
-          <small class="field-error" id="support-subject-input-error" hidden></small>
-        </label>
-        <label for="support-order-input">Mã đơn liên quan
-          <select id="support-order-input" name="relatedOrderId">
-            <option value="">Không gắn với đơn cụ thể</option>
-            {% for order in orderOptions %}
-              <option value="{{ order.platform_order_id }}" {% if supportPrefill.orderId == order.platform_order_id %}selected{% endif %}>
-                #{{ order.platform_order_id }} · {{ order.platform }}{% if order.order_amount_vnd | int > 0 %} · {{ order.order_amount_vnd | int | vnd }}{% endif %}
-              </option>
-            {% endfor %}
-          </select>
-          {% if not orderOptions.length %}<small class="field-hint">Bạn chưa có đơn hàng nào — có thể gửi yêu cầu không gắn đơn.</small>{% endif %}
-        </label>
-        <label for="support-description-input">Mô tả
-          <textarea id="support-description-input" name="description" rows="6" minlength="20" maxlength="3000" placeholder="Mô tả vấn đề cần hỗ trợ" required data-required-message="Vui lòng mô tả chi tiết vấn đề." data-minlength-message="Mô tả cần ít nhất 20 ký tự.">{{ supportPrefill.description or '' }}</textarea>
-          <small class="field-error" id="support-description-input-error" hidden></small>
-        </label>
-        <button class="button button-primary button-block" type="submit" data-submit-button>Gửi yêu cầu hỗ trợ</button>
-      </form>
-    </section>
+  <section class="panel support-chat-panel" data-chat
+    data-endpoint="/app/support/messages" data-csrf="{{ csrfToken }}">
+    <header class="support-chat-head">
+      <div class="support-chat-status">
+        <span class="support-chat-dot {% if chatOnline %}is-online{% endif %}" aria-hidden="true"></span>
+        <span>{% if chatOnline %}Đội CSKH đang trực — phản hồi sớm nhất có thể{% else %}Kênh chat đang bảo trì — tin nhắn vẫn được lưu lại{% endif %}</span>
+      </div>
+    </header>
 
-    <section class="panel support-history-panel">
-      <header class="panel-heading"><div><h2>Yêu cầu của bạn</h2></div></header>
-      {% if tickets.length %}
-        <div class="st-ticket-list">
-          {% for ticket in tickets %}
-            <a class="st-ticket st-ticket-link" href="/app/support/{{ ticket.id }}">
-              <div class="st-ticket-main">
-                <b class="st-ticket-subject">{{ ticket.subject }}</b>
-                <small class="st-ticket-meta">#{{ ticket.id | truncate(8, true, '') }} · {{ ticket_type_label(ticket.type) }} · {{ ticket.created_at | datetime }}</small>
-              </div>
-              <div class="st-ticket-side">
-                {{ status_badge(ticket.status) }}
-                {% if ticket.overdue %}
-                  <small class="st-ticket-sla st-ticket-sla-overdue">Quá hạn phản hồi ({{ ticket.sla_at | datetime }})</small>
-                {% else %}
-                  <small class="st-ticket-sla">Phản hồi trước {{ ticket.sla_at | datetime }}</small>
-                {% endif %}
-                <small class="st-ticket-open">Xem chi tiết →</small>
-              </div>
-            </a>
-          {% endfor %}
+    <div class="support-chat-messages" data-chat-messages tabindex="0"
+      role="log" aria-label="Lịch sử trò chuyện" aria-live="polite">
+      <div class="support-chat-empty" data-chat-empty {% if messages.length %}hidden{% endif %}>
+        <p><b>Bạn cần hỗ trợ điều gì?</b></p>
+        <p>Nhắn tin tại đây — về đơn hàng, tiền hoàn, rút tiền hoặc tài khoản.</p>
+      </div>
+      {% for message in messages %}
+        <div class="support-chat-row is-{{ message.authorRole | lower }}" data-message-id="{{ message.id }}">
+          <div class="support-chat-bubble">
+            <p>{{ message.body }}</p>
+            <time datetime="{{ message.createdAt.toISOString() }}">{{ message.createdAt | datetime }}</time>
+          </div>
         </div>
-      {% else %}
-        {{ empty_state("Chưa có yêu cầu hỗ trợ", "Khi cần hỗ trợ, hãy gửi biểu mẫu bên trái.") }}
-      {% endif %}
-    </section>
-  </div>
+      {% endfor %}
+    </div>
+
+    <p class="support-chat-error" data-chat-error hidden role="alert"></p>
+
+    <form class="support-chat-form" data-chat-form>
+      <label class="visually-hidden" for="support-chat-input">Tin nhắn</label>
+      <textarea id="support-chat-input" data-chat-input rows="1" maxlength="3000"
+        placeholder="Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)"
+        autocomplete="off">{{ prefillMessage }}</textarea>
+      <button class="button button-primary support-chat-send" type="submit" data-chat-send>
+        Gửi
+      </button>
+    </form>
+  </section>
+
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/support-chat.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

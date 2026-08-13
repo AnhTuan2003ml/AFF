@@ -54,12 +54,9 @@ export interface DefaultAdminBootstrapResult {
 }
 
 /**
- * Đảm bảo danh sách admin mặc định (hardcode trong src/auth/default-admins.ts)
- * luôn tồn tại và có quyền SUPER_ADMIN/ADMIN — chạy trên MỌI máy, không phụ
- * thuộc .env. Tài khoản chưa tồn tại (máy mới) được tạo với initialPassword
- * khai báo sẵn làm mật khẩu đăng nhập ban đầu. Tài khoản đã tồn tại chỉ được
- * đồng bộ role/trạng thái — KHÔNG bao giờ đụng mật khẩu hiện tại, kể cả khi
- * đã đổi mật khẩu khác initialPassword từ trước.
+ * Đảm bảo admin mặc định (default-admins.ts) tồn tại với đúng role trên mọi
+ * máy. Tài khoản đã tồn tại chỉ đồng bộ role/trạng thái — không bao giờ đụng
+ * mật khẩu hiện tại.
  */
 export async function bootstrapDefaultAdmins(
   db: Database,
@@ -141,10 +138,8 @@ export async function bootstrapDefaultAdmins(
 }
 
 /**
- * Đồng bộ tài khoản admin từ ADMIN_ACCOUNTS_JSON khi ứng dụng khởi động.
- * Không bao giờ ghi mật khẩu hoặc nội dung ENV vào log — chỉ email/role/hành
- * động. Ném lỗi (dừng khởi động) nếu cấu hình sai cú pháp hoặc không còn admin
- * hợp lệ nào, thay vì âm thầm chạy với quyền sai.
+ * Đồng bộ admin từ ADMIN_ACCOUNTS_JSON lúc khởi động. Không log mật khẩu;
+ * cấu hình sai thì ném lỗi dừng khởi động thay vì chạy với quyền sai.
  */
 export async function syncAdminAccountsFromEnv(
   db: Database,

@@ -35,6 +35,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   BANK_VERIFIED: "Xác minh tài khoản ngân hàng",
   BANK_REJECTED: "Từ chối tài khoản ngân hàng",
   BUSINESS_CONFIG_UPDATED: "Cập nhật cấu hình nghiệp vụ",
+  SUPPORT_AUTOREPLY_UPDATED: "Cập nhật tự trả lời hỗ trợ",
   CASHBACK_APPROVED: "Duyệt hoàn tiền đơn hàng",
   CASHBACK_AUTO_APPROVED: "Tự động duyệt hoàn tiền đơn hàng",
   CASHBACK_REJECTED: "Từ chối hoàn tiền đơn hàng",
