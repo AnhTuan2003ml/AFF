@@ -513,3 +513,53 @@
   font-size: 13.5px;
   line-height: 1.55;
 }
+
+/* ── Đăng nhập bằng Google ────────────────────────────────────────────
+   Trang auth cố định nền sáng (data-theme="light"), nên chỉ cần một hệ màu. */
+.auth-commerce .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #98a2b3;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.auth-commerce .auth-divider::before,
+.auth-commerce .auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e4e7ec;
+}
+
+.auth-commerce .button-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  background: #fff;
+  color: #1d2939;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.auth-commerce .button-google:hover {
+  background: #f9fafb;
+  border-color: #98a2b3;
+}
+
+.auth-commerce .button-google:focus-visible {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, .25);
+}
+
+.auth-commerce .button-google .google-logo {
+  flex: none;
+}

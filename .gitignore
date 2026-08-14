@@ -11,6 +11,9 @@ coverage/
 tmp/
 uploads/
 secrets/
+# Google OAuth client secret tải từ Google Cloud Console — chứa client_secret,
+# tuyệt đối không commit. Giá trị đã nạp vào .env (GOOGLE_OAUTH_*).
+client_secret_*.json
 shopee-cookies*.txt
 /shopee-report*.json
 secrets/shopee-report*.json

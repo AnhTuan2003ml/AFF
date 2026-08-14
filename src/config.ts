@@ -101,6 +101,14 @@ const configSchema = z.object({
     .min(1000)
     .max(30000)
     .default(8000),
+  // Đăng nhập/đăng ký bằng Google (OAuth 2.0). Lấy Client ID + Secret tại
+  // Google Cloud Console → APIs & Services → Credentials. Thiếu một trong hai
+  // là tắt tính năng, app vẫn chạy bình thường (chỉ ẩn nút "Tiếp tục với Google").
+  GOOGLE_OAUTH_CLIENT_ID: z.string().trim().default(""),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().trim().default(""),
+  // Trống = tự suy ra APP_ORIGIN + "/auth/google/callback". Phải trùng đúng
+  // "Authorized redirect URIs" đã khai trong Google Cloud Console.
+  GOOGLE_OAUTH_REDIRECT_URI: httpsUrlOrEmpty,
   // Slack CSKH: thiếu token hoặc kênh là tắt tích hợp, app vẫn chạy bình thường.
   SLACK_BOT_TOKEN: z.string().trim().default(""),
   SLACK_SUPPORT_CHANNEL: z.string().trim().default(""),

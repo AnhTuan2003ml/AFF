@@ -76,5 +76,14 @@
       <span aria-hidden="true">→</span>
     </button>
   </form>
+
+  {% if googleEnabled %}
+    <div class="auth-divider"><span>hoặc</span></div>
+    <a class="button button-block button-large button-google" href="/auth/google">
+      {% include "partials/google-logo.njk" %}
+      <span>Đăng ký nhanh với Google</span>
+    </a>
+  {% endif %}
+
   <p class="auth-switch login-register-link">Đã có tài khoản? <a href="/dang-nhap">Đăng nhập</a></p>
 {% endblock %}

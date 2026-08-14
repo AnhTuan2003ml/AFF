@@ -41,5 +41,13 @@
     </button>
   </form>
 
+  {% if googleEnabled %}
+    <div class="auth-divider"><span>hoặc</span></div>
+    <a class="button button-block button-large button-google" href="/auth/google{% if next %}?next={{ next | urlencode }}{% endif %}">
+      {% include "partials/google-logo.njk" %}
+      <span>Tiếp tục với Google</span>
+    </a>
+  {% endif %}
+
   <p class="auth-switch login-register-link">Chưa có tài khoản? <a href="/dang-ky">Tạo tài khoản</a></p>
 {% endblock %}
