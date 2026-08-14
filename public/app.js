@@ -310,7 +310,13 @@
       if (!(field instanceof HTMLInputElement)) return;
       const showing = field.type === "text";
       field.type = showing ? "password" : "text";
-      button.textContent = showing ? "Hiện" : "Ẩn";
+      // Nút nào có sẵn icon bên trong (hai con mắt ở trang đăng nhập) thì
+      // KHÔNG ghi đè textContent — làm thế là xoá luôn cả <svg>. Trạng thái
+      // nói qua aria-pressed, CSS tự đổi icon.
+      button.setAttribute("aria-pressed", showing ? "false" : "true");
+      if (button.childElementCount === 0) {
+        button.textContent = showing ? "Hiện" : "Ẩn";
+      }
       button.setAttribute(
         "aria-label",
         showing ? "Hiện mật khẩu" : "Ẩn mật khẩu",

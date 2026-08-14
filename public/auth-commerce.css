@@ -1,25 +1,29 @@
 /*
- * ShopTik authentication architecture.
- * Desktop: commerce story + focused form. Mobile: task-first single column.
+ * Trang đăng nhập / đăng ký — dựng theo AuthModal của bản thiết kế MB.
+ *
+ * Bố cục: cột trái kể chuyện trên ảnh phủ navy, cột phải là thẻ trắng bo lớn
+ * gồm ba tầng — dải gradient navy (nhận diện + nhãn bảo mật), thân biểu mẫu,
+ * chân thẻ tin cậy.
+ *
+ * Toàn bộ màu lấy từ token ở theme/tokens.css. File này KHÔNG dùng !important
+ * (trừ chỗ phải gỡ nền tối mặc định của .auth-shell cũ) vì trang auth không
+ * nạp app-shell/dv13 nên không có gì phải giành quyền.
  */
 
-.auth-commerce,
-.auth-commerce *,
-.auth-commerce *::before,
-.auth-commerce *::after {
-  box-sizing: border-box;
+/* ====================================================================== */
+/* 1. KHUNG HAI CỘT                                                        */
+/* ====================================================================== */
+
+.auth-shell.auth-commerce {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  min-height: 100svh;
+  background: var(--paper);
 }
 
-.auth-commerce {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1.12fr) minmax(430px, .88fr) !important;
-  min-height: 100svh !important;
-  overflow: hidden !important;
-  color: #1a2027 !important;
-  background: #f6f6f4 !important;
-  background-image: none !important;
-  font-family: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
-}
+/* ====================================================================== */
+/* 2. CỘT TRÁI — ẢNH + LỚP PHỦ NAVY                                        */
+/* ====================================================================== */
 
 .auth-commerce-story {
   position: relative;
@@ -28,7 +32,7 @@
   min-height: 100svh;
   overflow: hidden;
   color: #fff;
-  background: #101317;
+  background: #00112f;
 }
 
 .auth-commerce-media {
@@ -36,30 +40,34 @@
   z-index: -2;
   inset: 0;
   background:
-    #101317
+    #00112f
     url("/assets/images/shop-tik-commerce-hero.webp")
     center center / cover no-repeat;
   transform: scale(1.015);
 }
 
+/* Lớp phủ nghiêng về navy thương hiệu thay vì đen xám, kèm quầng sáng xanh ở
+   góc trên phải để ảnh không bị "chì" và bẹt. */
 .auth-commerce-story::after {
   content: "";
   position: absolute;
   z-index: -1;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(6, 8, 10, .94), rgba(7, 9, 11, .66) 58%, rgba(7, 9, 11, .25)),
-    linear-gradient(180deg, rgba(0, 0, 0, .15), transparent 45%, rgba(0, 0, 0, .52));
+    radial-gradient(85% 65% at 100% 0%, rgba(0, 92, 255, .34), transparent 62%),
+    linear-gradient(90deg, rgba(0, 12, 44, .94), rgba(0, 24, 82, .78) 55%, rgba(0, 45, 156, .48)),
+    linear-gradient(180deg, rgba(0, 10, 36, .26), transparent 40%, rgba(0, 8, 30, .62));
 }
 
 .auth-commerce-story-content {
   display: flex;
-  width: min(100% - 80px, 760px);
+  width: min(100% - 80px, 720px);
   min-height: 100%;
   margin: 0 auto;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(34px, 5vw, 72px) 0 42px;
+  gap: 22px;
+  padding: clamp(26px, 3.6vw, 44px) 0 30px;
 }
 
 .auth-commerce-brand {
@@ -72,8 +80,8 @@
 }
 
 .auth-commerce-brand img {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .35));
 }
@@ -81,53 +89,45 @@
 .auth-commerce-brand > span {
   position: relative;
   display: flex;
-  align-items: baseline;
   min-width: 155px;
+  align-items: baseline;
   font-family: "Bahnschrift SemiCondensed", "Arial Narrow", Arial, sans-serif;
-  font-size: 31px;
+  font-size: 29px;
   font-weight: 850;
   letter-spacing: .055em;
   line-height: 1;
 }
 
-.auth-commerce-brand strong {
-  color: #e44a2b;
-}
-
-/* tokens.css có rule chung `h1,h2,h3,h4,strong,b { color: var(--text) }`
-   khiến <b>SHOP</b> ăn màu mực tối và chìm vào ảnh nền tối — phải khai báo
-   màu trắng trực tiếp, không dựa vào kế thừa từ .auth-commerce-brand. */
 .auth-commerce-brand b {
   color: #fff;
 }
 
-/* Bóng chữ mỏng giữ wordmark đọc được kể cả trên vùng sáng của ảnh. */
-.auth-commerce-brand b,
 .auth-commerce-brand strong {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 4px 14px rgba(0, 0, 0, .35);
+  color: #7cc4ff;
 }
 
 .auth-commerce-brand small {
   position: absolute;
-  top: calc(100% + 7px);
+  top: 100%;
   left: 1px;
-  color: rgba(255, 255, 255, .78);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
-  font: 750 8px/1 "Segoe UI", Arial, sans-serif;
+  margin-top: 5px;
+  color: rgba(190, 220, 255, .82);
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: .34em;
 }
 
 .auth-commerce-message {
-  max-width: 680px;
+  max-width: 620px;
   margin-block: auto;
-  padding-block: 52px;
+  padding-block: 6px;
 }
 
 .auth-commerce-kicker {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: #ef5a3b;
+  color: var(--mb-cyan-300);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: .2em;
@@ -140,24 +140,180 @@
   background: currentColor;
 }
 
+/*
+ * Tiêu đề lớn tiếng Việt IN HOA cần chỗ thở theo CHIỀU DỌC nhiều hơn hẳn chữ
+ * Latin thường: Ậ có dấu mũ ở trên và dấu nặng ở dưới, Ề/Ú đội thêm một tầng
+ * nữa. Bản trước để line-height .94 nên dấu của dòng dưới đâm vào chân chữ
+ * dòng trên. Mỗi dòng là một block riêng, leading 1.06 và có padding chống
+ * cắt ngọn dấu.
+ */
 .auth-commerce-message h1 {
-  max-width: 680px;
-  margin: 18px 0 24px;
-  color: #fff !important;
+  max-width: 640px;
+  margin: 14px 0 16px;
+  color: #fff;
   font-family: "Bahnschrift SemiCondensed", "Arial Narrow", Arial, sans-serif;
-  font-size: clamp(52px, 6.2vw, 86px);
+  font-size: clamp(36px, 3.9vw, 55px);
   font-weight: 850;
-  line-height: .92;
-  letter-spacing: -.045em;
+  line-height: 1.14;
+  letter-spacing: -.015em;
   text-transform: uppercase;
 }
 
-.auth-commerce-message p {
-  max-width: 570px;
+.auth-commerce-message h1 span {
+  display: block;
+  padding-block: .06em;
+}
+
+.auth-commerce-message > p {
+  max-width: 480px;
   margin: 0;
-  color: rgba(255, 255, 255, .72) !important;
-  font-size: 16px;
-  line-height: 1.7;
+  color: rgba(255, 255, 255, .74);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/*
+ * Hoá đơn hoàn tiền bằng kính mờ — vật thể chính của cột trái. Có rãnh răng
+ * cưa giữa hai dòng như biên lai thật để mắt nhận ra ngay đây là "hoá đơn".
+ */
+.auth-receipt {
+  max-width: 372px;
+  margin: 20px 0 0;
+  padding: 14px 17px 16px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .09);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 44px -22px rgba(0, 6, 26, .9);
+}
+
+.auth-receipt figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.auth-receipt figcaption > span {
+  color: #a9c9ff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.auth-receipt-rate {
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #04231a;
+  background: #34d399;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.auth-receipt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-receipt-row span {
+  color: rgba(216, 231, 255, .82);
+  font-size: 12.5px;
+}
+
+.auth-receipt-row b {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.auth-receipt-row.is-total b {
+  color: #6ee7b7;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+/* Rãnh cắt: đường đứt nét kèm hai lỗ tròn hai đầu. */
+.auth-receipt-tear {
+  position: relative;
+  height: 1px;
+  margin: 13px -18px;
+  border-top: 1px dashed rgba(255, 255, 255, .26);
+}
+
+/* Lỗ tròn dùng màu tối TRONG SUỐT chứ không phải một mã navy đặc: nền dưới là
+   ảnh chụp nên mọi màu đặc đều lộ vệt không khớp. */
+.auth-receipt-tear::before,
+.auth-receipt-tear::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(0, 8, 30, .55);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  transform: translateY(-50%);
+}
+
+.auth-receipt-tear::before { left: -7px; }
+.auth-receipt-tear::after { right: -7px; }
+
+/* Ba điểm bán hàng — lấp khoảng trống lớn ở giữa cột. */
+.auth-commerce-points {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auth-commerce-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.auth-commerce-points span {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .12);
+}
+
+.auth-commerce-points svg {
+  width: 18px;
+  height: 18px;
+  color: var(--mb-cyan-300);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-commerce-points b {
+  display: block;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.auth-commerce-points small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(206, 226, 255, .72);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .auth-commerce-trust {
@@ -167,209 +323,717 @@
 }
 
 .auth-commerce-trust span {
-  padding: 9px 12px;
-  border: 1px solid rgba(255, 255, 255, .2);
-  color: rgba(255, 255, 255, .72);
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, .78);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .1em;
 }
 
+/* ====================================================================== */
+/* 3. CỘT PHẢI — THẺ BIỂU MẪU                                              */
+/* ====================================================================== */
+
+/* Nền cột phải không để phẳng lì: hai vệt xanh rất nhạt toả sau thẻ để thẻ
+   trắng có chỗ "đậu" thay vì nổi lơ lửng giữa mảng xám. */
 .auth-commerce .auth-commerce-panel {
-  position: relative !important;
-  z-index: 2 !important;
-  display: flex !important;
-  width: 100% !important;
-  min-height: 100svh !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 34px clamp(30px, 5vw, 76px) !important;
-  background: #f6f6f4 !important;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  min-height: 100svh;
+  align-items: center;
+  justify-content: center;
+  padding: 34px clamp(24px, 4vw, 64px);
+  background:
+    radial-gradient(70% 46% at 50% 22%, rgba(0, 45, 156, .10), transparent 68%),
+    radial-gradient(52% 38% at 78% 92%, rgba(0, 150, 104, .07), transparent 70%),
+    var(--paper);
 }
 
 .auth-commerce .auth-card {
-  width: min(100%, 480px) !important;
-  max-height: calc(100svh - 48px) !important;
-  overflow-y: auto !important;
-  padding: clamp(28px, 3.2vw, 44px) !important;
-  border: 1px solid #dddeda !important;
-  border-top: 5px solid #e44a2b !important;
-  border-radius: 0 !important;
-  color: #1a2027 !important;
-  background: #fff !important;
-  box-shadow: 0 24px 65px rgba(15, 18, 22, .10) !important;
-  backdrop-filter: none !important;
-  scrollbar-width: thin;
+  display: flex;
+  width: min(100%, 486px);
+  max-height: calc(100svh - 48px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow:
+    0 32px 80px -34px rgba(0, 14, 51, .42),
+    0 8px 24px -12px rgba(0, 45, 156, .14),
+    0 2px 6px rgba(15, 23, 42, .04);
 }
 
-.auth-commerce .auth-card-brand {
-  margin-bottom: 28px !important;
+/* --- Dải navy đầu thẻ --- */
+
+.auth-card-header {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  padding: 24px 28px 22px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-navy-900) 0%, var(--mb-navy-800) 52%, #0050d8 100%);
 }
 
-.auth-commerce .auth-card-brand img {
-  width: 178px;
-  height: auto;
+/* Vệt sáng lượn ở góc phải cho dải navy có chiều sâu, không phẳng như tấm bìa. */
+.auth-card-header::after {
+  content: "";
+  position: absolute;
+  top: -70px;
+  right: -50px;
+  width: 190px;
+  height: 190px;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, .22);
+  filter: blur(38px);
+  pointer-events: none;
 }
 
-.auth-commerce .auth-heading {
-  margin-bottom: 24px !important;
-  text-align: left !important;
+.auth-card-header > * {
+  position: relative;
+  z-index: 1;
 }
 
-.auth-commerce .auth-heading .eyebrow {
-  display: inline-block !important;
-  margin-bottom: 8px;
-  color: #e44a2b !important;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: .16em;
+.auth-card-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.auth-commerce .auth-heading h1,
-.auth-commerce .auth-heading h2 {
-  margin: 0 !important;
-  color: #151a20 !important;
-  font-family: "Bahnschrift SemiCondensed", "Arial Narrow", Arial, sans-serif;
-  font-size: clamp(34px, 4vw, 46px) !important;
-  font-weight: 850 !important;
-  line-height: 1 !important;
-  letter-spacing: -.035em !important;
+/* Nền TRẮNG cho ô dấu hiệu: logo ShopTik nhiều màu và có nét tối, đặt trên
+   kính mờ nền navy thì chìm thành một mảng lem nhem. */
+.auth-card-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .5);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 10, 40, .28);
+}
+
+.auth-card-mark img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.auth-card-header-copy {
+  min-width: 0;
+}
+
+.auth-card-header-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-card-header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.auth-card-secure {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(16, 185, 129, .92);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
   text-transform: uppercase;
 }
 
-.auth-commerce .auth-heading p {
-  display: block !important;
-  margin: 10px 0 0 !important;
-  color: #737b84 !important;
-  font-size: 14px !important;
+.auth-card-header p {
+  margin: 3px 0 0;
+  color: #c9dcff;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* --- Thân biểu mẫu --- */
+
+.auth-card-body {
+  flex: 1;
+  padding: 28px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.auth-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.auth-note strong {
+  color: var(--text);
+}
+
+.auth-heading {
+  margin-bottom: 18px;
+}
+
+.auth-heading .eyebrow {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--brand);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.auth-heading h1,
+.auth-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.auth-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* Khoảng cách đủ chứa dòng lỗi đặt tuyệt đối bên dưới mỗi trường. */
+.auth-card-body .stack-form {
+  display: grid;
+  gap: 21px;
+}
+
+/* Trường nhập: nhãn nhỏ đậm, ô nền xám nhạt bo 14px, icon nằm trong ô. */
+.login-field,
+.auth-card-body .stack-form > label {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.auth-field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.auth-field-label .optional {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.auth-input-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-muted);
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.auth-input-shell:focus-within {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent);
+}
+
+/*
+ * styles.css đặt .login-field-icon là position:absolute (thiết kế cũ chồng
+ * icon lên ô nhập) VÀ cho nó nền tròn xanh nhạt 25×25. Ở đây icon là MỘT Ô
+ * FLEX đứng trước input, nên phải trả về static — không thì icon đè lên chữ,
+ * ra kiểu "Ng 👤 ăn A" — đồng thời xoá nền tròn, không thì nó hiện thành một
+ * mảng sáng lạ lọt trong ô, lộ rõ nhất khi ô chuyển sang nền đỏ báo lỗi.
+ */
+.login-field-icon {
+  position: static;
+  display: grid;
+  width: 46px;
+  height: auto;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0;
+  background: transparent;
+  transform: none;
+  color: var(--muted);
+  transition: color .15s ease;
+}
+
+.login-field-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-input-shell:focus-within .login-field-icon {
+  color: var(--brand);
+}
+
+/* Bọc trong .auth-card-body để đủ sức nặng đè
+   `.login-field .password-field input` của styles.css (0,3,0) — rule đó tự vẽ
+   viền + nền + padding-left 54px cho riêng ô mật khẩu, khiến nó thành cái hộp
+   thứ hai nằm trong vỏ, icon bị đẩy ra ngoài. */
+.auth-card-body .auth-input-shell input {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 52px;
+  padding: 0 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  background: transparent;
+  box-shadow: none;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.auth-card-body .auth-input-shell input:focus,
+.auth-card-body .auth-input-shell input:focus-visible {
+  border: 0;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+.auth-input-shell input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Nút hiện/ẩn mật khẩu là một ô flex trong vỏ — styles.css để nó absolute
+   theo thiết kế cũ nên phải trả về static, không thì nó trôi lên góc.
+   Nội dung là hai icon con mắt, đổi qua lại theo aria-pressed. */
+.auth-card-body .password-field [data-toggle-password] {
+  position: static;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  top: auto;
+  right: auto;
+  place-items: center;
+  transform: none;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+
+.auth-card-body .password-field [data-toggle-password] svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Mắt gạch chéo chỉ hiện khi mật khẩu ĐANG hiển thị (aria-pressed=true). */
+.auth-card-body .password-field [data-toggle-password] .icon-eye-off,
+.auth-card-body .password-field [data-toggle-password][aria-pressed="true"] .icon-eye {
+  display: none;
+}
+
+.auth-card-body .password-field [data-toggle-password][aria-pressed="true"] .icon-eye-off {
+  display: block;
+}
+
+.auth-card-body .password-field [data-toggle-password][aria-pressed="true"] {
+  color: var(--brand);
+}
+
+.auth-card-body .password-field [data-toggle-password]:hover {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* Vỏ ô là flex ngang; .password-field của styles.css đặt display:block. */
+.auth-card-body .auth-input-shell.password-field {
+  display: flex;
+}
+
+/* Ô nhập trần (các trang OTP / quên mật khẩu chưa bọc auth-input-shell).
+   Loại trừ checkbox/radio: hàng "Tôi đồng ý điều khoản" cũng là > label >
+   input, dính rule này thì ô tick phình thành hộp trống cao 46px. */
+.auth-card-body .stack-form > label > input:not([type="checkbox"]):not([type="radio"]),
+.auth-card-body .stack-form > label > select,
+.auth-card-body .stack-form > label > textarea {
+  display: block;
+  width: 100%;
+  height: 52px;
+  margin-top: 6px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--surface-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.auth-card-body .stack-form > label > input:not([type="checkbox"]):not([type="radio"]):focus {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent);
+  outline: none;
+}
+
+.auth-card-body .otp-input {
+  font-family: var(--font-data);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .5em;
+  text-align: center;
+}
+
+.auth-card-body small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/*
+ * Lỗi từng trường: có chấm đầu dòng để mắt bắt được ngay, và ĐẶT TUYỆT ĐỐI để
+ * lúc hiện ra không đẩy phần dưới xuống.
+ *
+ * Chèn thêm một dòng vào luồng nghĩa là mọi thứ bên dưới tụt xuống giữa lúc
+ * người dùng đang bấm — cú nhả chuột rơi ra ngoài link và click bị nuốt. Đây
+ * chính là lỗi "bấm Tạo tài khoản lần đầu không ăn". Dòng lỗi nằm gọn trong
+ * khoảng cách sẵn có giữa các trường nên không tốn thêm chiều cao.
+ */
+.auth-card-body .login-field {
+  position: relative;
+}
+
+.auth-card-body .field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.auth-card-body .login-field > .field-error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 3px;
+}
+
+.auth-card-body .field-error::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin-top: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/*
+ * Ô nhập đang lỗi thì đỏ CẢ VỎ LẪN ICON.
+ *
+ * Chỉ bám vào aria-invalid (do JS đặt, luôn đi kèm một dòng thông báo), KHÔNG
+ * dùng :user-invalid của trình duyệt — cái đó bật đỏ theo ràng buộc HTML ngay
+ * cả khi chưa có thông báo nào, thành ra ô đỏ mà không nói vì sao.
+ */
+.auth-input-shell:has(input[aria-invalid="true"]) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.auth-input-shell:has(input[aria-invalid="true"]) .login-field-icon {
+  color: var(--danger);
+}
+
+/* Ô đồng ý điều khoản. */
+/*
+ * Hàng đồng ý điều khoản.
+ *
+ * Phải nhắm bằng `.stack-form > label.check-row` (0,3,1): rule
+ * `.auth-card-body .stack-form > label` phía trên đặt display:block cho MỌI
+ * label trong biểu mẫu và nặng hơn `.check-row` (0,1,0) — nên hàng này chưa
+ * bao giờ thực sự là flex. Ô tick khi đó rơi theo baseline chữ, đo được tâm
+ * ở 903.2 trong khi tâm dòng đầu ở 911.5, tức lệch lên 8.3px.
+ */
+.auth-card-body .stack-form > label.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
   line-height: 1.55;
 }
 
-.auth-commerce .stack-form {
-  display: grid;
-  gap: 15px !important;
+/*
+ * Ô tick: styles.css ĐÃ tự vẽ sẵn ô này (appearance:none, dấu ✓ dựng bằng
+ * ::after xoay 45°). Ở đây CHỈ chỉnh kích thước, bo góc và cách căn — tuyệt
+ * đối không vẽ thêm dấu tích thứ hai.
+ *
+ * (Bản trước tôi vẽ thêm một dấu bằng ::before mà không kiểm tra xem đã có
+ * sẵn chưa, nên ô hiện RA HAI dấu tích chồng nhau.)
+ *
+ * margin:0 để xoá margin mặc định, rồi đẩy xuống đúng nửa phần chênh giữa
+ * chiều cao dòng và ô tick → tâm ô trùng tâm DÒNG ĐẦU của nhãn, kể cả khi
+ * nhãn xuống nhiều dòng.
+ */
+.auth-card-body .stack-form > label.check-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  margin: calc((1.55em - 18px) / 2) 0 0;
+  border-radius: 6px;
 }
 
-.auth-commerce .stack-form > label:not(.check-row),
-.auth-commerce .auth-field-label {
-  color: #434a52 !important;
-  font-size: 12px !important;
-  font-weight: 750 !important;
+/*
+ * Dấu ✓ của styles.css neo bằng toạ độ tuyệt đối (left:4px, top:0) đo cho hộp
+ * 16px — đặt vào hộp 18px là lệch ngay. Neo lại theo tâm để không phụ thuộc
+ * kích thước hộp nữa. -58% (thay vì -50%) bù cho chuyện sau khi xoay 45°,
+ * phần thân dấu tích dồn xuống dưới điểm giữa hình học.
+ */
+.auth-card-body .stack-form > label.check-row input[type="checkbox"]:checked::after {
+  left: 50%;
+  top: 50%;
+  width: 4.5px;
+  height: 9px;
+  transform: translate(-50%, -58%) rotate(45deg);
 }
 
-.auth-commerce .auth-input-shell {
-  position: relative !important;
-  display: block !important;
-  width: 100% !important;
+.auth-card-body .stack-form > label.check-row input[type="checkbox"]:hover:not(:checked) {
+  border-color: var(--brand);
 }
 
-.auth-commerce .auth-input-shell input,
-.auth-commerce .stack-form > label:not(.login-field):not(.check-row) input,
-.auth-commerce .stack-form select,
-.auth-commerce .stack-form textarea {
-  width: 100% !important;
-  min-height: 52px !important;
-  border: 1px solid #d7dadc !important;
-  border-radius: 0 !important;
-  color: #1a2027 !important;
-  background: #fff !important;
-  -webkit-text-fill-color: #1a2027 !important;
-  box-shadow: none !important;
+.check-row a {
+  color: var(--brand);
+  font-weight: 700;
 }
 
-.auth-commerce .auth-input-shell input {
-  padding: 0 58px 0 46px !important;
+.login-inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
 }
 
-.auth-commerce .auth-input-shell input:hover,
-.auth-commerce .stack-form input:hover {
-  border-color: #aeb4b9 !important;
+.login-inline-actions a {
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
-.auth-commerce .auth-input-shell input:focus,
-.auth-commerce .stack-form input:focus,
-.auth-commerce .stack-form select:focus,
-.auth-commerce .stack-form textarea:focus {
-  border-color: #e44a2b !important;
-  outline: none !important;
-  box-shadow: 0 0 0 4px rgba(228, 74, 43, .11) !important;
+.login-inline-actions a:hover {
+  text-decoration: underline;
 }
 
-.auth-commerce .login-field-icon {
-  color: #7c858e !important;
+/* Nút chính: navy đặc, cao 48, chiếm hết bề ngang. */
+/* Loại .button-google ra: nút Google có hệ màu riêng (nền trắng, viền xám,
+   chữ đậm) theo hướng dẫn thương hiệu của Google. Tô navy như nút chính thì
+   hai nút cùng màu, mất hẳn thứ bậc chính/phụ. */
+.auth-card-body .login-submit,
+.auth-card-body .button-block:not(.button-google) {
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: var(--brand);
+  box-shadow: 0 8px 20px var(--brand-shadow);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
 }
 
-.auth-commerce .password-field button {
-  color: #d74327 !important;
+.auth-card-body .login-submit:hover:not(:disabled),
+.auth-card-body .button-block:not(.button-google):hover:not(:disabled) {
+  background: var(--brand-hover);
+  box-shadow: 0 12px 26px var(--brand-shadow-hover);
+  transform: translateY(-1px);
 }
 
-.auth-commerce .login-submit,
-.auth-commerce .button-primary {
-  min-height: 54px !important;
-  border: 1px solid #e44a2b !important;
-  border-radius: 0 !important;
-  color: #fff !important;
-  background: #e44a2b !important;
-  box-shadow: 6px 6px 0 #15191e !important;
+.auth-switch {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
 }
 
-.auth-commerce .login-submit:hover,
-.auth-commerce .button-primary:hover {
-  background: #c9371d !important;
-  box-shadow: 3px 3px 0 #15191e !important;
-  transform: translate(3px, 3px) !important;
+.auth-switch a {
+  color: var(--brand);
+  font-weight: 800;
+  text-decoration: none;
 }
 
-.auth-commerce .login-inline-actions a,
-.auth-commerce .auth-switch a,
-.auth-commerce .helper-note a,
-.auth-commerce .text-button,
-.auth-commerce .check-row a {
-  color: #c9371d !important;
+.auth-switch a:hover {
+  text-decoration: underline;
 }
 
-.auth-commerce .auth-switch,
-.auth-commerce .check-row,
-.auth-commerce .auth-card-footer {
-  color: #737b84 !important;
+.auth-card-body .form-error {
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--danger-line);
+  border-radius: 14px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
-.auth-commerce .auth-card-footer {
-  margin-top: 24px !important;
-  padding-top: 18px !important;
-  border-top-color: #e4e6e7 !important;
+/* --- Chân thẻ --- */
+
+.auth-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 15px 28px 17px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
 }
 
-@media (max-width: 980px) {
-  .auth-commerce {
-    grid-template-columns: minmax(0, .85fr) minmax(430px, 1.15fr) !important;
+.auth-card-footer a {
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-card-footer a:hover {
+  color: var(--brand);
+}
+
+.auth-card-footer i {
+  width: 1px;
+  height: 11px;
+  background: var(--line-strong);
+}
+
+.auth-secure-mark {
+  display: inline-flex;
+  color: var(--success);
+}
+
+.auth-secure-mark svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ====================================================================== */
+/* 4. MÀN HÌNH HẸP                                                         */
+/* ====================================================================== */
+
+@media (max-width: 1023px) {
+  .auth-shell.auth-commerce {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+  }
+
+  /* Cột kể chuyện co lại thành dải mở đầu, không còn chiếm cả màn hình. */
+  .auth-commerce-story {
+    min-height: auto;
   }
 
   .auth-commerce-story-content {
-    width: min(100% - 48px, 620px);
+    width: min(100% - 44px, 640px);
+    gap: 22px;
+    padding: 30px 0 28px;
+  }
+
+  .auth-commerce-message {
+    padding-block: 0;
   }
 
   .auth-commerce-message h1 {
-    font-size: clamp(48px, 7vw, 66px);
+    margin: 12px 0 12px;
+    font-size: clamp(32px, 9vw, 46px);
+  }
+
+  /* Mobile chỉ giữ tiêu đề + hoá đơn; đoạn mô tả và ba gạch đầu dòng bỏ đi
+     để người dùng chạm tới ô nhập sớm nhất có thể. */
+  .auth-commerce-message > p,
+  .auth-commerce-points {
+    display: none;
+  }
+
+  .auth-receipt {
+    max-width: none;
+    margin-top: 18px;
+    padding: 13px 15px 15px;
+  }
+
+  .auth-receipt-tear {
+    margin-inline: -15px;
+  }
+
+  .auth-receipt-row b {
+    font-size: 15px;
+  }
+
+  .auth-receipt-row.is-total b {
+    font-size: 19px;
+  }
+
+  .auth-commerce .auth-commerce-panel {
+    min-height: auto;
+    padding: 22px 16px 34px;
+  }
+
+  .auth-commerce .auth-card {
+    max-height: none;
   }
 }
 
-@media (max-width: 760px) {
-  .auth-commerce {
-    display: block !important;
-    min-height: 100svh !important;
-    overflow: auto !important;
-    background: #f6f6f4 !important;
+@media (max-width: 480px) {
+  .auth-card-header,
+  .auth-card-body {
+    padding-inline: 16px;
   }
 
-  .auth-commerce-story {
-    min-height: 212px;
-  }
-
-  .auth-commerce-story-content {
-    width: min(100% - 32px, 620px);
-    min-height: 212px;
-    padding: 22px 0 24px;
+  .auth-card-footer {
+    padding-inline: 16px;
   }
 
   .auth-commerce-brand img {
@@ -378,78 +1042,14 @@
   }
 
   .auth-commerce-brand > span {
-    min-width: 116px;
-    font-size: 23px;
-  }
-
-  .auth-commerce-message {
-    margin: 30px 0 0;
-    padding: 0;
-  }
-
-  .auth-commerce-kicker,
-  .auth-commerce-message p,
-  .auth-commerce-trust {
-    display: none;
-  }
-
-  .auth-commerce-message h1 {
-    max-width: 420px;
-    margin: 0;
-    font-size: clamp(36px, 11vw, 50px);
-    line-height: .94;
-  }
-
-  .auth-commerce .auth-commerce-panel {
-    min-height: 0 !important;
-    margin-top: -1px !important;
-    padding: 0 14px 28px !important;
-    background: #f6f6f4 !important;
-  }
-
-  .auth-commerce .auth-card {
-    width: min(100%, 560px) !important;
-    max-height: none !important;
-    margin-top: -18px;
-    padding: 26px 20px 24px !important;
-    box-shadow: 0 18px 45px rgba(15, 18, 22, .12) !important;
-  }
-}
-
-@media (max-width: 420px) {
-  .auth-commerce-story {
-    min-height: 188px;
-  }
-
-  .auth-commerce-story-content {
-    min-height: 188px;
-  }
-
-  .auth-commerce .auth-card {
-    padding-inline: 16px !important;
-  }
-
-  .auth-commerce .auth-card-brand {
-    margin-bottom: 20px !important;
-  }
-
-  .auth-commerce .auth-card-brand img {
-    width: 154px;
-  }
-
-  .auth-commerce .auth-heading h1,
-  .auth-commerce .auth-heading h2 {
-    font-size: 32px !important;
+    font-size: 24px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-commerce *,
-  .auth-commerce *::before,
-  .auth-commerce *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+  .auth-card-body .login-submit:hover:not(:disabled),
+  .auth-card-body .button-block:not(.button-google):hover:not(:disabled) {
+    transform: none;
   }
 }
 

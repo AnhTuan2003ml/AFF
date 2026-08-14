@@ -1,76 +1,147 @@
 /*
  * ShopTik UI tokens và quy tắc nền tảng.
  * Chỉ sửa màu, khoảng cách, bo góc và font tại đây khi đổi hệ thiết kế.
+ *
+ * Hệ màu: xanh navy - trắng (chuẩn MB), gồm 3 lớp:
+ *   1. Primitive (--mb-*)  : bảng màu thô, không mang ngữ nghĩa.
+ *   2. Semantic  (--brand, --surface, --text...) : nghĩa dùng trong giao diện.
+ *   3. Alias legacy (--jade, --coral, --mint...)  : tên cũ còn rải trong các
+ *      stylesheet đời trước, trỏ ngược về lớp 2 để không phải sửa từng file.
+ *
+ * Cam/san hô KHÔNG còn là màu thương hiệu — chỉ giữ lại đúng chỗ nhận diện
+ * sàn Shopee (.platform-shopee). Xanh lá là màu tiền/hành động hoàn tiền,
+ * hổ phách là điểm thưởng, đỏ là cảnh báo.
  */
 
+/* ---------------------------------------------------------------- *
+ * Lớp 1 — primitive
+ * ---------------------------------------------------------------- */
+:root {
+  --mb-navy-950: #000e33;
+  --mb-navy-900: #00144d;
+  --mb-navy-850: #001859;
+  --mb-navy-800: #002d9c;
+  --mb-navy-700: #0038b8;
+  --mb-navy-600: #0047ba;
+  --mb-navy-500: #0052ff;
+  --mb-blue-400: #3b82f6;
+  --mb-blue-300: #93c5fd;
+  --mb-blue-200: #bfdbfe;
+  --mb-blue-100: #dbeafe;
+  --mb-blue-50: #eff6ff;
+  --mb-cyan-300: #67e8f9;
+
+  --mb-slate-950: #020617;
+  --mb-slate-900: #0f172a;
+  --mb-slate-800: #1e293b;
+  --mb-slate-700: #334155;
+  --mb-slate-600: #475569;
+  --mb-slate-500: #64748b;
+  --mb-slate-400: #94a3b8;
+  --mb-slate-300: #cbd5e1;
+  --mb-slate-200: #e2e8f0;
+  --mb-slate-100: #f1f5f9;
+  --mb-slate-50: #f8fafc;
+  --mb-canvas: #f0f4f8;
+
+  --mb-green-700: #00825a;
+  --mb-green-600: #009668;
+  --mb-green-500: #10b981;
+  --mb-green-50: #ecfdf5;
+
+  --mb-amber-600: #b45309;
+  --mb-amber-500: #f59e0b;
+  --mb-amber-400: #fbbf24;
+  --mb-amber-50: #fffbeb;
+
+  --mb-red-600: #dc2626;
+  --mb-red-50: #fef2f2;
+}
+
+/* ---------------------------------------------------------------- *
+ * Lớp 2 — semantic (sáng)
+ * ---------------------------------------------------------------- */
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
 
-  /* Bảng màu lấy trực tiếp từ giao diện mobile chuẩn. */
-  --paper: #f1f3f5;
+  --paper: var(--mb-canvas);
   --sidebar-bg: #ffffff;
   --surface: #ffffff;
-  --surface-muted: #f5f6f8;
-  --surface-hover: #fff6f2;
-  --surface-hover-strong: #fff0eb;
+  --surface-muted: var(--mb-slate-100);
+  --surface-hover: var(--mb-blue-50);
+  --surface-hover-strong: var(--mb-blue-100);
 
-  --line: #cbd3dc;
-  --line-strong: #aeb9c5;
+  --line: var(--mb-slate-200);
+  --line-strong: var(--mb-slate-300);
 
-  --text: #111827;
-  --ink-soft: #334155;
-  --muted: #64748b;
+  --text: var(--mb-slate-900);
+  --ink-soft: var(--mb-slate-700);
+  --muted: var(--mb-slate-500);
 
-  /* Gam cam - san hô theo giao diện mobile và nhận diện ShopTik. */
-  --brand: #ee4d2d;
-  --brand-strong: #c63f27;
-  --brand-hover: #dc4529;
-  --brand-active: #bd3722;
-  --brand-from: #ff704d;
-  --brand-to: #ee3e50;
-  --brand-shadow: rgba(238, 77, 45, .20);
-  --brand-shadow-hover: rgba(220, 69, 41, .28);
+  /* Xanh navy MB — màu nhận diện, dùng cho điều hướng, tiêu đề, nút chính. */
+  --brand: var(--mb-navy-800);
+  --brand-strong: var(--mb-navy-850);
+  --brand-hover: #001f70;
+  --brand-active: var(--mb-navy-900);
+  --brand-from: var(--mb-navy-800);
+  --brand-to: var(--mb-navy-600);
+  --brand-shadow: rgba(0, 45, 156, .22);
+  --brand-shadow-hover: rgba(0, 45, 156, .32);
+  --brand-soft: var(--mb-blue-50);
+  --brand-line: var(--mb-blue-200);
+  --on-brand: #ffffff;
 
-  --accent: #ef334d;
-  --accent-strong: #c9233b;
-  --accent-soft: #fff0eb;
+  /* Nhấn phụ: xanh dương sáng, dùng cho chip/highlight trên nền trắng. */
+  --accent: #0069e0;
+  --accent-strong: var(--mb-navy-700);
+  --accent-soft: var(--mb-blue-50);
 
-  --success: #059669;
-  --success-strong: #047857;
-  --success-soft: #ecfdf5;
+  /* Xanh lá = tiền và hành động kích hoạt hoàn tiền (Mua ngay, rút tiền). */
+  --cta: var(--mb-green-600);
+  --cta-hover: var(--mb-green-700);
+  --cta-shadow: rgba(0, 150, 104, .28);
+  --on-cta: #ffffff;
+
+  --success: #047857;
+  --success-strong: #065f46;
+  --success-soft: var(--mb-green-50);
   --success-line: #a7f3d0;
 
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
+  --danger: var(--mb-red-600);
+  --danger-soft: var(--mb-red-50);
   --danger-line: #fecaca;
+  /* Mực đặt TRÊN nền đỏ đặc. Bản tối dùng đỏ nhạt (#ff7d92) nên chữ trắng
+     đọc không nổi — phải là mực sẫm. */
+  --on-danger: #ffffff;
 
   --warning: #a16207;
-  --warning-soft: #fffbeb;
+  --warning-soft: var(--mb-amber-50);
   --warning-line: #fde68a;
 
   --topbar-bg: rgba(255, 255, 255, .94);
-  --shadow-sm: 0 2px 12px rgba(17, 24, 39, .055);
-  --shadow-md: 0 18px 42px rgba(17, 24, 39, .09);
-  --shadow-lg: 0 22px 48px rgba(17, 24, 39, .12);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, .05), 0 1px 2px rgba(15, 23, 42, .03);
+  --shadow-md: 0 12px 36px -10px rgba(0, 45, 156, .14), 0 4px 12px -6px rgba(15, 23, 42, .06);
+  --shadow-lg: 0 22px 48px -14px rgba(0, 45, 156, .20), 0 8px 18px -10px rgba(15, 23, 42, .08);
 
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --sidebar-width: 256px;
 
-  --hero-from: #f3ad39;
-  --hero-mid: #ef7d40;
-  --hero-to: #e95876;
+  /* Dải hero = dải gradient nhận diện MB (đậm sang sáng). */
+  --hero-from: var(--mb-navy-850);
+  --hero-mid: var(--mb-navy-800);
+  --hero-to: #004bb5;
 
-  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Plus Jakarta Sans", "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-data: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  /* Alias tương thích với các stylesheet cũ của dự án. */
-  --ink: #251c20;
-  --mint-fixed: #fff0eb;
-  --gold: var(--hero-from);
+  /* --- Lớp 3: alias tương thích với các stylesheet cũ của dự án. --- */
+  --ink: var(--mb-slate-900);
+  --mint-fixed: var(--mb-blue-50);
+  --gold: var(--mb-amber-500);
   --neutral-soft: var(--surface-muted);
   --row-hover: var(--surface-hover);
   --jade: var(--brand);
@@ -82,8 +153,8 @@
   --jade-shadow-hover: var(--brand-shadow-hover);
   --coral: var(--accent);
   --coral-dark: var(--accent-strong);
-  --mint: #ffded4;
-  --mint-soft: #fff3ef;
+  --mint: var(--mb-blue-100);
+  --mint-soft: var(--mb-blue-50);
   --money: var(--success);
   --money-dark: var(--success-strong);
   --money-soft: var(--success-soft);
@@ -94,44 +165,55 @@
   --on-jade: #ffffff;
   --on-coral: #ffffff;
   --on-jade-soft: rgba(255, 255, 255, .78);
-  --shadow-color: rgba(94, 47, 35, .10);
-  --scrim-soft: rgba(94, 47, 35, .08);
-  --chart-buyer: var(--brand);
-  --chart-sharer: #f3a43b;
-  --chart-platform: var(--accent);
+  --shadow-color: rgba(0, 45, 156, .10);
+  --scrim-soft: rgba(15, 23, 42, .08);
+  --chart-buyer: var(--mb-navy-800);
+  --chart-sharer: var(--mb-amber-500);
+  --chart-platform: #0ea5e9;
   --chart-grid: var(--line);
-  --chart-area-fill: rgba(238, 77, 45, .10);
+  --chart-area-fill: rgba(0, 45, 156, .10);
 }
 
+/* ---------------------------------------------------------------- *
+ * Lớp 2 — semantic (tối): vẫn là navy, chỉ đảo vai sáng/tối.
+ * ---------------------------------------------------------------- */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper: #171316;
-  --sidebar-bg: #1c171a;
-  --surface: #241d21;
-  --surface-muted: #2a2226;
-  --surface-hover: #342229;
-  --surface-hover-strong: #422832;
+  --paper: #070c18;
+  --sidebar-bg: #0b1324;
+  --surface: #0f1a30;
+  --surface-muted: #16233c;
+  --surface-hover: #172b4d;
+  --surface-hover-strong: #1e3a63;
 
-  --line: #5a4650;
-  --line-strong: #765762;
+  --line: #24354f;
+  --line-strong: #35496a;
 
-  --text: #fff7f4;
-  --ink-soft: #ead8d3;
-  --muted: #b99b94;
+  --text: #eaf1ff;
+  --ink-soft: #c4d3ea;
+  --muted: #8fa3c0;
 
-  --brand: #ff7a55;
-  --brand-strong: #ffb09a;
-  --brand-hover: #ff633f;
-  --brand-active: #e94a2b;
-  --brand-from: #ff7954;
-  --brand-to: #ef4657;
-  --brand-shadow: rgba(255, 99, 63, .22);
-  --brand-shadow-hover: rgba(255, 122, 85, .30);
+  --brand: #5b93f6;
+  --brand-strong: #9dc0ff;
+  --brand-hover: #74a5ff;
+  --brand-active: #4b83e8;
+  --brand-from: #2f6fe4;
+  --brand-to: #5b93f6;
+  --brand-shadow: rgba(47, 111, 228, .26);
+  --brand-shadow-hover: rgba(91, 147, 246, .36);
+  --brand-soft: rgba(91, 147, 246, .14);
+  --brand-line: rgba(91, 147, 246, .30);
+  --on-brand: #06122a;
 
-  --accent: #ff7185;
-  --accent-strong: #ffa2af;
-  --accent-soft: rgba(255, 113, 133, .11);
+  --accent: #57b6ff;
+  --accent-strong: #9ad3ff;
+  --accent-soft: rgba(87, 182, 255, .12);
+
+  --cta: #17b483;
+  --cta-hover: #34d19c;
+  --cta-shadow: rgba(23, 180, 131, .26);
+  --on-cta: #04201a;
 
   --success: #49d39b;
   --success-strong: #7be2b7;
@@ -141,51 +223,55 @@
   --danger: #ff7d92;
   --danger-soft: rgba(255, 125, 146, .10);
   --danger-line: rgba(255, 125, 146, .25);
+  --on-danger: #2b0a12;
 
   --warning: #dfb869;
   --warning-soft: rgba(223, 184, 105, .10);
   --warning-line: rgba(223, 184, 105, .26);
 
-  --topbar-bg: rgba(28, 23, 26, .90);
-  --shadow-sm: 0 8px 22px rgba(0, 0, 0, .22);
-  --shadow-md: 0 18px 42px rgba(0, 0, 0, .34);
-  --shadow-lg: 0 24px 50px rgba(0, 0, 0, .38);
+  --topbar-bg: rgba(11, 19, 36, .90);
+  --shadow-sm: 0 8px 22px rgba(0, 0, 0, .30);
+  --shadow-md: 0 18px 42px rgba(0, 0, 0, .42);
+  --shadow-lg: 0 24px 50px rgba(0, 0, 0, .48);
 
-  --hero-from: #b9782f;
-  --hero-mid: #c76b39;
-  --hero-to: #ad455f;
+  --hero-from: #001238;
+  --hero-mid: #00246f;
+  --hero-to: #0b57d0;
 
   --coral-dark: var(--accent-strong);
-  --mint: rgba(255, 122, 85, .16);
-  --mint-soft: rgba(255, 122, 85, .09);
-  --ink: #fff7f4;
-  --mint-fixed: rgba(255, 122, 85, .16);
-  --shadow-color: rgba(0, 0, 0, .34);
-  --scrim-soft: rgba(255, 232, 224, .10);
+  --mint: rgba(91, 147, 246, .16);
+  --mint-soft: rgba(91, 147, 246, .09);
+  --ink: #eaf1ff;
+  --mint-fixed: rgba(91, 147, 246, .16);
+  --gold: var(--mb-amber-400);
+  --shadow-color: rgba(0, 0, 0, .38);
+  --scrim-soft: rgba(224, 234, 255, .10);
   --chart-buyer: var(--brand);
-  --chart-sharer: #e9a84c;
-  --chart-platform: var(--accent);
+  --chart-sharer: var(--mb-amber-400);
+  --chart-platform: #57b6ff;
   --chart-grid: var(--line);
-  --chart-area-fill: rgba(255, 122, 85, .14);
+  --chart-area-fill: rgba(91, 147, 246, .16);
 }
 
 /*
- * Token "chrome" dùng chung cho mọi vùng nền tối cố định (header desktop,
+ * Token "chrome" dùng chung cho mọi vùng nền tối cố định (header mobile,
  * sidebar quản trị, thanh điều hướng dưới mobile...) — không đổi theo
  * sáng/tối vì bản thân các vùng này luôn tối để làm khung neo thương hiệu.
  * Khai báo một lần tại đây để app và quản trị luôn dùng đúng một tông màu.
  */
 :root {
-  --chrome-accent-from: #ff7a50;
-  --chrome-accent-to: #dd3f20;
+  --chrome-accent-from: var(--mb-navy-600);
+  --chrome-accent-to: var(--mb-navy-800);
   --chrome-accent: linear-gradient(135deg, var(--chrome-accent-from), var(--chrome-accent-to));
-  --chrome-accent-shadow: 0 10px 24px rgba(221, 63, 32, .34);
-  --chrome-accent-shadow-lg: 0 16px 36px rgba(221, 63, 32, .4);
-  --water-tint: 255, 148, 110;
-  /* Nền khối chrome tối (header app, topnav quản trị, thanh dưới mobile) —
+  --chrome-accent-shadow: 0 10px 24px rgba(0, 45, 156, .34);
+  --chrome-accent-shadow-lg: 0 16px 36px rgba(0, 45, 156, .40);
+  --water-tint: 96, 165, 250;
+  /* Nền khối chrome tối (header mobile, topnav quản trị, thanh dưới mobile) —
      cố định, KHÔNG dùng --dv-ink vì biến đó đổi ngược màu theo theme sáng/
      tối của trang (từng khiến thanh menu ghim hoá trắng khi bật dark mode). */
-  --chrome-bg: #101317;
+  --chrome-bg: #00133f;
+  /* Dải gradient header MB: đậm bên trái, sáng dần sang phải. */
+  --chrome-gradient: linear-gradient(135deg, #001859 0%, #002b99 52%, #004bb5 100%);
 }
 
 /*
@@ -337,12 +423,17 @@ button:not(.sidebar-scrim):not(.menu-button):not(.sidebar-close-button) {
   transform: translateY(-1px);
 }
 
+/*
+ * Nút chờ đủ điều kiện: mờ đi nhưng GIỮ NGUYÊN màu thương hiệu. Trước đây có
+ * thêm filter: saturate(.2) nên nút navy hoá xám chì — người mới vào trang
+ * đăng nhập nhìn thấy ngay một nút trông như hỏng, dù nó chỉ đang chờ nhập
+ * liệu. Chỉ giảm độ đục là đủ báo trạng thái mà không giết nhận diện.
+ */
 .button:disabled,
 .button[aria-disabled="true"],
 button:disabled {
   cursor: not-allowed;
-  opacity: .46;
-  filter: saturate(.2);
+  opacity: .5;
   box-shadow: none !important;
   transform: none !important;
 }

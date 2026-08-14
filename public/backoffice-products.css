@@ -563,9 +563,9 @@
 }
 
 .discover-preview-badges em {
-  color: #9a3412;
-  border-color: color-mix(in srgb, #fb923c 30%, var(--admin-border));
-  background: color-mix(in srgb, #ffedd5 86%, var(--admin-surface));
+  color: #0a2356;
+  border-color: color-mix(in srgb, #043db0 30%, var(--admin-border));
+  background: color-mix(in srgb, #c2dcff 86%, var(--admin-surface));
 }
 
 .discover-admin-badges {

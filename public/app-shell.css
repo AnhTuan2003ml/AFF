@@ -22,85 +22,74 @@
 /* 1. TOKEN — một nguồn duy nhất                                           */
 /* ====================================================================== */
 
+/*
+ * Bảng --sh-* / --dv-* KHÔNG còn tự đặt hex: mọi giá trị lấy lại từ lớp
+ * semantic ở theme/tokens.css (hệ navy - trắng MB). Đổi màu toàn hệ chỉ cần
+ * sửa tokens.css; file này chỉ dịch tên cũ sang tên mới. Nhờ vậy shell và
+ * nội dung không bao giờ lệch tông nhau như thời còn hai bảng hex song song.
+ */
 :root {
-  /* Shell (đổi theo theme) — bảng màu ấm có năng lượng mua sắm */
-  --sh-bg: #f5f6f1;
-  --sh-surface: #ffffff;
-  --sh-hover: #f0f1ec;
-  --sh-ink: #1f231e;
-  --sh-copy: #43463f;
-  --sh-muted: #6f706a;
-  --sh-line: #d6dcd2;
-  --sh-line-strong: #c2c9bd;
-  --sh-shadow: 0 1px 2px rgba(15, 15, 15, .04), 0 6px 18px rgba(15, 15, 15, .05);
+  /* Shell (đổi theo theme) */
+  --sh-bg: var(--paper);
+  --sh-surface: var(--surface);
+  --sh-hover: var(--surface-hover);
+  --sh-ink: var(--text);
+  --sh-copy: var(--ink-soft);
+  --sh-muted: var(--muted);
+  --sh-line: var(--line);
+  --sh-line-strong: var(--line-strong);
+  --sh-shadow: var(--shadow-sm);
 
-  /* Hành động chính: đạt 5.19:1 với chữ trắng. Cam nhận diện #ee4d2d chỉ
-     dùng cho icon/điểm nhấn, không làm nền chữ trắng. Đỏ KHÔNG dùng cho
-     icon/kẻ/nhãn thường — các trạng thái có màu ngữ nghĩa riêng. */
-  --sh-primary: #c9371d;
-  --sh-primary-hover: #b22f16;
-  --sh-accent: #ee4d2d;
-  --sh-accent-soft: #fff0eb;
-  --sh-accent-text: #b22f16;
-  --sh-accent-strong-bg: #ffe1d3;
-  --sh-success: #16845b;
-  --sh-success-soft: #ddf4e9;
-  --sh-info: #245c8a;
-  --sh-info-soft: #ddeeff;
-  --sh-warn: #8a5a00;
-  --sh-warn-soft: #ffe8a3;
+  /* Hành động chính là navy MB (#002d9c, 11.4:1 với chữ trắng). Xanh lá
+     --cta dành riêng cho hành động ra tiền (Mua ngay / rút tiền). Đỏ KHÔNG
+     dùng cho icon/kẻ/nhãn thường — trạng thái có màu ngữ nghĩa riêng. */
+  --sh-primary: var(--brand);
+  --sh-primary-hover: var(--brand-hover);
+  --sh-accent: var(--accent);
+  --sh-accent-soft: var(--accent-soft);
+  --sh-accent-text: var(--brand);
+  --sh-accent-strong-bg: var(--mb-blue-200);
+  --sh-success: var(--success);
+  --sh-success-soft: var(--success-soft);
+  --sh-info: var(--mb-navy-700);
+  --sh-info-soft: var(--mb-blue-50);
+  --sh-warn: var(--warning);
+  --sh-warn-soft: var(--warning-soft);
 
-  --sh-radius-s: 8px;
-  --sh-radius-m: 10px;
-  --sh-radius-l: 12px;
+  --sh-radius-s: 10px;
+  --sh-radius-m: 14px;
+  --sh-radius-l: 20px;
   /* Viền control (input/select) phải đậm hơn viền card để nhận ra trường
-     nhập trên nền trắng (viền card #E6E4DF chỉ để chia nhóm). */
-  --sh-control-border: #96938c;
-  --sh-sidebar-w: 224px;
-  --sh-topbar-h: 56px;
+     nhập trên nền trắng (viền card --line chỉ để chia nhóm). */
+  --sh-control-border: var(--mb-slate-400);
+  --sh-sidebar-w: 236px;
+  --sh-topbar-h: 60px;
 
-  /* Token nội dung (dv13 tự đổi giá trị trong scope dark) */
-  --dv-ink: #252420;
-  --dv-ink-2: #252420;
-  --dv-charcoal: #44433d;
-  --dv-orange: #c9371d;
-  --dv-orange-2: #b22f16;
-  --dv-orange-soft: #fff0eb;
-  --dv-paper: #ffffff;
-  --dv-canvas: #f5f6f1;
-  --dv-line: #d6dcd2;
-  --dv-line-strong: #c2c9bd;
-  --dv-line-dark: #d6dcd2;
-  --dv-copy: #44433d;
-  --dv-muted: #6f706a;
-  --dv-shadow: 0 1px 2px rgba(15, 15, 15, .04), 0 6px 18px rgba(15, 15, 15, .05);
-  --dv-inverse-surface: #191918;
-  --dv-inverse-surface-hover: #37352f;
+  /* Token nội dung (tên cũ của dv13, nay chỉ là bí danh) */
+  --dv-ink: var(--text);
+  --dv-ink-2: var(--text);
+  --dv-charcoal: var(--ink-soft);
+  --dv-orange: var(--brand);
+  --dv-orange-2: var(--brand-hover);
+  --dv-orange-soft: var(--brand-soft);
+  --dv-paper: var(--surface);
+  --dv-canvas: var(--paper);
+  --dv-line: var(--line);
+  --dv-line-strong: var(--line-strong);
+  --dv-line-dark: var(--line);
+  --dv-copy: var(--ink-soft);
+  --dv-muted: var(--muted);
+  --dv-shadow: var(--shadow-sm);
+  --dv-inverse-surface: var(--mb-navy-900);
+  --dv-inverse-surface-hover: var(--mb-navy-800);
   --dv-on-inverse: #ffffff;
 
   /* Token cũ còn được tham chiếu rải rác ở các lớp trước. */
-  --chrome-bg: var(--sh-surface);
-  --paper: var(--dv-paper);
-  --surface: var(--dv-paper);
-  --text: var(--dv-copy);
-  --muted: var(--dv-muted);
-  --line: var(--dv-line);
+  --chrome-bg: var(--surface);
 }
 
 :root[data-theme="dark"] {
-  --sh-bg: #161616;
-  --sh-surface: #1f1f1f;
-  --sh-hover: #2a2a2a;
-  --sh-ink: #ececec;
-  --sh-copy: #d6d6d6;
-  --sh-muted: #a0a0a0;
-  --sh-line: #2e2e2e;
-  --sh-line-strong: #3d3d3d;
-  --sh-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 22px rgba(0, 0, 0, .4);
-  --sh-accent: #ff6a45;
-  --sh-accent-soft: rgba(238, 77, 45, .16);
-  --sh-accent-text: #ff8a66;
-  --sh-control-border: #66727e;
+  --sh-accent-text: var(--brand-strong);
 }
 
 /*
@@ -648,19 +637,19 @@ body {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1px solid #e6e4df !important;
+  border: 1px solid #dde2e8 !important;
   border-radius: var(--sh-radius-m) !important;
-  color: #57534e !important;
-  background: #f7f7f5 !important;
+  color: #4c5259 !important;
+  background: #f5f6f8 !important;
   box-shadow: none !important;
   cursor: pointer;
   transition: background .16s ease, color .16s ease, border-color .16s ease;
 }
 
 .st-app .st-icon-button:hover {
-  border-color: #f2c8bd !important;
-  color: #b22f16 !important;
-  background: #fdeee9 !important;
+  border-color: #97bbeb !important;
+  color: #0c2964 !important;
+  background: #e3eefc !important;
 }
 
 .st-app .st-icon-button[aria-expanded="true"] {
@@ -676,9 +665,9 @@ body {
 }
 
 :root[data-theme="dark"] .st-app .st-icon-button:hover {
-  border-color: #b22f16 !important;
-  color: #ff8a66 !important;
-  background: rgba(238, 77, 45, .16) !important;
+  border-color: #0c2964 !important;
+  color: #0471ff !important;
+  background: rgba(12, 57, 147, .16) !important;
 }
 
 :root[data-theme="dark"] .st-app .st-icon-button[aria-expanded="true"] {
@@ -1089,12 +1078,13 @@ body.no-scroll {
 /* ====================================================================== */
 
 /* Nút chính: một màu hành động duy nhất, đủ tương phản. Loại trừ nút
-   Đăng xuất trong menu tài khoản — cũng là type=submit nhưng phải là mục
-   menu trung tính, không phải CTA đỏ. */
+   Đăng xuất trong menu tài khoản và các hàng danh sách .mb-linkrow (tab Cá
+   nhân) — cũng là type=submit nhưng phải là mục menu trung tính, không phải
+   CTA đỏ. */
 .st-app .button-primary,
-.st-app button[type="submit"]:not(.st-menu-logout),
+.st-app button[type="submit"]:not(.st-menu-logout):not(.mb-linkrow),
 .backoffice-shell .button-primary,
-.backoffice-shell button[type="submit"]:not(.st-menu-logout) {
+.backoffice-shell button[type="submit"]:not(.st-menu-logout):not(.mb-linkrow) {
   border: 1px solid var(--sh-primary) !important;
   border-radius: var(--sh-radius-m) !important;
   color: #fff !important;
@@ -1106,9 +1096,9 @@ body.no-scroll {
 }
 
 .st-app .button-primary:hover,
-.st-app button[type="submit"]:not(.st-menu-logout):hover,
+.st-app button[type="submit"]:not(.st-menu-logout):not(.mb-linkrow):hover,
 .backoffice-shell .button-primary:hover,
-.backoffice-shell button[type="submit"]:not(.st-menu-logout):hover {
+.backoffice-shell button[type="submit"]:not(.st-menu-logout):not(.mb-linkrow):hover {
   border-color: var(--sh-primary-hover) !important;
   background: var(--sh-primary-hover) !important;
   transform: none !important;
@@ -1149,7 +1139,7 @@ body.no-scroll {
 
 .st-app :is(input, select, textarea):focus-visible,
 .backoffice-shell :is(input, select, textarea):focus-visible {
-  outline: 2px solid rgba(201, 55, 29, .45);
+  outline: 2px solid rgba(16, 48, 113, .45);
   outline-offset: 1px;
 }
 
@@ -1455,9 +1445,9 @@ html {
 .backoffice-shell button:disabled,
 .backoffice-shell button[type="submit"]:disabled,
 .st-app [aria-disabled="true"] {
-  border-color: #e0e3de !important;
-  color: #92978f !important;
-  background: #e8eae7 !important;
+  border-color: #dde0e4 !important;
+  color: #8d9299 !important;
+  background: #e6e8eb !important;
   box-shadow: none !important;
   cursor: not-allowed;
 }
@@ -1487,12 +1477,12 @@ html {
 .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field input:focus-visible {
   border-color: var(--sh-primary) !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(201, 55, 29, .22) !important;
+  box-shadow: 0 0 0 3px rgba(16, 48, 113, .22) !important;
 }
 
 .st-app .shopping-panel .buy-input-field .buy-paste-button:focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(201, 55, 29, .4) !important;
+  box-shadow: 0 0 0 2px rgba(16, 48, 113, .4) !important;
 }
 
 /* Tiêu đề trang Đơn hàng bị dv13 ẩn (display:none) — trả lại cho người
@@ -1654,10 +1644,10 @@ html {
 .st-app .discover-hero {
   min-height: 0 !important;
   padding: 28px !important;
-  border: 1px solid #f5d9cd !important;
+  border: 1px solid #b2cdf0 !important;
   border-radius: 12px !important;
   color: var(--sh-ink) !important;
-  background: linear-gradient(135deg, #fff0eb, #fff7ee) !important;
+  background: linear-gradient(135deg, #e8f2ff, #edf5ff) !important;
   box-shadow: none !important;
 }
 
@@ -1683,7 +1673,7 @@ html {
 }
 
 .st-app .discover-hero-chip {
-  border: 1px solid #f0cdbd !important;
+  border: 1px solid #97bae7 !important;
   border-radius: 999px !important;
   color: var(--sh-accent-text) !important;
   background: #fff !important;
@@ -1697,18 +1687,18 @@ html {
 .st-app .discover-card-media {
   aspect-ratio: 4 / 3;
   max-height: 340px;
-  background: #f2f4ef;
+  background: #eef1f5;
 }
 
 /* ====================================================================== */
 /* 11. BOLDER + COLORIZE — điểm neo mỗi trang, màu theo chức năng          */
 /* ====================================================================== */
 
-/* Hero Trang chủ: nền cam đào ấm, 2 cột — tác vụ dán link bên trái,
-   minh họa + ví dụ tiền hoàn bên phải. */
+/* Hero Trang chủ: dải xanh nhạt chuyển sáng dần, 2 cột — tác vụ dán link bên
+   trái, minh họa + ví dụ tiền hoàn bên phải. */
 .st-app .st-home-hero {
-  border: 1px solid #f2c9b4 !important;
-  background: linear-gradient(120deg, #ffe1d3 0%, #fff3ec 62%, #fff8f1 100%) !important;
+  border: 1px solid #88b2ea !important;
+  background: linear-gradient(120deg, #bfdaff 0%, #e9f3ff 62%, #f2f8ff 100%) !important;
 }
 
 .st-home-hero-grid {
@@ -1733,24 +1723,24 @@ html {
 }
 
 .st-app .st-home-hero-art .hh-shadow {
-  fill: #f0c9b2 !important;
+  fill: #84afe7 !important;
   stroke: none !important;
   opacity: .45;
 }
 
 .st-app .st-home-hero-art .hh-bag {
-  fill: #ee4d2d !important;
+  fill: #0c3993 !important;
   stroke: none !important;
 }
 
 .st-app .st-home-hero-art .hh-bag-top {
-  fill: #c9371d !important;
+  fill: #103071 !important;
   stroke: none !important;
 }
 
 .st-app .st-home-hero-art .hh-handle {
   fill: none !important;
-  stroke: #8a2913 !important;
+  stroke: #0b214d !important;
   stroke-width: 7 !important;
   stroke-linecap: round !important;
 }
@@ -1793,7 +1783,7 @@ html {
   gap: 2px;
   min-width: 200px;
   padding: 12px 16px;
-  border: 1px solid #f2c9b4;
+  border: 1px solid #88b2ea;
   border-radius: 12px;
   background: #fff;
   box-shadow: var(--sh-shadow);
@@ -2180,11 +2170,11 @@ html {
 }
 
 .st-app .st-home-hero-example b {
-  color: #1f231e !important;
+  color: #1d2024 !important;
 }
 
 .st-app .st-home-hero-example em {
-  color: #43463f !important;
+  color: #3d4248 !important;
 }
 
 .st-app .st-home-hero-example strong {
@@ -2192,27 +2182,27 @@ html {
 }
 
 .st-app .st-home-hero .home-section-copy :is(h1, h2) {
-  color: #1f231e !important;
+  color: #1d2024 !important;
 }
 
 .st-app .st-home-hero .home-section-copy p {
-  color: #43463f !important;
+  color: #3d4248 !important;
 }
 
 .st-app .st-home-hero .home-section-kicker {
-  color: #b22f16 !important;
+  color: #0c2964 !important;
 }
 
 .st-app .commerce-benefits article h2 {
-  color: #1f231e !important;
+  color: #1d2024 !important;
 }
 
 .st-app .commerce-benefits article p {
-  color: #43463f !important;
+  color: #3d4248 !important;
 }
 
 .st-app .platform-tab strong {
-  color: #1f231e !important;
+  color: #1d2024 !important;
 }
 
 .st-app .platform-tab small {
@@ -2220,11 +2210,11 @@ html {
 }
 
 .st-app .discover-hero :is(h1, h2, strong, b) {
-  color: #1f231e !important;
+  color: #1d2024 !important;
 }
 
 .st-app .discover-hero p {
-  color: #43463f !important;
+  color: #3d4248 !important;
 }
 
 .st-app .discover-hero span:not(.discover-hero-chip),
@@ -2234,9 +2224,9 @@ html {
 
 /* Giới thiệu: bỏ hero đen — cùng ngôn ngữ cam đào với Trang chủ. */
 .st-app .referral-hero {
-  border: 1px solid #f2c9b4 !important;
-  color: #1f231e !important;
-  background: linear-gradient(120deg, #ffe1d3, #fff8f1) !important;
+  border: 1px solid #88b2ea !important;
+  color: #1d2024 !important;
+  background: linear-gradient(120deg, #bfdaff, #f2f8ff) !important;
   box-shadow: none !important;
 }
 
@@ -2246,12 +2236,12 @@ html {
 }
 
 .st-app .referral-hero :is(h1, h2, b, strong) {
-  color: #1f231e !important;
+  color: #1d2024 !important;
   text-shadow: none !important;
 }
 
 .st-app .referral-hero :is(p, li) {
-  color: #43463f !important;
+  color: #3d4248 !important;
 }
 
 .st-app .referral-hero :is(span, small) {
@@ -2264,8 +2254,8 @@ html {
 :root[data-theme="dark"] .st-app .discover-platform-tabs button.active,
 :root[data-theme="dark"] .st-app .discover-category-tabs button.active {
   border-color: var(--sh-accent) !important;
-  color: #b22f16 !important;
-  background: #ffe1d3 !important;
+  color: #0c2964 !important;
+  background: #bfdaff !important;
   box-shadow: none !important;
 }
 
@@ -2275,7 +2265,7 @@ html {
    (banner voucher 580×720 từng chỉ còn một dải giữa trong khung 190px).
    Icon giỏ hàng làm placeholder khi ảnh chưa tải/lỗi. */
 .st-app .discover-card-media {
-  background-color: #f0f1ec;
+  background-color: #ebeef2;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c2c9bd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6h15l-1.7 8.5a2 2 0 0 1-2 1.5H8.6a2 2 0 0 1-2-1.6L4.4 3.8A1.5 1.5 0 0 0 3 2.6H1.8'/%3E%3Ccircle cx='9.5' cy='20' r='1.6'/%3E%3Ccircle cx='17.5' cy='20' r='1.6'/%3E%3C/svg%3E");
   background-position: center;
   background-repeat: no-repeat;
@@ -2295,15 +2285,15 @@ html {
 }
 
 .st-app .mission-progress-bar::-webkit-progress-bar {
-  background: #e8ebe4 !important;
+  background: #e2e7ed !important;
 }
 
 .st-app .mission-progress-bar::-webkit-progress-value {
-  background: linear-gradient(90deg, #ee4d2d, #c9371d) !important;
+  background: linear-gradient(90deg, #0c3993, #103071) !important;
 }
 
 .st-app .mission-progress-bar::-moz-progress-bar {
-  background: #c9371d !important;
+  background: #103071 !important;
 }
 
 .st-app .mission-row-reward b {
@@ -2319,12 +2309,12 @@ html {
 :root[data-theme="dark"] .st-app .st-content .st-home-hero,
 :root[data-theme="dark"] .st-app .st-home-hero,
 :root[data-theme="dark"] .dv13-commerce-shell .st-home-hero {
-  border-color: #43302a !important;
-  background: linear-gradient(120deg, #2b1e16 0%, #241d18 55%, #201d1a 100%) !important;
+  border-color: #161c27 !important;
+  background: linear-gradient(120deg, #0b1019 0%, #161d26 55%, #181c21 100%) !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint {
-  color: #a7ac9f !important;
+  color: #9ca4af !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits,
@@ -2338,7 +2328,7 @@ html {
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(2) {
-  background: #2c1e19 !important;
+  background: #0d1119 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(3) {
@@ -2378,28 +2368,28 @@ html {
 
 :root[data-theme="dark"] .dv13-commerce-shell .discover-hero,
 :root[data-theme="dark"] .st-app .discover-hero {
-  border-color: #43302a !important;
-  background: linear-gradient(135deg, #2b1e16, #221d19) !important;
+  border-color: #161c27 !important;
+  background: linear-gradient(135deg, #0b1019, #171d24) !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .referral-hero,
 :root[data-theme="dark"] .st-app .referral-hero {
-  border-color: #43302a !important;
-  background: linear-gradient(120deg, #2b1e16, #201d1a) !important;
+  border-color: #161c27 !important;
+  background: linear-gradient(120deg, #0b1019, #181c21) !important;
 }
 
 /* Chữ trên thẻ sàn và hero Giới thiệu trong dark: nền đã tối nên chữ sáng. */
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab strong {
-  color: #f2f3f0 !important;
+  color: #eff1f4 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab small {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
 :root[data-theme="dark"] .st-app .st-content .referral-hero :is(span, small, .eyebrow),
 :root[data-theme="dark"] .dv13-commerce-shell .referral-hero :is(span, small, .eyebrow) {
-  color: #e8a877 !important;
+  color: #2470d5 !important;
   text-shadow: none !important;
 }
 
@@ -2415,7 +2405,7 @@ html {
 .st-app .buy-input-label {
   display: block;
   margin-bottom: 6px;
-  color: #43463f;
+  color: #3d4248;
   font-size: 13px;
   font-weight: 650;
 }
@@ -2434,7 +2424,7 @@ html {
 /* Vùng trạng thái tra cứu trong dark: chữ hướng dẫn phải đủ tương phản
    trên bề mặt tối của khối kết quả. */
 :root[data-theme="dark"] .st-app .shopping-panel :is(.buy-empty, [data-product-empty]) :is(p, small, span) {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
 /* Badge HOT/LIVE trên thẻ sàn: 8px mờ → 10px nền đặc đủ tương phản. */
@@ -2443,14 +2433,14 @@ html {
   border: 0 !important;
   border-radius: 999px !important;
   color: #fff !important;
-  background: #c9371d !important;
+  background: #103071 !important;
   font-size: 10px !important;
   letter-spacing: .04em;
 }
 
 /* Kicker hero dark 2.91:1 → nâu đậm hằng số trên nền đào. */
 .st-app .st-home-hero .home-section-kicker {
-  color: #8a2913 !important;
+  color: #0b214d !important;
 }
 
 /* Trang chủ: rút khoảng trống trước "Tiện ích thường dùng", tile thôi
@@ -2489,8 +2479,8 @@ html {
 }
 
 .st-app .discover-card-badges span {
-  border: 1px solid rgba(31, 35, 30, .14) !important;
-  color: #1f231e !important;
+  border: 1px solid rgba(29, 32, 36, .14) !important;
+  color: #1d2024 !important;
   background: rgba(255, 255, 255, .95) !important;
   font-size: 11px !important;
 }
@@ -2507,31 +2497,31 @@ html {
 }
 
 .backoffice-shell .st-content .eyebrow {
-  color: #8a2913 !important;
+  color: #0b214d !important;
 }
 
 .backoffice-shell .st-content .kpi-card small,
 .backoffice-shell .st-content .panel small,
 .backoffice-shell .st-content .field-hint,
 .backoffice-shell .st-content label small {
-  color: #565b54 !important;
+  color: #52575d !important;
 }
 
 :root[data-theme="dark"] .backoffice-shell .st-content .kpi-card small,
 :root[data-theme="dark"] .backoffice-shell .st-content .panel small,
 :root[data-theme="dark"] .backoffice-shell .st-content .field-hint,
 :root[data-theme="dark"] .backoffice-shell .st-content label small {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
-/* Disabled trong dark phải tối đi — bản sáng #E8EAE7 nhìn như nút active. */
+/* Disabled trong dark phải tối đi — bản sáng #e6e8eb nhìn như nút active. */
 :root[data-theme="dark"] .st-app button:disabled,
 :root[data-theme="dark"] .st-app .button:disabled,
 :root[data-theme="dark"] .st-app button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost),
 :root[data-theme="dark"] .backoffice-shell button:disabled,
 :root[data-theme="dark"] .backoffice-shell button[type="submit"]:disabled:not(.button-danger):not(.button-light):not(.button-ghost) {
   border-color: #3d3d3d !important;
-  color: #8a8a82 !important;
+  color: #80858c !important;
   background: #2a2a2a !important;
 }
 
@@ -2594,17 +2584,17 @@ html {
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-field input,
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input {
   border-color: #3d3d3d !important;
-  color: #e8eae7 !important;
-  background: #1c1b1a !important;
+  color: #e6e8eb !important;
+  background: #191b1c !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input::placeholder {
-  color: #8a8a82;
+  color: #80858c;
 }
 
 /* Hint trên nền đào (sáng) — bản dark có màu riêng ở mục cuối file. */
 .st-app .st-home-hero .buy-form-hint {
-  color: #565b54 !important;
+  color: #52575d !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero-example {
@@ -2613,7 +2603,7 @@ html {
 
 /* Mô tả thẻ sàn đậm hơn trên nền pastel sáng (bản dark ở mục cuối file). */
 .st-app .platform-tab small {
-  color: #565b54 !important;
+  color: #52575d !important;
 }
 
 /* Trạng thái thẻ sàn đang chọn rõ hơn: viền đậm cùng màu gạch chân. */
@@ -2634,14 +2624,14 @@ html {
   position: relative;
   height: 10px !important;
   border-radius: 999px;
-  background: #e8ebe4 !important;
+  background: #e2e7ed !important;
   overflow: visible;
 }
 
 .st-app .mission-meter-fill {
   height: 100% !important;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ee4d2d, #c9371d) !important;
+  background: linear-gradient(90deg, #0c3993, #103071) !important;
 }
 
 .st-app .mission-meter-tick {
@@ -2649,7 +2639,7 @@ html {
   height: 14px !important;
   border: 2px solid #fff !important;
   border-radius: 50%;
-  background: #c2c9bd !important;
+  background: #bac2cc !important;
 }
 
 .st-app .mission-meter-tick-done {
@@ -2754,9 +2744,9 @@ html {
   padding: 0 56px 0 16px !important;
   border: 1px solid var(--sh-control-border) !important;
   border-radius: 12px !important;
-  color: #1f231e !important;
+  color: #1d2024 !important;
   background: #fff !important;
-  box-shadow: 0 1px 2px rgba(31, 35, 30, .05) !important;
+  box-shadow: 0 1px 2px rgba(29, 32, 36, .05) !important;
   font-size: 14.5px !important;
 }
 
@@ -2783,7 +2773,7 @@ html {
   padding: 0 !important;
   border: 0 !important;
   border-radius: 9px !important;
-  color: #565b54 !important;
+  color: #52575d !important;
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -2797,45 +2787,45 @@ html {
 /* ====================================================================== */
 
 :root[data-theme="dark"] .st-app .st-home-hero .home-section-copy :is(h1, h2) {
-  color: #f2f3f0 !important;
+  color: #eff1f4 !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .home-section-copy p {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .home-section-kicker {
-  color: #ff9e78 !important;
+  color: #2382ff !important;
 }
 
 :root[data-theme="dark"] .st-app .buy-input-label {
-  color: #c6cabf;
+  color: #bcc3cd;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint {
-  color: #a7ac9f !important;
+  color: #9ca4af !important;
 }
 
 :root[data-theme="dark"] .st-app .shopping-panel .buy-input-field .buy-paste-button {
-  color: #a7ac9f !important;
+  color: #9ca4af !important;
 }
 
 /* Card "Ví dụ thực tế" trong hero. */
 :root[data-theme="dark"] .st-app .st-home-hero-example {
   border-color: rgba(255, 255, 255, .1) !important;
-  background: #262321 !important;
+  background: #202327 !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero-example span {
-  color: #a7ac9f !important;
+  color: #9ca4af !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero-example b {
-  color: #f2f3f0 !important;
+  color: #eff1f4 !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero-example em {
-  color: #c6cabf !important;
+  color: #bcc3cd !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero-example strong {
@@ -2844,11 +2834,11 @@ html {
 
 /* Bốn ô lợi ích: chữ sáng + icon giữ tông màu từng ô. */
 :root[data-theme="dark"] .st-app .commerce-benefits article h2 {
-  color: #f2f3f0 !important;
+  color: #eff1f4 !important;
 }
 
 :root[data-theme="dark"] .st-app .commerce-benefits article p {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
 :root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(1) span {
@@ -2856,7 +2846,7 @@ html {
 }
 
 :root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(2) span {
-  color: #ff9e78;
+  color: #2382ff;
 }
 
 :root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(3) span {
@@ -2869,11 +2859,11 @@ html {
 
 /* Thẻ sàn: tên + mô tả sáng (nền đã tối ở mục 12). */
 :root[data-theme="dark"] .st-app .platform-tab strong {
-  color: #f2f3f0 !important;
+  color: #eff1f4 !important;
 }
 
 :root[data-theme="dark"] .st-app .platform-tab small {
-  color: #b8bcb4 !important;
+  color: #b2b7be !important;
 }
 
 /* Ô nhập link: bản trắng ở mục 15 (specificity ngang) — bản dark phải đứng
@@ -2881,18 +2871,18 @@ html {
 :root[data-theme="dark"] .st-app .shopping-panel .buy-input-field input,
 :root[data-theme="dark"] .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field input {
   border-color: #3d3d3d !important;
-  color: #e8eae7 !important;
-  background: #1c1b1a !important;
+  color: #e6e8eb !important;
+  background: #191b1c !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .3) !important;
 }
 
 :root[data-theme="dark"] .st-app .shopping-panel .buy-input-field input::placeholder {
-  color: #8a8a82;
+  color: #80858c;
 }
 
 .st-app .shopping-panel .buy-input-field .buy-paste-button:hover {
-  color: #1f231e !important;
-  background: #f0f1ec !important;
+  color: #1d2024 !important;
+  background: #ebeef2 !important;
 }
 
 .st-app .shopping-panel .buy-input-field .buy-paste-button svg {
@@ -3240,7 +3230,7 @@ html {
 }
 
 .st-app .discover-price-box strong {
-  color: #c9371d !important;
+  color: #103071 !important;
   font-size: 17px !important;
   font-weight: 750 !important;
 }
@@ -3300,10 +3290,10 @@ html {
 
 .st-app .st-shop-head-badge {
   padding: 5px 12px;
-  border: 1px solid #f2c9b4;
+  border: 1px solid #88b2ea;
   border-radius: 999px;
-  color: #8a2913;
-  background: #ffe1d3;
+  color: #0b214d;
+  background: #bfdaff;
   font-size: 12.5px;
   font-weight: 700;
 }
@@ -3318,7 +3308,7 @@ html {
   height: 44px !important;
   border: 1px solid var(--sh-line) !important;
   border-radius: 999px !important;
-  color: #1f231e !important;
+  color: #1d2024 !important;
   background: rgba(255, 255, 255, .95) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, .18) !important;
   font-size: 22px !important;
@@ -3332,7 +3322,7 @@ html {
 
 .st-app .entry-promo-close:focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(201, 55, 29, .35) !important;
+  box-shadow: 0 0 0 3px rgba(16, 48, 113, .35) !important;
 }
 
 /* ====================================================================== */
@@ -3344,7 +3334,7 @@ html {
 .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field:focus-within input {
   border-color: var(--sh-primary) !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(201, 55, 29, .22) !important;
+  box-shadow: 0 0 0 3px rgba(16, 48, 113, .22) !important;
 }
 
 /* Mã đối chiếu ShopTik trên thẻ đơn hàng — bấm để sao chép, đối chiếu với sàn. */
@@ -3364,12 +3354,12 @@ html {
 }
 
 .st-app .orders-history-ref:hover {
-  border-color: var(--sh-accent, #ee4d2d);
-  color: var(--sh-ink, #1f231e);
+  border-color: var(--sh-accent, #0c3993);
+  color: var(--sh-ink, #1d2024);
 }
 
 .st-app .orders-history-ref code {
-  color: var(--sh-ink, #1f231e);
+  color: var(--sh-ink, #1d2024);
   font-weight: 650;
   letter-spacing: .02em;
 }
@@ -3385,12 +3375,12 @@ html {
 }
 
 :root[data-theme="dark"] .st-app .orders-history-ref {
-  border-color: #33312f;
-  background: #242220;
+  border-color: #2e3134;
+  background: #1f2225;
 }
 
 :root[data-theme="dark"] .st-app .orders-history-ref code {
-  color: #f2f3f0;
+  color: #eff1f4;
 }
 
 /* Trang quản trị dùng gần trọn bề ngang (bảng dữ liệu cần rộng) — bỏ giới

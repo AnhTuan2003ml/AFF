@@ -1,0 +1,1021 @@
+/* ======================================================================
+ * mb-admin.css — LỚP DÁNG RIÊNG CHO TRUNG TÂM VẬN HÀNH /backoffice
+ *
+ * Nạp SAU cùng trong views/backoffice/base.njk (sau app-shell.css và
+ * mb-skin.css) nên không cần đua !important trừ mấy chỗ CSS đời trước cố
+ * tình khoá cứng (đánh dấu rõ ở từng chỗ).
+ *
+ * Vì sao tách khỏi mb-app.css: khung /app và khung /backoffice là hai bộ
+ * markup khác nhau (mb-* với st-*), và hai bài toán khác nhau — /app phục
+ * vụ người mua hàng xem trên điện thoại, /backoffice phục vụ người trực
+ * vận hành đọc bảng dày đặc. Trộn chung thì mỗi lần sửa một bên lại phải
+ * dò xem có vỡ bên kia không.
+ *
+ * Nguyên tắc màu: dùng token ngữ nghĩa (--brand/--surface/--line...), KHÔNG
+ * viết mã màu cứng, để bật theme tối là tự đúng.
+ *
+ *  1. Biến khung quản trị
+ *  2. Sidebar
+ *  3. Topbar + dải hàng chờ
+ *  4. Vùng nội dung, tiêu đề trang, panel
+ *  5. Bảng dữ liệu (desktop)
+ *  6. Bảng dữ liệu (điện thoại → thẻ)
+ *  7. Nút, nhãn trạng thái, form
+ *  8. Tinh chỉnh điện thoại
+ * ====================================================================== */
+
+/* ====================================================================== */
+/* 1. BIẾN KHUNG QUẢN TRỊ                                                  */
+/* ====================================================================== */
+
+.backoffice-shell {
+  /* Rộng hơn 236px của khung app: nhãn điều hướng quản trị dài hơn hẳn
+     ("Tài khoản ngân hàng", "Cấu hình nghiệp vụ") và không được xuống dòng. */
+  --sh-sidebar-w: 268px;
+  --sh-topbar-h: 64px;
+  --bo-radius: 16px;
+  --bo-radius-s: 12px;
+
+  /* ------------------------------------------------------------------ *
+   * Kéo khu quản trị về ĐÚNG hệ màu chung.
+   *
+   * dashboard.css khai một bảng màu riêng --admin-* (xanh #1d4ed8, xám
+   * #d9e2ef...) rồi trỏ ngược các token ngữ nghĩa vào đó:
+   *     .backoffice-shell { --surface: var(--admin-surface); ... }
+   * Nghĩa là mọi thứ trong /backoffice chạy trên một bảng màu KHÁC hẳn
+   * /app, dù cả hai cùng nạp tokens.css. Đó là lý do trang quản trị lệch
+   * tông: xanh royal thay vì navy MB, và mấy chục rule cũ dùng var(--admin-*)
+   * thì không cách nào sửa lẻ từng cái.
+   *
+   * Sửa tận gốc bằng cách định nghĩa lại chính bảng --admin-* theo lớp
+   * primitive --mb-*. Một chỗ này đúng thì toàn bộ rule đời trước tự đúng
+   * theo, cả sáng lẫn tối.
+   *
+   * Phải trỏ vào --mb-* (lớp 1) chứ KHÔNG trỏ vào --surface/--line (lớp 2):
+   * lớp 2 trong khu này đang lấy giá trị từ chính --admin-*, trỏ ngược lại
+   * sẽ thành vòng lặp và CSS bỏ luôn cả hai biến.
+   * ------------------------------------------------------------------ */
+  --admin-bg: var(--mb-canvas);
+  --admin-sidebar: #ffffff;
+  --admin-surface: #ffffff;
+  --admin-surface-soft: var(--mb-slate-100);
+  --admin-hover: var(--mb-blue-50);
+  --admin-border: var(--mb-slate-200);
+  --admin-border-strong: var(--mb-slate-300);
+  --admin-text: var(--mb-slate-900);
+  --admin-text-soft: var(--mb-slate-700);
+  --admin-muted: var(--mb-slate-500);
+  --admin-brand: var(--mb-navy-800);
+  --admin-brand-strong: var(--mb-navy-850);
+  --admin-brand-soft: var(--mb-blue-50);
+  --admin-success: #047857;
+  --admin-success-bg: var(--mb-green-50);
+  --admin-success-border: #a7f3d0;
+  --admin-warning: #a16207;
+  --admin-warning-bg: var(--mb-amber-50);
+  --admin-warning-border: #fde68a;
+  --admin-danger: var(--mb-red-600);
+  --admin-danger-bg: var(--mb-red-50);
+  --admin-danger-border: #fecaca;
+  --admin-neutral-bg: var(--mb-slate-100);
+}
+
+/* Bản tối: chép đúng giá trị lớp 2 tối trong tokens.css. Không viết
+   var(--surface) được vì lý do vòng lặp nói ở trên — đổi màu tối thì sửa
+   cả hai chỗ. */
+:root[data-theme="dark"] .backoffice-shell {
+  --admin-bg: #070c18;
+  --admin-sidebar: #0b1324;
+  --admin-surface: #0f1a30;
+  --admin-surface-soft: #16233c;
+  --admin-hover: #172b4d;
+  --admin-border: #24354f;
+  --admin-border-strong: #35496a;
+  --admin-text: #eaf1ff;
+  --admin-text-soft: #c4d3ea;
+  --admin-muted: #8fa3c0;
+  --admin-brand: #5b93f6;
+  --admin-brand-strong: #9dc0ff;
+  --admin-brand-soft: rgba(91, 147, 246, .14);
+  --admin-success: #49d39b;
+  --admin-success-bg: rgba(52, 195, 143, .10);
+  --admin-success-border: rgba(52, 195, 143, .26);
+  --admin-warning: #dfb869;
+  --admin-warning-bg: rgba(223, 184, 105, .10);
+  --admin-warning-border: rgba(223, 184, 105, .26);
+  /* Bản cũ để --admin-danger là màu XANH #5da3ff — cảnh báo và huỷ đơn
+     hiện ra xanh dương như link. Trả về đỏ hồng của hệ tối. */
+  --admin-danger: #ff7d92;
+  --admin-danger-bg: rgba(255, 125, 146, .10);
+  --admin-danger-border: rgba(255, 125, 146, .25);
+  --admin-neutral-bg: #16233c;
+}
+
+/* ====================================================================== */
+/* 2. SIDEBAR                                                              */
+/* ====================================================================== */
+
+.backoffice-shell .st-sidebar {
+  gap: 2px;
+  padding: 16px 14px 14px;
+  background: var(--surface);
+}
+
+.backoffice-shell .st-sidebar-head {
+  margin-bottom: 14px;
+  padding: 0 2px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Logo đặt trong ô navy bo tròn: ảnh icon.png có nền trắng nung sẵn nên thả
+   trần lên sidebar sáng thì mất viền, còn ở theme tối thì thành đốm trắng.
+   Bọc ô màu thương hiệu là cách duy nhất cho nó tử tế ở cả hai theme mà
+   không cần đổi file ảnh. */
+.backoffice-shell .st-sidebar .st-brand {
+  gap: 10px;
+  font-size: 17px;
+}
+
+.backoffice-shell .st-sidebar .st-brand img {
+  width: 38px;
+  height: 38px;
+  padding: 5px;
+  border-radius: 11px;
+  background: var(--brand-soft);
+  box-shadow: inset 0 0 0 1px var(--brand-line);
+}
+
+/* "QUẢN TRỊ" xuống dòng dưới chữ SHOPTIK thành nhãn không gian làm việc,
+   thay vì bám đuôi làm dòng chữ dài ngoằng. */
+.backoffice-shell .st-sidebar .st-brand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.backoffice-shell .st-sidebar .st-brand img {
+  grid-row: span 2;
+}
+
+.backoffice-shell .st-sidebar .st-brand small {
+  align-self: start;
+  margin: 2px 0 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  justify-self: start;
+}
+
+.backoffice-shell .st-nav-group {
+  margin: 16px 12px 6px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.backoffice-shell .st-nav-group:first-child {
+  margin-top: 2px;
+}
+
+.backoffice-shell .st-nav a {
+  position: relative;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 11px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.backoffice-shell .st-nav a:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+/* Mục đang mở: viên navy đặc, chữ trắng. Khung app dùng viên xanh nhạt vì ở
+   đó chỉ có 8 mục nằm ngang; ở đây 13 mục xếp dọc, nền nhạt không đủ nổi để
+   liếc một cái là biết mình đang ở đâu. */
+.backoffice-shell .st-nav a.active {
+  color: #fff;
+  background: var(--brand);
+  font-weight: 750;
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--brand) 80%, transparent);
+}
+
+.backoffice-shell .st-nav a.active svg {
+  color: #fff;
+}
+
+.backoffice-shell .st-nav a svg {
+  width: 18px;
+  height: 18px;
+}
+
+.backoffice-shell .st-nav-badge {
+  min-width: 22px;
+  padding: 2px 7px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+/* Trên nền navy đặc, chấm đỏ chìm nghỉm → đảo thành nền trắng chữ navy. */
+.backoffice-shell .st-nav a.active .st-nav-badge {
+  color: var(--brand);
+  background: #fff;
+}
+
+/* Thẻ danh tính người đang trực, ghim đáy sidebar. Ca vận hành hay dùng
+   chung một máy nên phải luôn thấy mình đang thao tác bằng tài khoản nào. */
+.bo-side-foot {
+  position: sticky;
+  bottom: -14px;
+  margin-top: auto;
+  padding: 12px 0 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* Trên desktop, cho RIÊNG danh sách điều hướng cuộn thay vì cả cột sidebar:
+   13 mục không vừa màn hình thấp, mà thẻ danh tính người trực thì phải luôn
+   nằm nguyên chỗ. Để cả cột cuộn thì mục cuối bị vạch của thẻ cắt ngang. */
+@media (min-width: 961px) {
+  .backoffice-shell .st-sidebar {
+    overflow: hidden;
+  }
+
+  .backoffice-shell .st-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+
+  .bo-side-foot {
+    position: static;
+  }
+}
+
+.bo-side-foot-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--bo-radius-s);
+  background: var(--surface-muted);
+}
+
+.bo-side-foot-card i {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--brand);
+  font-size: 14px;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.bo-side-foot-card b,
+.bo-side-foot-card small {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bo-side-foot-card b {
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.bo-side-foot-card small {
+  color: var(--brand);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.bo-side-foot-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: var(--bo-radius-s);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.bo-side-foot-link svg {
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bo-side-foot-link:hover {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.bo-side-foot-link:hover svg {
+  color: var(--brand);
+}
+
+/* ====================================================================== */
+/* 3. TOPBAR + DẢI HÀNG CHỜ                                                */
+/* ====================================================================== */
+
+.backoffice-shell .st-topbar {
+  gap: 12px;
+  padding: 0 26px;
+}
+
+/* Chỗ này trước để trống hoàn toàn — một dải trắng cao 60px không chứa gì.
+   Thay bằng số việc đang chờ, bấm được để nhảy thẳng tới hàng đợi tương ứng.
+   Dữ liệu đã có sẵn trong context (chính là số trên badge sidebar). */
+.bo-queue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bo-queue-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bo-queue a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.bo-queue a:hover {
+  border-color: var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.bo-queue a b {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Không có việc chờ thì báo bằng một dòng chữ nhẹ, không phải bằng khoảng
+   trống — người trực cần phân biệt "đã xử lý hết" với "chưa tải xong". */
+.bo-queue-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--success);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.bo-queue-clear::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.backoffice-shell .st-account-email {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ====================================================================== */
+/* 4. VÙNG NỘI DUNG, TIÊU ĐỀ TRANG, PANEL                                  */
+/* ====================================================================== */
+
+/*
+ * Nội dung phải thẳng hàng với topbar.
+ *
+ * Khung app-shell cho .st-content một bề ngang cố định rồi căn giữa bằng
+ * margin-inline: auto. Nhưng lề đó KHÔNG ăn (đo được margin-left = 0), nên
+ * hộp nội dung dính sát mép sidebar và bỏ trống cả một dải bên phải: ở màn
+ * 1920 là ~310px trống, trong khi topbar vẫn trải hết bề ngang — nhìn như
+ * cả trang bị lệch sang trái.
+ *
+ * Ở trung tâm vận hành thì không cần hộp hẹp căn giữa: bảng 7-9 cột càng
+ * rộng càng dễ đọc. Cho nội dung trải hết bề ngang cột chính và dùng ĐÚNG
+ * mức đệm hai bên như topbar (26px) — mép trái, mép phải của tiêu đề trang,
+ * bảng và của thanh trên cùng khớp nhau ở mọi cỡ màn hình, không phụ thuộc
+ * vào việc lề tự động có ăn hay không.
+ */
+.backoffice-shell .st-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 26px 26px 56px;
+}
+
+/* shoptik-premium-patch.css bọc tiêu đề trang trong một tấm gradient đen
+   (#101720 → #090e14) bo 24px — di tích của bản giao diện tối cũ. Ở nền sáng
+   nó bị các rule khác đè thành trắng nên chỉ còn thấy phần đệm thừa, còn ở
+   nền tối nó nổi lên thành một khối xanh lệch tông giữa trang. Gỡ hẳn: tiêu
+   đề trang chỉ là chữ + một vạch kẻ chân. */
+.backoffice-shell .page-heading,
+.backoffice-shell .admin-page-heading {
+  margin-bottom: 22px;
+  padding: 0 0 18px;
+  overflow: visible;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 !important;
+  color: inherit;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Ở theme tối, app-shell còn một "guard" quét mọi bề mặt lớn về giấy tối
+   với bậc (0,5,0) + !important, trong danh sách có luôn .page-heading. Muốn
+   thắng phải lên bậc cao hơn: .backoffice-shell và .st-app nằm trên CÙNG một
+   thẻ div nên viết dính nhau là được (0,6,0) mà không cần thêm phần tử giả. */
+:root[data-theme="dark"] .backoffice-shell.st-app .st-content .page-heading,
+:root[data-theme="dark"] .backoffice-shell.st-app .st-content .admin-page-heading {
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: none !important;
+}
+
+.backoffice-shell .page-heading h1 {
+  font-size: 27px;
+  font-weight: 780;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+
+.backoffice-shell .page-heading p {
+  max-width: 720px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.backoffice-shell .page-heading .eyebrow,
+.backoffice-shell .admin-kicker {
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.backoffice-shell .admin-section-heading {
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+.backoffice-shell .st-content .panel {
+  border: 1px solid var(--line);
+  border-radius: var(--bo-radius);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.backoffice-shell .panel-heading {
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Ô chỉ số: viền mảnh + số cỡ lớn, bỏ đổ bóng dày của bản cũ. */
+.backoffice-shell .kpi-card {
+  border: 1px solid var(--line);
+  border-radius: var(--bo-radius);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.backoffice-shell .kpi-name {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.backoffice-shell .kpi-value {
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 780;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+.backoffice-shell .kpi-scope {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ====================================================================== */
+/* 5. BẢNG DỮ LIỆU (DESKTOP)                                               */
+/* ====================================================================== */
+
+.backoffice-shell .responsive-table {
+  border-radius: var(--bo-radius-s);
+}
+
+.backoffice-shell :is(.responsive-table, .admin-data-table) table,
+.backoffice-shell table.admin-data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* Bám sát bậc của dashboard.css (.backoffice-shell thead th) rồi cộng thêm
+   một bậc, nếu không cỡ chữ .66rem và nền cũ vẫn thắng. */
+.backoffice-shell .st-content thead th,
+.backoffice-shell :is(.responsive-table, .admin-data-table) th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.backoffice-shell :is(.responsive-table, .admin-data-table) td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13.5px;
+  vertical-align: middle;
+}
+
+/* Theme tối: app-shell có rule riêng cho `th` và cho `:is(th, td)` với bậc
+   (0,4,1), cao hơn rule trên, nên đầu bảng bị kéo về nền --sh-bg và mực
+   --sh-copy. Thêm `thead` vào selector là đủ vượt một bậc phần tử. */
+:root[data-theme="dark"] .backoffice-shell .st-content thead th {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+
+.backoffice-shell :is(.responsive-table, .admin-data-table) tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.backoffice-shell :is(.responsive-table, .admin-data-table) tbody tr:hover td {
+  background: var(--surface-hover);
+}
+
+/* Cột tiền/số: canh phải + chữ số đều bề ngang để so sánh theo cột được. */
+.backoffice-shell :is(.responsive-table, .admin-data-table) td :is(b, strong),
+.backoffice-shell .amount-cell,
+.backoffice-shell .money-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ====================================================================== */
+/* 6. BẢNG DỮ LIỆU (ĐIỆN THOẠI → THẺ)                                      */
+/*                                                                         */
+/* Dưới 760px, bảng 9 cột không cách nào đọc nổi: pro-ui.css còn ép        */
+/* min-width 980px nên cả bảng trôi ngang, cột "Quyết định" (chỗ có nút    */
+/* duyệt) nằm ngoài màn hình. Đổi mỗi hàng thành một thẻ nhãn-giá-trị.     */
+/* Nhãn cột do admin-table.js gắn vào data-label, nên chỉ những bảng nó đã */
+/* xử lý (có [data-cards]) mới đổi — bảng lạ giữ nguyên cách cuộn cũ.      */
+/* ====================================================================== */
+
+@media (max-width: 760px) {
+  .backoffice-shell .responsive-table:has(table[data-cards]) {
+    max-height: none !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .backoffice-shell table[data-cards] {
+    min-width: 0 !important;
+    border-spacing: 0;
+  }
+
+  .backoffice-shell table[data-cards],
+  .backoffice-shell table[data-cards] tbody,
+  .backoffice-shell table[data-cards] tr,
+  .backoffice-shell table[data-cards] td {
+    display: block !important;
+    width: auto !important;
+  }
+
+  .backoffice-shell table[data-cards] thead {
+    display: none !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr {
+    margin-bottom: 10px;
+    padding: 6px 14px;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--bo-radius-s);
+    background: var(--surface) !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr:hover td {
+    background: transparent;
+  }
+
+  .backoffice-shell table[data-cards] td {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    text-align: right;
+  }
+
+  .backoffice-shell table[data-cards] td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .backoffice-shell table[data-cards] td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  /* Ô không có nhãn (cột chọn, cột thao tác) chiếm trọn bề ngang thay vì
+     để lại một khoảng trống 38% vô nghĩa bên trái. */
+  .backoffice-shell table[data-cards] td[data-label=""]::before,
+  .backoffice-shell table[data-cards] td:not([data-label])::before {
+    content: none;
+  }
+
+  .backoffice-shell table[data-cards] td[data-label=""],
+  .backoffice-shell table[data-cards] td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* Hàng "chưa có dữ liệu" dùng colspan — giữ nguyên một khối chữ giữa thẻ. */
+  .backoffice-shell table[data-cards] td[colspan] {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .backoffice-shell table[data-cards] td[colspan]::before {
+    content: none;
+  }
+
+  /* Nút thao tác trong thẻ: xuống hàng riêng, kéo full bề ngang cho dễ bấm. */
+  .backoffice-shell table[data-cards] td :is(.row-actions, .row-reject-form, .table-actions) {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .backoffice-shell table[data-cards] td :is(.row-actions, .row-reject-form) .button {
+    flex: 1 1 120px;
+  }
+}
+
+/* ====================================================================== */
+/* 7. NÚT, NHÃN TRẠNG THÁI, FORM                                           */
+/* ====================================================================== */
+
+.backoffice-shell .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.backoffice-shell .info-strip {
+  border-radius: var(--bo-radius-s);
+}
+
+/* app-shell.css tô ĐẶC mọi button[type="submit"] bằng màu chính, và tô bằng
+   !important:
+     .backoffice-shell button[type="submit"]:not(.st-menu-logout):not(.mb-linkrow)
+     { color: #fff !important; background: var(--sh-primary) !important }
+   Hậu quả ở khu vận hành: "Duyệt tất cả đang chờ" (chi tiền hàng loạt) trông
+   y hệt "Duyệt đã chọn", và nút từ chối trông y hệt nút duyệt — người trực
+   không phân biệt được cấp độ hành động trước khi bấm. Đây là chỗ bắt buộc
+   phải dùng lại !important để gỡ, không có cách nào khác thắng được. */
+.backoffice-shell .st-content button[type="submit"].button-ghost,
+.backoffice-shell .st-content .button-ghost {
+  border: 1px solid var(--line-strong) !important;
+  color: var(--ink-soft) !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+}
+
+.backoffice-shell .st-content button[type="submit"].button-ghost:hover:not(:disabled),
+.backoffice-shell .st-content .button-ghost:hover {
+  border-color: var(--brand-line) !important;
+  color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+}
+
+/* Nút nguy hiểm (từ chối, khoá tài khoản, xoá) luôn phải đỏ. */
+.backoffice-shell .st-content button[type="submit"].button-danger,
+.backoffice-shell .st-content .button-danger {
+  border: 1px solid var(--danger-line) !important;
+  color: var(--danger) !important;
+  background: var(--danger-soft) !important;
+  box-shadow: none !important;
+}
+
+.backoffice-shell .st-content button[type="submit"].button-danger:hover:not(:disabled),
+.backoffice-shell .st-content .button-danger:hover {
+  border-color: var(--danger) !important;
+  color: var(--on-danger) !important;
+  background: var(--danger) !important;
+}
+
+.backoffice-shell .st-content :is(input, select, textarea) {
+  border-radius: 10px;
+}
+
+/* ====================================================================== */
+/* 8. TINH CHỈNH ĐIỆN THOẠI                                                */
+/* ====================================================================== */
+
+@media (max-width: 960px) {
+  /* Header mobile: logo bị bóp sát nút hamburger và mất hẳn chữ nên không
+     biết đang ở khu quản trị hay khu người dùng. Cho logo ô riêng + nhãn
+     QUẢN TRỊ, và đẩy hai nút phải ra sát mép. */
+  .backoffice-shell .st-topbar {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  /* Khối thương hiệu dựng y như trong sidebar: ô logo — "SHOPTIK" — nhãn
+     QUẢN TRỊ xuống dòng dưới. Ô logo để nền TRẮNG vì file icon.png có nền
+     trắng nung sẵn; đặt lên nền navy mà không bọc trắng thì lòi ra một vệt
+     trắng lệch tông quanh hình. */
+  .backoffice-shell .st-topbar-brand {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .backoffice-shell .st-topbar-brand img {
+    grid-row: span 2;
+    width: 38px;
+    height: 38px;
+    padding: 5px;
+    border-radius: 11px;
+    background: #fff;
+  }
+
+  /* app-shell giấu chữ SHOPTIK ở màn hẹp để nhường chỗ cho 4 nút + chip số dư
+     của khung người dùng. Header quản trị chỉ còn 2 nút và đã bỏ nút ba gạch
+     nên thừa chỗ — hiện lại tên để biết ngay mình đang ở không gian nào. */
+  .backoffice-shell .st-topbar-brand span {
+    display: block;
+    align-self: end;
+    color: #fff;
+  }
+
+  .backoffice-shell .st-topbar-brand small {
+    align-self: start;
+    justify-self: start;
+    margin: 3px 0 0;
+    padding: 1px 6px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, .18);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+  }
+
+  /* Email trên nền navy hẹp: giữ avatar tròn, bỏ chữ (đã có trong menu). */
+  .backoffice-shell .st-topbar .st-account-email {
+    display: none;
+  }
+
+  .backoffice-shell .st-topbar .st-menu-caret {
+    display: none;
+  }
+
+  .backoffice-shell .st-topbar .st-account {
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+  }
+
+  /* Dải hàng chờ chuyển xuống đầu nội dung, cuộn ngang được. */
+  .bo-queue {
+    display: none;
+  }
+
+  /* Cùng nguyên tắc: đệm hai bên bằng đúng đệm topbar bản mobile (14px),
+     đáy chừa chỗ cho thanh điều hướng nổi. */
+  .backoffice-shell .st-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 18px 14px calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .backoffice-shell .page-heading {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+  }
+
+  .backoffice-shell .page-heading h1 {
+    font-size: 22px;
+  }
+
+  .backoffice-shell .st-sidebar {
+    width: min(320px, 88vw);
+  }
+}
+
+/* ====================================================================== */
+/* 9. DỌN DI TÍCH RIÊNG CỦA TỪNG TRANG                                     */
+/* ====================================================================== */
+
+/* Bàn điều hành dùng class .admin-page-heading, các trang còn lại dùng
+   .page-heading. app-shell chỉ dọn banner tối cho .page-heading nên riêng
+   trang này còn chữ TRẮNG trên nền sáng — gần như không đọc được. Gộp cả
+   hai tên lại. */
+/* Cỡ chữ cũng phải gộp: app-shell ép .page-heading h1 = 30px còn
+   .admin-page-heading h1 giữ 2.4rem của bản cũ, nên hai trang quản trị cạnh
+   nhau lại có tiêu đề to nhỏ khác hẳn. */
+.backoffice-shell .st-content :is(.page-heading, .admin-page-heading) h1 {
+  color: var(--text) !important;
+  font-size: 27px !important;
+}
+
+.backoffice-shell .st-content :is(.page-heading, .admin-page-heading) p {
+  color: var(--ink-soft) !important;
+}
+
+.backoffice-shell .st-content :is(.page-heading, .admin-page-heading) :is(.admin-kicker, .eyebrow) {
+  color: var(--brand) !important;
+}
+
+/* Hình trang trí mờ (mấy vạch chéo góc phải) vẽ bằng ::after của banner cũ. */
+.backoffice-shell .admin-page-heading::after {
+  content: none !important;
+}
+
+/* Danh sách "Việc đang chờ": markup có 4 ô (icon · chữ · số · mũi tên) nhưng
+   lưới cũ chỉ khai 3 cột nên mũi tên rơi xuống dòng riêng; và <b>/<small>
+   trong cùng một span không được đặt block nên tên việc dính liền mô tả. */
+.backoffice-shell .work-queue > a,
+.backoffice-shell .admin-activity-list > a {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > b,
+.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > small {
+  display: block;
+}
+
+.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > b {
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Số việc: viên tròn, đỏ khi còn tồn và xám khi đã sạch. */
+.backoffice-shell .work-queue > a > strong {
+  display: grid;
+  min-width: 30px;
+  height: 26px;
+  place-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.backoffice-shell .work-queue > a.has-work > strong {
+  color: #fff;
+  background: var(--danger);
+}
+
+.backoffice-shell :is(.work-queue, .admin-activity-list) > a > i {
+  color: var(--muted);
+  font-size: 16px;
+  font-style: normal;
+}
+
+/* Dải hàng chờ bản mobile: nằm ngay dưới tiêu đề trang, cuộn ngang. */
+.bo-queue-mobile {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .bo-queue-mobile {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .bo-queue-mobile::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bo-queue-mobile a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 8px 14px 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .bo-queue-mobile a b {
+    display: grid;
+    min-width: 20px;
+    height: 20px;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--danger);
+    font-size: 11px;
+    font-weight: 800;
+  }
+}

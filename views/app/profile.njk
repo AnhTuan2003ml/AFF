@@ -1,0 +1,97 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+{% from "partials/icons.njk" import icon %}
+
+{#
+  Trang "Thông tin cá nhân" — tách khỏi trang Chức năng.
+  Ở đây chỉ có thứ THUỘC VỀ người dùng: hồ sơ, bảo mật, thiết bị đang đăng
+  nhập. Thêm trường mới (ảnh đại diện, số điện thoại, ngày sinh...) thì thêm
+  vào đây, không làm trang điều hướng dài ra.
+#}
+
+{% block app_content %}
+  {% set profileBalances = headerBalances or balances %}
+  <section class="mb-profile" aria-label="Tài khoản của bạn">
+    <span class="mb-profile-avatar" aria-hidden="true">
+      <span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+    </span>
+    <div class="mb-profile-copy">
+      <b>{{ currentUser.fullName or 'Tài khoản ShopTik' }}</b>
+      <small>{{ currentUser.email }}</small>
+    </div>
+    {% if profileBalances %}
+      <div class="mb-profile-stats">
+        <div class="is-pending">
+          <span>Đang chờ</span>
+          <b>{{ profileBalances.pending | vnd }}</b>
+        </div>
+        <div>
+          <span>Khả dụng</span>
+          <b>{{ profileBalances.available | vnd }}</b>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+  <div class="settings-grid">
+    <section class="panel">
+      <header class="panel-heading"><div><span class="eyebrow">HỒ SƠ</span><h2>Thông tin cá nhân</h2></div></header>
+      <form method="post" action="/app/settings/profile" class="stack-form" data-validate-form data-disable-until-dirty novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label for="settings-fullname-input">Họ và tên
+          <input id="settings-fullname-input" type="text" name="fullName" value="{{ currentUser.fullName }}" minlength="2" maxlength="100" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">
+          <small class="field-error" id="settings-fullname-input-error" hidden></small>
+        </label>
+        <label>Email
+          <input type="email" value="{{ currentUser.email }}" readonly disabled>
+          <small>Email đã xác nhận và dùng để nhận OTP.</small>
+        </label>
+        <button class="button button-primary" type="submit" data-submit-button>Lưu thay đổi</button>
+      </form>
+    </section>
+
+    <section class="panel settings-security-panel">
+      <header class="panel-heading"><div><span class="eyebrow">BẢO MẬT</span><h2>Bảo vệ tài khoản</h2></div></header>
+      <div class="security-checklist">
+        <div><span>1</span><p>Dùng mật khẩu riêng, không trùng với email hoặc mạng xã hội.</p></div>
+        <div><span>2</span><p>Chỉ nhập OTP ShopTik trên đúng tên miền của ứng dụng.</p></div>
+        <div><span>3</span><p>ShopTik không bao giờ hỏi OTP, PIN hay mật khẩu Internet Banking.</p></div>
+      </div>
+      <form method="post" action="/app/settings/revoke-all" class="danger-zone" data-confirm-form data-confirm-message="Đăng xuất tất cả thiết bị, kể cả thiết bị hiện tại?">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <div><b>Đăng xuất mọi nơi</b><p>Dùng khi bạn nghi ngờ tài khoản bị truy cập trái phép.</p></div>
+        <button class="button button-danger" type="submit">Đăng xuất tất cả thiết bị</button>
+      </form>
+    </section>
+
+    <section class="panel settings-sessions-panel">
+      <header class="panel-heading"><div><span class="eyebrow">PHIÊN ĐĂNG NHẬP</span><h2>Thiết bị đã đăng nhập</h2></div></header>
+      {% if sessions.length %}
+        <div class="session-list">
+          {% for session in sessions %}
+            <div>
+              <span class="session-dot{% if session.is_current %} is-current{% endif %}"></span>
+              <span>
+                <b>{% if session.is_current %}Phiên hiện tại{% else %}Phiên web{% endif %}</b>
+                <small>Hoạt động {{ session.last_seen_at | datetime }} · Hết hạn {{ session.expires_at | datetime }}</small>
+              </span>
+              {% if session.is_current %}<span class="session-current-badge">Đang dùng</span>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Không có phiên hoạt động", "Không tìm thấy thiết bị nào đang đăng nhập.") }}
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="mb-panel" aria-label="Lối tắt liên quan">
+    <div class="mb-panel-head">
+      <h2 class="mb-panel-title">Liên quan</h2>
+    </div>
+    <div class="mb-linklist">
+      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>Tài khoản nhận tiền</span></a>
+      <a class="mb-linkrow" href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
+    </div>
+  </section>
+{% endblock %}

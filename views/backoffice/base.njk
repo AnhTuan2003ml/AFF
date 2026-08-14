@@ -2,14 +2,21 @@
 {% from "partials/icons.njk" import icon %}
 {% from "partials/macros.njk" import role_label %}
 
+{% block skin_styles %}{% endblock %}
+
 {% block body %}
   <link rel="stylesheet" href="/assets/dashboard.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/shoptik-premium-patch.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/app-shell.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/mb-skin.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/mb-admin.css?v={{ assetVersion }}">
+  <script src="/assets/admin-table.js?v={{ assetVersion }}" defer></script>
   {# Khung quản trị dùng CHUNG hệ shell st-* với app (app-shell.css):
      sidebar nhóm chức năng + topbar mỏng + tabbar mobile. Class
      backoffice-shell giữ lại cho CSS nội dung trang (dashboard.css,
-     shoptik-premium-patch.css) — chrome cũ commerce-* đã bỏ hẳn. #}
+     shoptik-premium-patch.css) — chrome cũ commerce-* đã bỏ hẳn.
+     mb-admin.css nạp CUỐI: nó là lớp dáng riêng của khu vận hành, đè lên cả
+     app-shell lẫn mb-skin. #}
   <div class="backoffice-shell st-app">
     <div class="st-layout">
       <aside class="st-sidebar" data-sidebar>
@@ -41,17 +48,52 @@
           <a href="/backoffice/audit" {% if backofficeSection == 'audit' %}class="active" aria-current="page"{% endif %}>{{ icon('audit') }}<span>Nhật ký</span></a>
         </nav>
 
+        {# Ghim đáy sidebar: ai đang trực + lối về khu người dùng. Ca vận hành
+           hay dùng chung một máy nên phải luôn nhìn thấy mình đang thao tác
+           bằng tài khoản nào trước khi bấm duyệt tiền. #}
+        <div class="bo-side-foot">
+          <div class="bo-side-foot-card">
+            <i aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</i>
+            <span>
+              <b title="{{ currentUser.email }}">{{ currentUser.fullName or currentUser.email }}</b>
+              <small>{{ role_label(currentUser.role) }}</small>
+            </span>
+          </div>
+          <a class="bo-side-foot-link" href="/app">{{ icon('discover') }}<span>Về ứng dụng người dùng</span></a>
+        </div>
       </aside>
 
       <div class="st-main">
         <header class="st-topbar">
-          <button class="st-topbar-open" type="button" aria-label="Mở menu" data-sidebar-open>
-            <span></span><span></span><span></span>
-          </button>
+          {# Không còn nút ba gạch ở đây: trên điện thoại, mục "Thêm" của thanh
+             dưới cũng mang data-sidebar-open và mở đúng ngăn kéo đó. Giữ cả
+             hai là hai lối vào cho cùng một việc, mà cái ở đây lại chiếm mất
+             chỗ của khối thương hiệu. #}
           <a class="st-brand st-topbar-brand" href="/backoffice/console" aria-label="ShopTik">
             <img src="/assets/images/icon.png" alt="" aria-hidden="true">
-            <span>SHOPTIK</span>
+            <span>SHOPTIK</span><small>QUẢN TRỊ</small>
           </a>
+
+          {# Số việc đang chờ, đặt ngay trên topbar để người trực không phải mở
+             từng trang mới biết còn tồn gì. Chỗ này trước là dải trắng trống. #}
+          <div class="bo-queue">
+            {% set hasQueue = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 %}
+            {% if hasQueue %}
+              <span class="bo-queue-label">Đang chờ</span>
+              {% if backofficeOrdersPendingCount > 0 %}
+                <a href="/backoffice/reconciliation"><b>{{ backofficeOrdersPendingCount }}</b>Đơn hoàn tiền</a>
+              {% endif %}
+              {% if backofficeWithdrawalsPendingCount > 0 %}
+                <a href="/backoffice/withdrawals"><b>{{ backofficeWithdrawalsPendingCount }}</b>Yêu cầu rút</a>
+              {% endif %}
+              {% if backofficeMissionsPendingCount > 0 %}
+                <a href="/backoffice/missions"><b>{{ backofficeMissionsPendingCount }}</b>Nhận thưởng</a>
+              {% endif %}
+            {% else %}
+              <span class="bo-queue-clear">Không còn việc chờ xử lý</span>
+            {% endif %}
+          </div>
+
           <div class="st-topbar-spacer"></div>
 
           {% include "partials/theme-button.njk" %}
@@ -79,6 +121,21 @@
 
         <main class="st-content" id="main-content" tabindex="-1">
           {% include "partials/flash.njk" %}
+          {# Bản mobile của dải hàng chờ: topbar navy đã kín chỗ nên nó xuống
+             đầu nội dung, cuộn ngang được. #}
+          {% if backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 %}
+            <div class="bo-queue-mobile" aria-label="Việc đang chờ xử lý">
+              {% if backofficeOrdersPendingCount > 0 %}
+                <a href="/backoffice/reconciliation"><b>{{ backofficeOrdersPendingCount }}</b>Đơn hoàn tiền</a>
+              {% endif %}
+              {% if backofficeWithdrawalsPendingCount > 0 %}
+                <a href="/backoffice/withdrawals"><b>{{ backofficeWithdrawalsPendingCount }}</b>Yêu cầu rút</a>
+              {% endif %}
+              {% if backofficeMissionsPendingCount > 0 %}
+                <a href="/backoffice/missions"><b>{{ backofficeMissionsPendingCount }}</b>Nhận thưởng</a>
+              {% endif %}
+            </div>
+          {% endif %}
           {% block backoffice_content %}{% endblock %}
         </main>
       </div>

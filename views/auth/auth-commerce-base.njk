@@ -1,9 +1,18 @@
 {% extends "base.njk" %}
 
+{#
+  Khung trang đăng nhập / đăng ký dựng theo AuthModal của bản thiết kế MB:
+  thẻ trắng bo lớn, ĐẦU THẺ là dải gradient navy mang nhận diện + nhãn bảo
+  mật, dưới đó là biểu mẫu.
+
+  Trang con ghi đè auth_head_title / auth_head_sub để đổi chữ trên dải navy.
+  Chuyển qua lại giữa đăng nhập và đăng ký đi bằng dòng link cuối biểu mẫu.
+#}
+
 {% block html_attrs %}data-theme="light"{% endblock %}
 
 {% block body %}
-  <main class="auth-shell auth-shell-premium auth-commerce" id="main-content">
+  <main class="auth-shell auth-commerce" id="main-content">
     <section class="auth-commerce-story" aria-label="Giới thiệu ShopTik">
       <div class="auth-commerce-media" aria-hidden="true"></div>
       <div class="auth-commerce-story-content">
@@ -14,8 +23,43 @@
 
         <div class="auth-commerce-message">
           <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
-          <h1>MUA ĐÚNG LINK.<br>NHẬN ĐÚNG TIỀN.</h1>
+          {# Không có dấu chấm cuối dòng: chữ in hoa cỡ lớn mà chấm câu trông
+             rất rối. Mỗi dòng là một <span> để đặt được leading riêng. #}
+          <h1><span>MUA ĐÚNG LINK</span><span>NHẬN ĐÚNG TIỀN</span></h1>
           <p>Dán link sản phẩm, mua qua liên kết Affiliate và theo dõi tiền hoàn minh bạch trên một nền tảng.</p>
+
+          {# Vật thể chính của cột: một "hoá đơn hoàn tiền" bằng kính mờ. Nói
+             thẳng lời hứa của sản phẩm bằng con số thay vì mô tả chung chung. #}
+          <figure class="auth-receipt">
+            <figcaption>
+              <span>Ví dụ một đơn hàng</span>
+              <b class="auth-receipt-rate">Hoàn 8%</b>
+            </figcaption>
+            <div class="auth-receipt-row">
+              <span>Bạn thanh toán trên sàn</span>
+              <b>500.000 ₫</b>
+            </div>
+            <div class="auth-receipt-tear" aria-hidden="true"></div>
+            <div class="auth-receipt-row is-total">
+              <span>ShopTik hoàn về ví</span>
+              <b>+ 40.000 ₫</b>
+            </div>
+          </figure>
+
+          <ul class="auth-commerce-points">
+            <li>
+              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+              <div><b>Hoàn tiền tự động</b><small>Không cần khai báo đơn, không cần chụp màn hình</small></div>
+            </li>
+            <li>
+              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M4 7.5 7 4h10l3 3.5"/><path d="M9.5 12h5"/></svg></span>
+              <div><b>Rút về mọi ngân hàng</b><small>Vietcombank, Techcombank, MB, BIDV, VPBank…</small></div>
+            </li>
+            <li>
+              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 5 6.5v5.2c0 4 2.9 7.4 7 8.8 4.1-1.4 7-4.8 7-8.8V6.5z"/><path d="m9.2 12 2 2 3.6-3.8"/></svg></span>
+              <div><b>Đối soát minh bạch</b><small>Mọi biến động ví đều có lịch sử kiểm tra được</small></div>
+            </li>
+          </ul>
         </div>
 
         <div class="auth-commerce-trust" aria-label="Điểm nổi bật">
@@ -28,13 +72,26 @@
 
     <section class="auth-panel auth-commerce-panel">
       <div class="auth-card">
-        <a class="auth-card-brand auth-card-brand-image" href="/" aria-label="ShopTik - Trang chủ">
-          <img src="/assets/images/logo.png" alt="ShopTik">
-        </a>
+        <header class="auth-card-header">
+          <div class="auth-card-header-top">
+            <span class="auth-card-mark" aria-hidden="true">
+              <img src="/assets/images/icon.png" alt="">
+            </span>
+            <div class="auth-card-header-copy">
+              <div class="auth-card-header-line">
+                <h1>{% block auth_head_title %}Tài khoản hoàn tiền{% endblock %}</h1>
+                <span class="auth-card-secure">Bảo mật 256-bit</span>
+              </div>
+              <p>{% block auth_head_sub %}Đăng nhập để nhận hoàn tiền và theo dõi đơn{% endblock %}</p>
+            </div>
+          </div>
+        </header>
 
-        {% include "partials/flash.njk" %}
-        {% if formError %}<div class="form-error" role="alert">{{ formError }}</div>{% endif %}
-        {% block auth_content %}{% endblock %}
+        <div class="auth-card-body">
+          {% include "partials/flash.njk" %}
+          {% if formError %}<div class="form-error" role="alert">{{ formError }}</div>{% endif %}
+          {% block auth_content %}{% endblock %}
+        </div>
 
         <footer class="auth-card-footer">
           <span class="auth-secure-mark" aria-hidden="true">

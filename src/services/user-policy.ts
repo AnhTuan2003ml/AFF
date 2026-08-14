@@ -300,7 +300,7 @@ export function renderUserPolicyEmail(params: {
             .map((bullet) => `<li style="margin:0 0 6px">${escapeHtml(bullet)}</li>`)
             .join("")}</ul>`
         : "";
-      return `<h2 style="font-size:16px;margin:22px 0 8px;color:#0f2e26">${escapeHtml(
+      return `<h2 style="font-size:16px;margin:22px 0 8px;color:#0f2544">${escapeHtml(
         item.heading,
       )}</h2>${paragraphs}${bullets}`;
     })
@@ -310,16 +310,16 @@ export function renderUserPolicyEmail(params: {
     subject: `Chính sách người dùng ${app} (phiên bản ${policy.version})`,
     text: textLines.join("\n"),
     html: `
-      <div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:auto;color:#163333;font-size:14px">
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:auto;color:#0f2544;font-size:14px">
         <h1 style="font-size:22px;margin:0 0 6px">${escapeHtml(policy.title)}</h1>
-        <p style="margin:0 0 18px;color:#5f6f6c">Phiên bản ${escapeHtml(policy.version)}</p>
+        <p style="margin:0 0 18px;color:#5b6b85">Phiên bản ${escapeHtml(policy.version)}</p>
         <p style="line-height:1.6">Chào ${escapeHtml(greetName)}, cảm ơn bạn đã đăng ký ${escapeHtml(app)}.</p>
         <p style="line-height:1.6">${escapeHtml(policy.lead)}</p>
         ${sectionsHtml}
         <p style="margin:24px 0 8px">
-          <a href="${escapeHtml(policy.url)}" style="background:#ee4d2d;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;display:inline-block">Xem bản mới nhất</a>
+          <a href="${escapeHtml(policy.url)}" style="background:#002d9c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;display:inline-block">Xem bản mới nhất</a>
         </p>
-        <p style="color:#5f6f6c;line-height:1.6">${escapeHtml(app)} không bao giờ hỏi mật khẩu, mã PIN hay OTP ngân hàng của bạn.</p>
+        <p style="color:#5b6b85;line-height:1.6">${escapeHtml(app)} không bao giờ hỏi mật khẩu, mã PIN hay OTP ngân hàng của bạn.</p>
       </div>
     `,
   };

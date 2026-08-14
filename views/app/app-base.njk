@@ -1,142 +1,214 @@
 {% extends "base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
+{#
+  Khung trang người dùng theo bản thiết kế MB CashBack:
+  - Desktop: header trắng dính trên cùng + thanh tab viên thuốc. KHÔNG còn
+    sidebar trái — mọi mục điều hướng nằm trên thanh tab (cuộn ngang khi hẹp).
+  - Mobile: header gradient navy (avatar + lời chào + tìm kiếm + chuông) và
+    thanh điều hướng dưới 5 mục, mục giữa là nút tròn "Khám phá".
+
+  Class `st-app` / `st-content` được giữ để CSS nội dung trang sẵn có (bảng,
+  panel, trạng thái trống, guard dark-mode) vẫn khớp. Toàn bộ hook JS
+  (data-menu, data-notification-*, data-theme-toggle, data-support-fab...)
+  giữ nguyên tên nên app.js chạy y như cũ.
+#}
+
+{% block skin_styles %}{% endblock %}
+
 {% block body %}
   <link rel="stylesheet" href="/assets/shoptik-premium-patch.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/app-shell.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/mb-skin.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/mb-app.css?v={{ assetVersion }}">
+
   {% set persistentBalances = headerBalances or balances %}
-  <div class="dv13-commerce-shell app-section-{{ appSection or 'default' }} st-app" data-app-section="{{ appSection or 'default' }}">
-    <div class="st-layout">
-      <aside class="st-sidebar" data-sidebar>
-        <div class="st-sidebar-head">
-          <a class="st-brand" href="/app" aria-label="ShopTik">
-            <img src="/assets/images/icon.png" alt="" aria-hidden="true">
-            <span>SHOPTIK</span><small>CASHBACK</small>
+  {% set navItems = [
+    { href: '/app', section: 'dashboard', icon: 'discover', label: 'Tìm sản phẩm' },
+    { href: '/app/discover', section: 'discover', icon: 'compass', label: 'Khám phá ưu đãi' },
+    { href: '/app/orders', section: 'orders', icon: 'orders', label: 'Đơn hàng' },
+    { href: '/app/wallet', section: 'wallet', icon: 'wallet', label: 'Số dư & rút tiền' },
+    { href: '/app/nhiem-vu', section: 'missions', icon: 'mission', label: 'Nhiệm vụ' },
+    { href: '/app/links', section: 'links', icon: 'link', label: 'Link chia sẻ' },
+    { href: '/app/referrals', section: 'referrals', icon: 'referral', label: 'Giới thiệu' },
+    { href: '/app/support', section: 'support', icon: 'support', label: 'Hỗ trợ' }
+  ] %}
+  {% set financeSections = ['wallet', 'withdrawals', 'banks'] %}
+
+  <div class="mb-app dv13-commerce-shell app-section-{{ appSection or 'default' }} st-app" data-app-section="{{ appSection or 'default' }}">
+    <div class="mb-shell">
+      <header class="mb-header">
+        <div class="mb-header-inner mb-container">
+          {# Desktop: dấu hiệu + tên + dòng mô tả. Mobile: CSS ẩn phần chữ,
+             chỉ còn dấu hiệu để nhường chỗ cho ô tìm kiếm. #}
+          <a class="mb-brand" href="/app" aria-label="ShopTik">
+            <span class="mb-brand-mark"><img src="/assets/images/icon.png" alt="" aria-hidden="true"></span>
+            <span class="mb-brand-copy">
+              <span class="mb-brand-name">SHOPTIK<em class="mb-brand-tag">CASHBACK</em></span>
+              <small class="mb-brand-sub">Hoàn tiền Shopee · TikTok Shop · Lazada</small>
+            </span>
           </a>
-          <button class="st-sidebar-close" type="button" aria-label="Đóng menu" data-sidebar-close>×</button>
+
+          {# Ô tìm kiếm điều hướng sang trang Khám phá — nơi thật sự có bộ lọc. #}
+          <form class="mb-search" role="search" method="get" action="/app/discover">
+            {{ icon('search') }}
+            <input type="search" name="q" value="{{ discoverQuery or '' }}" placeholder="Tìm deal, voucher, sản phẩm..." aria-label="Tìm ưu đãi">
+          </form>
+
+          <div class="mb-header-actions">
+            {% if persistentBalances %}
+              <a class="mb-wallet-chip" href="/app/wallet">
+                <span class="mb-wallet-stat is-pending">
+                  <i aria-hidden="true">◷</i>
+                  <span>
+                    <span>Đang chờ</span>
+                    <b>{{ persistentBalances.pending | vnd }}</b>
+                  </span>
+                </span>
+                <span class="mb-wallet-divider" aria-hidden="true"></span>
+                <span class="mb-wallet-stat is-available">
+                  <i aria-hidden="true">₫</i>
+                  <span>
+                    <span>Khả dụng</span>
+                    <b>{{ persistentBalances.available | vnd }}</b>
+                  </span>
+                </span>
+              </a>
+            {% endif %}
+
+            <a class="mb-action mb-action-cta" href="/app/withdrawals">{{ icon('withdraw') }}<span>Rút tiền</span></a>
+
+            <div class="notification-menu">
+              <button type="button" class="mb-icon-button notification-trigger" data-notification-trigger aria-expanded="false" aria-label="Thông báo">
+                {{ icon('bell') }}
+                {% if unreadNotificationCount %}<b class="notification-badge" data-notification-badge>{{ unreadNotificationCount if unreadNotificationCount <= 9 else '9+' }}</b>{% endif %}
+              </button>
+              <div class="notification-dropdown" data-notification-panel>
+                <div class="notification-dropdown-head"><b>Thông báo</b></div>
+                {% if recentNotifications and recentNotifications.length %}
+                  <ul class="notification-list">
+                    {% for item in recentNotifications %}
+                      <li class="{{ 'unread' if not item.isRead }}">
+                        <b>{{ item.title }}</b>
+                        {% if item.body %}<p>{{ item.body }}</p>{% endif %}
+                        <time>{{ item.createdAt | datetime }}</time>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="notification-empty">Bạn chưa có thông báo mới.</p>
+                {% endif %}
+              </div>
+            </div>
+
+            {% include "partials/theme-button.njk" %}
+
+            <div class="st-menu">
+              <button type="button" class="st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
+                <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+                <span class="st-account-email">{{ currentUser.email }}</span>
+                <svg class="st-menu-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+              </button>
+              <div class="st-menu-panel" data-menu>
+                <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
+                <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
+                <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
+                <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
+                <a href="/app/referrals">{{ icon('referral') }}<span>Giới thiệu bạn bè</span></a>
+                {% if currentUser.role != 'USER' %}
+                  <a href="/backoffice/console">{{ icon('ops') }}<span>Mở trang quản trị</span></a>
+                {% endif %}
+                <div class="st-menu-divider" role="separator"></div>
+                <form method="post" action="/dang-xuat">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  {# class button-ghost để rule CTA đỏ của dv13
+                     (button[type=submit]:not(.button-ghost)...) tự loại trừ nút này #}
+                  <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <nav class="mb-tabs mb-container" aria-label="Khu vực chức năng">
+        <div class="mb-tabs-bar">
+          {% for item in navItems %}
+            {% set isActive = (item.section == appSection) or (item.section == 'wallet' and appSection in financeSections) %}
+            <a class="mb-tab{% if isActive %} active{% endif %}" href="{{ item.href }}"{% if isActive %} aria-current="page"{% endif %}>
+              {{ icon(item.icon) }}<span>{{ item.label }}</span>
+              {% if item.section == 'orders' and pendingOrdersCount %}<em class="mb-tab-badge">{{ pendingOrdersCount }}</em>{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </nav>
+
+      {# tabindex="-1" để link "Bỏ qua menu" đặt được focus vào đây —
+         thiếu nó, focus rơi về <body> và Tab quay lại đầu trang. #}
+      <main class="st-content" id="main-content" tabindex="-1">
+        {% include "partials/flash.njk" %}
+        {# Nhóm Tài chính gộp thành MỘT giao diện: một tiêu đề chung + 3
+           tab (Số dư / Rút tiền / Ngân hàng) chuyển giữa 3 URL sẵn có —
+           không đổi route hay nghiệp vụ. Các trang khác tự mang tiêu đề
+           trong nội dung. #}
+        {% if appSection in financeSections %}
+          <div class="st-page-head">
+            <h1>Tài chính</h1>
+            <p>Số dư, lệnh rút và tài khoản nhận tiền trên cùng một màn hình.</p>
+          </div>
+          <nav class="st-subtabs" aria-label="Khu vực tài chính">
+            <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>Số dư</a>
+            <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>Rút tiền</a>
+            <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>Ngân hàng</a>
+          </nav>
+        {% endif %}
+        {% block app_content %}{% endblock %}
+      </main>
+
+      {#
+        Hai nút cửa hàng ứng dụng đang là CHỖ ĐẶT TRƯỚC — cố ý dùng <span> chứ
+        không phải <a href="#"> để không tạo ra một liên kết dẫn đi đâu cả.
+        Khi có link thật thì đổi span thành thẻ a và bỏ dòng "Sắp ra mắt".
+      #}
+      <footer class="mb-footer">
+        <div class="mb-footer-apps">
+          <div class="mb-footer-apps-copy">
+            <b>Tải ứng dụng ShopTik</b>
+            <small>Theo dõi đơn và nhận tiền hoàn ngay trên điện thoại</small>
+          </div>
+          <div class="mb-stores">
+            <span class="mb-store">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8s-1.6-.7-2.7-.7c-1.4 0-2.7.8-3.4 2-1.4 2.5-.4 6.2 1 8.2.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.2-.8-2.2-3.1z"/><path d="M14.6 6.3c.6-.7 1-1.6.9-2.6-.8 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5.9.1 1.8-.5 2.5-1.2z"/></svg>
+              <span><small>Tải về trên</small><b>App Store</b></span>
+            </span>
+            <span class="mb-store">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.2v17.6c0 .5.5.8.9.6l9.6-5.6-2.6-2.6z"/><path d="M4 3.2 11.9 11l2.6-2.6L4.9 2.6c-.4-.2-.9.1-.9.6z"/><path d="m17.6 9.9-3.1-1.5L11.9 11l2.6 2.6 3.1-1.8c.6-.4.6-1.5 0-1.9z"/></svg>
+              <span><small>Tải về trên</small><b>Google Play</b></span>
+            </span>
+          </div>
+          <span class="mb-store-soon">Sắp ra mắt</span>
         </div>
 
-        <nav class="st-nav" aria-label="Tất cả chức năng">
-          <p class="st-nav-group">Mua sắm</p>
-          <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Tìm sản phẩm</span></a>
-          <a href="/app/discover" {% if appSection == 'discover' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<span>Khám phá</span></a>
-          <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Đơn hàng</span></a>
-          <p class="st-nav-group">Tài chính</p>
-          <a href="/app/wallet" {% if appSection in ['wallet', 'withdrawals', 'banks'] %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<span>Số dư &amp; rút tiền</span></a>
-          <p class="st-nav-group">Tiện ích</p>
-          <a href="/app/links" {% if appSection == 'links' %}class="active" aria-current="page"{% endif %}>{{ icon('link') }}<span>Link chia sẻ</span></a>
-          <a href="/app/referrals" {% if appSection == 'referrals' %}class="active" aria-current="page"{% endif %}>{{ icon('referral') }}<span>Giới thiệu</span></a>
-          <a href="/app/nhiem-vu" {% if appSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ</span></a>
-          <p class="st-nav-group">Khác</p>
-          <a href="/app/support" {% if appSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
-          <a href="/app/settings" {% if appSection == 'settings' %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<span>Tài khoản</span></a>
-        </nav>
-
-      </aside>
-
-      <div class="st-main">
-        <header class="st-topbar">
-          <button class="st-topbar-open" type="button" aria-label="Mở menu" data-sidebar-open>
-            <span></span><span></span><span></span>
-          </button>
-          <a class="st-brand st-topbar-brand" href="/app" aria-label="ShopTik">
-            <img src="/assets/images/icon.png" alt="" aria-hidden="true">
-            <span>SHOPTIK</span>
-          </a>
-          <div class="st-topbar-spacer"></div>
-
-          {% if persistentBalances %}
-            <a class="st-balance" href="/app/wallet">
-              <span>Khả dụng</span><b>{{ persistentBalances.available | vnd }}</b>
-            </a>
-          {% endif %}
-
-          <div class="notification-menu">
-            <button type="button" class="st-icon-button notification-trigger" data-notification-trigger aria-expanded="false" aria-label="Thông báo">
-              {{ icon('bell') }}
-              {% if unreadNotificationCount %}<b class="notification-badge" data-notification-badge>{{ unreadNotificationCount if unreadNotificationCount <= 9 else '9+' }}</b>{% endif %}
-            </button>
-            <div class="notification-dropdown" data-notification-panel>
-              <div class="notification-dropdown-head"><b>Thông báo</b></div>
-              {% if recentNotifications and recentNotifications.length %}
-                <ul class="notification-list">
-                  {% for item in recentNotifications %}
-                    <li class="{{ 'unread' if not item.isRead }}">
-                      <b>{{ item.title }}</b>
-                      {% if item.body %}<p>{{ item.body }}</p>{% endif %}
-                      <time>{{ item.createdAt | datetime }}</time>
-                    </li>
-                  {% endfor %}
-                </ul>
-              {% else %}
-                <p class="notification-empty">Bạn chưa có thông báo mới.</p>
-              {% endif %}
-            </div>
-          </div>
-
-          {% include "partials/theme-button.njk" %}
-
-          {# Menu tài khoản gom: thông tin, chuyển không gian làm việc và
-             Đăng xuất — không còn nằm rải ở đáy sidebar. #}
-          <div class="st-menu">
-            <button type="button" class="st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
-              <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
-              <span class="st-account-email">{{ currentUser.email }}</span>
-              <svg class="st-menu-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
-            </button>
-            <div class="st-menu-panel" data-menu>
-              <a href="/app/settings">{{ icon('user') }}<span>Thông tin tài khoản</span></a>
-              {% if currentUser.role != 'USER' %}
-                <a href="/backoffice/console">{{ icon('ops') }}<span>Mở trang quản trị</span></a>
-              {% endif %}
-              <div class="st-menu-divider" role="separator"></div>
-              <form method="post" action="/dang-xuat">
-                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                {# class button-ghost để rule CTA đỏ của dv13
-                   (button[type=submit]:not(.button-ghost)...) tự loại trừ nút này #}
-                <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
-              </form>
-            </div>
-          </div>
-        </header>
-
-        {# tabindex="-1" để link "Bỏ qua menu" đặt được focus vào đây —
-           thiếu nó, focus rơi về <body> và Tab quay lại đầu trang. #}
-        <main class="st-content" id="main-content" tabindex="-1">
-          {% include "partials/flash.njk" %}
-          {# Nhóm Tài chính gộp thành MỘT giao diện: một tiêu đề chung + 3
-             tab (Số dư / Rút tiền / Ngân hàng) chuyển giữa 3 URL sẵn có —
-             không đổi route hay nghiệp vụ. Các trang khác tự mang tiêu đề
-             trong nội dung. #}
-          {% if appSection in ['wallet', 'withdrawals', 'banks'] %}
-            <div class="st-page-head">
-              <h1>Tài chính</h1>
-              <p>Số dư, lệnh rút và tài khoản nhận tiền trên cùng một màn hình.</p>
-            </div>
-            <nav class="st-subtabs" aria-label="Khu vực tài chính">
-              <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>Số dư</a>
-              <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>Rút tiền</a>
-              <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>Ngân hàng</a>
-            </nav>
-          {% endif %}
-          {% block app_content %}{% endblock %}
-        </main>
-
-        <footer class="st-footer">
+        <div class="mb-footer-bottom">
           <span>© 2026 ShopTik Cashback</span>
-          <a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách người dùng</a>
-        </footer>
-      </div>
+          <nav aria-label="Thông tin pháp lý">
+            <a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách người dùng</a>
+            <a href="/dieu-khoan">Điều khoản</a>
+            <a href="/quyen-rieng-tu">Quyền riêng tư</a>
+            <a href="/app/support">Hỗ trợ</a>
+          </nav>
+        </div>
+      </footer>
     </div>
 
-    <button class="st-scrim" type="button" aria-label="Đóng menu" data-sidebar-close></button>
-
-    <nav class="st-tabbar" aria-label="Điều hướng di động">
-      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>Tìm</b></a>
+    {# Thanh dưới mobile: 5 mục, mục giữa là nút tròn dẫn sang Khám phá.
+       Mọi chức năng còn lại vào qua lưới tiện ích ở trang chủ và tab Cá nhân. #}
+    <nav class="mb-bottomnav" aria-label="Điều hướng di động">
+      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>Trang chủ</b></a>
       <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>Đơn hàng</b></a>
-      <a href="/app/wallet" {% if appSection in ['wallet', 'withdrawals', 'banks'] %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Tài chính</b></a>
-      <a href="/app/support" {% if appSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<b>Hỗ trợ</b></a>
-      <button type="button" data-sidebar-open>{{ icon('more') }}<b>Thêm</b></button>
+      <a class="mb-nav-center{% if appSection == 'discover' %} active{% endif %}" href="/app/discover" aria-label="Khám phá ưu đãi"{% if appSection == 'discover' %} aria-current="page"{% endif %}>{{ icon('compass') }}<b>Khám phá</b></a>
+      <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Số dư</b></a>
+      <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('settings') }}<b>Chức năng</b></a>
     </nav>
 
     <div class="entry-promo-scrim" data-entry-promo hidden inert>

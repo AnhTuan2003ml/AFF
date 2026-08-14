@@ -1,6 +1,6 @@
 :root {
-  --discover-accent: #ff5a1f;
-  --discover-accent-strong: #ef3f17;
+  --discover-accent: #0035a0;
+  --discover-accent-strong: #093489;
   --discover-success: #08a86b;
   --discover-warning: #ffb400;
 }
@@ -66,8 +66,8 @@
   overflow: hidden;
   border-radius: 24px;
   color: #fff;
-  background: linear-gradient(112deg, #ff8a00 0%, #ff5b1f 52%, #ff2455 100%);
-  box-shadow: 0 22px 48px -28px rgba(255, 77, 32, .8);
+  background: linear-gradient(112deg, #00308f 0%, #0035a0 52%, #0036a3 100%);
+  box-shadow: 0 22px 48px -28px rgba(0, 54, 161, .8);
 }
 
 .discover-hero-copy {
@@ -409,7 +409,7 @@
   white-space: nowrap;
 }
 
-.discover-platform-badge.platform-shopee { background: #ee4d2d; }
+.discover-platform-badge.platform-shopee { background: #0c3993; }
 .discover-platform-badge.platform-tiktok { background: #17181d; }
 .discover-platform-badge.platform-lazada { background: #1d2d86; }
 
@@ -562,7 +562,7 @@
 .discover-primary-action {
   border: 0;
   color: #fff;
-  background: linear-gradient(100deg, var(--discover-accent), #ff315f);
+  background: linear-gradient(100deg, var(--discover-accent), #0039aa);
   cursor: pointer;
   box-shadow: 0 11px 24px -15px color-mix(in srgb, var(--discover-accent) 72%, transparent);
   transition: transform .16s ease, filter .16s ease, opacity .16s ease;
@@ -862,7 +862,7 @@
   width: 30px;
   height: 30px;
   border: 3px solid var(--line, #e5e7eb);
-  border-top-color: var(--discover-accent, #ff5a1f);
+  border-top-color: var(--discover-accent, #0035a0);
   border-radius: 50%;
   animation: bestseller-spin 0.7s linear infinite;
 }
@@ -876,5 +876,176 @@
 @media (prefers-reduced-motion: reduce) {
   .bestseller-spinner {
     animation-duration: 2s;
+  }
+}
+
+/* ── Mobile: danh mục thành COMBOBOX mở LÊN (popover, KHÔNG đen màn) ───────
+   Cuộn ngang khó thao tác nên đổi thành nút chọn cố định chân trang; bấm để
+   MỞ bảng danh sách trượt lên ngay trên nút — cuộn dọc để chọn, không phủ nền
+   đen, không khoá màn hình. Nút mở chỉ dùng cho mobile — ẩn trên desktop
+   (desktop giữ dải ngang như cũ). Giữ nguyên nút + hook JS. */
+.discover-cat-fab {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  /* backdrop-filter trên .discover-filters tạo "containing block" khiến phần
+     tử fixed con bị neo vào ô filter thay vì viewport. Bỏ trên mobile. */
+  .discover-filters {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Nút mở (cố định chân trang) — hiển thị danh mục đang chọn. */
+  .discover-cat-fab {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--mb-bottomnav-h, 72px) + 16px + env(safe-area-inset-bottom));
+    z-index: 122;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 0 16px;
+    border: 1px solid var(--line, #e5e7eb);
+    border-radius: 15px;
+    background: var(--surface, #fff);
+    box-shadow: 0 12px 30px -14px rgba(15, 23, 42, 0.34);
+    color: var(--ink, #0f172a);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .discover-cat-fab[aria-expanded="true"] {
+    border-color: var(--discover-accent, #0035a0);
+    box-shadow: 0 16px 34px -14px rgba(0, 53, 160, 0.34);
+  }
+
+  .discover-cat-fab > span {
+    flex: 0 0 auto;
+    color: var(--discover-accent, #0035a0);
+    font-weight: 800;
+  }
+
+  .discover-cat-fab b {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .discover-cat-fab i {
+    flex: 0 0 auto;
+    font-style: normal;
+    font-size: 0.72rem;
+    color: var(--muted, #64748b);
+    transition: transform 0.22s ease;
+  }
+
+  .discover-cat-fab[aria-expanded="true"] i {
+    transform: rotate(180deg);
+  }
+
+  /* Ẩn nút hỗ trợ nổi khi bảng danh mục mở để không chồng góc phải bảng. */
+  body.discover-cat-open .support-fab {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Bảng danh mục mở LÊN ngay trên nút — nền đặc, bo góc, đổ bóng mềm. */
+  .discover-category-row {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--mb-bottomnav-h, 72px) + 16px + 50px + 10px + env(safe-area-inset-bottom));
+    z-index: 121;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    max-height: 46vh;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid var(--line, #e5e7eb);
+    border-radius: 16px;
+    background: var(--surface, #fff);
+    box-shadow: 0 18px 44px -16px rgba(15, 23, 42, 0.36);
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.98);
+    transform-origin: bottom center;
+    transition: opacity 0.2s ease,
+      transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0.24s ease;
+    pointer-events: none;
+  }
+
+  .discover-category-row.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  /* Nhãn nhỏ đầu bảng. */
+  .discover-cat-title {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px 6px;
+    color: var(--muted, #64748b);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* Danh sách danh mục — CUỘN dọc để chọn. */
+  .discover-category-tabs {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .discover-category-tabs button {
+    width: 100%;
+    min-height: 46px;
+    justify-content: flex-start;
+    text-align: left;
+    border: 0;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .discover-category-tabs button:hover {
+    background: color-mix(in srgb, var(--discover-accent, #0035a0) 8%, transparent);
+  }
+
+  /* Bỏ padding đáy chung của .st-content trên trang này để không cộng dồn. */
+  .mb-app.app-section-discover .st-content {
+    padding-bottom: 0;
+  }
+
+  .discover-page {
+    padding-bottom: calc(var(--mb-bottomnav-h, 72px) + 92px + env(safe-area-inset-bottom));
+  }
+
+  /* Nút hỗ trợ nổi nằm trên nút danh mục để không chồng lấn. */
+  .mb-app .support-fab,
+  .mb-app.app-section-discover .support-fab {
+    bottom: calc(var(--mb-bottomnav-h, 72px) + 100px + env(safe-area-inset-bottom)) !important;
   }
 }

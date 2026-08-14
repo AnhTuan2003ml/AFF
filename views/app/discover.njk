@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
   <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/discover-bestsellers.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/discover-category-sheet.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
 
 {% block app_content %}
@@ -37,8 +38,8 @@
           {% endif %}
         </div>
 
-        <div class="discover-category-row">
-          <span><b aria-hidden="true">◇</b> Danh mục:</span>
+        <div class="discover-category-row" id="discover-cat-sheet" data-cat-sheet>
+          <span class="discover-cat-title"><b aria-hidden="true">◇</b> Danh mục</span>
           <div class="discover-category-tabs" role="group" aria-label="Lọc theo danh mục">
             <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả danh mục</button>
             {# Ba danh mục sống lấy thẳng từ Shopee, phân trang riêng từng mục. #}
@@ -51,6 +52,14 @@
           </div>
         </div>
       </section>
+
+      {# Nút mở combobox danh mục + lớp mờ (chỉ hiện trên mobile qua CSS;
+         desktop giữ dải danh mục ngang trong ô filter như cũ). #}
+      <button type="button" class="discover-cat-fab" data-cat-open aria-expanded="false" aria-controls="discover-cat-sheet" aria-label="Chọn danh mục">
+        <span aria-hidden="true">◇</span>
+        <b data-cat-current>Tất cả danh mục</b>
+        <i aria-hidden="true">▲</i>
+      </button>
 
       <section class="discover-grid" aria-live="polite" data-discover-grid>
         {% for item in items %}

@@ -1,32 +1,53 @@
-/* Băng chuyền sản phẩm bán chạy trên trang Tìm sản phẩm. Cuộn ngang có
-   scroll-snap; thẻ gọn; dùng token --sh-* của app shell (tự hợp light/dark). */
+/*
+ * Băng chuyền sản phẩm bán chạy trên trang chủ.
+ *
+ * Dựng theo hệ MB: khối bọc là panel trắng bo 24px giống .mb-panel, tiêu đề
+ * có vạch navy, thẻ sản phẩm nền giấy với viền mảnh, nút mua màu xanh lá
+ * (hành động ra tiền). Toàn bộ màu lấy qua token nên sáng/tối tự khớp —
+ * không còn khối dark hard-code như bản cũ.
+ */
 
 .st-app .promo-carousel {
-  margin-top: 22px;
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, .03);
 }
 
 .promo-carousel-head {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .promo-carousel-kicker {
-  display: block;
-  color: #ee4d2d;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  display: none;
+}
+
+/* Tiêu đề mang vạch navy đứng trước — cùng chữ ký với .mb-panel-title. */
+.st-app .promo-carousel-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
-.st-app .promo-carousel-head h2 {
-  margin: 4px 0 0;
-  color: var(--sh-ink, #1f231e);
-  font-size: 20px;
-  letter-spacing: -0.02em;
+.st-app .promo-carousel-head h2::before {
+  content: "";
+  width: 5px;
+  height: 17px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--brand);
 }
 
 .promo-carousel-nav {
@@ -35,25 +56,27 @@
   flex: none;
 }
 
-.promo-carousel-arrow {
+.st-app .promo-carousel-arrow {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 38px;
   height: 38px;
-  border: 1px solid var(--sh-line, #e5e7eb);
-  border-radius: 50%;
-  color: var(--sh-ink, #1f231e);
-  background: var(--sh-surface, #fff);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--surface);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
 
-.promo-carousel-arrow:hover {
-  color: #ee4d2d;
-  border-color: #ee4d2d;
+.st-app .promo-carousel-arrow:hover {
+  border-color: var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
 }
 
 /* Vùng cuộn: ẩn thanh cuộn, snap theo trang. */
@@ -82,15 +105,22 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--sh-line, #e5e7eb);
-  border-radius: 14px;
-  background: var(--sh-surface, #fff);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.promo-card:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .promo-card-media {
   position: relative;
   aspect-ratio: 1 / 1;
-  background: var(--sh-bg, #f4f6f5);
+  background: var(--surface-muted);
 }
 
 .promo-card-media img {
@@ -102,34 +132,35 @@
 
 .promo-card-badge {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
-  padding: 3px 9px;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 10px;
   border-radius: 999px;
-  color: #fff;
-  background: rgba(22, 132, 91, 0.95);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--on-cta);
+  background: var(--cta);
+  box-shadow: 0 4px 12px rgba(0, 150, 104, .3);
+  font-size: 11.5px;
+  font-weight: 900;
 }
 
 .promo-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   flex: 1;
-  padding: 12px;
+  padding: 14px;
 }
 
-.promo-card-name {
+.st-app .promo-card-name {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
   min-height: 2.7em;
-  color: var(--sh-ink, #1f231e);
-  font-size: 13.5px;
-  font-weight: 600;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -141,41 +172,47 @@
   margin: 0;
 }
 
-.promo-card-price strong {
-  color: #d0342c;
-  font-size: 15px;
+.st-app .promo-card-price strong {
+  color: var(--text);
+  font-size: 15.5px;
+  font-weight: 900;
 }
 
 .promo-card-price span {
-  color: #16845b;
+  color: var(--success);
   font-size: 12.5px;
-  font-weight: 650;
+  font-weight: 800;
 }
 
-.promo-card-buy {
-  margin-top: auto;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  background: #c9371d;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
+/* Nút mua là hành động ra tiền → xanh lá, giống CTA "kích hoạt hoàn tiền"
+   của bản thiết kế. */
+.st-app .promo-card-buy {
   display: inline-flex;
+  margin-top: auto;
+  min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  color: var(--on-cta);
+  background: var(--cta);
+  box-shadow: 0 4px 14px var(--cta-shadow);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
 }
 
-.promo-card-buy:hover:not(:disabled) {
-  background: #ee4d2d;
+.st-app .promo-card-buy:hover:not(:disabled) {
+  background: var(--cta-hover);
+  transform: translateY(-1px);
 }
 
-.promo-card-buy:disabled {
-  opacity: 0.7;
+.st-app .promo-card-buy:disabled {
+  opacity: .7;
   cursor: wait;
 }
 
@@ -184,24 +221,23 @@
   display: flex;
   justify-content: center;
   gap: 7px;
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
-.promo-dot {
+.st-app .promo-dot {
   width: 8px;
   height: 8px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: var(--sh-line-strong, #cbd5e1);
+  border-radius: 999px;
+  background: var(--line-strong);
   cursor: pointer;
-  transition: width 0.2s, background 0.2s;
+  transition: width .2s ease, background .2s ease;
 }
 
-.promo-dot.is-active {
-  width: 20px;
-  border-radius: 999px;
-  background: #ee4d2d;
+.st-app .promo-dot.is-active {
+  width: 22px;
+  background: var(--brand);
 }
 
 @media (max-width: 980px) {
@@ -214,6 +250,10 @@
   .promo-card {
     flex-basis: calc((100% - 14px) / 2);
   }
+
+  .st-app .promo-carousel {
+    border-radius: 20px;
+  }
 }
 
 @media (max-width: 420px) {
@@ -222,26 +262,9 @@
   }
 }
 
-/* Dark: bề mặt tối, viền dịu, badge hoàn vẫn xanh. */
-:root[data-theme="dark"] .st-app .promo-carousel-arrow {
-  border-color: #3d3d3d;
-  color: #e8eae7;
-  background: #242220;
-}
-
-:root[data-theme="dark"] .st-app .promo-card {
-  border-color: #33312f;
-  background: #242220;
-}
-
-:root[data-theme="dark"] .st-app .promo-card-media {
-  background: #1c1b1a;
-}
-
-:root[data-theme="dark"] .st-app .promo-card-name {
-  color: #f2f3f0;
-}
-
-:root[data-theme="dark"] .st-app .promo-carousel-head h2 {
-  color: #f2f3f0;
+@media (prefers-reduced-motion: reduce) {
+  .promo-card:hover,
+  .st-app .promo-card-buy:hover:not(:disabled) {
+    transform: none;
+  }
 }
