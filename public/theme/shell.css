@@ -170,8 +170,8 @@
   margin-left: auto;
   padding: 2px 7px;
   border-radius: 999px;
-  color: #c2410c;
-  background: #ffedd5;
+  color: #07296d;
+  background: #c2dcff;
   font-size: .57rem;
   font-style: normal;
   font-weight: 900;
@@ -179,8 +179,8 @@
 }
 
 :root[data-theme="dark"] .app-nav a em {
-  color: #f6c8b1;
-  background: rgba(212, 121, 66, .14);
+  color: #83b3f1;
+  background: rgba(29, 62, 127, .14);
 }
 
 .app-nav a:hover {

@@ -227,10 +227,20 @@
     credentials: "same-origin",
     headers: { accept: "application/json" },
   })
-    .then(function (response) { return response.json(); })
+    .then(function (response) {
+      // Phải chặn ở đây: phản hồi lỗi (429 rate limit, 500, hết phiên...) vẫn
+      // là JSON hợp lệ nhưng KHÔNG có mảng products, nên nếu cứ .json() thì
+      // mọi sự cố đều bị hiểu nhầm thành "kho trống" và băng chuyền lặng lẽ
+      // biến mất — không có cách nào biết vì sao.
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return response.json();
+    })
     .then(function (data) {
       var products = (data && data.products) || [];
-      if (!products.length) return; // kho trống → giữ ẩn
+      if (!products.length) {
+        console.info("[promo-carousel] kho sản phẩm đang trống nên ẩn băng chuyền.");
+        return;
+      }
       products.forEach(function (product) {
         if (product.imageUrl) track.appendChild(renderCard(product));
       });
@@ -243,7 +253,12 @@
         startAuto();
       }, 80);
     })
-    .catch(function () {
-      /* không có quảng cáo thì thôi */
+    .catch(function (error) {
+      /* Không nạp được thì vẫn ẩn băng chuyền, nhưng nói rõ lý do ra console
+         để lần sau không phải đoán xem "mục Đang hot" đi đâu mất. */
+      console.warn(
+        "[promo-carousel] không nạp được /app/promo-products:",
+        (error && error.message) || error,
+      );
     });
 })();

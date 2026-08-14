@@ -1,0 +1,50 @@
+{#
+  Khoang PHẢI của hero — thẻ ví navy, thay cho panel "bảo chứng" tĩnh của bản
+  thiết kế bằng số liệu thật của người dùng. Thanh tiến độ đo khoảng cách tới
+  mức rút tối thiểu, đặt bề rộng bằng class (CSP chặn style nội tuyến).
+#}
+{% set available = balances.available or 0 %}
+{% set minWithdraw = minWithdrawAmountVnd or 0 %}
+{% set reachedWithdraw = minWithdraw <= 0 or available >= minWithdraw %}
+{% set progressRaw = 100 if reachedWithdraw else ((available * 100 / minWithdraw) | round | int) %}
+{% set progressStep = ((progressRaw / 10) | round | int) * 10 %}
+
+<section class="mb-points" aria-label="Ví hoàn tiền">
+  <div class="mb-points-top">
+    <div>
+      <span class="mb-points-label">Số dư khả dụng</span>
+      <b class="mb-points-value">{{ available | vnd }}</b>
+    </div>
+    <div class="mb-points-side">
+      <span class="mb-chip-glass">Hoàn tới {{ cashbackRate }}%</span>
+      <a class="mb-points-pending" href="/app/orders">
+        Đang chờ: <strong>{{ balances.pending | vnd }}</strong> ›
+      </a>
+    </div>
+  </div>
+
+  <div class="mb-points-bar">
+    <div>
+      <span>Đã mua qua ShopTik</span>
+      <b>{{ purchaseStats.products or 0 }} sản phẩm</b>
+    </div>
+    <div class="mb-points-actions">
+      <a href="/app/wallet">Xem ví</a>
+      <a class="is-primary" href="/app/withdrawals">Rút tiền ›</a>
+    </div>
+  </div>
+
+  <div class="mb-points-progress">
+    <div class="mb-points-progress-copy">
+      {% if reachedWithdraw %}
+        <p>Số dư đã đủ điều kiện rút về ngân hàng — tạo lệnh bất cứ lúc nào.</p>
+      {% else %}
+        <p>Thêm <strong>{{ (minWithdraw - available) | vnd }}</strong> nữa là đủ mức rút tối thiểu {{ minWithdraw | vnd }}.</p>
+      {% endif %}
+      <em>{{ progressRaw }}%</em>
+    </div>
+    <div class="mb-points-track">
+      <i class="mb-w-{{ progressStep }}" aria-hidden="true"></i>
+    </div>
+  </div>
+</section>

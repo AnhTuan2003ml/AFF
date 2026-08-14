@@ -112,7 +112,21 @@ await app.register(rateLimit, {
   global: true,
   max: 300,
   timeWindow: "1 minute",
-  allowList: ["/-/live", "/-/ready"],
+  /*
+   * allowList dạng MẢNG được so với "key" của bộ đếm (mặc định là IP), không
+   * phải đường dẫn — nên khai báo cũ ["/-/live", "/-/ready"] không bao giờ
+   * khớp và chính health check cũng bị tính hạn mức. Dùng hàm để lọc theo URL.
+   *
+   * Quan trọng hơn: KHÔNG tính hạn mức cho tệp tĩnh. Một lần mở trang /app
+   * kéo hơn 25 tệp CSS/JS/ảnh, nên chỉ vài lần chuyển trang là chạm mốc 300 —
+   * người dùng thật lãnh 429, và băng chuyền "Đang hot trên Shopee" biến mất
+   * vì fetch /app/promo-products bị chặn (JS coi phản hồi lỗi là kho trống).
+   * Tệp tĩnh đọc thẳng từ đĩa, không chạm DB, nên không cần bảo vệ ở đây.
+   */
+  allowList: (request) =>
+    request.url.startsWith("/assets/") ||
+    request.url === "/-/live" ||
+    request.url === "/-/ready",
   errorResponseBuilder: (_request, context) =>
     new AppError(
       "RATE_LIMITED",
@@ -131,6 +145,19 @@ await app.register(view, {
   root: path.join(projectRoot, "views"),
   viewExt: "njk",
   options: {
+    /*
+     * Ngoài production thì KHÔNG cache template đã biên dịch.
+     *
+     * Nunjucks đọc và biên dịch file .njk ở lần render đầu rồi giữ luôn trong
+     * bộ nhớ, trong khi `tsx watch` chỉ theo dõi src/ nên sửa .njk không làm
+     * server khởi động lại. Hệ quả rất khó đoán khi phát triển: CSS trong
+     * public/ được đọc lại từ đĩa mỗi request nên LUÔN mới, còn giao diện thì
+     * vẫn là bản cũ — nửa mới nửa cũ, ví dụ thẻ <nav> đã xoá vẫn hiện ra
+     * nhưng mất sạch kiểu dáng vì CSS tương ứng đã bị gỡ.
+     *
+     * Production vẫn cache để không phải đọc đĩa mỗi lượt render.
+     */
+    noCache: config.NODE_ENV !== "production",
     onConfigure(environment: nunjucks.Environment) {
       environment.addFilter("vnd", formatVnd);
       environment.addFilter("datetime", formatDateTime);
@@ -283,6 +310,14 @@ async function shutdown(signal: string): Promise<void> {
 process.on("SIGTERM", () => void shutdown("SIGTERM"));
 process.on("SIGINT", () => void shutdown("SIGINT"));
 
+// Khai báo ngoài try để nhánh catch còn tắt được bộ hẹn giờ đồng bộ.
+let scheduler: { stop: () => void } | null = null;
+
+/* Hook phải đăng ký TRƯỚC app.listen() — Fastify ném
+   FST_ERR_INSTANCE_ALREADY_LISTENING nếu addHook sau khi đã lắng nghe. Hook
+   đóng bao quanh biến `scheduler` nên vẫn thấy giá trị gán về sau. */
+app.addHook("onClose", async () => scheduler?.stop());
+
 try {
   await assertDatabaseReady(db);
   const defaultAdmins = await bootstrapDefaultAdmins(db);
@@ -312,13 +347,36 @@ try {
       "Đã đồng bộ tài khoản admin từ ENV",
     );
   }
-  if (config.ENABLE_SYNC_SCHEDULER) {
-    const scheduler = startSyncScheduler(db, config, app.log);
-    app.addHook("onClose", async () => scheduler.stop());
-  }
   await app.listen({ host: config.HOST, port: config.PORT });
+
+  /*
+   * Bật đồng bộ nền SAU khi đã lắng nghe được cổng.
+   *
+   * startSyncScheduler chạy ngay một lượt (`void tick()`) chứ không đợi hết
+   * chu kỳ đầu. Đặt nó TRƯỚC app.listen() thì khi listen ném lỗi — hay gặp
+   * nhất là EADDRINUSE vì dev server cũ chưa tắt — nhánh catch đóng pool
+   * trong lúc lượt đồng bộ đó còn đang chạy dở, sinh ra lỗi thứ hai
+   * "Cannot use a pool after calling end on the pool" che mất nguyên nhân
+   * thật. clearInterval không cứu được vì nó chỉ chặn các lượt SAU.
+   */
+  if (config.ENABLE_SYNC_SCHEDULER) {
+    scheduler = startSyncScheduler(db, config, app.log);
+  }
 } catch (error) {
-  app.log.fatal({ err: error }, "Không thể khởi động máy chủ");
+  // Chỉ clearInterval, gọi lại vô hại. Với thứ tự mới thì bộ hẹn giờ hầu như
+  // chưa kịp chạy, nhưng vẫn dọn cho chắc.
+  scheduler?.stop();
+
+  const code = (error as NodeJS.ErrnoException | undefined)?.code;
+  if (code === "EADDRINUSE") {
+    app.log.fatal(
+      `Cổng ${config.PORT} đang bị một tiến trình khác chiếm — nhiều khả năng là bản dev server cũ chưa tắt. Tắt tiến trình đó rồi chạy lại, hoặc đổi cổng bằng biến môi trường PORT.`,
+    );
+  } else {
+    app.log.fatal({ err: error }, "Không thể khởi động máy chủ");
+  }
+
+  await app.close().catch(() => undefined);
   await db.end().catch(() => undefined);
   process.exit(1);
 }

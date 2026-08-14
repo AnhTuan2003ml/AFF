@@ -1,0 +1,2677 @@
+/*
+ * ShopTik · MB App — BỐ CỤC giao diện người dùng.
+ *
+ * File này dựng lại toàn bộ khung trang /app theo bản thiết kế MB CashBack:
+ *  - Desktop: header trắng dính trên cùng + thanh tab viên thuốc, KHÔNG còn
+ *    sidebar trái; nội dung nằm giữa trong container 1440px.
+ *  - Mobile: header gradient navy (avatar + lời chào + tìm kiếm + chuông) và
+ *    thanh điều hướng dưới dạng viên thuốc trắng nổi có nút tròn ở giữa.
+ *
+ * Chrome cũ (.st-sidebar / .st-topbar / .st-tabbar / .st-layout) không còn
+ * phần tử nào khớp sau khi app-base.njk đổi sang class `mb-*`, nên các rule đó
+ * tự vô hiệu — đúng cách dự án từng bỏ lớp chrome `commerce-*` trước đây.
+ * `.st-app` và `.st-content` được GIỮ trên container để toàn bộ CSS nội dung
+ * trang (bảng, panel, trạng thái trống, dark-mode guard...) vẫn áp dụng.
+ *
+ * Quy ước: chỉ trình bày. Không phần tử nào ở đây đổi hoặc thêm hook JS.
+ */
+
+/* ====================================================================== */
+/* 1. KHUNG TRANG                                                          */
+/* ====================================================================== */
+
+.mb-app {
+  --mb-container: 1440px;
+  --mb-gutter: clamp(16px, 3vw, 48px);
+  --mb-header-h: 64px;
+  --mb-bottomnav-h: 72px;
+
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.mb-shell {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  flex-direction: column;
+}
+
+.mb-container {
+  width: 100%;
+  max-width: var(--mb-container);
+  margin-inline: auto;
+  padding-inline: var(--mb-gutter);
+}
+
+/* .st-content giữ nguyên tên để CSS nội dung cũ còn khớp, nhưng bố cục
+   (bề ngang, khoảng đệm) do khung mới quyết định. */
+.mb-app .st-content {
+  display: block;
+  width: 100%;
+  max-width: var(--mb-container);
+  margin-inline: auto;
+  padding: 24px var(--mb-gutter) 56px;
+}
+
+.mb-app .st-content > * + * {
+  margin-top: 20px;
+}
+
+/* ====================================================================== */
+/* 2. HEADER                                                               */
+/* ====================================================================== */
+
+.mb-header {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, .03);
+}
+
+.mb-header-inner {
+  display: flex;
+  min-height: var(--mb-header-h);
+  align-items: center;
+  gap: 14px;
+  padding-block: 10px;
+}
+
+/* --- Nhận diện --- */
+
+.mb-brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+
+.mb-brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--mb-navy-900), var(--mb-navy-800) 55%, #0050d8);
+  box-shadow: 0 4px 14px rgba(0, 45, 156, .25);
+}
+
+.mb-brand-mark img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.mb-brand-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mb-brand-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.mb-brand-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-green-600), #0d9488);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.mb-brand-sub {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Ô tìm kiếm --- */
+
+.mb-search {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  /* 380px là đủ cho một câu tìm kiếm; dài hơn thì thanh này chiếm hết khoảng
+     giữa header và đẩy nhóm nút sang sát mép. */
+  max-width: 380px;
+  flex: 1 1 auto;
+  align-items: center;
+}
+
+.mb-search svg {
+  position: absolute;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.mb-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px 0 38px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--surface-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.mb-search input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.mb-search input:focus {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+  outline: none;
+}
+
+/* --- Nhóm hành động bên phải --- */
+
+.mb-header-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* Chip ví: điểm chờ + số dư khả dụng, giống "wallet stat capsule". */
+.mb-wallet-chip {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.mb-wallet-chip:hover {
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+}
+
+.mb-wallet-stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mb-wallet-stat i {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.mb-wallet-stat.is-pending i {
+  color: var(--mb-amber-600);
+  background: var(--mb-amber-50);
+}
+
+.mb-wallet-stat.is-available i {
+  color: var(--mb-green-700);
+  background: var(--mb-green-50);
+}
+
+.mb-wallet-stat > span > span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mb-wallet-stat b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.mb-wallet-stat.is-pending b { color: var(--mb-amber-600); }
+.mb-wallet-stat.is-available b { color: var(--mb-green-700); }
+
+.mb-wallet-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+
+/* Nút hành động cao 40px, bo 14px — cùng nhịp với chip ví. */
+.mb-action {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.mb-action svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/*
+ * Phải bọc .mb-app: dv13 có rule ".dv13-commerce-shell a { color: inherit }"
+ * với độ ưu tiên (0,1,1), nặng hơn ".mb-action-cta" (0,1,0) — nên nút ăn màu
+ * chữ của khối cha, hoá đen ở theme sáng và trắng ở theme tối.
+ */
+.mb-app .mb-action-cta {
+  color: #fff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, .34);
+}
+
+.mb-app .mb-action-cta:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #14c98d, #069f6b);
+  box-shadow: 0 8px 20px rgba(5, 150, 105, .42);
+  transform: translateY(-1px);
+}
+
+.mb-app .mb-action-soft {
+  border-color: var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.mb-action-soft:hover {
+  background: var(--surface-hover-strong);
+}
+
+/*
+ * Ô tìm kiếm phải đè bằng !important và selector đủ nặng: app-shell.css có
+ * `.st-app input { min-height: 44px; background: var(--dv-paper) !important }`
+ * (0,2,0) — rule dành cho ô nhập trong NỘI DUNG trang, nhưng vơ luôn ô tìm
+ * kiếm trên header, ép nó cao 44px và nền trắng đục giữa dải navy.
+ */
+.mb-app .mb-search input {
+  min-height: 0 !important;
+  border-color: var(--line) !important;
+  border-radius: 14px !important;
+  background: var(--surface-muted) !important;
+}
+
+.mb-app .mb-search input:focus {
+  border-color: var(--brand) !important;
+  background: var(--surface) !important;
+}
+
+/* Nút vuông 40px cho chuông / đổi theme. Gộp cả .st-icon-button vì nút đổi
+   theme dùng class đó (partials/theme-button.njk) — không gộp thì nó giữ
+   nguyên kiểu trắng 44px của app-shell, lệch hẳn với nút chuông bên cạnh. */
+.mb-app .mb-icon-button,
+.mb-app .mb-header .st-icon-button {
+  position: relative;
+  display: grid;
+  /* Khoá cả min/max: nếu chỉ đặt width thì một rule khác có min-width là hộp
+     bị kéo rộng ra, hai nút cạnh nhau lệch cỡ thấy rõ. */
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  /* app-shell.css tô .st-icon-button bằng !important (viền #dde2e8, nền
+     #f5f6f8) nên nút đổi theme phải đè lại cùng mức, không thì nó trắng đục
+     lệch hẳn với nút chuông bên cạnh. */
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  color: var(--ink-soft) !important;
+  background: var(--surface) !important;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.mb-app .mb-icon-button:hover,
+.mb-app .mb-header .st-icon-button:hover {
+  border-color: var(--brand-line) !important;
+  color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+}
+
+.mb-app .mb-icon-button svg,
+.mb-app .mb-header .st-icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-app .notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 10px;
+  font-weight: 900;
+  font-style: normal;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* --- Menu tài khoản --- */
+
+.mb-app .st-account {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--surface-muted);
+  cursor: pointer;
+}
+
+.mb-app .st-account:hover {
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+}
+
+.mb-app .st-avatar {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--mb-cyan-300);
+  background: var(--brand);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mb-app .st-account-email {
+  max-width: 130px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-app .st-menu-caret {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-app .st-menu,
+.mb-app .notification-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.mb-app .st-menu-panel,
+.mb-app .notification-dropdown {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 8px);
+  right: 0;
+  display: none;
+  width: min(300px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.mb-app .st-menu-panel.open,
+.mb-app .notification-dropdown.open {
+  display: block;
+}
+
+.mb-app .st-menu-panel a,
+.mb-app .st-menu-logout {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mb-app .st-menu-panel a:hover,
+.mb-app .st-menu-logout:hover {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.mb-app .st-menu-panel svg,
+.mb-app .st-menu-logout svg {
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-app .st-menu-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--line);
+}
+
+.mb-app .notification-dropdown-head {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mb-app .notification-list {
+  max-height: 340px;
+  margin: 0;
+  padding: 4px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.mb-app .notification-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.mb-app .notification-list li.unread {
+  background: var(--brand-soft);
+}
+
+.mb-app .notification-list b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.mb-app .notification-list p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.mb-app .notification-list time {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.mb-app .notification-empty {
+  margin: 0;
+  padding: 18px 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* --- Phần chỉ hiện trên mobile --- */
+
+.mb-header-mobile-only {
+  display: none;
+}
+
+/* ====================================================================== */
+/* 3. THANH TAB (desktop)                                                  */
+/* ====================================================================== */
+
+.mb-tabs {
+  padding-top: 20px;
+}
+
+.mb-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, .03);
+  scrollbar-width: none;
+}
+
+.mb-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.mb-tab {
+  display: inline-flex;
+  height: 44px;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 13px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.mb-tab svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-tab:hover {
+  color: var(--text);
+  background: var(--surface-muted);
+}
+
+.mb-tab.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-navy-900), var(--mb-navy-800) 52%, #0048d0);
+  box-shadow: 0 6px 18px rgba(0, 45, 156, .25);
+}
+
+.mb-tab.active svg {
+  color: var(--mb-cyan-300);
+}
+
+.mb-tab-badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  font-size: 10px;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.mb-tab.active .mb-tab-badge {
+  color: var(--mb-navy-950);
+  background: #34d399;
+}
+
+/* ====================================================================== */
+/* 4. THANH ĐIỀU HƯỚNG DƯỚI (mobile)                                       */
+/* ====================================================================== */
+
+.mb-bottomnav {
+  display: none;
+}
+
+/* ====================================================================== */
+/* 5. FOOTER                                                               */
+/* ====================================================================== */
+
+/*
+ * width:100% là bắt buộc, không thừa: footer là flex item của .mb-shell, mà
+ * margin-inline:auto trên flex item sẽ NUỐT hết khoảng trống trục ngang và
+ * ép item co về fit-content (đã làm footer chỉ rộng 361px, nằm giữa trang).
+ * Có width xác định thì auto margin mới quay lại đúng việc căn giữa.
+ */
+.mb-footer {
+  width: 100%;
+  max-width: var(--mb-container);
+  margin-inline: auto;
+  /* Chừa lề phải rộng hơn để link cuối không nằm dưới nút hỗ trợ nổi. */
+  padding: 26px calc(var(--mb-gutter) + 60px) 30px var(--mb-gutter);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mb-footer-apps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mb-footer-apps-copy b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 900;
+}
+
+.mb-footer-apps-copy small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.mb-stores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Nút cửa hàng: khối đen bo tròn, icon + hai dòng chữ — dạng chuẩn ai cũng
+   nhận ra. Đang là chỗ đặt trước nên không có con trỏ bàn tay. */
+.mb-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 15px;
+  border: 1px solid var(--mb-slate-800);
+  border-radius: 12px;
+  color: #fff;
+  background: var(--mb-slate-900);
+  text-decoration: none;
+  transition: background .15s ease, transform .15s ease;
+}
+
+/*
+ * KHÔNG đặt aria-disabled lên hai ô cửa hàng: chúng là <span> thuần, không
+ * phải điều khiển, nên thuộc tính đó vừa sai ngữ nghĩa vừa dính rule
+ * `.st-app [aria-disabled="true"]` của app-shell.css — rule vốn dành cho nút
+ * nhưng viết bằng selector thuộc tính trần nên tô xám mọi thứ (đo được
+ * bg #e6e8eb, chữ #8d9299). Trạng thái đã có nhãn "Sắp ra mắt" nói rõ.
+ */
+.mb-store:not(a) {
+  cursor: default;
+}
+
+a.mb-store:hover {
+  background: var(--mb-slate-800);
+  transform: translateY(-1px);
+}
+
+.mb-store svg {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.mb-store small {
+  display: block;
+  color: rgba(255, 255, 255, .74);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1.2;
+}
+
+.mb-store b {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+
+.mb-store-soon {
+  padding: 4px 10px;
+  border: 1px solid var(--warning-line);
+  border-radius: 999px;
+  color: var(--warning);
+  background: var(--warning-soft);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.mb-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-top: 16px;
+}
+
+.mb-footer-bottom nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.mb-footer a {
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mb-footer a:hover {
+  color: var(--brand);
+}
+
+/* ====================================================================== */
+/* 5b. DẢI NHẮC VIỆC                                                       */
+/* ====================================================================== */
+
+.mb-alert {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--warning-line);
+  border-radius: 20px;
+  color: var(--text);
+  background: var(--warning-soft);
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.mb-alert:hover {
+  border-color: var(--warning);
+  box-shadow: var(--shadow-sm);
+}
+
+.mb-alert-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+
+.mb-alert-icon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-alert-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.mb-alert-copy b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 900;
+}
+
+.mb-alert-copy small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mb-alert-go {
+  flex: 0 0 auto;
+  color: var(--warning);
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ====================================================================== */
+/* 6. KHỐI DÙNG CHUNG CHO NỘI DUNG                                         */
+/* ====================================================================== */
+
+/*
+ * Tiêu đề tự ngắt dòng CÂN — không để dòng trên còn thừa cả một khoảng mà
+ * dòng dưới chỉ có một hai chữ. `balance` chia đều số chữ giữa các dòng,
+ * `pretty` lo cho đoạn văn dài (chống chữ mồ côi cuối đoạn). Trình duyệt cũ
+ * không hiểu thì bỏ qua, chữ vẫn ngắt như bình thường.
+ */
+/* CHỈ áp cho tiêu đề nhiều dòng. Đặt lên viên thuốc hay nhãn ngắn thì nó
+   chủ động bẻ làm hai dòng cho "cân" trong khi một dòng vẫn vừa — đúng kiểu
+   xuống dòng vô cớ. */
+.mb-app :is(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+/* Viên thuốc luôn một dòng. */
+.mb-hero-badge {
+  white-space: nowrap;
+}
+
+.mb-only-narrow {
+  display: none;
+}
+
+.mb-app :is(p, .mb-hero-intro p, .mb-alert-copy small, .mb-tool b) {
+  text-wrap: pretty;
+}
+
+.mb-panel {
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, .03);
+}
+
+.mb-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mb-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Vạch navy đứng trước tiêu đề — dấu hiệu nhận biết của bản thiết kế. */
+.mb-panel-title::before {
+  content: "";
+  width: 5px;
+  height: 17px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+.mb-pill-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--success-line);
+  border-radius: 999px;
+  color: var(--success);
+  background: var(--success-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.mb-pill-note::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mb-green-500);
+}
+
+.mb-see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.mb-see-all:hover {
+  text-decoration: underline;
+}
+
+/* ====================================================================== */
+/* 7. HERO TRANG CHỦ — tiêu đề + 2 khoang                                  */
+/* ====================================================================== */
+
+/* Các khối trong hero phải có nhịp riêng, không thì ô dán link và bảng sàn
+   dính sát nhau như một khối. */
+.mb-hero {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 4px;
+}
+
+.mb-hero-intro {
+  max-width: 900px;
+  margin-inline: auto;
+  padding-bottom: 24px;
+  text-align: center;
+}
+
+.mb-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border: 1px solid var(--brand-line);
+  border-radius: 999px;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mb-hero-badge svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-hero-intro h1 {
+  margin: 14px 0 10px;
+  font-size: clamp(28px, 3.6vw, 46px);
+  font-weight: 900;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+}
+
+.mb-hero-intro h1 em {
+  color: var(--brand);
+  font-style: normal;
+}
+
+.mb-hero-intro p {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.mb-hero-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: stretch;
+}
+
+/* --- Khoang trái: dán link --- */
+
+.mb-converter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(18px, 2.4vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 12px 36px -14px rgba(0, 45, 156, .16);
+}
+
+.mb-converter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mb-converter-head > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.mb-converter-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.mb-converter-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-converter h2 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.mb-converter-head p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.mb-samples {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  scrollbar-width: none;
+}
+
+.mb-samples::-webkit-scrollbar {
+  display: none;
+}
+
+.mb-samples > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* --- Khoang phải: bảng bảo chứng navy --- */
+
+.mb-sidepane {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: clamp(18px, 2.4vw, 28px);
+  border: 1px solid rgba(96, 165, 250, .3);
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-navy-900) 0%, var(--mb-navy-800) 55%, #004bb5 100%);
+  box-shadow: 0 12px 36px -12px rgba(0, 45, 156, .34);
+}
+
+.mb-sidepane-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mb-chip-glass {
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 999px;
+  color: var(--mb-cyan-300);
+  background: rgba(255, 255, 255, .14);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.mb-sidepane-rate {
+  color: var(--mb-amber-400);
+  font-size: 12.5px;
+  font-weight: 900;
+}
+
+.mb-sidepane h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: clamp(16px, 1.6vw, 19px);
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.mb-sidepane p {
+  margin: 0;
+  color: #cfe0ff;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.mb-sidepane-facts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  text-align: center;
+}
+
+.mb-sidepane-facts div {
+  padding: 10px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .1);
+}
+
+.mb-sidepane-facts span {
+  display: block;
+  color: #bcd4ff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mb-sidepane-facts strong {
+  display: block;
+  margin-top: 3px;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 900;
+}
+
+.mb-sidepane-facts .is-money strong { color: #6ee7b7; }
+.mb-sidepane-facts .is-free strong { color: var(--mb-amber-400); }
+
+/* ====================================================================== */
+/* 8. Ô SỐ LIỆU                                                            */
+/* ====================================================================== */
+
+.mb-kpis {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mb-kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, .03);
+  text-decoration: none;
+}
+
+.mb-kpi:hover {
+  border-color: var(--brand-line);
+}
+
+.mb-kpi i {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 16px;
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.mb-kpi-money i { color: var(--mb-green-700); background: var(--mb-green-50); }
+.mb-kpi-point i { color: var(--mb-amber-600); background: var(--mb-amber-50); }
+.mb-kpi-order i { color: var(--brand); background: var(--brand-soft); }
+.mb-kpi-shield i { color: #7c3aed; background: #f5f3ff; }
+
+.mb-kpi-copy span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mb-kpi b {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.mb-kpi-money b { color: var(--success); }
+
+/* ====================================================================== */
+/* 9. SÀN ĐỐI TÁC — bọc lại .platform-tab sẵn có                           */
+/* ====================================================================== */
+
+.mb-brands .platform-grid,
+.mb-brands.platform-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mb-app .mb-brands .platform-tab {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-muted);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.mb-app .mb-brands .platform-tab:hover {
+  border-color: var(--brand-line);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.mb-app .mb-brands .platform-tab.active {
+  border-color: transparent;
+  background: var(--brand-soft);
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+/*
+ * Ô logo BUỘC phải sáng: ba file platform-*.webp là WebP lossy KHÔNG có kênh
+ * alpha, nền trắng nằm sẵn trong ảnh nên không CSS nào gỡ được. Đặt ô nền tối
+ * thì logo nổi một mảng trắng vuông giữa ô, còn xấu hơn.
+ * Cách sửa triệt để là thay bằng file PNG/SVG nền trong suốt.
+ */
+.mb-app .mb-brands .platform-logo {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+  transition: transform .18s ease;
+}
+
+.mb-app .mb-brands .platform-tab:hover .platform-logo {
+  transform: scale(1.06);
+}
+
+/*
+ * Dark mode: ô logo để TRẮNG TINH, đúng bằng nền trắng nằm sẵn trong ảnh.
+ * Trước đó dùng trắng ngà cho đỡ chói thì hoá ra hai sắc trắng khác nhau
+ * chồng lên nhau — nhìn thành hai lớp, còn rối hơn. Một màu trắng duy nhất
+ * thì ô và ảnh liền mạch thành một huy hiệu.
+ */
+:root[data-theme="dark"] .mb-app .mb-brands .platform-logo {
+  border-color: #fff;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+}
+
+/* Viên thuốc tỉ lệ hoàn: nền trắng mờ của bản sáng đặt lên nền tối thành xám
+   nhờ nhờ, chữ chìm hẳn. Trong dark dùng nền kính tối + chữ xanh lá sáng. */
+:root[data-theme="dark"] .mb-app .mb-brands .platform-tab small {
+  color: #5fe0ab !important;
+  background: rgba(0, 0, 0, .34);
+  box-shadow: inset 0 0 0 1px rgba(95, 224, 171, .28);
+}
+
+.mb-app .mb-brands .platform-logo img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+/*
+ * dv13 xếp thẻ sàn theo lưới 2 cột nên đặt align-self:end/start cho tên và
+ * dòng tỉ lệ. Thẻ mới là cột flex — ở đó end/start nghĩa là dạt PHẢI/TRÁI,
+ * làm chữ lệch khỏi logo. Ép về giữa (đúng lỗi từng gặp ở bản mobile cũ).
+ */
+.mb-app .mb-brands .platform-tab > :is(span, strong, small, b, i, em) {
+  align-self: center;
+  grid-row: auto;
+  text-align: center;
+}
+
+.mb-app .mb-brands .platform-tab strong {
+  color: var(--text) !important;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+/* Tỉ lệ hoàn thành viên thuốc trắng nổi trên nền pastel — đọc rõ hơn hẳn
+   một dòng chữ xanh trôi nổi. */
+.mb-app .mb-brands .platform-tab small {
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--success) !important;
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mb-app .mb-brands .platform-tab.active strong {
+  color: var(--brand) !important;
+}
+
+.mb-app .mb-brands .platform-card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--mb-navy-850);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.mb-app .mb-brands .platform-tab {
+  position: relative;
+}
+
+/* ====================================================================== */
+/* 10. LƯỚI TIỆN ÍCH                                                       */
+/* ====================================================================== */
+
+/*
+ * Mỗi tiện ích là một THẺ có nền và viền riêng, không phải icon trần thả
+ * trên nền trắng — nhờ vậy vùng bấm rõ ràng, hàng lối đều nhau và chữ có chỗ
+ * thở. auto-fit để số cột tự co theo bề ngang thay vì ép cứng 6 cột.
+ */
+/*
+ * Lưới tiện ích theo mẫu Boss gửi: ô icon LỚN nhiều màu, chữ nằm DƯỚI và căn
+ * giữa. Mỗi ô một sắc riêng để mắt nhớ vị trí theo màu chứ không phải đọc
+ * từng chữ — đúng cách các app tiện ích Việt hay làm.
+ */
+.mb-tools {
+  display: grid;
+  gap: 22px 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.mb-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.mb-tool i {
+  position: relative;
+  display: grid;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 19px;
+  /* Màu mặc định; từng ô ghi đè bằng lớp .mb-tool-* bên dưới. */
+  background: linear-gradient(145deg, #4f7ffa, #1d4ed8);
+  box-shadow: 0 8px 18px -8px rgba(15, 23, 42, .5);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.mb-tool:hover i {
+  box-shadow: 0 12px 24px -8px rgba(15, 23, 42, .55);
+  transform: translateY(-3px);
+}
+
+/* Nét trắng trên nền màu đặc — không đổi theo từng ô. */
+.mb-tool i svg {
+  width: 27px;
+  height: 27px;
+  color: #fff;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-tool-amber i  { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
+.mb-tool-green i  { background: linear-gradient(145deg, #34d399, #059669); }
+.mb-tool-emerald i{ background: linear-gradient(145deg, #2dd4bf, #0d9488); }
+.mb-tool-sky i    { background: linear-gradient(145deg, #38bdf8, #0284c7); }
+.mb-tool-rose i   { background: linear-gradient(145deg, #fb7185, #e11d48); }
+.mb-tool-violet i { background: linear-gradient(145deg, #a78bfa, #7c3aed); }
+.mb-tool-purple i { background: linear-gradient(145deg, #c084fc, #9333ea); }
+.mb-tool-cyan i   { background: linear-gradient(145deg, #22d3ee, #0891b2); }
+.mb-tool-indigo i { background: linear-gradient(145deg, #818cf8, #4f46e5); }
+.mb-tool-orange i { background: linear-gradient(145deg, #fb923c, #ea580c); }
+.mb-tool-pink i   { background: linear-gradient(145deg, #f472b6, #db2777); }
+
+.mb-tool b {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mb-tool:hover b {
+  color: var(--brand);
+}
+
+.mb-tool em {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  padding: 2px 6px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 10px;
+  font-weight: 900;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+/* ====================================================================== */
+/* 11. BĂNG QUẢNG CÁO NAVY                                                 */
+/* ====================================================================== */
+
+.mb-promo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px clamp(18px, 2.4vw, 28px);
+  border: 1px solid rgba(96, 165, 250, .3);
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(120deg, var(--mb-navy-900), var(--mb-navy-800) 52%, #0052ff);
+  box-shadow: 0 12px 32px -14px rgba(0, 45, 156, .40);
+}
+
+.mb-promo-copy {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.mb-promo-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mb-promo h2 {
+  margin: 8px 0 4px;
+  color: #fff;
+  font-size: 15.5px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+.mb-promo p {
+  margin: 0;
+  color: #c9dcff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* ====================================================================== */
+/* 12. THẺ VÍ NAVY (nổi bật trên mobile)                                   */
+/* ====================================================================== */
+
+.mb-points {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid rgba(96, 165, 250, .3);
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-navy-900) 0%, var(--mb-navy-800) 55%, #004bb5 100%);
+  box-shadow: 0 12px 32px -14px rgba(0, 45, 156, .34);
+}
+
+.mb-points::before,
+.mb-points::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.mb-points::before {
+  top: -40px;
+  right: -30px;
+  width: 160px;
+  height: 160px;
+  background: rgba(34, 211, 238, .18);
+  filter: blur(34px);
+}
+
+.mb-points::after {
+  bottom: -30px;
+  left: -25px;
+  width: 130px;
+  height: 130px;
+  background: rgba(96, 165, 250, .2);
+  filter: blur(28px);
+}
+
+.mb-points > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mb-points-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mb-points-label {
+  display: block;
+  color: #a5d8ff;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.mb-points-value {
+  display: block;
+  margin-top: 3px;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  text-shadow: 0 0 18px rgba(0, 163, 255, .35);
+}
+
+.mb-points-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.mb-points-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  color: #d6e6ff;
+  background: rgba(255, 255, 255, .12);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mb-points-pending strong {
+  color: var(--mb-amber-400);
+}
+
+.mb-points-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 15px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, .24);
+}
+
+.mb-points-bar span {
+  display: block;
+  color: #a5d8ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mb-points-bar b {
+  display: block;
+  margin-top: 2px;
+  color: #6ee7b7;
+  font-size: 14.5px;
+  font-weight: 900;
+}
+
+.mb-points-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mb-points-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 13px;
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.mb-points-actions a.is-primary {
+  border-color: transparent;
+  background: var(--cta);
+  box-shadow: 0 4px 14px rgba(0, 150, 104, .35);
+}
+
+.mb-points-actions a:hover {
+  background: rgba(255, 255, 255, .24);
+}
+
+.mb-points-actions a.is-primary:hover {
+  background: var(--cta-hover);
+}
+
+.mb-points-progress {
+  margin-top: 15px;
+}
+
+.mb-points-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.mb-points-progress-copy p {
+  margin: 0;
+  color: #c9dcff;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.mb-points-progress-copy p strong {
+  color: var(--mb-amber-400);
+}
+
+.mb-points-progress-copy em {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid rgba(103, 232, 249, .35);
+  border-radius: 8px;
+  color: var(--mb-amber-400);
+  background: var(--mb-navy-850);
+  font-size: 10.5px;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.mb-points-track {
+  height: 10px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .3);
+}
+
+.mb-points-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22d3ee, #7dd3fc 55%, var(--mb-amber-400));
+}
+
+/* Bề rộng thanh tiến độ qua class (CSP chặn style nội tuyến). */
+.mb-points-track .mb-w-0 { width: 4%; }
+.mb-points-track .mb-w-10 { width: 10%; }
+.mb-points-track .mb-w-20 { width: 20%; }
+.mb-points-track .mb-w-30 { width: 30%; }
+.mb-points-track .mb-w-40 { width: 40%; }
+.mb-points-track .mb-w-50 { width: 50%; }
+.mb-points-track .mb-w-60 { width: 60%; }
+.mb-points-track .mb-w-70 { width: 70%; }
+.mb-points-track .mb-w-80 { width: 80%; }
+.mb-points-track .mb-w-90 { width: 90%; }
+.mb-points-track .mb-w-100 { width: 100%; }
+
+/* ====================================================================== */
+/* 13. DÒNG ĐƠN GẦN ĐÂY                                                    */
+/* ====================================================================== */
+
+.mb-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mb-order {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.mb-order:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.mb-order-thumb {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+
+.mb-order-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mb-order-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.mb-order-copy small {
+  display: block;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.mb-order-copy b {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-order-copy em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.mb-order-metrics {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.mb-order-metrics i {
+  display: block;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.mb-order-metrics strong {
+  color: var(--success);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.mb-empty-soft {
+  padding: 26px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* ====================================================================== */
+/* 12b. TRƯỜNG NHẬP TRONG NỘI DUNG TRANG                                   */
+/* ====================================================================== */
+
+/*
+ * Ô nhập theo bản thiết kế: nền xám rất nhạt, viền mảnh, bo 14px, khi focus
+ * chuyển nền trắng + viền navy + vòng sáng xanh.
+ *
+ * Phải !important vì dv13 có `.dv13-commerce-shell .orders-history-search
+ * input { border: 0 !important }` (thiết kế cũ để viền ở form bọc ngoài),
+ * trong khi app-shell lại xoá viền của chính form bọc đó — kết quả là ô tìm
+ * đơn hàng mất sạch viền, trắng trên nền trắng, nhìn như không có ô nhập.
+ */
+.mb-app .st-content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea
+) {
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  color: var(--text);
+  background: var(--surface-muted) !important;
+}
+
+.mb-app .st-content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea
+):focus {
+  border-color: var(--brand) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent) !important;
+  outline: none;
+}
+
+.mb-app .st-content :is(input, textarea)::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ====================================================================== */
+/* 13b. TAB CÁ NHÂN — thẻ nhận diện + danh sách lối tắt                    */
+/* ====================================================================== */
+
+.mb-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid rgba(96, 165, 250, .3);
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mb-navy-900) 0%, var(--mb-navy-800) 55%, #004bb5 100%);
+  box-shadow: 0 12px 32px -14px rgba(0, 45, 156, .34);
+}
+
+.mb-profile-avatar {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #67e8f9, #60a5fa 45%, #6366f1);
+}
+
+.mb-profile-avatar span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--mb-cyan-300);
+  background: var(--mb-navy-850);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.mb-profile-copy {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.mb-profile-copy b {
+  display: block;
+  overflow: hidden;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-profile-copy small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #bcd4ff;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-profile-stats {
+  display: flex;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Dùng > * chứ không phải div: ở trang Chức năng thẻ hồ sơ là thẻ <a> nên
+   con bên trong phải là <span> cho HTML hợp lệ, còn trang Hồ sơ vẫn là <div>. */
+.mb-profile-stats > * {
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, .22);
+  text-align: right;
+}
+
+.mb-profile-stats > * > span {
+  display: block;
+  color: #a5d8ff;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mb-profile-stats b {
+  display: block;
+  margin-top: 2px;
+  color: #6ee7b7;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.mb-profile-stats .is-pending b {
+  color: var(--mb-amber-400);
+}
+
+/* Thẻ hồ sơ ở trang Chức năng bấm được để sang trang Thông tin cá nhân. */
+.mb-profile-link {
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.mb-profile-link:hover {
+  border-color: rgba(167, 213, 255, .55);
+  box-shadow: 0 16px 38px -16px rgba(0, 45, 156, .45);
+  transform: translateY(-1px);
+}
+
+.mb-profile-go {
+  flex: 0 0 auto;
+  color: rgba(190, 220, 255, .82);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mb-linklist {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Form đăng xuất chỉ là vỏ bọc CSRF — display:contents để nút bên trong nằm
+   thẳng vào lưới như các hàng còn lại. */
+.mb-linklist form {
+  display: contents;
+}
+
+.mb-linkrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.mb-linkrow:hover {
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+}
+
+.mb-linkrow > svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: var(--brand);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mb-linkrow span {
+  flex: 1;
+  min-width: 0;
+}
+
+.mb-linkrow::after {
+  content: "›";
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.mb-linkrow.is-danger {
+  color: var(--danger);
+}
+
+.mb-linkrow.is-danger > svg {
+  color: var(--danger);
+}
+
+.mb-linkrow.is-danger:hover {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+/* ====================================================================== */
+/* 14. MOBILE                                                              */
+/* ====================================================================== */
+
+@media (max-width: 1023px) {
+  .mb-app {
+    --mb-header-h: 54px;
+  }
+
+  /* Header đổi sang dải gradient navy, nội dung trắng. */
+  .mb-header {
+    border-bottom-color: rgba(255, 255, 255, .14);
+    background: var(--chrome-gradient);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 6px 20px -10px rgba(0, 24, 89, .6);
+  }
+
+  .mb-header-inner {
+    gap: 8px;
+    padding-block: 7px;
+  }
+
+  /* Bên trái header mobile là DẤU HIỆU THƯƠNG HIỆU, không phải lời chào —
+     chỗ hẹp thì logo nhận ra ngay, còn tên người dùng không nói lên điều gì
+     mà lại ăn mất chỗ của ô tìm kiếm. Tên vẫn xem được ở tab Chức năng. */
+  .mb-brand-copy,
+  .mb-header-actions .mb-wallet-chip,
+  .mb-header-actions .mb-action,
+  .mb-header-actions .st-menu,
+  .mb-tabs {
+    display: none;
+  }
+
+  .mb-header .mb-brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+
+  .mb-header .mb-brand-mark img {
+    width: 23px;
+    height: 23px;
+  }
+
+  /* Ô tìm kiếm kính mờ trên nền navy. */
+  .mb-app .mb-search input {
+    height: 31px;
+    padding-left: 30px;
+    border-color: rgba(255, 255, 255, .2) !important;
+    border-radius: 999px !important;
+    color: #fff;
+    background: rgba(255, 255, 255, .15) !important;
+    font-size: 11.5px;
+  }
+
+  .mb-search input::placeholder {
+    color: rgba(191, 219, 254, .8);
+  }
+
+  .mb-app .mb-search input:focus {
+    border-color: var(--mb-cyan-300) !important;
+    background: rgba(255, 255, 255, .24) !important;
+    box-shadow: none;
+  }
+
+  .mb-search svg {
+    left: 11px;
+    width: 14px;
+    height: 14px;
+    color: #bfdbfe;
+  }
+
+  .mb-app .mb-icon-button,
+  .mb-app .mb-header .st-icon-button {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    border-color: rgba(255, 255, 255, .2) !important;
+    border-radius: 999px !important;
+    color: #fff !important;
+    background: rgba(255, 255, 255, .15) !important;
+  }
+
+  .mb-app .mb-icon-button svg,
+  .mb-app .mb-header .st-icon-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mb-app .mb-icon-button:hover,
+  .mb-app .mb-header .st-icon-button:hover {
+    border-color: rgba(255, 255, 255, .3) !important;
+    color: #fff !important;
+    background: rgba(255, 255, 255, .26) !important;
+  }
+
+  /* Huy hiệu nhỏ lại cho khỏi lấn át nút chuông 33px. */
+  .mb-app .notification-badge {
+    top: -4px;
+    right: -4px;
+    min-width: 15px;
+    padding: 0 4px;
+    border-width: 1.5px;
+    border-color: var(--mb-navy-850);
+    font-size: 9px;
+  }
+
+  .mb-app .st-content {
+    /* Chỉ chừa khoảng thở tới footer. Phần tránh thanh điều hướng nổi để
+       footer gánh ở dưới — trước đây CẢ HAI cùng chừa ~100px nên giữa nội
+       dung và footer hở một mảng trống rất lớn trên điện thoại. */
+    padding: 14px 14px 18px;
+  }
+
+  .mb-app .st-content > * + * {
+    margin-top: 16px;
+  }
+
+  /* Mobile: nút hỗ trợ đã nằm hẳn trên thanh dưới nên footer không cần
+     chừa lề phải như bản desktop. */
+  .mb-footer {
+    padding: 18px 14px calc(var(--mb-bottomnav-h) + 16px);
+    font-size: 11.5px;
+  }
+
+  .mb-footer-apps {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .mb-stores {
+    width: 100%;
+  }
+
+  .mb-store {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .mb-footer-bottom {
+    padding-top: 14px;
+  }
+
+  .mb-alert {
+    gap: 11px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  /* --- Thanh dưới: viên thuốc trắng nổi, nút giữa tròn --- */
+  .mb-bottomnav {
+    position: fixed;
+    z-index: 120;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 12px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    padding: 6px;
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow:
+      0 14px 36px -8px rgba(0, 30, 100, .22),
+      0 2px 8px rgba(15, 23, 42, .05);
+  }
+
+  .mb-bottomnav a {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .mb-bottomnav a svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mb-bottomnav a.active {
+    color: var(--brand);
+    background: var(--brand-soft);
+    font-weight: 900;
+  }
+
+  .mb-bottomnav a.active svg {
+    stroke-width: 2.5;
+  }
+
+  /* Nút giữa: hình tròn navy nhô lên khỏi thanh. */
+  .mb-bottomnav .mb-nav-center {
+    justify-self: center;
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    padding: 0;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--mb-navy-850), var(--mb-navy-800));
+    box-shadow: 0 6px 20px rgba(0, 45, 156, .38);
+  }
+
+  .mb-bottomnav .mb-nav-center svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2.2;
+  }
+
+  .mb-bottomnav .mb-nav-center b {
+    display: none;
+  }
+
+  .mb-bottomnav .mb-nav-center.active {
+    background: linear-gradient(135deg, var(--mb-navy-850), var(--mb-navy-800));
+    box-shadow: 0 0 0 4px var(--mb-blue-100), 0 6px 20px rgba(0, 45, 156, .38);
+  }
+
+  /* --- Nội dung xếp lại một cột --- */
+  .mb-hero-grid,
+  .mb-kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mb-kpis {
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mb-kpi {
+    gap: 11px;
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .mb-kpi i {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    font-size: 15px;
+  }
+
+  .mb-kpi b {
+    font-size: 14px;
+  }
+
+  .mb-hero-intro {
+    padding-bottom: 16px;
+    text-align: left;
+  }
+
+  .mb-hero-intro h1 {
+    margin: 10px 0 8px;
+  }
+
+  .mb-hero-intro p {
+    font-size: 12.5px;
+  }
+
+  /* Điện thoại: 4 cột như bảng tiện ích quen thuộc của các app Việt. */
+  .mb-tools {
+    gap: 18px 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mb-tool i {
+    width: 54px;
+    height: 54px;
+    border-radius: 17px;
+  }
+
+  .mb-tool i svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mb-tool b {
+    font-size: 11.5px;
+  }
+
+  .mb-linklist {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mb-profile {
+    padding: 18px;
+  }
+
+  .mb-profile-stats {
+    width: 100%;
+  }
+
+  .mb-profile-stats > * {
+    flex: 1;
+  }
+
+  /* Thẻ hồ sơ xuống nhiều dòng trên mobile nên mũi tên rơi xuống một dòng
+     riêng, trông như lỗi. Cả thẻ vốn đã bấm được nên bỏ hẳn mũi tên. */
+  .mb-profile-go {
+    display: none;
+  }
+
+  /* Trên mobile bản thiết kế mở đầu bằng thẻ ví, rồi mới tới ô dán link. */
+  .mb-hero-grid .mb-points {
+    order: -1;
+  }
+
+  /* Viên thuốc dùng bản chữ ngắn để luôn gọn một dòng. */
+  .mb-only-wide {
+    display: none;
+  }
+
+  .mb-only-narrow {
+    display: inline;
+  }
+
+  .mb-hero-badge {
+    font-size: 11.5px;
+  }
+
+  /* Ô dán link và bảng sàn phải tách nhau rõ, không dính thành một khối. */
+  .mb-hero {
+    gap: 16px;
+  }
+
+  .mb-hero-grid {
+    gap: 16px;
+  }
+
+  /* Đầu khoang dán link xếp dọc cho đỡ chật; nhãn "Hoàn tiền tự động" lùi
+     xuống dưới tiêu đề thay vì chen ngang làm gãy chữ. */
+  .mb-converter-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .mb-converter-head > div {
+    align-items: flex-start;
+  }
+
+  /* Nút hỗ trợ nổi phải đứng trên thanh điều hướng dạng viên thuốc. */
+  .mb-app .support-fab {
+    bottom: calc(var(--mb-bottomnav-h) + 22px + env(safe-area-inset-bottom));
+  }
+
+  .mb-panel {
+    border-radius: 20px;
+  }
+
+  .mb-sidepane,
+  .mb-converter,
+  .mb-promo,
+  .mb-points {
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .mb-app .mb-brands .platform-grid,
+  .mb-app .mb-brands.platform-grid {
+    gap: 10px;
+  }
+
+  .mb-app .mb-brands .platform-tab {
+    padding: 14px 8px;
+  }
+
+  .mb-app .mb-brands .platform-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .mb-app .mb-brands .platform-tab strong {
+    font-size: 12px;
+  }
+
+  .mb-app .mb-brands .platform-tab small {
+    font-size: 10px;
+  }
+
+  .mb-points-bar {
+    flex-wrap: wrap;
+  }
+
+  .mb-sidepane-facts {
+    gap: 8px;
+  }
+}
+
+/* Màn hình rất hẹp: ẩn ô tìm kiếm để lời chào và chuông không bị bóp. */
+@media (max-width: 380px) {
+  .mb-header .mb-search {
+    display: none;
+  }
+}
+
+/* ====================================================================== */
+/* 15. GIẢM CHUYỂN ĐỘNG                                                    */
+/* ====================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-header,
+  .mb-bottomnav,
+  .mb-tabs-bar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .mb-tool:hover i,
+  .mb-app .mb-brands .platform-tab:hover,
+  .mb-action-cta:hover {
+    transform: none;
+  }
+}
+
+/* ====================================================================== */
+/* 16. VÁ MÀU CHO CÁC TRANG NỘI DUNG                                       */
+/* ====================================================================== */
+
+/*
+ * Mấy chỗ dưới đây trong CSS đời trước ghi màu CỨNG (trắng, cam, xám) và
+ * không có bản dark, nên bật giao diện tối là lạc hẳn tông. Viết lại bằng
+ * token để một nguồn màu lo cho cả hai theme.
+ */
+
+/* Khám phá — nhãn trên thẻ: app-shell ép trắng đục + chữ #1d2024, đặt lên
+   thẻ tối thành mảng trắng chói. */
+.mb-app .discover-card-badges span {
+  border-color: var(--line) !important;
+  color: var(--ink-soft) !important;
+  background: color-mix(in srgb, var(--surface) 92%, var(--line)) !important;
+}
+
+.mb-app .discover-card-badges .discover-cashback-badge {
+  border-color: var(--success-line) !important;
+  color: var(--success) !important;
+  background: var(--success-soft) !important;
+}
+
+/* Đơn hàng — ô icon tiêu đề: styles.css để chữ màu --coral (nay là xanh
+   dương) trên nền --warning-soft (hổ phách) nên hai màu chửi nhau. */
+.mb-app .orders-history-icon {
+  border: 1px solid var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.mb-app .orders-history-icon svg {
+  color: var(--brand);
+}
+
+/* Ví — ba bước dòng tiền. Ô "Đã nhận" trước dùng --sh-info-soft (xanh rất
+   nhạt) nên ở theme sáng thì trắng bệch, ở theme tối thì chói. Cho cả ba ô
+   cùng công thức: nền pha từ chính màu chữ nên tự hợp mọi theme. */
+.mb-app .st-flow-step {
+  border: 1px solid transparent;
+  border-radius: 18px;
+}
+
+.mb-app .st-flow-wait {
+  border-color: var(--warning-line);
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.mb-app .st-flow-ready {
+  border-color: var(--success-line);
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.mb-app .st-flow-paid {
+  border-color: var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* Nhiệm vụ — chấm mốc trên thanh tiến độ. styles.css định vị cho chấm 9px
+   (margin -4.5px), rồi app-shell phóng lên 14px mà quên chỉnh lề, nên chấm
+   lệch khỏi tâm 2.5px theo cả hai chiều. */
+.mb-app .mission-meter-tick {
+  margin-top: -7px !important;
+  margin-left: -7px !important;
+  border-color: var(--surface) !important;
+  background: var(--line-strong) !important;
+}
+
+.mb-app .mission-meter-tick-done {
+  background: var(--success) !important;
+}
+
+/* Link chia sẻ — bỏ vạch màu trên đầu thẻ. Có HAI nguồn vẽ nó: instant-purchase
+   vẽ dải gradient bằng ::before, còn dv13 đặt riêng border-top 4px cho đúng
+   trang này. Phải tắt cả hai. */
+.mb-app .buy-card::before {
+  display: none;
+}
+
+.mb-app.app-section-links .buy-card {
+  border-top: 1px solid var(--line) !important;
+}

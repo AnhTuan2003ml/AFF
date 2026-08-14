@@ -67,12 +67,12 @@ export class EmailService {
         "Không chia sẻ mã này với bất kỳ ai. ShopTik không bao giờ hỏi OTP ngân hàng.",
       ].join("\n"),
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#163333">
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f2544">
           <h1 style="font-size:22px">Xác nhận ${safePurpose}</h1>
           <p>Mã xác nhận của bạn:</p>
-          <div style="font-size:32px;font-weight:700;letter-spacing:8px;background:#edf8f2;padding:20px;border-radius:12px;text-align:center">${safeCode}</div>
+          <div style="font-size:32px;font-weight:700;letter-spacing:8px;background:#eef4ff;padding:20px;border-radius:12px;text-align:center">${safeCode}</div>
           <p>Mã có hiệu lực ${params.expiresInMinutes} phút.</p>
-          <p style="color:#5f6f6c">Không chia sẻ mã này với bất kỳ ai. ShopTik không bao giờ hỏi OTP ngân hàng.</p>
+          <p style="color:#5b6b85">Không chia sẻ mã này với bất kỳ ai. ShopTik không bao giờ hỏi OTP ngân hàng.</p>
         </div>
       `,
     });
@@ -120,18 +120,18 @@ export class EmailService {
         `Xem và trả lời tại: ${supportUrl}`,
       ].join("\n"),
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#163333">
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f2544">
           <h1 style="font-size:20px">Đội hỗ trợ đã phản hồi bạn</h1>
           <p>Chào ${safeName},</p>
           ${
             params.question
-              ? `<p style="margin-bottom:4px;color:#5f6f6c">Vấn đề bạn gửi:</p>
-          <div style="background:#f4f6f5;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeQuestion}</div>`
+              ? `<p style="margin-bottom:4px;color:#5b6b85">Vấn đề bạn gửi:</p>
+          <div style="background:#f1f5f9;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeQuestion}</div>`
               : ""
           }
-          <p style="margin-bottom:4px;color:#5f6f6c">Phản hồi của đội hỗ trợ:</p>
-          <div style="background:#edf8f2;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeReply}</div>
-          <p style="margin-top:20px"><a href="${supportUrl}" style="color:#0e7a4f">Mở trang Hỗ trợ để trao đổi tiếp</a></p>
+          <p style="margin-bottom:4px;color:#5b6b85">Phản hồi của đội hỗ trợ:</p>
+          <div style="background:#eef4ff;padding:14px 16px;border-radius:10px;white-space:pre-wrap">${safeReply}</div>
+          <p style="margin-top:20px"><a href="${supportUrl}" style="color:#002d9c">Mở trang Hỗ trợ để trao đổi tiếp</a></p>
         </div>
       `,
     });

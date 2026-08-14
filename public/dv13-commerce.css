@@ -9,9 +9,9 @@
   --dv-ink: #101317;
   --dv-ink-2: #181d22;
   --dv-charcoal: #20262c;
-  --dv-orange: #e44a2b;
-  --dv-orange-2: #c9371d;
-  --dv-orange-soft: #fff1ec;
+  --dv-orange: #113887;
+  --dv-orange-2: #103071;
+  --dv-orange-soft: #e9f3ff;
   --dv-paper: #ffffff;
   --dv-canvas: #f5f6f7;
   --dv-line: #cbd2d9;
@@ -79,7 +79,7 @@
 }
 
 .dv13-commerce-shell :focus-visible {
-  outline: 3px solid rgba(228, 74, 43, .34);
+  outline: 3px solid rgba(17, 56, 135, .34);
   outline-offset: 3px;
 }
 
@@ -881,9 +881,9 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border: 1px solid rgba(228, 74, 43, .68);
+  border: 1px solid rgba(17, 56, 135, .68);
   color: #fff;
-  background: rgba(228, 74, 43, .14);
+  background: rgba(17, 56, 135, .14);
   font: 750 13px/1 "Segoe UI", Arial, sans-serif;
   cursor: pointer;
 }
@@ -1091,7 +1091,7 @@
 .dv13-commerce-shell textarea:focus {
   border-color: var(--dv-orange) !important;
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(228, 74, 43, .11) !important;
+  box-shadow: 0 0 0 3px rgba(17, 56, 135, .11) !important;
 }
 
 .dv13-commerce-shell .field-error {
@@ -1130,7 +1130,7 @@
 }
 
 .dv13-commerce-shell tbody tr:hover td {
-  background: #faf7f5;
+  background: #f5f7fa;
 }
 
 .dv13-commerce-shell .empty-state {
@@ -2285,7 +2285,7 @@
 :root[data-theme="dark"] .dv13-commerce-shell {
   --dv-paper: #171b20;
   --dv-canvas: #101419;
-  --dv-orange-soft: rgba(228, 74, 43, .14);
+  --dv-orange-soft: rgba(17, 56, 135, .14);
   --dv-line: #46505a;
   --dv-line-strong: #66727e;
   --dv-ink: #f5f6f7;
@@ -2344,8 +2344,8 @@
 
 :root[data-theme="dark"] .dv13-commerce-shell .orders-history-tabs a.active {
   border-color: var(--dv-orange);
-  color: #ff987d !important;
-  background: rgba(228, 74, 43, .14) !important;
+  color: #2b87ff !important;
+  background: rgba(17, 56, 135, .14) !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-nav-dropdown,
@@ -2359,7 +2359,7 @@
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-nav-dropdown a:hover,
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-nav-dropdown a.active {
-  color: #ff987d;
+  color: #2b87ff;
   background: var(--dv-orange-soft);
 }
 

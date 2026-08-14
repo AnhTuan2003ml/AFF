@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#ee4d2d">
+  <meta name="theme-color" content="#002d9c">
   <meta name="description" content="ShopTik giúp tìm sản phẩm, mua tự động qua Affiliate và nhận hoàn tiền minh bạch.">
   <meta name="csrf-token" content="{{ csrfToken }}">
   <title>{{ pageTitle }} · {{ appName }}</title>
@@ -28,6 +28,12 @@
   <link rel="stylesheet" href="/assets/theme/responsive.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/dv13-commerce.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/auth-commerce.css?v={{ assetVersion }}">
+  {# Lớp dáng MB phải nạp SAU app-shell.css. Trang công khai/đăng nhập không
+     có app-shell nên nạp ngay tại đây; khung app và quản trị ghi đè block
+     này thành rỗng rồi tự nạp lại đúng thứ tự trong phần thân. #}
+  {% block skin_styles %}
+  <link rel="stylesheet" href="/assets/theme/mb-skin.css?v={{ assetVersion }}">
+  {% endblock %}
   <script src="/assets/theme-init.js?v={{ assetVersion }}"></script>
   <script src="/assets/backoffice-product-integrity.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/app.js?v={{ assetVersion }}" defer></script>

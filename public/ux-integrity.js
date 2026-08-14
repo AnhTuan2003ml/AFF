@@ -156,7 +156,23 @@
         fields().forEach((field, fieldIndex) => {
           ensureError(field, fieldIndex);
           field.addEventListener("blur", () => {
-            if (field.disabled || field.checkValidity()) {
+            /*
+             * Rời ô CHỈ báo lỗi định dạng khi người dùng đã nhập gì đó. Ô còn
+             * trống nguyên thì không đỏ — lỗi "bắt buộc" để dành lúc bấm nút
+             * gửi. app.js đã theo đúng quy tắc này, còn ở đây thì chưa, nên
+             * chỉ cần rời ô email trống là hiện ngay "Vui lòng nhập email".
+             *
+             * Hệ quả nặng hơn cả chuyện thẩm mỹ: ô email được autofocus, nên
+             * cú bấm ĐẦU TIÊN vào link "Tạo tài khoản" làm ô mất focus →
+             * dòng lỗi chèn vào → cả khối tụt xuống → con trỏ nhả chuột không
+             * còn nằm trên link nữa, click bị nuốt. Phải bấm lần hai mới đi
+             * được sang trang đăng ký.
+             */
+            const hasValue =
+              field instanceof HTMLInputElement && field.type === "checkbox"
+                ? field.checked
+                : String(field.value ?? "").trim().length > 0;
+            if (field.disabled || !hasValue || field.checkValidity()) {
               showError(field, "", fieldIndex);
             } else {
               showError(field, messageFor(field), fieldIndex);

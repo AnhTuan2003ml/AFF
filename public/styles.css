@@ -40,8 +40,8 @@
   --mint-soft: #f1f0ff;
 
   /* CTA mua hàng — cam nóng. */
-  --coral: #ff6224;
-  --coral-dark: #ea4e0f;
+  --coral: #0036a3;
+  --coral-dark: #083183;
 
   /* Màu "tiền về" — dùng cho số tiền hoàn, số dư dương. */
   --money: #0ca35c;
@@ -49,9 +49,9 @@
   --money-soft: #e5f8ee;
   --money-border: #a4e2c2;
 
-  --danger: #dd3b4b;
-  --danger-soft: #fdecee;
-  --danger-border: #f2b8bf;
+  --danger: #173c86;
+  --danger-soft: #e8f1fd;
+  --danger-border: #8fb6ea;
   --warning: #9a6a08;
   --warning-soft: #fdf3d9;
   --warning-border: #ecd189;
@@ -82,7 +82,7 @@
   /* Biểu đồ — indigo / teal / cam, phân biệt được với người mù màu. */
   --chart-buyer: #5145e5;
   --chart-sharer: #0e9aad;
-  --chart-platform: #ff6224;
+  --chart-platform: #0036a3;
   --chart-grid: #e4e4ef;
   --chart-area-fill: rgba(81, 69, 229, 0.1);
 }
@@ -110,22 +110,22 @@
   --jade-shadow: rgba(120, 108, 250, 0.3);
   --jade-shadow-hover: rgba(120, 108, 250, 0.45);
   --on-jade: #14122e;
-  --on-coral: #2b1206;
+  --on-coral: #030a18;
   --on-jade-soft: rgba(20, 18, 46, 0.7);
 
   --mint: #2b2f55;
   --mint-soft: #232748;
-  --coral: #ff7d47;
-  --coral-dark: #ff9767;
+  --coral: #0045ce;
+  --coral-dark: #0572ff;
 
   --money: #34d18a;
   --money-dark: #4bdd9b;
   --money-soft: #17372a;
   --money-border: #2c5c48;
 
-  --danger: #ff6b7a;
-  --danger-soft: #3d2228;
-  --danger-border: #67323b;
+  --danger: #0c75ff;
+  --danger-soft: #121823;
+  --danger-border: #1a253c;
   --warning: #f4c04c;
   --warning-soft: #3e3315;
   --warning-border: #6b571f;
@@ -139,7 +139,7 @@
 
   --chart-buyer: #8f86ff;
   --chart-sharer: #38bdd3;
-  --chart-platform: #ff7d47;
+  --chart-platform: #0045ce;
   --chart-grid: #2b2f47;
   --chart-area-fill: rgba(143, 134, 255, 0.14);
 }
@@ -168,22 +168,22 @@
     --jade-shadow: rgba(120, 108, 250, 0.3);
     --jade-shadow-hover: rgba(120, 108, 250, 0.45);
     --on-jade: #14122e;
-    --on-coral: #2b1206;
+    --on-coral: #030a18;
     --on-jade-soft: rgba(20, 18, 46, 0.7);
 
     --mint: #2b2f55;
     --mint-soft: #232748;
-    --coral: #ff7d47;
-    --coral-dark: #ff9767;
+    --coral: #0045ce;
+    --coral-dark: #0572ff;
 
     --money: #34d18a;
     --money-dark: #4bdd9b;
     --money-soft: #17372a;
     --money-border: #2c5c48;
 
-    --danger: #ff6b7a;
-    --danger-soft: #3d2228;
-    --danger-border: #67323b;
+    --danger: #0c75ff;
+    --danger-soft: #121823;
+    --danger-border: #1a253c;
     --warning: #f4c04c;
     --warning-soft: #3e3315;
     --warning-border: #6b571f;
@@ -197,7 +197,7 @@
 
     --chart-buyer: #8f86ff;
     --chart-sharer: #38bdd3;
-    --chart-platform: #ff7d47;
+    --chart-platform: #0045ce;
     --chart-grid: #2b2f47;
     --chart-area-fill: rgba(143, 134, 255, 0.14);
   }
@@ -416,12 +416,12 @@ code {
 .button-coral {
   color: var(--on-coral);
   background: var(--coral);
-  box-shadow: 0 10px 22px -8px rgba(240, 108, 79, 0.55);
+  box-shadow: 0 10px 22px -8px rgba(15, 70, 178, 0.55);
 }
 
 .button-coral:hover {
   background: var(--coral-dark);
-  box-shadow: 0 14px 28px -8px rgba(240, 108, 79, 0.65);
+  box-shadow: 0 14px 28px -8px rgba(15, 70, 178, 0.65);
 }
 
 .button-ink {
@@ -530,8 +530,8 @@ select:not([multiple])::-ms-expand {
   place-items: center;
   border-radius: 12px;
   color: white;
-  background: linear-gradient(135deg, #ff7a3c, #ee4d2d);
-  box-shadow: 0 4px 12px rgba(238, 77, 45, 0.35);
+  background: linear-gradient(135deg, #003ebb, #0c3993);
+  box-shadow: 0 4px 12px rgba(12, 57, 147, 0.35);
 }
 
 .brand-mark svg {
@@ -553,7 +553,7 @@ select:not([multiple])::-ms-expand {
 }
 
 .brand-shop {
-  color: #ee4d2d;
+  color: #0c3993;
 }
 
 .brand-tik {
@@ -595,7 +595,7 @@ select:not([multiple])::-ms-expand {
 
 .brand-light .brand-mark {
   color: #fff;
-  background: linear-gradient(135deg, #ff7a3c, #ee4d2d);
+  background: linear-gradient(135deg, #003ebb, #0c3993);
 }
 
 .brand-light small {
@@ -1419,7 +1419,7 @@ select:not([multiple])::-ms-expand {
 
 .backoffice-sidebar .brand-mark {
   color: #fff;
-  background: linear-gradient(135deg, #ff7a3c, #ee4d2d);
+  background: linear-gradient(135deg, #003ebb, #0c3993);
 }
 
 .backoffice-sidebar small {
@@ -1591,7 +1591,7 @@ select:not([multiple])::-ms-expand {
 .sidebar-account-badge.role-admin { --role-accent: #5145e5; }
 .sidebar-account-badge.role-support { --role-accent: #d6409f; }
 .sidebar-account-badge.role-finance { --role-accent: #0ca35c; }
-.sidebar-account-badge.role-risk { --role-accent: #dd3b4b; }
+.sidebar-account-badge.role-risk { --role-accent: #173c86; }
 .sidebar-account-badge.role-auditor { --role-accent: #2a5db0; }
 .sidebar-account-badge.role-user { --role-accent: #0e9aad; }
 
@@ -1687,7 +1687,7 @@ select:not([multiple])::-ms-expand {
   margin: 3px auto;
   border-radius: 2px;
   /* Màu cam thương hiệu — nổi rõ trên cả nền sáng lẫn tối. */
-  background: linear-gradient(90deg, #ff7a3c, #ee4d2d);
+  background: linear-gradient(90deg, #003ebb, #0c3993);
 }
 
 .dashboard-quick-actions {
@@ -1781,7 +1781,7 @@ select:not([multiple])::-ms-expand {
   padding: 0 4px;
   place-items: center;
   border-radius: 999px;
-  background: #ee4d2d;
+  background: #0c3993;
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
@@ -1857,7 +1857,7 @@ select:not([multiple])::-ms-expand {
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #ee4d2d;
+  background: #0c3993;
 }
 
 .notification-list li b {
@@ -2211,7 +2211,7 @@ select:not([multiple])::-ms-expand {
 .mission-meter-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ff734f, #ed4b2c);
+  background: linear-gradient(90deg, #0049db, #0c3991);
   transition: width .35s ease;
 }
 
@@ -3637,7 +3637,7 @@ tbody tr:hover {
   color: #fff;
   border-color: var(--coral);
   background: var(--coral);
-  box-shadow: 0 10px 18px rgba(242, 85, 53, .18);
+  box-shadow: 0 10px 18px rgba(10, 58, 155, .18);
 }
 
 .orders-history-search {
@@ -5392,7 +5392,7 @@ tbody tr:hover {
 .app-content {
   background:
     radial-gradient(720px 340px at 92% -90px, color-mix(in srgb, #5145e5 9%, transparent), transparent 70%),
-    radial-gradient(620px 320px at -80px 34%, color-mix(in srgb, #ff6224 7%, transparent), transparent 70%),
+    radial-gradient(620px 320px at -80px 34%, color-mix(in srgb, #0036a3 7%, transparent), transparent 70%),
     radial-gradient(560px 300px at 55% 108%, color-mix(in srgb, #0ca35c 7%, transparent), transparent 72%);
 }
 
@@ -5402,7 +5402,7 @@ tbody tr:hover {
   letter-spacing: 0.01em;
 }
 
-.topbar-title .brand-shop { color: #ee4d2d; }
+.topbar-title .brand-shop { color: #0c3993; }
 .topbar-title .brand-tik { color: var(--text); }
 
 @media (max-width: 900px) {
@@ -5417,7 +5417,7 @@ tbody tr:hover {
   }
 
   .mobile-bottom-nav a:nth-of-type(1) { --nav-accent: #5145e5; }
-  .mobile-bottom-nav a:nth-of-type(2) { --nav-accent: #ff6224; }
+  .mobile-bottom-nav a:nth-of-type(2) { --nav-accent: #0036a3; }
   .mobile-bottom-nav a:nth-of-type(3) { --nav-accent: #0ca35c; }
   .mobile-bottom-nav button { --nav-accent: #8b5cf6; }
 
@@ -5501,7 +5501,7 @@ code {
 
 /* Bôi đen văn bản mang màu thương hiệu. */
 ::selection {
-  background: color-mix(in srgb, #ff6224 28%, transparent);
+  background: color-mix(in srgb, #0036a3 28%, transparent);
 }
 
 /* Nét chữ hiển thị mượt trên màn hình lớn. */
@@ -5626,9 +5626,9 @@ code {
 }
 
 .st-dialog-confirm.is-danger {
-  background: linear-gradient(135deg, #ff6b7a, #dd3b4b);
+  background: linear-gradient(135deg, #0c75ff, #173c86);
   color: #fff;
-  box-shadow: 0 8px 18px -8px rgba(221, 59, 75, 0.6);
+  box-shadow: 0 8px 18px -8px rgba(23, 60, 134, 0.6);
 }
 
 .st-dialog-confirm:hover {
@@ -5823,7 +5823,7 @@ code {
   min-height: 100svh;
   grid-template-columns: minmax(520px, 1.2fr) minmax(420px, 0.8fr);
   overflow: hidden;
-  background: #ffe8ed;
+  background: #e3efff;
 }
 
 .auth-shell-visual .auth-story {
@@ -5835,7 +5835,7 @@ code {
   color: var(--text);
   background:
     radial-gradient(circle at 18% 18%, rgba(255,255,255,.9), transparent 25%),
-    linear-gradient(145deg, #ffe7ec 0%, #fff2f5 52%, #f6eafe 100%);
+    linear-gradient(145deg, #e1eeff 0%, #f4f9ff 52%, #f6eafe 100%);
 }
 
 .auth-shell-visual .auth-story::before,
@@ -5851,7 +5851,7 @@ code {
   height: 160px;
   left: -70px;
   top: 24%;
-  background: rgba(255, 111, 135, .14);
+  background: rgba(19, 121, 255, .14);
 }
 
 .auth-shell-visual .auth-story::after {
@@ -5871,12 +5871,12 @@ code {
 
 .auth-brand .brand-mark {
   color: #fff;
-  background: linear-gradient(135deg, #ff705f, #ee344e);
-  box-shadow: 0 10px 26px rgba(238, 52, 78, .2);
+  background: linear-gradient(135deg, #ff705f, #0d3a96);
+  box-shadow: 0 10px 26px rgba(13, 58, 150, .2);
 }
 
 .auth-brand small {
-  color: #a14e5c;
+  color: #283a5e;
 }
 
 .auth-visual {
@@ -5898,7 +5898,7 @@ code {
 .auth-shell-visual .auth-panel {
   min-height: 100svh;
   padding: clamp(26px, 4vw, 58px);
-  background: linear-gradient(180deg, #fff7f9 0%, #ffeef2 100%);
+  background: linear-gradient(180deg, #fcfdff 0%, #edf5ff 100%);
 }
 
 .auth-shell-visual .auth-panel-top {
@@ -5910,10 +5910,10 @@ code {
 .auth-shell-visual .auth-card {
   width: min(100%, 470px);
   padding: clamp(28px, 4vw, 44px);
-  border: 1px solid rgba(222, 67, 89, .13);
+  border: 1px solid rgba(24, 62, 138, .13);
   border-radius: 32px;
   background: rgba(255, 255, 255, .94);
-  box-shadow: 0 28px 70px rgba(164, 62, 85, .16);
+  box-shadow: 0 28px 70px rgba(30, 52, 96, .16);
   backdrop-filter: blur(18px);
 }
 
@@ -5931,7 +5931,7 @@ code {
 
 .auth-heading-login p {
   margin: 10px 0 0;
-  color: #a94555;
+  color: #223863;
   font-size: 1.02rem;
   font-weight: 700;
 }
@@ -5956,8 +5956,8 @@ code {
   height: 25px;
   place-items: center;
   border-radius: 50%;
-  color: #d7354d;
-  background: #fff0f3;
+  color: #193a7d;
+  background: #f0f7ff;
   font-size: .75rem;
   font-weight: 900;
   transform: translateY(-50%);
@@ -5968,7 +5968,7 @@ code {
 .login-field .password-field input {
   min-height: 54px;
   padding-left: 54px;
-  border: 1.5px solid #efb3bd;
+  border: 1.5px solid #86afe5;
   border-radius: 16px;
   background: #fff;
   color: var(--text);
@@ -5977,8 +5977,8 @@ code {
 
 .login-field > input:focus,
 .login-field .password-field input:focus {
-  border-color: #df334c;
-  box-shadow: 0 0 0 4px rgba(223, 51, 76, .1);
+  border-color: #153a85;
+  box-shadow: 0 0 0 4px rgba(21, 58, 133, .1);
 }
 
 .login-field .password-field {
@@ -5991,7 +5991,7 @@ code {
 
 .login-field .password-field button {
   right: 12px;
-  color: #d7354d;
+  color: #193a7d;
 }
 
 .login-field .field-error {
@@ -6005,7 +6005,7 @@ code {
 
 .login-inline-actions a,
 .login-register-link a {
-  color: #d52f47;
+  color: #183979;
   font-weight: 750;
 }
 
@@ -6013,13 +6013,13 @@ code {
   min-height: 54px;
   border-radius: 16px;
   color: #fff;
-  background: linear-gradient(135deg, #ef4158, #d92742);
-  box-shadow: 0 14px 28px rgba(217, 39, 66, .22);
+  background: linear-gradient(135deg, #0d3d9d, #15377a);
+  box-shadow: 0 14px 28px rgba(21, 55, 122, .22);
 }
 
 .login-submit.button-primary:hover {
-  background: linear-gradient(135deg, #e6354e, #c91e39);
-  box-shadow: 0 16px 32px rgba(201, 30, 57, .28);
+  background: linear-gradient(135deg, #113b8d, #113171);
+  box-shadow: 0 16px 32px rgba(17, 49, 113, .28);
 }
 
 .login-register-link {
@@ -6034,7 +6034,7 @@ code {
 }
 
 .auth-shell-visual .auth-legal-links a {
-  color: #9b5964;
+  color: #2f3d5a;
 }
 
 :root[data-theme="dark"] .auth-shell-visual,
@@ -6060,7 +6060,7 @@ code {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(320px, 42svh) auto;
     overflow: visible;
-    background: #ffe9ee;
+    background: #e4f0ff;
   }
 
   .auth-shell-visual .auth-story {
@@ -6089,7 +6089,7 @@ code {
     margin-top: -28px;
     padding: 0 14px 34px;
     border-radius: 30px 30px 0 0;
-    background: linear-gradient(180deg, #fff4f6 0%, #ffecef 100%);
+    background: linear-gradient(180deg, #f7fbff 0%, #e9f3ff 100%);
   }
 
   .auth-shell-visual .auth-panel-top {
@@ -6101,7 +6101,7 @@ code {
     width: 100%;
     padding: 28px 22px 24px;
     border-radius: 28px;
-    box-shadow: 0 18px 48px rgba(164, 62, 85, .14);
+    box-shadow: 0 18px 48px rgba(30, 52, 96, .14);
   }
 }
 
@@ -6228,8 +6228,8 @@ body.is-entry-promo-open {
   min-height: 28px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(255, 109, 0, 0.12);
-  color: #f45f20;
+  background: rgba(0, 48, 143, 0.12);
+  color: #073693;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -6296,7 +6296,7 @@ body.is-entry-promo-open {
   width: 100%;
   min-height: 46px;
   border: 0;
-  background: #f45f20;
+  background: #073693;
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -6311,7 +6311,7 @@ body.is-entry-promo-open {
 
 .entry-promo-skip:hover,
 .entry-promo-skip:focus-visible {
-  background: #d94f12;
+  background: #0a2f7a;
   color: #fff;
   outline: none;
 }

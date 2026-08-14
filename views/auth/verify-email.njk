@@ -1,11 +1,11 @@
 {% extends "auth/auth-commerce-base.njk" %}
 
+{% block auth_head_title %}Nhập mã OTP{% endblock %}
+{% block auth_head_sub %}Bước 2/2 — xác thực email để hoàn tất đăng ký{% endblock %}
+
 {% block auth_content %}
-  <header class="auth-heading">
-    <span class="eyebrow">BƯỚC 2/2</span>
-    <h2>Nhập mã OTP</h2>
-    <p>Mã OTP 6 số đã được gửi tới <strong>{{ maskedEmail }}</strong>.</p>
-  </header>
+  {# Tiêu đề đã nằm trên dải navy đầu thẻ. #}
+  <p class="auth-note">Mã OTP 6 số đã được gửi tới <strong>{{ maskedEmail }}</strong>.</p>
   <form method="post" action="/xac-thuc-email" class="stack-form" data-validate-form novalidate>
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
     <label for="verify-code-input">Mã xác nhận

@@ -1,6 +1,6 @@
 :root {
-  --discover-accent: #ff5a1f;
-  --discover-accent-strong: #ef3f17;
+  --discover-accent: #0035a0;
+  --discover-accent-strong: #093489;
   --discover-success: #08a86b;
   --discover-warning: #ffb400;
 }
@@ -66,8 +66,8 @@
   overflow: hidden;
   border-radius: 24px;
   color: #fff;
-  background: linear-gradient(112deg, #ff8a00 0%, #ff5b1f 52%, #ff2455 100%);
-  box-shadow: 0 22px 48px -28px rgba(255, 77, 32, .8);
+  background: linear-gradient(112deg, #00308f 0%, #0035a0 52%, #0036a3 100%);
+  box-shadow: 0 22px 48px -28px rgba(0, 54, 161, .8);
 }
 
 .discover-hero-copy {
@@ -409,7 +409,7 @@
   white-space: nowrap;
 }
 
-.discover-platform-badge.platform-shopee { background: #ee4d2d; }
+.discover-platform-badge.platform-shopee { background: #0c3993; }
 .discover-platform-badge.platform-tiktok { background: #17181d; }
 .discover-platform-badge.platform-lazada { background: #1d2d86; }
 
@@ -562,7 +562,7 @@
 .discover-primary-action {
   border: 0;
   color: #fff;
-  background: linear-gradient(100deg, var(--discover-accent), #ff315f);
+  background: linear-gradient(100deg, var(--discover-accent), #0039aa);
   cursor: pointer;
   box-shadow: 0 11px 24px -15px color-mix(in srgb, var(--discover-accent) 72%, transparent);
   transition: transform .16s ease, filter .16s ease, opacity .16s ease;
@@ -862,7 +862,7 @@
   width: 30px;
   height: 30px;
   border: 3px solid var(--line, #e5e7eb);
-  border-top-color: var(--discover-accent, #ff5a1f);
+  border-top-color: var(--discover-accent, #0035a0);
   border-radius: 50%;
   animation: bestseller-spin 0.7s linear infinite;
 }

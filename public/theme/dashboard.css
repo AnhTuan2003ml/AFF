@@ -238,15 +238,15 @@
 
 .home-hot-badge,
 .home-section-title > b {
-  color: #c2410c;
-  background: #ffedd5;
+  color: #07296d;
+  background: #c2dcff;
   box-shadow: none;
 }
 
 :root[data-theme="dark"] .home-hot-badge,
 :root[data-theme="dark"] .home-section-title > b {
-  color: #f6c8b1;
-  background: rgba(212, 121, 66, .14);
+  color: #83b3f1;
+  background: rgba(29, 62, 127, .14);
 }
 
 .platform-grid {

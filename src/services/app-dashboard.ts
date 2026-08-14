@@ -66,6 +66,9 @@ export async function getAppDashboard(
       LAZADA: isPlatformPurchaseEnabled(config, "LAZADA"),
     },
     cashbackRate: businessConfig.buyerCashbackPercent,
+    // Thẻ ví ở trang chủ vẽ thanh tiến độ "còn bao nhiêu nữa thì rút được",
+    // nên cần đúng ngưỡng đang áp dụng chứ không phải con số viết cứng.
+    minWithdrawAmountVnd: businessConfig.minWithdrawAmountVnd,
     featuredVoucher,
   };
 }

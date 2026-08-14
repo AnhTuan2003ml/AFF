@@ -1,0 +1,65 @@
+{#
+  Lưới tiện ích — bản đối chiếu của "Quick Tool Grid". Đây là lối vào duy nhất
+  trên mobile cho các chức năng không nằm trong 5 mục thanh dưới, nên mọi mục
+  ở đây phải trỏ tới route thật đang chạy.
+
+  Mỗi ô một sắc riêng và giữ NGUYÊN vị trí — người dùng quen tay sẽ nhớ theo
+  màu và chỗ đứng chứ không đọc lại chữ mỗi lần. Đổi thứ tự là phá thói quen đó.
+#}
+<section class="mb-panel" aria-label="Tiện ích">
+  <div class="mb-panel-head">
+    <h2 class="mb-panel-title">Tiện ích thường dùng</h2>
+    <a class="mb-see-all" href="/app/settings">Tất cả ›</a>
+  </div>
+
+  <div class="mb-tools">
+    <a class="mb-tool mb-tool-indigo" href="/app/orders">
+      <i>{{ icon('orders') }}{% if pendingOrdersCount %}<em>{{ pendingOrdersCount }}</em>{% endif %}</i>
+      <b>Đơn hàng</b>
+    </a>
+    <a class="mb-tool mb-tool-green" href="/app/wallet">
+      <i>{{ icon('wallet') }}</i>
+      <b>Số dư ví</b>
+    </a>
+    <a class="mb-tool mb-tool-emerald" href="/app/withdrawals">
+      <i>{{ icon('withdraw') }}</i>
+      <b>Rút tiền</b>
+    </a>
+    <a class="mb-tool mb-tool-sky" href="/app/banks">
+      <i>{{ icon('bank') }}</i>
+      <b>Ngân hàng</b>
+    </a>
+    <a class="mb-tool mb-tool-rose" href="/app/discover">
+      <i>{{ icon('compass') }}</i>
+      <b>Khám phá</b>
+    </a>
+    <a class="mb-tool mb-tool-amber" href="/app/nhiem-vu">
+      <i>{{ icon('mission') }}</i>
+      <b>Nhiệm vụ</b>
+    </a>
+    <a class="mb-tool mb-tool-violet" href="/app/links">
+      <i>{{ icon('link') }}</i>
+      <b>Link chia sẻ</b>
+    </a>
+    <a class="mb-tool mb-tool-purple" href="/app/referrals">
+      <i>{{ icon('referral') }}</i>
+      <b>Giới thiệu</b>
+    </a>
+    <a class="mb-tool mb-tool-cyan" href="/app/support">
+      <i>{{ icon('support') }}</i>
+      <b>Hỗ trợ</b>
+    </a>
+    <a class="mb-tool" href="/app/profile">
+      <i>{{ icon('user') }}</i>
+      <b>Tài khoản</b>
+    </a>
+    <a class="mb-tool mb-tool-pink" href="/chinh-sach-nguoi-dung" data-user-policy-link>
+      <i>{{ icon('audit') }}</i>
+      <b>Chính sách</b>
+    </a>
+    <a class="mb-tool mb-tool-orange" href="/app/discover">
+      <i>{{ icon('gift') }}</i>
+      <b>Ưu đãi mới</b>
+    </a>
+  </div>
+</section>

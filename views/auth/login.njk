@@ -1,10 +1,9 @@
 {% extends "auth/auth-commerce-base.njk" %}
 
-{% block auth_content %}
-  <header class="auth-heading auth-heading-login">
-    <h1>Đăng nhập</h1>
-  </header>
+{% block auth_head_title %}Đăng nhập{% endblock %}
+{% block auth_head_sub %}Vào ví để xem tiền hoàn và tạo lệnh rút{% endblock %}
 
+{% block auth_content %}
   <form method="post" action="/dang-nhap" class="stack-form login-form" data-validate-form novalidate>
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
     <input type="hidden" name="next" value="{{ next or '' }}">
@@ -27,7 +26,7 @@
           <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
         </span>
         <input id="login-password-input" type="password" name="password" autocomplete="current-password" maxlength="128" placeholder="Nhập mật khẩu" data-password required data-required-message="Vui lòng nhập mật khẩu.">
-        <button type="button" data-toggle-password aria-label="Hiện mật khẩu">Hiện</button>
+        <button type="button" data-toggle-password aria-pressed="false" aria-label="Hiện mật khẩu"><svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 5.8A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.9M6.4 7.6A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1 0 1.9-.2 2.8-.5"/><path d="M10 10a3.2 3.2 0 0 0 4.3 4.3"/><path d="m4 4 16 16"/></svg></button>
       </span>
       <small class="field-error" id="login-password-input-error" hidden></small>
     </label>
@@ -40,6 +39,14 @@
       <span aria-hidden="true">→</span>
     </button>
   </form>
+
+  {% if googleEnabled %}
+    <div class="auth-divider"><span>hoặc</span></div>
+    <a class="button button-block button-large button-google" href="/auth/google{% if next %}?next={{ next | urlencode }}{% endif %}">
+      {% include "partials/google-logo.njk" %}
+      <span>Tiếp tục với Google</span>
+    </a>
+  {% endif %}
 
   <p class="auth-switch login-register-link">Chưa có tài khoản? <a href="/dang-ky">Tạo tài khoản</a></p>
 {% endblock %}

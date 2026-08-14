@@ -6,7 +6,7 @@ import {
 } from "../auth/session.js";
 import type { AppConfig } from "../config.js";
 import type { Database } from "../db.js";
-import { maskEmail } from "../lib/crypto.js";
+import { maskEmail, randomToken } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { passwordSchema } from "../lib/password.js";
@@ -19,6 +19,12 @@ import {
   verifyRegistration,
 } from "../services/auth.js";
 import type { EmailService } from "../services/email.js";
+import {
+  buildGoogleAuthUrl,
+  fetchGoogleProfile,
+  findOrCreateGoogleUser,
+  googleOAuthEnabled,
+} from "../services/google-auth.js";
 import { issueOtp } from "../services/otp.js";
 import { safeNextPath } from "../auth/guards.js";
 
@@ -59,6 +65,8 @@ const loginSchema = z.object({
 
 const PENDING_EMAIL_COOKIE = "aff_pending_email";
 const RESET_EMAIL_COOKIE = "aff_reset_email";
+const OAUTH_STATE_COOKIE = "aff_oauth_state";
+const OAUTH_NEXT_COOKIE = "aff_oauth_next";
 
 function signedEmailCookie(
   reply: FastifyReply,
@@ -107,6 +115,7 @@ export async function registerAuthRoutes(
     if (request.currentUser) return reply.redirect("/app");
     return reply.view("auth/register.njk", {
       pageTitle: "Tạo tài khoản",
+      googleEnabled: googleOAuthEnabled(deps.config),
       referralCode: String(
         (request.query as Record<string, unknown>).ref ?? "",
       ).slice(0, 30),
@@ -138,6 +147,7 @@ export async function registerAuthRoutes(
         const body = (request.body ?? {}) as Record<string, unknown>;
         return renderAuthError(reply, "auth/register.njk", error, {
           pageTitle: "Tạo tài khoản",
+          googleEnabled: googleOAuthEnabled(deps.config),
           values: {
             fullName: String(body.fullName ?? ""),
             email: String(body.email ?? ""),
@@ -231,6 +241,7 @@ export async function registerAuthRoutes(
     const query = request.query as Record<string, unknown>;
     return reply.view("auth/login.njk", {
       pageTitle: "Đăng nhập",
+      googleEnabled: googleOAuthEnabled(deps.config),
       next: safeNextPath(query.next, ""),
     });
   });
@@ -252,6 +263,7 @@ export async function registerAuthRoutes(
         const body = (request.body ?? {}) as Record<string, unknown>;
         return renderAuthError(reply, "auth/login.njk", error, {
           pageTitle: "Đăng nhập",
+          googleEnabled: googleOAuthEnabled(deps.config),
           next: safeNextPath(body.next, ""),
           values: { email: String(body.email ?? "") },
         });
@@ -348,6 +360,90 @@ export async function registerAuthRoutes(
           pageTitle: "Đặt lại mật khẩu",
           maskedEmail: maskEmail(email),
         });
+      }
+    },
+  );
+
+  // ── Đăng nhập / đăng ký bằng Google (OAuth 2.0) ──────────────────────
+  app.get(
+    "/auth/google",
+    { config: { rateLimit: { max: 15, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      if (request.currentUser) return reply.redirect("/app");
+      if (!googleOAuthEnabled(deps.config)) {
+        setFlash(
+          reply,
+          deps.config,
+          "error",
+          "Đăng nhập bằng Google chưa được bật.",
+        );
+        return reply.redirect("/dang-nhap");
+      }
+      // `state` chống CSRF của chính luồng OAuth: lưu bản signed ở cookie rồi
+      // đối chiếu lại ở callback.
+      const state = randomToken(24);
+      signedEmailCookie(reply, deps.config, OAUTH_STATE_COOKIE, state);
+      const next = safeNextPath(
+        (request.query as Record<string, unknown>).next,
+        "",
+      );
+      if (next) {
+        signedEmailCookie(reply, deps.config, OAUTH_NEXT_COOKIE, next);
+      }
+      return reply.redirect(buildGoogleAuthUrl(deps.config, state));
+    },
+  );
+
+  app.get(
+    "/auth/google/callback",
+    { config: { rateLimit: { max: 20, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const query = request.query as Record<string, unknown>;
+      const stateCookie = readSignedCookie(request, OAUTH_STATE_COOKIE);
+      const nextCookie = readSignedCookie(request, OAUTH_NEXT_COOKIE);
+      reply.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
+      reply.clearCookie(OAUTH_NEXT_COOKIE, { path: "/" });
+
+      if (query.error) {
+        setFlash(
+          reply,
+          deps.config,
+          "error",
+          "Bạn đã hủy đăng nhập bằng Google.",
+        );
+        return reply.redirect("/dang-nhap");
+      }
+
+      const code = String(query.code ?? "");
+      const state = String(query.state ?? "");
+      if (!code || !state || !stateCookie || state !== stateCookie) {
+        setFlash(
+          reply,
+          deps.config,
+          "error",
+          "Phiên đăng nhập Google đã hết hạn. Hãy thử lại.",
+        );
+        return reply.redirect("/dang-nhap");
+      }
+
+      try {
+        const profile = await fetchGoogleProfile(deps.config, code);
+        const { userId } = await findOrCreateGoogleUser(
+          deps.db,
+          deps.emailService,
+          deps.config,
+          request,
+          profile,
+        );
+        await createSession(deps.db, deps.config, request, reply, userId);
+        return reply.redirect(safeNextPath(nextCookie, "/app"));
+      } catch (error) {
+        const message =
+          error instanceof AppError
+            ? error.message
+            : "Đăng nhập Google thất bại. Hãy thử lại.";
+        setFlash(reply, deps.config, "error", message);
+        return reply.redirect("/dang-nhap");
       }
     },
   );

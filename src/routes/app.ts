@@ -1206,7 +1206,21 @@ export async function registerAppRoutes(
     return reply.send({ messages });
   });
 
-  app.get("/settings", async (request, reply) => {
+  /*
+   * Tách làm HAI trang thay vì gộp một:
+   *   /app/settings — "Chức năng": chỉ là bảng điều hướng tới mọi khu vực.
+   *   /app/profile  — "Thông tin cá nhân": hồ sơ, bảo mật, phiên đăng nhập.
+   * Gộp chung thì một trang vừa là chỗ ĐI ĐÂU vừa là chỗ SỬA GÌ, càng thêm
+   * trường hồ sơ (ảnh đại diện, số điện thoại...) càng dài và lẫn lộn.
+   */
+  app.get("/settings", async (_request, reply) => {
+    return reply.view("app/settings.njk", {
+      pageTitle: "Chức năng",
+      appSection: "settings",
+    });
+  });
+
+  app.get("/profile", async (request, reply) => {
     const currentTokenHash = request.sessionToken
       ? sha256(request.sessionToken)
       : null;
@@ -1226,9 +1240,9 @@ export async function registerAppRoutes(
       `,
       [userId(request)],
     );
-    return reply.view("app/settings.njk", {
-      pageTitle: "Tài khoản và bảo mật",
-      appSection: "settings",
+    return reply.view("app/profile.njk", {
+      pageTitle: "Thông tin cá nhân",
+      appSection: "profile",
       sessions: sessions.rows.map((row) => ({
         ...row,
         is_current: currentTokenHash === row.token_hash,
@@ -1252,7 +1266,8 @@ export async function registerAppRoutes(
     } catch (error) {
       flashError(reply, deps.config, error);
     }
-    return reply.redirect("/app/settings");
+    // Quay lại đúng trang vừa sửa (hồ sơ), không phải trang điều hướng.
+    return reply.redirect("/app/profile");
   });
 
   app.post("/settings/revoke-all", async (request, reply) => {

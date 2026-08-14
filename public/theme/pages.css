@@ -334,13 +334,13 @@ tbody tr:hover td {
   min-height: 190px;
   overflow: hidden;
   padding: 20px 22px;
-  border: 1px solid rgba(238, 125, 77, .24);
+  border: 1px solid rgba(16, 68, 170, .24);
   border-radius: 20px;
   color: #f8fafc;
   background:
-    radial-gradient(circle at 88% 12%, rgba(238, 77, 45, .24), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(12, 57, 147, .24), transparent 28%),
     radial-gradient(circle at 10% 95%, rgba(243, 173, 57, .12), transparent 34%),
-    linear-gradient(135deg, #2c2022 0%, #20191d 52%, #3c2027 100%);
+    linear-gradient(135deg, #2c2022 0%, #20191d 52%, #111723 100%);
   box-shadow: 0 20px 42px rgba(62, 31, 29, .24);
 }
 
@@ -349,7 +349,7 @@ tbody tr:hover td {
   background:
     radial-gradient(circle at 88% 12%, rgba(52, 211, 153, .16), transparent 28%),
     radial-gradient(circle at 10% 95%, rgba(243, 173, 57, .10), transparent 34%),
-    linear-gradient(135deg, #25201e 0%, #1b1a18 50%, #293024 100%);
+    linear-gradient(135deg, #25201e 0%, #17191c 50%, #212933 100%);
 }
 
 .bank-visual-card::after {
