@@ -775,3 +775,106 @@
     bottom: 84px;
   }
 }
+
+/* ===== Bán chạy nhất trên Shopee (phân trang, dữ liệu cache theo trang) ===== */
+.bestseller-section {
+  margin-top: 8px;
+}
+
+.bestseller-head {
+  margin-bottom: 16px;
+}
+
+.bestseller-head h2 {
+  margin: 0 0 4px;
+  color: var(--text, #111827);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.bestseller-head p {
+  margin: 0;
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+}
+
+.bestseller-status {
+  margin: 14px 0 0;
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+}
+
+.bestseller-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.bestseller-pagination .page-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line, #d1d5db);
+  border-radius: 10px;
+  color: var(--text, #111827);
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.bestseller-pagination .page-item:hover:not(:disabled):not(.active) {
+  border-color: var(--discover-accent);
+  color: var(--discover-accent);
+}
+
+.bestseller-pagination .page-item.active {
+  border-color: var(--discover-accent);
+  color: #fff;
+  background: var(--discover-accent);
+  cursor: default;
+}
+
+.bestseller-pagination .page-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+[data-bestseller-grid][aria-busy="true"] {
+  opacity: 0.55;
+}
+
+/* Loading im lặng: chỉ spinner, không chữ "đang lấy từ Shopee…". */
+.bestseller-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.bestseller-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--line, #e5e7eb);
+  border-top-color: var(--discover-accent, #ff5a1f);
+  border-radius: 50%;
+  animation: bestseller-spin 0.7s linear infinite;
+}
+
+@keyframes bestseller-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bestseller-spinner {
+    animation-duration: 2s;
+  }
+}

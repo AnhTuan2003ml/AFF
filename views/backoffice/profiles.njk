@@ -1,0 +1,276 @@
+{% extends "backoffice/base.njk" %}
+
+{% macro profile_status(status) %}
+  {% if status == 'READY' %}
+    <span class="status-badge status-positive">Sẵn sàng</span>
+  {% elif status == 'DISABLED' %}
+    <span class="status-badge status-neutral">Đang tắt</span>
+  {% else %}
+    <span class="status-badge status-pending">Chưa đăng nhập</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro job_status(status) %}
+  {% if status == 'DONE' %}
+    <span class="status-badge status-positive">Xong</span>
+  {% elif status == 'ERROR' %}
+    <span class="status-badge status-negative">Lỗi</span>
+  {% elif status == 'RUNNING' %}
+    <span class="status-badge status-pending">Đang chạy</span>
+  {% else %}
+    <span class="status-badge status-neutral">Chờ worker</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro list_label(listType) %}{% if listType == 0 %}Đề xuất{% elif listType == 8 %}Ưu đãi độc quyền{% else %}Bán chạy{% endif %}{% endmacro %}
+
+{% macro job_kind(job) %}
+  {% if job.kind == 'LOGIN' %}Mở đăng nhập
+  {% elif job.kind == 'FETCH_RANGE' %}Lấy dải trang {{ list_label(job.params.listType) }} {{ job.params.fromPage }}–{{ job.params.toPage }}
+  {% elif job.kind == 'FETCH_PAGE' %}Lấy 1 trang {{ list_label(job.params.listType) }} #{{ job.params.pageNo }}
+  {% else %}Lấy sản phẩm{% endif %}
+{% endmacro %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/backoffice-profiles.css?v={{ assetVersion }}">
+
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">SẢN PHẨM TỪ SHOPEE AFFILIATE</span>
+      <h1>Profile Shopee</h1>
+      <p>Worker điều khiển profile trình duyệt (ứng dụng <b>Browser Control</b>, 127.0.0.1:9222) mở trang Product Offer, lấy danh sách sản phẩm và lưu vào kho dữ liệu. Trang Khám phá đọc thẳng từ kho — không lấy lại mỗi lần.</p>
+    </div>
+  </section>
+
+  <section class="order-summary-grid" aria-label="Trạng thái hệ thống">
+    <a href="/backoffice/profiles">
+      <span>Worker</span>
+      <strong>
+        {% if workerOnline %}<span class="status-badge status-positive">Đang chạy</span>
+        {% else %}<span class="status-badge status-negative">Không kết nối</span>{% endif %}
+      </strong>
+      <small>{% if settings.workerLastSeenAt %}Lần cuối: {{ settings.workerLastSeenAt | datetime }}{% else %}Chưa thấy worker{% endif %}</small>
+    </a>
+    <a href="/app/discover?list=recommend" target="_blank" rel="noopener">
+      <span>Kho Đề xuất</span>
+      <strong>{{ recommendRange.productCount }}</strong>
+      <small>{% if recommendRange.maxPage %}Trang {{ recommendRange.minPage }}–{{ recommendRange.maxPage }} ({{ recommendRange.pageCount }} trang){% else %}Chưa có dữ liệu{% endif %}</small>
+    </a>
+    <a href="/app/discover?list=best" target="_blank" rel="noopener">
+      <span>Kho Bán chạy</span>
+      <strong>{{ bestRange.productCount }}</strong>
+      <small>{% if bestRange.maxPage %}Trang {{ bestRange.minPage }}–{{ bestRange.maxPage }} ({{ bestRange.pageCount }} trang){% else %}Chưa có dữ liệu{% endif %}</small>
+    </a>
+    <a href="/app/discover?list=exclusive" target="_blank" rel="noopener">
+      <span>Kho Ưu đãi độc quyền</span>
+      <strong>{{ exclusiveRange.productCount }}</strong>
+      <small>{% if exclusiveRange.maxPage %}Trang {{ exclusiveRange.minPage }}–{{ exclusiveRange.maxPage }} ({{ exclusiveRange.pageCount }} trang){% else %}Chưa có dữ liệu{% endif %}</small>
+    </a>
+  </section>
+
+  {% if not workerConfigured %}
+    <aside class="info-strip"><span>!</span><div><b>Chưa cấu hình token worker</b><p>Đặt <code>HARVEST_WORKER_TOKEN</code> trong <code>.env</code> của server và worker rồi khởi động lại.</p></div></aside>
+  {% elif not workerOnline %}
+    <aside class="info-strip"><span>!</span><div><b>Worker chưa chạy</b><p>Trên máy chủ: mở <b>Browser Control</b>, rồi vào thư mục <code>profile-worker</code> chạy <code>npm start</code>. Worker tự nhận lệnh trong vài giây.</p></div></aside>
+  {% endif %}
+  {% if settings.lastError %}
+    <aside class="info-strip"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ settings.lastError }}</p></div></aside>
+  {% endif %}
+
+  {# ── Lấy dữ liệu theo dải trang ────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">LẤY DỮ LIỆU</span><h2>Nạp sản phẩm theo dải trang</h2></div>
+    </header>
+    <p class="bp-hint">Mỗi trang 20 sản phẩm. Chọn <b>từ trang</b> đến <b>trang</b> để nạp vào kho — ví dụ hôm nay lấy 1–25, hôm sau lấy 26–50. Đã có trong kho thì được cập nhật lại. Tối đa 40 trang mỗi lượt.</p>
+
+    <div class="bp-range-grid">
+      <form method="post" action="/backoffice/profiles/fetch-range" class="bp-range-card" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="list" value="recommend">
+        <h3>Đề xuất</h3>
+        <p class="bp-range-state">{% if recommendRange.maxPage %}Đã có: trang {{ recommendRange.minPage }}–{{ recommendRange.maxPage }}{% else %}Kho trống{% endif %}</p>
+        <div class="bp-range-inputs">
+          <label>Từ trang
+            <input type="number" name="fromPage" min="1" max="500" value="{{ (recommendRange.maxPage + 1) if recommendRange.maxPage else 1 }}" required data-required-message="Nhập trang đầu.">
+          </label>
+          <span class="bp-range-dash" aria-hidden="true">→</span>
+          <label>Đến trang
+            <input type="number" name="toPage" min="1" max="500" value="{{ (recommendRange.maxPage + 25) if recommendRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
+          </label>
+        </div>
+        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Đề xuất</button>
+      </form>
+
+      <form method="post" action="/backoffice/profiles/fetch-range" class="bp-range-card" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="list" value="best">
+        <h3>Bán chạy nhất</h3>
+        <p class="bp-range-state">{% if bestRange.maxPage %}Đã có: trang {{ bestRange.minPage }}–{{ bestRange.maxPage }}{% else %}Kho trống{% endif %}</p>
+        <div class="bp-range-inputs">
+          <label>Từ trang
+            <input type="number" name="fromPage" min="1" max="500" value="{{ (bestRange.maxPage + 1) if bestRange.maxPage else 1 }}" required data-required-message="Nhập trang đầu.">
+          </label>
+          <span class="bp-range-dash" aria-hidden="true">→</span>
+          <label>Đến trang
+            <input type="number" name="toPage" min="1" max="500" value="{{ (bestRange.maxPage + 25) if bestRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
+          </label>
+        </div>
+        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Bán chạy</button>
+      </form>
+
+      <form method="post" action="/backoffice/profiles/fetch-range" class="bp-range-card" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="list" value="exclusive">
+        <h3>Ưu đãi độc quyền</h3>
+        <p class="bp-range-state">{% if exclusiveRange.maxPage %}Đã có: trang {{ exclusiveRange.minPage }}–{{ exclusiveRange.maxPage }}{% else %}Kho trống{% endif %}</p>
+        <div class="bp-range-inputs">
+          <label>Từ trang
+            <input type="number" name="fromPage" min="1" max="500" value="{{ (exclusiveRange.maxPage + 1) if exclusiveRange.maxPage else 1 }}" required data-required-message="Nhập trang đầu.">
+          </label>
+          <span class="bp-range-dash" aria-hidden="true">→</span>
+          <label>Đến trang
+            <input type="number" name="toPage" min="1" max="500" value="{{ (exclusiveRange.maxPage + 25) if exclusiveRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
+          </label>
+        </div>
+        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Ưu đãi</button>
+      </form>
+    </div>
+  </section>
+
+  {# ── Danh sách profile ─────────────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">PROFILE</span><h2>Danh sách profile</h2></div>
+    </header>
+
+    {% if profiles.length %}
+      <div class="responsive-table">
+        <table class="bp-profile-table">
+          <thead>
+            <tr>
+              <th>Tên</th>
+              <th>Trạng thái</th>
+              <th>Đăng nhập</th>
+              <th>Lấy gần nhất</th>
+              <th class="bp-actions-col">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for profile in profiles %}
+              <tr>
+                <td>
+                  <b>{{ profile.name }}</b>
+                  <small class="bp-profile-id">{{ profile.id }}</small>
+                </td>
+                <td>
+                  {{ profile_status(profile.status) }}
+                  {% if profile.last_error %}<small class="field-error bp-cell-error">{{ profile.last_error }}</small>{% endif %}
+                </td>
+                <td>{% if profile.last_login_at %}{{ profile.last_login_at | datetime }}{% else %}—{% endif %}</td>
+                <td>
+                  {% if profile.last_fetch_at %}{{ profile.last_fetch_at | datetime }}{% if profile.last_fetched_count %}<small>{{ profile.last_fetched_count }} sp</small>{% endif %}{% else %}—{% endif %}
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/login">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button class="button button-small button-ghost" type="submit">Đăng nhập</button>
+                    </form>
+                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/fetch">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button class="button button-small button-primary" type="submit" {% if profile.status != 'READY' %}disabled title="Đăng nhập profile trước"{% endif %}>Lấy sản phẩm</button>
+                    </form>
+                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/toggle">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      {% if profile.status != 'DISABLED' %}<input type="hidden" name="disabled" value="on">{% endif %}
+                      <button class="button button-small button-ghost" type="submit">{% if profile.status == 'DISABLED' %}Bật lại{% else %}Tắt{% endif %}</button>
+                    </form>
+                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/delete" onsubmit="return confirm('Xóa profile này khỏi hệ thống?');">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button class="button button-small button-danger" type="submit">Xóa</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="bp-hint">Chưa có profile nào. Tạo profile trong Browser Control rồi đăng ký Profile ID bên dưới.</p>
+    {% endif %}
+
+    <form method="post" action="/backoffice/profiles" class="bp-add-form" data-validate-form novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <label>Tên hiển thị
+        <input type="text" name="name" minlength="2" maxlength="80" placeholder="Ví dụ: Tài khoản chính" required data-required-message="Nhập tên profile.">
+      </label>
+      <label>Profile ID (từ Browser Control)
+        <input type="text" name="profileId" maxlength="40" autocomplete="off" spellcheck="false" placeholder="0054964c-313d-42c2-b627-c6a07b3eba4b" required data-required-message="Dán Profile ID.">
+      </label>
+      <button class="button button-primary" type="submit" data-submit-button>Đăng ký profile</button>
+    </form>
+  </section>
+
+  {# ── Lịch lấy tự động ──────────────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">TỰ ĐỘNG</span><h2>Lịch làm mới Đề xuất</h2></div>
+    </header>
+    <form method="post" action="/backoffice/profiles/settings" class="config-form" data-validate-form novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <div class="bp-settings-grid">
+        <label>Tần suất (phút)
+          <input type="number" name="intervalMinutes" min="15" max="10080" value="{{ settings.intervalMinutes }}" required data-required-message="Nhập tần suất." data-min-message="Tối thiểu 15 phút." data-max-message="Tối đa 10080 phút.">
+          <small>Khoảng cách giữa hai lượt làm mới tự động.</small>
+        </label>
+        <label>Số trang mỗi lượt
+          <input type="number" name="pages" min="1" max="10" value="{{ settings.pages }}" required data-required-message="Nhập số trang." data-min-message="Ít nhất 1." data-max-message="Tối đa 10.">
+          <small>Số trang Đề xuất làm mới mỗi lượt tự động.</small>
+        </label>
+        <label>Sản phẩm hiển thị tối đa
+          <input type="number" name="maxItems" min="10" max="200" value="{{ settings.maxItems }}" required data-required-message="Nhập số sản phẩm." data-min-message="Ít nhất 10." data-max-message="Tối đa 200.">
+          <small>Vượt số này sẽ ẩn bớt khỏi mục Đề xuất trên Khám phá.</small>
+        </label>
+      </div>
+      <label class="switch-row">
+        <input type="checkbox" name="enabled" {% if settings.enabled %}checked{% endif %}>
+        <span>Bật làm mới tự động<small>Đến hạn, hệ thống tự làm mới Đề xuất (cần worker đang chạy).</small></span>
+      </label>
+      <div class="config-save-bar">
+        <span class="config-saved-state">Tiền hoàn = hoa hồng Shopee × tỷ lệ hoàn cho người mua (Cấu hình nghiệp vụ).</span>
+        <button class="button button-primary" type="submit" data-submit-button>Lưu cấu hình</button>
+      </div>
+    </form>
+  </section>
+
+  {# ── Nhật ký ───────────────────────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">NHẬT KÝ</span><h2>Lệnh gần đây</h2></div>
+    </header>
+    {% if jobs.length %}
+      <div class="responsive-table">
+        <table>
+          <thead>
+            <tr><th>Thời điểm</th><th>Profile</th><th>Lệnh</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+          </thead>
+          <tbody>
+            {% for job in jobs %}
+              <tr>
+                <td>{{ job.created_at | datetime }}</td>
+                <td>{{ job.profile_name }}</td>
+                <td>{{ job_kind(job) }}</td>
+                <td>{{ job_status(job.status) }}</td>
+                <td>{% if job.error %}<span class="field-error">{{ job.error }}</span>{% elif job.finished_at %}Xong {{ job.finished_at | datetime }}{% else %}—{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="bp-hint">Chưa có lệnh nào.</p>
+    {% endif %}
+  </section>
+{% endblock %}

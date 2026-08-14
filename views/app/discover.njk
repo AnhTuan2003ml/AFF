@@ -4,6 +4,7 @@
 {% block page_scripts %}
   <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
   <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/discover-bestsellers.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
 
 {% block app_content %}
@@ -40,6 +41,10 @@
           <span><b aria-hidden="true">◇</b> Danh mục:</span>
           <div class="discover-category-tabs" role="group" aria-label="Lọc theo danh mục">
             <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả danh mục</button>
+            {# Ba danh mục sống lấy thẳng từ Shopee, phân trang riêng từng mục. #}
+            <button type="button" data-discover-livelist="recommend" aria-pressed="false">Đề xuất</button>
+            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy nhất</button>
+            <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Ưu đãi độc quyền</button>
             {% for category in categories %}
               <button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>
             {% endfor %}
@@ -147,6 +152,25 @@
         <p>Nội dung mới sẽ xuất hiện sau khi quản trị viên tạo bài đăng và gắn danh mục.</p>
       </section>
     {% endif %}
+
+    {# Danh mục sống (Đề xuất / Bán chạy nhất): dữ liệu theo trang
+       (20 sp/trang) cache DB; trang chưa có thì worker gọi Shopee lấy.
+       Hiện khi chọn nút danh mục tương ứng, thay cho lưới nội dung thường. #}
+    <section class="bestseller-section" data-bestseller
+      data-endpoint="/app/discover/offer-products" hidden
+      aria-labelledby="bestseller-title">
+      <header class="bestseller-head">
+        <h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee</h2>
+        <p>Mua qua ShopTik để nhận hoàn tiền — mỗi trang 20 sản phẩm.</p>
+      </header>
+      <div class="discover-grid" data-bestseller-grid aria-live="polite"></div>
+      <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true">
+        <span class="bestseller-spinner"></span>
+      </div>
+      <p class="bestseller-status" data-bestseller-status hidden></p>
+      <nav class="bestseller-pagination" data-bestseller-pagination
+        aria-label="Chuyển trang" hidden></nav>
+    </section>
 
     <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
   </div>

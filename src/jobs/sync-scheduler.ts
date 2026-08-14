@@ -2,6 +2,8 @@ import type { FastifyBaseLogger } from "fastify";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { releaseDueCashback } from "../services/cashback-release.js";
+import { enqueueDueHarvest } from "../services/discover-harvest.js";
+import { pruneUnconfirmedInstantBuys } from "../services/instantbuy-cleanup.js";
 import { getPlatformSyncSettings } from "../services/platform-sync-settings.js";
 import {
   isShopeeSyncDue,
@@ -60,12 +62,34 @@ export function startSyncScheduler(
         }
       }
 
+      // Đến hạn lấy sản phẩm đề xuất: xếp lệnh FETCH cho profile-worker.
+      try {
+        if (await enqueueDueHarvest(db)) {
+          logger.info("Đã xếp lệnh lấy sản phẩm đề xuất Shopee cho worker.");
+        }
+      } catch (error) {
+        logger.warn({ err: error }, "Không xếp được lệnh lấy sản phẩm đề xuất");
+      }
+
       const release = await releaseDueCashback(db, { actorId });
       if (release.released > 0) {
         logger.info(
           { orders: release.released, amountVnd: release.amountVnd },
           "Đã giải ngân tiền hoàn đến hạn",
         );
+      }
+
+      // Dọn lượt "Mua ngay" quá hạn mà đối soát vẫn chưa gán được đơn thật.
+      try {
+        const pruned = await pruneUnconfirmedInstantBuys(db, config);
+        if (pruned > 0) {
+          logger.info(
+            { removed: pruned },
+            "Đã xóa lượt mua chưa thành đơn khỏi lịch sử",
+          );
+        }
+      } catch (error) {
+        logger.warn({ err: error }, "Không dọn được lượt mua chưa thành đơn");
       }
     } catch (error) {
       logger.error({ err: error }, "Lỗi tiến trình đồng bộ nền");

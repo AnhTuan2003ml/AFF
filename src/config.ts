@@ -63,6 +63,9 @@ const configSchema = z.object({
   SMTP_FROM_NAME: z.string().default("ShopTik"),
   SMTP_FROM_EMAIL: z.string().email().default("no-reply@example.com"),
   SHOPEE_AFFILIATE_ID: z.string().default(""),
+  // Token cho profile-worker (Playwright chạy trên máy host) gọi API
+  // /api/v1/harvest/*. Trống = tắt toàn bộ API worker.
+  HARVEST_WORKER_TOKEN: z.string().trim().default(""),
   // Lấy tại affiliate.shopee.vn → Công cụ → API.
   SHOPEE_OPEN_API_APP_ID: z.string().trim().default(""),
   SHOPEE_OPEN_API_SECRET: z.string().trim().default(""),
@@ -124,6 +127,9 @@ const configSchema = z.object({
     .enum(["first_approved_order"])
     .default("first_approved_order"),
   AFFILIATE_ATTRIBUTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  // Lượt bấm "Mua ngay" quá số ngày này mà đối soát vẫn chưa gán được đơn
+  // thật thì tự xóa khỏi lịch sử (dọn lượt mua thử/không thành).
+  INSTANTBUY_KEEP_DAYS: z.coerce.number().int().min(1).max(90).default(1),
   CASHBACK_HOLD_DAYS: z.coerce.number().int().min(0).max(365).default(30),
   MIN_WITHDRAW_AMOUNT: z.coerce.number().int().positive().default(100000),
   ENABLE_SHARE_LINK: booleanFromStringDefault("true"),

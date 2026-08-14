@@ -1,5 +1,6 @@
 node_modules
 dist
+profile-worker
 .env
 .git
 coverage

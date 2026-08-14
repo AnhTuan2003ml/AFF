@@ -2311,20 +2311,20 @@ html {
   font-size: 15px;
 }
 
-/* Nền pastel phải là HẰNG SỐ ở cả dark mode — rule dark của dv13 (specificity
-   cao hơn) đang đổi các bề mặt này về xám tối làm chữ mực đã ghim bị chìm.
-   Ghim lại nền với scope dark thắng rule cũ. */
+/* Dark mode: các bề mặt pastel (hero, ô lợi ích, thẻ sàn) chuyển sang bản
+   TỐI cùng tông màu — không giữ nền sáng gây chói. Chữ bên trong được ghim
+   lại màu sáng ở cuối file (mục "DARK PASTEL → BỀ MẶT TỐI"). */
 /* .st-content trong selector để thắng cả guard dark nội bộ
    (background: var(--dv-paper) !important trên .shopping-panel). */
 :root[data-theme="dark"] .st-app .st-content .st-home-hero,
 :root[data-theme="dark"] .st-app .st-home-hero,
 :root[data-theme="dark"] .dv13-commerce-shell .st-home-hero {
-  border-color: #f2c9b4 !important;
-  background: linear-gradient(120deg, #ffe1d3 0%, #fff3ec 62%, #fff8f1 100%) !important;
+  border-color: #43302a !important;
+  background: linear-gradient(120deg, #2b1e16 0%, #241d18 55%, #201d1a 100%) !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint {
-  color: #6f706a !important;
+  color: #a7ac9f !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits,
@@ -2334,73 +2334,72 @@ html {
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(1) {
-  background: #ddeeff !important;
+  background: #182634 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(2) {
-  background: #fff0eb !important;
+  background: #2c1e19 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(3) {
-  background: #ddf4e9 !important;
+  background: #18291f !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .commerce-benefits article:nth-of-type(4) {
-  background: #ffe8a3 !important;
+  background: #2d2514 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-shopee {
-  background: #fff0eb !important;
-  border-color: #f5c9b6 !important;
+  background: #2c1c15 !important;
+  border-color: #5c3324 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-tiktok {
-  background: #e9f7f8 !important;
-  border-color: #bfe7ea !important;
+  background: #14282b !important;
+  border-color: #28545a !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab.platform-lazada {
-  background: #efecff !important;
-  border-color: #d4ccf5 !important;
+  background: #211d33 !important;
+  border-color: #453a6e !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-shopee.active {
-  background: #ffe1d3 !important;
+  background: #3a2318 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-tiktok.active {
-  background: #d8f1f3 !important;
+  background: #183338 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-grid .platform-tab.platform-lazada.active {
-  background: #e2dcfb !important;
+  background: #2a2444 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .discover-hero,
 :root[data-theme="dark"] .st-app .discover-hero {
-  border-color: #f5d9cd !important;
-  background: linear-gradient(135deg, #fff0eb, #fff7ee) !important;
+  border-color: #43302a !important;
+  background: linear-gradient(135deg, #2b1e16, #221d19) !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .referral-hero,
 :root[data-theme="dark"] .st-app .referral-hero {
-  border-color: #f2c9b4 !important;
-  background: linear-gradient(120deg, #ffe1d3, #fff8f1) !important;
+  border-color: #43302a !important;
+  background: linear-gradient(120deg, #2b1e16, #201d1a) !important;
 }
 
-/* Chữ trên thẻ sàn và hero Giới thiệu trong dark: rule dark cũ specificity
-   cao hơn pin thường — thêm bản dark-scope. */
+/* Chữ trên thẻ sàn và hero Giới thiệu trong dark: nền đã tối nên chữ sáng. */
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab strong {
-  color: #1f231e !important;
+  color: #f2f3f0 !important;
 }
 
 :root[data-theme="dark"] .dv13-commerce-shell .platform-tab small {
-  color: #6f706a !important;
+  color: #b8bcb4 !important;
 }
 
 :root[data-theme="dark"] .st-app .st-content .referral-hero :is(span, small, .eyebrow),
 :root[data-theme="dark"] .dv13-commerce-shell .referral-hero :is(span, small, .eyebrow) {
-  color: #8a5a2b !important;
+  color: #e8a877 !important;
   text-shadow: none !important;
 }
 
@@ -2582,8 +2581,7 @@ html {
   height: 24px !important;
 }
 
-/* Dark mode: khối nhập link trong hero pastel không được chuyển đen —
-   toàn bộ cụm form là bề mặt hằng số sáng ở CẢ hai theme. */
+/* Dark mode: khối nhập link trong hero — ô nhập chuyển tối cùng hệ input. */
 :root[data-theme="dark"] .st-app .st-home-hero .buy-form,
 :root[data-theme="dark"] .dv13-commerce-shell .st-home-hero .shopping-panel .buy-form,
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-row,
@@ -2595,19 +2593,17 @@ html {
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-field input,
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input {
-  border-color: var(--sh-control-border) !important;
-  color: #1f231e !important;
-  background: #fff !important;
+  border-color: #3d3d3d !important;
+  color: #e8eae7 !important;
+  background: #1c1b1a !important;
 }
 
 :root[data-theme="dark"] .st-app .st-home-hero .buy-input-row input::placeholder {
-  color: #6f706a;
+  color: #8a8a82;
 }
 
-/* Hint nằm trên nền đào hằng số → màu hằng số, không phụ thuộc theme. */
-.st-app .st-home-hero .buy-form-hint,
-:root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint,
-:root[data-theme="dark"] .dv13-commerce-shell .st-home-hero .buy-form-hint {
+/* Hint trên nền đào (sáng) — bản dark có màu riêng ở mục cuối file. */
+.st-app .st-home-hero .buy-form-hint {
   color: #565b54 !important;
 }
 
@@ -2615,9 +2611,8 @@ html {
   box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
 }
 
-/* Mô tả thẻ sàn đậm hơn (đo 4.04-4.31:1 trong dark trên nền pastel). */
-.st-app .platform-tab small,
-:root[data-theme="dark"] .dv13-commerce-shell .platform-tab small {
+/* Mô tả thẻ sàn đậm hơn trên nền pastel sáng (bản dark ở mục cuối file). */
+.st-app .platform-tab small {
   color: #565b54 !important;
 }
 
@@ -2791,6 +2786,108 @@ html {
   color: #565b54 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* ====================================================================== */
+/* 16. DARK PASTEL → BỀ MẶT TỐI                                            */
+/* Trước đây hero/ô lợi ích/thẻ sàn giữ nền pastel SÁNG ở dark mode và chữ */
+/* bên trong bị ghim mực tối hằng số. Nay các bề mặt đó đã chuyển tối      */
+/* (mục 12) — khối này ghim lại CHỮ SÁNG, đặt cuối file để thắng mọi pin   */
+/* hằng số phía trên.                                                      */
+/* ====================================================================== */
+
+:root[data-theme="dark"] .st-app .st-home-hero .home-section-copy :is(h1, h2) {
+  color: #f2f3f0 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .home-section-copy p {
+  color: #b8bcb4 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .home-section-kicker {
+  color: #ff9e78 !important;
+}
+
+:root[data-theme="dark"] .st-app .buy-input-label {
+  color: #c6cabf;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero .buy-form-hint {
+  color: #a7ac9f !important;
+}
+
+:root[data-theme="dark"] .st-app .shopping-panel .buy-input-field .buy-paste-button {
+  color: #a7ac9f !important;
+}
+
+/* Card "Ví dụ thực tế" trong hero. */
+:root[data-theme="dark"] .st-app .st-home-hero-example {
+  border-color: rgba(255, 255, 255, .1) !important;
+  background: #262321 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero-example span {
+  color: #a7ac9f !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero-example b {
+  color: #f2f3f0 !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero-example em {
+  color: #c6cabf !important;
+}
+
+:root[data-theme="dark"] .st-app .st-home-hero-example strong {
+  color: #4cc38a !important;
+}
+
+/* Bốn ô lợi ích: chữ sáng + icon giữ tông màu từng ô. */
+:root[data-theme="dark"] .st-app .commerce-benefits article h2 {
+  color: #f2f3f0 !important;
+}
+
+:root[data-theme="dark"] .st-app .commerce-benefits article p {
+  color: #b8bcb4 !important;
+}
+
+:root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(1) span {
+  color: #7fb8ef;
+}
+
+:root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(2) span {
+  color: #ff9e78;
+}
+
+:root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(3) span {
+  color: #5fce96;
+}
+
+:root[data-theme="dark"] .st-app .commerce-benefits article:nth-of-type(4) span {
+  color: #e6c25a;
+}
+
+/* Thẻ sàn: tên + mô tả sáng (nền đã tối ở mục 12). */
+:root[data-theme="dark"] .st-app .platform-tab strong {
+  color: #f2f3f0 !important;
+}
+
+:root[data-theme="dark"] .st-app .platform-tab small {
+  color: #b8bcb4 !important;
+}
+
+/* Ô nhập link: bản trắng ở mục 15 (specificity ngang) — bản dark phải đứng
+   sau cùng để thắng. */
+:root[data-theme="dark"] .st-app .shopping-panel .buy-input-field input,
+:root[data-theme="dark"] .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis .buy-input-field input {
+  border-color: #3d3d3d !important;
+  color: #e8eae7 !important;
+  background: #1c1b1a !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3) !important;
+}
+
+:root[data-theme="dark"] .st-app .shopping-panel .buy-input-field input::placeholder {
+  color: #8a8a82;
 }
 
 .st-app .shopping-panel .buy-input-field .buy-paste-button:hover {
@@ -3248,4 +3345,67 @@ html {
   border-color: var(--sh-primary) !important;
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(201, 55, 29, .22) !important;
+}
+
+/* Mã đối chiếu ShopTik trên thẻ đơn hàng — bấm để sao chép, đối chiếu với sàn. */
+.st-app .orders-history-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border: 1px solid var(--sh-line, #e5e7eb);
+  border-radius: 999px;
+  background: var(--sh-bg, #f4f6f5);
+  color: var(--sh-muted, #6b7280);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.st-app .orders-history-ref:hover {
+  border-color: var(--sh-accent, #ee4d2d);
+  color: var(--sh-ink, #1f231e);
+}
+
+.st-app .orders-history-ref code {
+  color: var(--sh-ink, #1f231e);
+  font-weight: 650;
+  letter-spacing: .02em;
+}
+
+.st-app .orders-history-ref i {
+  font-style: normal;
+  opacity: .7;
+}
+
+.st-app .orders-history-ref.is-copied {
+  border-color: var(--sh-success, #16a34a);
+  color: var(--sh-success, #16a34a);
+}
+
+:root[data-theme="dark"] .st-app .orders-history-ref {
+  border-color: #33312f;
+  background: #242220;
+}
+
+:root[data-theme="dark"] .st-app .orders-history-ref code {
+  color: #f2f3f0;
+}
+
+/* Trang quản trị dùng gần trọn bề ngang (bảng dữ liệu cần rộng) — bỏ giới
+   hạn 1120px + căn giữa của .st-content, chỉ chừa lề nhỏ 2 bên. */
+.backoffice-shell .st-content {
+  width: auto;
+  max-width: none;
+  margin-inline: 0;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+@media (max-width: 640px) {
+  .backoffice-shell .st-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }

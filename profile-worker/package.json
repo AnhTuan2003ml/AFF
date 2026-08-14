@@ -1,0 +1,10 @@
+{
+  "name": "aff-profile-worker",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker lấy sản phẩm đề xuất Shopee Affiliate qua ứng dụng Browser Control (không dependency, cần Node 22+)",
+  "scripts": {
+    "start": "node worker.mjs"
+  }
+}

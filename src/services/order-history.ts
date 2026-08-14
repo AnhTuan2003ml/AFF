@@ -20,6 +20,8 @@ export interface OrderHistoryRow {
   record_kind: OrderHistoryKind;
   platform: string;
   platform_order_id: string | null;
+  /** Mã đối chiếu của hệ thống (mã lượt click, nằm trong Sub ID gửi sàn). */
+  reference_code: string | null;
   status: string;
   order_amount_vnd: string;
   commission_vnd: string;
@@ -52,6 +54,7 @@ export interface OrderHistoryParams {
 const HISTORY_SQL = `
   SELECT * FROM (
     SELECT o.id, 'ORDER' AS record_kind, o.platform, o.platform_order_id,
+      l.click_id AS reference_code,
       o.status, o.order_amount_vnd::text, o.commission_vnd::text,
       o.cashback_vnd::text, o.purchased_at, o.created_at,
       COALESCE(oi.item_name, l.product_name) AS product_name,
@@ -113,6 +116,7 @@ const HISTORY_SQL = `
 
     SELECT il.id, 'INTENT' AS record_kind, il.platform,
       NULL::text AS platform_order_id,
+      il.click_id AS reference_code,
       CASE
         WHEN il.created_at > now() - ($5::text || ' days')::interval
         THEN 'AWAITING'

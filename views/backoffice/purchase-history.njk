@@ -1,0 +1,56 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/purchase-history.css?v={{ assetVersion }}">
+
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">THEO DÕI THEO TÀI KHOẢN</span>
+      <h1>Lịch sử mua</h1>
+      <p>Chọn một tài khoản ở cột trái để xem lịch sử đơn mua đã đối soát và lịch sử click (mỗi lượt bấm “Mua ngay”) của tài khoản đó.</p>
+    </div>
+  </section>
+
+  <div class="ph-layout" data-purchase-history data-endpoint="/backoffice/purchase-history">
+    {# ── Cột trái: tìm + danh sách tài khoản ─────────────────────────── #}
+    <aside class="panel ph-accounts">
+      <div class="ph-search">
+        <input type="search" placeholder="Tìm theo tên, email hoặc mã…" autocomplete="off" data-ph-search>
+      </div>
+      <p class="ph-accounts-count"><span data-ph-count>{{ accounts.length }}</span> tài khoản</p>
+      <ul class="ph-account-list" data-ph-list role="listbox" aria-label="Danh sách tài khoản">
+        {% for account in accounts %}
+          <li>
+            <button type="button" class="ph-account" data-ph-account="{{ account.id }}"
+              data-search="{{ (account.full_name ~ ' ' ~ account.email ~ ' ' ~ (account.tracking_code or '')) | lower }}">
+              <span class="ph-account-avatar" aria-hidden="true">{{ account.full_name | first | upper }}</span>
+              <span class="ph-account-main">
+                <b>{{ account.full_name }}</b>
+                <small>{{ account.email }}</small>
+              </span>
+              <span class="ph-account-stat">
+                <em>{{ account.orders_count }}</em> đơn
+                <em>{{ account.clicks_count }}</em> click
+              </span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="ph-account-empty" data-ph-list-empty hidden>Không có tài khoản khớp.</p>
+    </aside>
+
+    {# ── Cột phải: chi tiết (JS nạp khi chọn) ────────────────────────── #}
+    <section class="panel ph-detail" data-ph-detail aria-live="polite">
+      <div class="ph-detail-placeholder" data-ph-placeholder>
+        <span aria-hidden="true">◧</span>
+        <h2>Chọn một tài khoản</h2>
+        <p>Lịch sử đơn mua và click của tài khoản sẽ hiện ở đây.</p>
+      </div>
+      <div class="ph-detail-body" data-ph-body hidden></div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/purchase-history.js?v={{ assetVersion }}" defer></script>
+{% endblock %}

@@ -84,6 +84,25 @@
   {% include "app/dashboard/product-states.njk" %}
 </section>
 
+{# Băng chuyền sản phẩm bán chạy — JS nạp từ /app/promo-products, tự ẩn nếu
+   kho trống. Tự xoay, dừng khi hover; nút mua đi qua luồng affiliate. #}
+<section class="promo-carousel" data-promo-carousel hidden aria-label="Sản phẩm đang hot trên Shopee">
+  <header class="promo-carousel-head">
+    <div>
+      <span class="promo-carousel-kicker">Đang hot trên Shopee</span>
+      <h2>Mua là có hoàn tiền</h2>
+    </div>
+    <div class="promo-carousel-nav">
+      <button type="button" class="promo-carousel-arrow" data-promo-prev aria-label="Sản phẩm trước">‹</button>
+      <button type="button" class="promo-carousel-arrow" data-promo-next aria-label="Sản phẩm sau">›</button>
+    </div>
+  </header>
+  <div class="promo-carousel-viewport" data-promo-viewport>
+    <div class="promo-carousel-track" data-promo-track></div>
+  </div>
+  <div class="promo-carousel-dots" data-promo-dots aria-hidden="true"></div>
+</section>
+
 <section class="commerce-benefits" aria-label="Ưu điểm ShopTik">
   <article>
     <span>{{ icon('ops') }}</span>

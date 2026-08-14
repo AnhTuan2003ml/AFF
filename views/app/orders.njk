@@ -73,6 +73,15 @@
                   <span class="orders-history-platform">{% if order.platform == 'TIKTOK' %}TikTok{% elseif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
                 </div>
 
+                {% if order.reference_code %}
+                  <button type="button" class="orders-history-ref" data-copy-ref="{{ order.reference_code }}"
+                    title="Mã đối chiếu của ShopTik — dùng để đối chiếu với đơn trên sàn. Bấm để sao chép.">
+                    <span>Mã đối chiếu</span>
+                    <code>{{ order.reference_code }}</code>
+                    <i aria-hidden="true">⧉</i>
+                  </button>
+                {% endif %}
+
                 <h2>{{ order.product_name or "Sản phẩm đã mua" }}</h2>
 
                 <div class="orders-history-dates">
@@ -126,4 +135,8 @@
       </section>
     {% endif %}
   </section>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/orders.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

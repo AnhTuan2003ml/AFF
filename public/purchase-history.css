@@ -1,0 +1,248 @@
+/* Admin — Lịch sử mua theo tài khoản (master-detail). Token --admin-* của
+   dashboard.css → tự hợp light/dark. */
+
+.backoffice-shell .ph-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Cột trái ──────────────────────────────────────────────────────── */
+.backoffice-shell .ph-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 180px);
+  padding: 16px;
+}
+
+.backoffice-shell .ph-search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: 10px;
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  font: inherit;
+}
+
+.backoffice-shell .ph-search input:focus {
+  outline: none;
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 3px var(--admin-brand-soft);
+}
+
+.backoffice-shell .ph-accounts-count {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12.5px;
+}
+
+.backoffice-shell .ph-account-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.backoffice-shell .ph-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--admin-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.backoffice-shell .ph-account:hover {
+  background: var(--admin-hover);
+}
+
+.backoffice-shell .ph-account.is-active {
+  border-color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+}
+
+.backoffice-shell .ph-account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--admin-brand);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.backoffice-shell .ph-account-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.backoffice-shell .ph-account-main b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+}
+
+.backoffice-shell .ph-account-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.backoffice-shell .ph-account-stat {
+  flex: none;
+  color: var(--admin-muted);
+  font-size: 11px;
+  text-align: right;
+  line-height: 1.5;
+}
+
+.backoffice-shell .ph-account-stat em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.backoffice-shell .ph-account-empty {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 13px;
+}
+
+/* ── Cột phải ──────────────────────────────────────────────────────── */
+.backoffice-shell .ph-detail {
+  min-height: 320px;
+  padding: 20px;
+}
+
+.backoffice-shell .ph-detail-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 280px;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.backoffice-shell .ph-detail-placeholder span {
+  font-size: 34px;
+  opacity: 0.5;
+}
+
+.backoffice-shell .ph-detail-placeholder h2 {
+  margin: 6px 0 0;
+  color: var(--admin-text);
+  font-size: 18px;
+}
+
+.backoffice-shell .ph-detail-head h2 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 20px;
+}
+
+.backoffice-shell .ph-detail-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 4px 0 0;
+  color: var(--admin-muted);
+  font-size: 13px;
+}
+
+.backoffice-shell .ph-detail-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.backoffice-shell .ph-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 18px 0 8px;
+}
+
+.backoffice-shell .ph-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface-soft);
+}
+
+.backoffice-shell .ph-tile span {
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.backoffice-shell .ph-tile strong {
+  color: var(--admin-text);
+  font-size: 18px;
+}
+
+.backoffice-shell .ph-section-title {
+  margin: 22px 0 10px;
+  color: var(--admin-text);
+  font-size: 15px;
+}
+
+.backoffice-shell .ph-empty,
+.backoffice-shell .ph-loading {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 13.5px;
+}
+
+.backoffice-shell .ph-product {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-shell .ph-cashback {
+  color: var(--admin-success);
+  font-weight: 650;
+}
+
+.backoffice-shell .ph-ref {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--admin-neutral-bg);
+  color: var(--admin-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .backoffice-shell .ph-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .backoffice-shell .ph-accounts {
+    max-height: 360px;
+  }
+}

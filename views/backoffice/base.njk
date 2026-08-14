@@ -29,12 +29,14 @@
           <a href="/backoffice/support" {% if backofficeSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
           <p class="st-nav-group">Quản lý</p>
           <a href="/backoffice/accounts" {% if backofficeSection == 'users' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Người dùng &amp; quyền</span></a>
+          <a href="/backoffice/purchase-history" {% if backofficeSection == 'purchase-history' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Lịch sử mua</span></a>
           <a href="/backoffice/banks" {% if backofficeSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
           <a href="/backoffice/products" {% if backofficeSection == 'products' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Khám phá</span></a>
           <a href="/backoffice/missions" {% if backofficeSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ</span>{% if backofficeMissionsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/revenue" {% if backofficeSection == 'revenue' %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<span>Doanh thu</span></a>
           <p class="st-nav-group">Hệ thống</p>
           <a href="/backoffice/sync" {% if backofficeSection == 'sync' %}class="active" aria-current="page"{% endif %}>{{ icon('refresh') }}<span>Đồng bộ sàn</span></a>
+          <a href="/backoffice/profiles" {% if backofficeSection == 'profiles' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<span>Profile Shopee</span></a>
           <a href="/backoffice/config" {% if backofficeSection == 'config' %}class="active" aria-current="page"{% endif %}>{{ icon('settings') }}<span>Cấu hình nghiệp vụ</span></a>
           <a href="/backoffice/audit" {% if backofficeSection == 'audit' %}class="active" aria-current="page"{% endif %}>{{ icon('audit') }}<span>Nhật ký</span></a>
         </nav>

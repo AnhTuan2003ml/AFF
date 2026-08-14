@@ -1,0 +1,322 @@
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import { AppError } from "../lib/errors.js";
+import { setFlash } from "../lib/flash.js";
+import { parseInput } from "../lib/validation.js";
+import { writeAuditLog } from "../services/audit.js";
+import {
+  BEST_SELLER_LIST_TYPE,
+  EXCLUSIVE_LIST_TYPE,
+  RECOMMEND_LIST_TYPE,
+  createHarvestProfile,
+  deleteHarvestProfile,
+  enqueueHarvestJob,
+  enqueueOfferRangeFetch,
+  getCachedPageRange,
+  getHarvestSettings,
+  isWorkerOnline,
+  listHarvestProfiles,
+  listRecentHarvestJobs,
+  setHarvestProfileDisabled,
+  updateHarvestSettings,
+} from "../services/discover-harvest.js";
+import { query } from "../db.js";
+import {
+  flashAdminError,
+  type AdminConsoleDeps,
+} from "./admin-console-shared.js";
+
+/**
+ * Quản lý profile Shopee Affiliate: mỗi profile là một trình duyệt bền vững
+ * do profile-worker (máy host) giữ. Admin bấm "Mở đăng nhập" để worker mở
+ * cửa sổ đăng nhập; bấm "Lấy sản phẩm" để worker mở trang offer/product_offer
+ * và bắt response api/v3/offer/product/list đổ vào trang Khám phá.
+ */
+
+const MANAGE_ROLES = ["SUPER_ADMIN", "ADMIN"];
+
+function requireManage(role: string): void {
+  if (!MANAGE_ROLES.includes(role)) {
+    throw new AppError("FORBIDDEN", "Bạn không có quyền quản lý profile.", 403);
+  }
+}
+
+const idParams = z.object({ id: z.string().uuid("Profile không hợp lệ.") });
+
+export async function registerAdminProfileRoutes(
+  app: FastifyInstance,
+  deps: AdminConsoleDeps,
+): Promise<void> {
+  app.get("/profiles", async (_request, reply) => {
+    const [
+      settings,
+      profiles,
+      jobs,
+      autoCount,
+      recommendRange,
+      bestRange,
+      exclusiveRange,
+    ] = await Promise.all([
+        getHarvestSettings(deps.db),
+        listHarvestProfiles(deps.db),
+        listRecentHarvestJobs(deps.db, 15),
+        query<{ count: string }>(
+          deps.db,
+          `SELECT count(*)::text AS count FROM content_items
+           WHERE source = 'SHOPEE_AUTO' AND status = 'PUBLISHED'`,
+        ),
+        getCachedPageRange(deps.db, RECOMMEND_LIST_TYPE),
+        getCachedPageRange(deps.db, BEST_SELLER_LIST_TYPE),
+        getCachedPageRange(deps.db, EXCLUSIVE_LIST_TYPE),
+      ]);
+    return reply.view("backoffice/profiles.njk", {
+      pageTitle: "Profile Shopee",
+      backofficeSection: "profiles",
+      settings,
+      profiles,
+      jobs,
+      workerOnline: isWorkerOnline(settings),
+      workerConfigured: Boolean(deps.config.HARVEST_WORKER_TOKEN),
+      autoPublishedCount: Number(autoCount.rows[0]?.count ?? 0),
+      recommendRange,
+      bestRange,
+      exclusiveRange,
+    });
+  });
+
+  // Lấy dải trang cho một danh mục (Đề xuất / Bán chạy): "từ trang A đến B".
+  app.post("/profiles/fetch-range", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({
+          list: z.enum(["recommend", "best", "exclusive"]),
+          fromPage: z.coerce
+            .number("Trang đầu phải là số.")
+            .int()
+            .min(1, "Trang đầu tối thiểu 1."),
+          toPage: z.coerce
+            .number("Trang cuối phải là số.")
+            .int()
+            .min(1, "Trang cuối tối thiểu 1."),
+        }),
+        request.body,
+      );
+      const listTypeByList: Record<string, number> = {
+        recommend: RECOMMEND_LIST_TYPE,
+        best: BEST_SELLER_LIST_TYPE,
+        exclusive: EXCLUSIVE_LIST_TYPE,
+      };
+      const labelByList: Record<string, string> = {
+        recommend: "Đề xuất",
+        best: "Bán chạy nhất",
+        exclusive: "Ưu đãi độc quyền",
+      };
+      await enqueueOfferRangeFetch(
+        deps.db,
+        listTypeByList[input.list]!,
+        input.fromPage,
+        input.toPage,
+        request.currentUser!.id,
+      );
+      const label = labelByList[input.list]!;
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã gửi lệnh lấy ${label} trang ${input.fromPage}–${input.toPage}. Worker sẽ lưu vào kho dữ liệu; theo dõi ở mục Nhật ký.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+
+  app.post("/profiles", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({
+          name: z.string().trim().min(2).max(80),
+          profileId: z
+            .string()
+            .trim()
+            .uuid("Profile ID phải là UUID lấy từ Browser Control."),
+        }),
+        request.body,
+      );
+      const profile = await createHarvestProfile(
+        deps.db,
+        { id: input.profileId, name: input.name },
+        request.currentUser!.id,
+      );
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "HARVEST_PROFILE_CREATED",
+        targetType: "HARVEST_PROFILE",
+        targetId: profile.id,
+        after: { name: profile.name },
+      });
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã đăng ký profile "${profile.name}". Nếu profile đã đăng nhập Shopee sẵn, bấm "Mở đăng nhập" một lần để hệ thống xác nhận.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+
+  app.post<{ Params: { id: string } }>(
+    "/profiles/:id/login",
+    async (request, reply) => {
+      requireManage(request.currentUser!.role);
+      try {
+        const params = parseInput(idParams, request.params);
+        await enqueueHarvestJob(
+          deps.db,
+          params.id,
+          "LOGIN",
+          request.currentUser!.id,
+        );
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Đã gửi lệnh mở đăng nhập. Cửa sổ trình duyệt sẽ hiện trên máy đang chạy worker — đăng nhập xong cứ để worker tự đóng.",
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/profiles");
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/profiles/:id/fetch",
+    async (request, reply) => {
+      requireManage(request.currentUser!.role);
+      try {
+        const params = parseInput(idParams, request.params);
+        await enqueueHarvestJob(
+          deps.db,
+          params.id,
+          "FETCH",
+          request.currentUser!.id,
+        );
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Đã gửi lệnh lấy sản phẩm. Kết quả sẽ hiện ở trang này và trang Khám phá sau khi worker chạy xong.",
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/profiles");
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/profiles/:id/toggle",
+    async (request, reply) => {
+      requireManage(request.currentUser!.role);
+      try {
+        const params = parseInput(idParams, request.params);
+        const body = request.body as Record<string, unknown>;
+        const disabled = body.disabled === "on";
+        await setHarvestProfileDisabled(deps.db, params.id, disabled);
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          disabled ? "Đã tắt profile." : "Đã bật lại profile.",
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/profiles");
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/profiles/:id/delete",
+    async (request, reply) => {
+      requireManage(request.currentUser!.role);
+      try {
+        const params = parseInput(idParams, request.params);
+        const removed = await deleteHarvestProfile(deps.db, params.id);
+        if (!removed) {
+          throw new AppError("PROFILE_NOT_FOUND", "Không tìm thấy profile.", 404);
+        }
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: "HARVEST_PROFILE_DELETED",
+          targetType: "HARVEST_PROFILE",
+          targetId: params.id,
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Đã xóa profile khỏi hệ thống. Profile trong Browser Control vẫn giữ nguyên.",
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/profiles");
+    },
+  );
+
+  app.post("/profiles/settings", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const body = request.body as Record<string, unknown>;
+      const input = parseInput(
+        z.object({
+          intervalMinutes: z.coerce
+            .number("Tần suất phải là số.")
+            .int()
+            .min(15, "Tần suất tối thiểu 15 phút.")
+            .max(10080, "Tần suất tối đa 7 ngày."),
+          pages: z.coerce
+            .number("Số trang phải là số.")
+            .int()
+            .min(1, "Ít nhất 1 trang.")
+            .max(10, "Tối đa 10 trang."),
+          maxItems: z.coerce
+            .number("Số sản phẩm phải là số.")
+            .int()
+            .min(10, "Ít nhất 10 sản phẩm.")
+            .max(200, "Tối đa 200 sản phẩm."),
+          enabled: z.coerce.boolean(),
+        }),
+        { ...body, enabled: body.enabled === "on" },
+      );
+      const after = await updateHarvestSettings(
+        deps.db,
+        {
+          enabled: input.enabled,
+          intervalMinutes: input.intervalMinutes,
+          pages: input.pages,
+          maxItems: input.maxItems,
+        },
+        request.currentUser!.id,
+      );
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "HARVEST_CONFIG_UPDATED",
+        targetType: "BUSINESS_CONFIG",
+        after: {
+          enabled: after.enabled,
+          intervalMinutes: after.intervalMinutes,
+          pages: after.pages,
+          maxItems: after.maxItems,
+        },
+      });
+      setFlash(reply, deps.config, "success", "Đã lưu cấu hình lấy sản phẩm.");
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+}

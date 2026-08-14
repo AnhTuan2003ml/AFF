@@ -124,8 +124,16 @@
     return payload;
   };
 
-  page.querySelectorAll("[data-discover-buy]").forEach((button) => {
-    button.addEventListener("click", async () => {
+  // Ủy quyền sự kiện lên khung trang: thẻ "Bán chạy nhất" render động sau
+  // vẫn dùng chung luồng mua (preview → purchase → /go/:clickId có subId).
+  page.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target ? target.closest("[data-discover-buy]") : null;
+    if (button) void handleBuy(button);
+  });
+
+  async function handleBuy(button) {
+    {
       if (!(button instanceof HTMLButtonElement) || button.disabled) return;
       const productUrl = button.getAttribute("data-product-url") ?? "";
       const label = button.querySelector("[data-buy-label]");
@@ -165,17 +173,25 @@
         button.disabled = false;
         if (label) label.textContent = "Mua & Nhận Hoàn Tiền";
       }
-    });
-  });
+    }
+  }
 
-  page.querySelectorAll("[data-discover-image]").forEach((image) => {
-    image.addEventListener("error", () => {
-      if (!(image instanceof HTMLImageElement) || image.dataset.fallback) return;
+  // "error" không bubble — bắt ở capture phase để ảnh render động cũng có
+  // fallback.
+  page.addEventListener(
+    "error",
+    (event) => {
+      const image = event.target;
+      if (!(image instanceof HTMLImageElement)) return;
+      if (!image.hasAttribute("data-discover-image") || image.dataset.fallback) {
+        return;
+      }
       image.dataset.fallback = "true";
       image.src = "/assets/images/logo.png";
       image.classList.add("is-placeholder");
-    });
-  });
+    },
+    true,
+  );
 
   applyFilters();
 })();

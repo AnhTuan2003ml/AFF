@@ -38,6 +38,19 @@ import {
   platformDisplayName,
   submitSupportRequest,
 } from "../services/support-request.js";
+import {
+  BEST_SELLER_LIST_TYPE,
+  EXCLUSIVE_LIST_TYPE,
+  OFFER_PAGE_SIZE,
+  RECOMMEND_LIST_TYPE,
+  enqueueOfferPageFetch,
+  getHarvestSettings,
+  getKnownOfferPageCount,
+  getStoredOfferPage,
+  hasOfferPage,
+  isWorkerOnline,
+  type StoredOfferProduct,
+} from "../services/discover-harvest.js";
 import { isSlackSupportEnabled } from "../services/slack.js";
 import {
   claimMissionReward,
@@ -746,9 +759,10 @@ export async function registerAppRoutes(
         originalPriceValue > salePrice
           ? originalPriceValue
           : null;
+      // bps → phần trăm, giữ 1 chữ số thập phân (560 bps = 5.6%).
       const cashbackRate =
         row.cashback_rate_bps !== null
-          ? Math.round(row.cashback_rate_bps / 1000) / 10
+          ? Math.round(row.cashback_rate_bps / 10) / 10
           : null;
       const cashbackAmount =
         salePrice !== null && row.cashback_rate_bps !== null
@@ -777,7 +791,11 @@ export async function registerAppRoutes(
 
     const categories = Array.from(
       new Set(items.map((item) => item.category).filter(Boolean)),
-    ).sort((left, right) => left.localeCompare(right, "vi"));
+    )
+      // "Đề xuất" đã có nút danh mục sống (phân trang trực tiếp từ Shopee)
+      // — bỏ nút trùng tên sinh từ bài viết tĩnh.
+      .filter((category) => category !== "Đề xuất")
+      .sort((left, right) => left.localeCompare(right, "vi"));
     const platforms = Array.from(
       new Set(items.map((item) => item.platform).filter(Boolean)),
     ).map((key) => ({
@@ -801,6 +819,124 @@ export async function registerAppRoutes(
       productCount: items.filter((item) => item.isProduct).length,
       voucherCount: items.filter((item) => item.type === "VOUCHER").length,
       balances,
+    });
+  });
+
+  // Hai danh mục sống trong "◇ Danh mục" của trang Khám phá:
+  // list=recommend (Đề xuất, list_type=0) và list=best (Bán chạy, list_type=2).
+  // Dữ liệu theo trang, cache-first — trang chưa có thì xếp lệnh FETCH_PAGE
+  // cho profile-worker và trả FETCHING để client poll.
+  const mapOfferProduct = (
+    row: StoredOfferProduct,
+    buyerCashbackPercent: number,
+  ) => {
+    const priceVnd = row.price_vnd !== null ? Number(row.price_vnd) : null;
+    const cashbackBps =
+      row.commission_rate_bps !== null
+        ? Math.floor((row.commission_rate_bps * buyerCashbackPercent) / 100)
+        : null;
+    return {
+      name: row.name,
+      imageUrl: row.image_url,
+      priceVnd,
+      cashbackAmountVnd:
+        priceVnd !== null && cashbackBps !== null
+          ? Math.floor((priceVnd * cashbackBps) / 10000)
+          : null,
+      cashbackRatePercent:
+        cashbackBps !== null ? Math.round(cashbackBps / 10) / 10 : null,
+      shopName: row.shop_name,
+      salesCount: row.sales_count !== null ? Number(row.sales_count) : null,
+      productUrl: row.product_url,
+    };
+  };
+
+  // Ánh xạ tên danh mục sống → list_type Shopee.
+  const OFFER_LIST_TYPES: Record<string, number> = {
+    recommend: RECOMMEND_LIST_TYPE,
+    best: BEST_SELLER_LIST_TYPE,
+    exclusive: EXCLUSIVE_LIST_TYPE,
+  };
+
+  app.get("/discover/offer-products", async (request, reply) => {
+    const queryParams = request.query as Record<string, unknown>;
+    const listType =
+      OFFER_LIST_TYPES[String(queryParams.list ?? "best")] ??
+      BEST_SELLER_LIST_TYPE;
+    const parsedPage = Number.parseInt(String(queryParams.page ?? "1"), 10);
+    const pageNo = Math.min(
+      Math.max(Number.isFinite(parsedPage) ? parsedPage : 1, 1),
+      100,
+    );
+    reply.header("cache-control", "private, no-store");
+
+    if (await hasOfferPage(deps.db, listType, pageNo)) {
+      const [rows, knownPages, businessConfig] = await Promise.all([
+        getStoredOfferPage(deps.db, listType, pageNo),
+        getKnownOfferPageCount(deps.db, listType),
+        getBusinessConfig(deps.db, deps.config),
+      ]);
+      return reply.send({
+        status: "READY",
+        page: pageNo,
+        knownPages,
+        pageSize: OFFER_PAGE_SIZE,
+        products: rows.map((row) =>
+          mapOfferProduct(row, businessConfig.buyerCashbackPercent),
+        ),
+      });
+    }
+
+    const settings = await getHarvestSettings(deps.db);
+    if (!isWorkerOnline(settings)) {
+      return reply.send({
+        status: "UNAVAILABLE",
+        page: pageNo,
+        message:
+          "Hệ thống lấy dữ liệu Shopee đang tạm nghỉ. Vui lòng quay lại sau.",
+      });
+    }
+    try {
+      await enqueueOfferPageFetch(deps.db, listType, pageNo);
+      return reply.send({ status: "FETCHING", page: pageNo });
+    } catch (error) {
+      const appError = asAppError(error);
+      return reply.send({
+        status: "UNAVAILABLE",
+        page: pageNo,
+        message: appError.message,
+      });
+    }
+  });
+
+  // Băng chuyền quảng cáo trang chủ: nhiều sản phẩm NGẪU NHIÊN từ danh mục
+  // Bán chạy (cache DB). Nút mua đi qua luồng affiliate như thẻ Khám phá.
+  app.get("/promo-products", async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const queryParams = request.query as Record<string, unknown>;
+    const limit = Math.min(
+      Math.max(Number.parseInt(String(queryParams.limit ?? "16"), 10) || 16, 4),
+      24,
+    );
+    const [rows, businessConfig] = await Promise.all([
+      query<StoredOfferProduct>(
+        deps.db,
+        `
+          SELECT item_id, name, image_url, price_vnd::text, commission_rate_bps,
+            shop_name, product_url, sales_count::text
+          FROM shopee_offer_products
+          WHERE list_type = $1 AND image_url IS NOT NULL
+          ORDER BY random()
+          LIMIT $2
+        `,
+        [BEST_SELLER_LIST_TYPE, limit],
+      ),
+      getBusinessConfig(deps.db, deps.config),
+    ]);
+    return reply.send({
+      products: rows.rows.map((row) =>
+        mapOfferProduct(row, businessConfig.buyerCashbackPercent),
+      ),
     });
   });
 
