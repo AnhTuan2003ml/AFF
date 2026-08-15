@@ -3087,3 +3087,241 @@ a.mb-store:hover {
 .mb-app .mb-brands .platform-lazada .platform-logo svg {
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35));
 }
+
+/* ====================================================================== */
+/* 20. NÚT HỖ TRỢ NỔI + POPUP CHAT                                         */
+/* ====================================================================== */
+
+/*
+ * Nút nổi trước đây là ô vuông bo góc, nền trắng, icon xám — nằm trên nền
+ * trang cũng trắng nên gần như không thấy. Nay là viên tròn navy đặc, có
+ * nhịp nhún nhẹ để mắt bắt được, kèm bong bóng mời chào bên cạnh.
+ */
+.mb-app .support-fab-trigger {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+  background: linear-gradient(150deg, var(--brand-from), var(--brand-to)) !important;
+  box-shadow: 0 14px 30px -10px var(--brand-shadow-hover) !important;
+  cursor: pointer;
+  animation: mb-fab-bob 2.8s ease-in-out infinite;
+}
+
+.mb-app .support-fab-trigger svg {
+  width: 26px;
+  height: 26px;
+  color: #fff;
+}
+
+.mb-app .support-fab-trigger:hover {
+  box-shadow: 0 18px 36px -10px var(--brand-shadow-hover) !important;
+}
+
+@keyframes mb-fab-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* Kéo nút đi chỗ khác thì dừng nhún, không thì nó giật theo tay. */
+.mb-app .support-fab.is-dragging .support-fab-trigger {
+  animation: none;
+}
+
+/* Bong bóng mời chào: nằm bên trái nút, có mũi nhọn chỉ sang nút. */
+.mb-app .support-fab-hint {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 14px);
+  transform: translateY(-50%);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.mb-app .support-fab-hint::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 9px;
+  height: 9px;
+  margin-top: -5px;
+  margin-left: -5px;
+  border: 1px solid var(--line);
+  border-width: 0 1px 1px 0;
+  background: var(--surface);
+  transform: rotate(-45deg);
+}
+
+/* Đang mở menu hoặc đang chat thì bỏ lời mời — nó đã làm xong việc. */
+.mb-app .support-fab.is-chatting .support-fab-hint,
+.mb-app .support-fab:has([data-support-fab-panel]:not([hidden])) .support-fab-hint {
+  display: none;
+}
+
+.mb-app .support-fab.is-chatting .support-fab-trigger {
+  animation: none;
+}
+
+/* --- Popup chat --------------------------------------------------------- */
+
+.mb-app .support-pop {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 14px);
+  display: flex;
+  width: min(92vw, 380px);
+  max-height: min(72vh, 560px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 28px 60px -20px rgba(0, 24, 89, .45);
+}
+
+.mb-app .support-pop-head {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: #fff;
+  background: linear-gradient(140deg, var(--brand-from), var(--brand-to));
+}
+
+.mb-app .support-pop-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .18);
+}
+
+.mb-app .support-pop-mark svg {
+  width: 21px;
+  height: 21px;
+  color: #fff;
+}
+
+.mb-app .support-pop-title b {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 800;
+}
+
+.mb-app .support-pop-title small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, .82);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.mb-app .support-pop-title small i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+}
+
+.mb-app .support-pop-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, .16);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mb-app .support-pop-close:hover {
+  background: rgba(255, 255, 255, .28);
+}
+
+/* Khung tin nhắn trong popup: bỏ thẻ lõm của bản trang Hỗ trợ (popup đã là
+   một thẻ riêng rồi, lồng thêm một lớp nữa là thừa). */
+.mb-app .support-pop .support-chat-messages {
+  /* Có chỗ cho vài lượt trao đổi ngay khi mở; để 0 thì popup rỗng chỉ cao
+     hơn ô nhập một chút, nhìn như hộp báo lỗi. */
+  min-height: 240px;
+  max-height: none;
+  flex: 1;
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-muted);
+}
+
+.mb-app .support-pop .support-chat-error {
+  margin: 0;
+  padding: 8px 14px 0;
+}
+
+.mb-app .support-pop .support-chat-form {
+  margin: 0;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.mb-app .support-pop .support-chat-send {
+  min-width: 72px;
+}
+
+/* Mục "Hỗ trợ trực tiếp" trong menu: cùng dáng với hai mục nhóm cộng đồng
+   (chúng là thẻ <a>, mục này là <button>). */
+.mb-app button.support-fab-link {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mb-app .support-fab-icon.fab-live {
+  color: #fff;
+  background: var(--brand);
+}
+
+.mb-app .support-fab-icon.fab-live svg {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  /* Màn hẹp: bỏ bong bóng chữ, popup gần như phủ kín bề ngang. */
+  .mb-app .support-fab-hint {
+    display: none;
+  }
+
+  .mb-app .support-pop {
+    right: -6px;
+    width: min(94vw, 380px);
+    max-height: 68vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-app .support-fab-trigger {
+    animation: none;
+  }
+}

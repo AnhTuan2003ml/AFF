@@ -907,9 +907,32 @@
   });
   supportFabTrigger?.addEventListener("pointercancel", stopFabDrag);
   supportFabDismiss?.addEventListener("click", closeSupportFab);
+
+  // Popup chat: mở thẳng tại chỗ thay vì rời trang sang /app/support. Dùng
+  // chung khung chat của trang Hỗ trợ (support-chat.js), ở đây chỉ đóng/mở
+  // và báo cho nó biết để bắt đầu hoặc ngừng poll.
+  const supportPop = document.querySelector("[data-support-pop]");
+  const setSupportPop = (open) => {
+    if (!(supportPop instanceof HTMLElement)) return;
+    supportPop.hidden = !open;
+    supportFab?.classList.toggle("is-chatting", open);
+    document.dispatchEvent(new CustomEvent(open ? "support-chat:open" : "support-chat:close"));
+  };
+  document.querySelector("[data-support-pop-open]")?.addEventListener("click", () => {
+    closeSupportFab();
+    setSupportPop(true);
+  });
+  document.querySelector("[data-support-pop-close]")?.addEventListener("click", () => {
+    setSupportPop(false);
+  });
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Node)) return;
     if (supportFab && !supportFab.contains(event.target)) closeSupportFab();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (supportPop instanceof HTMLElement && !supportPop.hidden) setSupportPop(false);
   });
 
   // Modal xác nhận hành động tài khoản dùng chung (khóa / đổi quyền / xóa):

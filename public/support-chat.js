@@ -19,6 +19,9 @@
   var knownIds = {};
   var sending = false;
   var pollTimer = null;
+  // Khung chat trên trang Hỗ trợ luôn hiện nên "đang hoạt động" ngay; popup ở
+  // nút nổi thì chỉ bật khi người dùng mở.
+  var active = !root.hasAttribute("data-chat-deferred");
 
   Array.prototype.forEach.call(
     list.querySelectorAll("[data-message-id]"),
@@ -187,7 +190,7 @@
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
       stopPolling();
-    } else {
+    } else if (active) {
       poll();
       startPolling();
     }
@@ -199,7 +202,27 @@
     if (event.detail && appendMessage(event.detail)) scrollToBottom();
   });
 
+  /*
+   * Popup chat ở nút nổi đặt data-chat-deferred: nó nằm trên MỌI trang trong
+   * app nên nếu poll ngay từ đầu thì cứ 5 giây lại có một lượt gọi mạng dù
+   * người dùng không hề mở chat. Chỉ chạy khi popup được mở, dừng khi đóng.
+   */
+  var deferred = root.hasAttribute("data-chat-deferred");
+
+  document.addEventListener("support-chat:open", function () {
+    active = true;
+    poll();
+    startPolling();
+    scrollToBottom();
+    input.focus();
+  });
+
+  document.addEventListener("support-chat:close", function () {
+    active = false;
+    stopPolling();
+  });
+
   autosize();
   scrollToBottom();
-  startPolling();
+  if (!deferred) startPolling();
 })();
