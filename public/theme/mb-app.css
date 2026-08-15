@@ -2847,3 +2847,82 @@ a.mb-store:hover {
 .mb-app .info-strip p {
   color: var(--ink-soft);
 }
+
+/* ====================================================================== */
+/* 18. TIÊU ĐỀ TRANG                                                       */
+/* ====================================================================== */
+
+/*
+ * Tiêu đề mỗi tab trước đây là hai dòng chữ trần thả giữa nền trang: không
+ * có gì ngăn nó với khối nội dung ngay bên dưới, nên đầu trang trông trống
+ * và rời rạc. Gói lại thành một dải riêng — nền bề mặt, viền mảnh, thêm
+ * vạch navy dọc bên trái làm dấu nhận biết chung cho mọi tab.
+ *
+ * Gom cả ba tên lớp vì các trang đời khác nhau đặt tên khác nhau
+ * (.page-heading / .page-head / .st-page-head) nhưng vai trò y hệt.
+ */
+.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 20px 24px 20px 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Vạch nhận biết: bo tròn, cao bằng phần chữ chứ không kéo hết chiều cao
+   thẻ — kéo hết trông như viền thẻ bị đổi màu. */
+.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head)::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--brand);
+}
+
+.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) > div {
+  min-width: 0;
+}
+
+.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 780;
+  letter-spacing: -.02em;
+  line-height: 1.25;
+}
+
+.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) p {
+  max-width: 76ch;
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) {
+    margin-bottom: 16px;
+    padding: 16px 16px 16px 20px;
+    border-radius: 16px;
+  }
+
+  .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head)::before {
+    top: 18px;
+    bottom: 18px;
+  }
+
+  .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) h1 {
+    font-size: 20px;
+  }
+}

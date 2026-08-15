@@ -10,10 +10,12 @@
  * thụt vào so với khung tin nhắn phía trên.
  */
 
+/* Không giới hạn 860px nữa: khoang chat nằm trong cột phải của lưới, chặn
+   thêm bề ngang chỉ làm nó ngắn hơn cột 44px và lệch hẳn so với mép phải
+   của thanh chức năng phía trên. Cột đã đủ hẹp rồi. */
 .st-app .support-chat-panel {
   display: flex;
   flex-direction: column;
-  max-width: 860px;
   padding: 18px;
   overflow: hidden;
 }
@@ -192,7 +194,6 @@
 }
 
 .support-legacy-panel {
-  max-width: 860px;
   margin-top: 20px;
 }
 
