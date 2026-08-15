@@ -2735,10 +2735,13 @@ a.mb-store:hover {
 
 /* ── Mobile (≤1023px): làm gọn thẻ Đơn hàng + chừa đáy cho bottom-nav ───── */
 @media (max-width: 1023px) {
-  /* Mọi trang app: chừa khoảng đáy để bottom-nav nổi không che nội dung cuối. */
-  .mb-app .st-content {
-    padding-bottom: calc(var(--mb-bottomnav-h, 72px) + 26px + env(safe-area-inset-bottom));
-  }
+  /*
+   * KHÔNG chừa đáy ở .st-content nữa. Sau nội dung còn có footer, mà footer
+   * đã tự chừa đủ chỗ cho thanh điều hướng nổi rồi — hai bên cùng chừa thì
+   * giữa khối nội dung cuối và footer hở ra gần 100px trống trên điện thoại.
+   * Khoảng đáy của nội dung nằm ở rule .mb-app .st-content phía trên
+   * (padding: 14px 14px 18px).
+   */
 
   /* Tab lọc trạng thái: MỘT HÀNG cuộn ngang gọn thay vì 4 nút dọc full-width
      (trước đây chiếm gần nửa màn hình, đẩy đơn hàng xuống dưới). */

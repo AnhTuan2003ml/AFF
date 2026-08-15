@@ -1039,8 +1039,11 @@
     padding-bottom: 0;
   }
 
+  /* Chỉ cần đủ để thẻ cuối trôi qua khỏi nút danh mục cố định (cao 50px,
+     đặt ở nav+16). Trước để nav+92 nên dưới lưới sản phẩm hở một mảng trắng
+     lớn rồi mới tới footer — mà footer cũng đã tự chừa chỗ cho thanh nav. */
   .discover-page {
-    padding-bottom: calc(var(--mb-bottomnav-h, 72px) + 92px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--mb-bottomnav-h, 72px) + 24px + env(safe-area-inset-bottom));
   }
 
   /* Nút hỗ trợ nổi nằm trên nút danh mục để không chồng lấn. */
