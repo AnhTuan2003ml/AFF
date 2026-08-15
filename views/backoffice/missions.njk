@@ -42,7 +42,9 @@
       <input id="{{ idPrefix }}-description" type="text" name="description" maxlength="500" value="{{ def.description if def else '' }}">
     </label>
     <div class="discover-form-grid discover-form-grid-two">
-      <label for="{{ idPrefix }}-threshold">Mốc cần đạt <small>(số người giới thiệu hoặc số đơn/tháng)</small>
+      {# Nhãn và phần chú thích bọc chung một thẻ: .stack-form label là lưới
+         nên để rời thì mỗi thẻ con rơi xuống một dòng riêng. #}
+      <label for="{{ idPrefix }}-threshold"><span class="bo-label-line">Mốc cần đạt <small>(số người giới thiệu hoặc số đơn/tháng)</small></span>
         <input id="{{ idPrefix }}-threshold" type="number" name="threshold" min="1" step="1" required value="{{ def.threshold if def else '' }}" data-required-message="Vui lòng nhập mốc cần đạt.">
       </label>
       <label for="{{ idPrefix }}-reward">Số tiền thưởng

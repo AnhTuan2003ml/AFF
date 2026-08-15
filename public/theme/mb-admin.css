@@ -1112,3 +1112,39 @@
   flex: 0 0 auto;
   margin-left: auto;
 }
+
+/* ====================================================================== */
+/* 11. NHIỆM VỤ                                                            */
+/* ====================================================================== */
+
+/* Hai nút Sửa/Xóa xếp DỌC nên cột phải cao gấp đôi cần thiết và mỗi nút
+   hẹp tí xíu. Cho về một hàng, bề ngang tối thiểu đủ đọc. */
+.backoffice-shell .mission-card-side {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding-left: 14px;
+}
+
+.backoffice-shell .mission-card-side form {
+  margin: 0;
+}
+
+.backoffice-shell .mission-card-side .button {
+  min-width: 76px;
+  justify-content: center;
+}
+
+/* Nhãn có phần chú thích trong ngoặc: .stack-form label là lưới nên mọi thẻ
+   con rơi xuống một dòng riêng, "Mốc cần đạt" và "(số người giới thiệu hoặc
+   số đơn/tháng)" tách làm hai dòng. Bọc chung vào .bo-label-line để cả hai
+   nằm cùng một ô lưới. */
+.backoffice-shell .stack-form label > .bo-label-line {
+  display: block;
+}
+
+.backoffice-shell .stack-form label > .bo-label-line > small {
+  margin-left: 6px;
+  color: var(--muted);
+  font-weight: 500;
+}

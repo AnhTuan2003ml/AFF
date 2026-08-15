@@ -410,3 +410,100 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* ====================================================================== */
+/* 11. NÚT GẠT BẬT/TẮT                                                     */
+/*                                                                         */
+/* Đo computed style thì trạng thái BẬT và TẮT đang ra ĐÚNG MỘT MÀU:       */
+/*   sáng: cả hai đều nền trắng trên hàng #f1f5f9                          */
+/*   tối : cả hai đều nền #0f1a30 trên hàng #16233c                        */
+/* Nghĩa là không chỉ khó nhìn — người trực không có cách nào biết một cấu */
+/* hình đang bật hay tắt, chỉ còn cách bấm thử. Nguyên nhân: rule tô nền   */
+/* chung cho input trong form đè mất cả màu xám của trạng thái tắt lẫn màu */
+/* của trạng thái bật, nên ở đây phải !important mới gỡ được.              */
+/*                                                                         */
+/* Quy ước màu: XÁM = tắt, XANH LÁ = bật. Xanh lá ở đây là --success       */
+/* (trạng thái tích cực) chứ không phải --cta (hành động ra tiền).         */
+/* ====================================================================== */
+
+.st-app .switch-row input[type="checkbox"],
+.backoffice-shell .switch-row input[type="checkbox"],
+.st-app input[type="checkbox"][role="switch"],
+.backoffice-shell input[type="checkbox"][role="switch"] {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 46px;
+  min-width: 46px;
+  height: 26px;
+  min-height: 26px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 999px !important;
+  background: var(--line-strong) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .18) !important;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+
+.st-app .switch-row input[type="checkbox"]::after,
+.backoffice-shell .switch-row input[type="checkbox"]::after,
+.st-app input[type="checkbox"][role="switch"]::after,
+.backoffice-shell input[type="checkbox"][role="switch"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .35);
+  transition: transform .16s ease;
+}
+
+.st-app .switch-row input[type="checkbox"]:checked,
+.backoffice-shell .switch-row input[type="checkbox"]:checked,
+.st-app input[type="checkbox"][role="switch"]:checked,
+.backoffice-shell input[type="checkbox"][role="switch"]:checked {
+  border-color: var(--success) !important;
+  background: var(--success) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .12) !important;
+}
+
+.st-app .switch-row input[type="checkbox"]:checked::after,
+.backoffice-shell .switch-row input[type="checkbox"]:checked::after,
+.st-app input[type="checkbox"][role="switch"]:checked::after,
+.backoffice-shell input[type="checkbox"][role="switch"]:checked::after {
+  transform: translateX(20px);
+}
+
+.st-app .switch-row input[type="checkbox"]:focus-visible,
+.backoffice-shell .switch-row input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.st-app .switch-row input[type="checkbox"]:disabled,
+.backoffice-shell .switch-row input[type="checkbox"]:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/*
+ * Theme tối còn một rule nữa quét mọi input trong nội dung
+ * (`:root[data-theme="dark"] .backoffice-shell .st-content :is(input, select,
+ * textarea)`) ở bậc cao hơn, kéo rãnh gạt về đúng màu bề mặt nên trạng thái
+ * TẮT lại chìm vào nền. Nhắc lại ở bậc cao hơn nữa.
+ */
+:root[data-theme="dark"] .st-app .st-content .switch-row input[type="checkbox"],
+:root[data-theme="dark"] .backoffice-shell .st-content .switch-row input[type="checkbox"] {
+  border-color: var(--line-strong) !important;
+  background: var(--line-strong) !important;
+}
+
+:root[data-theme="dark"] .st-app .st-content .switch-row input[type="checkbox"]:checked,
+:root[data-theme="dark"] .backoffice-shell .st-content .switch-row input[type="checkbox"]:checked {
+  border-color: var(--success) !important;
+  background: var(--success) !important;
+}
