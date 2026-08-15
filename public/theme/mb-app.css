@@ -1369,32 +1369,70 @@ a.mb-store:hover {
   transform: translateY(-3px);
 }
 
-/* Thẻ đang chọn: hai vòng — một vòng cùng màu nền trang để tách khỏi
-   gradient, một vòng navy. Viền chìm hay đổi nền đều không đọc được trên
-   ba gradient khác nhau. */
+/*
+ * Thẻ đang chọn: KHÔNG vẽ vòng ở ngoài nữa. Hai vòng (navy + màu nền trang)
+ * trông như thẻ bị đóng khung, nặng hơn cả nội dung bên trong. Thay bằng ba
+ * tín hiệu nhẹ cộng lại: viền trắng mảnh nằm BÊN TRONG thẻ, thẻ nhấc lên một
+ * chút, và các thẻ chưa chọn mờ bớt đi.
+ */
 .mb-app .mb-brands .platform-tab.active {
   box-shadow:
-    0 0 0 3px var(--paper),
-    0 0 0 6px var(--brand),
-    0 14px 30px -14px rgba(15, 23, 42, .45);
+    inset 0 0 0 2px rgba(255, 255, 255, .92),
+    0 18px 34px -16px rgba(15, 23, 42, .55);
+  transform: translateY(-2px);
 }
 
 /*
- * Ô logo BUỘC phải sáng: ba file platform-*.webp là WebP lossy KHÔNG có kênh
- * alpha, nền trắng nằm sẵn trong ảnh nên không CSS nào gỡ được. Đặt ô nền tối
- * thì logo nổi một mảng trắng vuông giữa ô, còn xấu hơn.
- * Cách sửa triệt để là thay bằng file PNG/SVG nền trong suốt.
+ * Dấu tích trong chấm trắng ở góc trái. Đây mới là thứ nói "thẻ này đang
+ * được chọn" — làm mờ mấy thẻ còn lại thì chúng trông như bị khoá, không
+ * phải như chưa chọn. Ruột dấu tích lấy chính màu cuối gradient của thẻ.
+ */
+.mb-app .mb-brands .platform-tab.active::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .3);
+}
+
+.mb-app .mb-brands .platform-tab.active::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 17.5px;
+  width: 10px;
+  height: 5px;
+  border: 2px solid var(--pf-to);
+  border-top: 0;
+  border-right: 0;
+  border-radius: 1px;
+  transform: rotate(-45deg);
+}
+
+/*
+ * Logo giờ là SVG nền trong suốt (partials/platform-logos.njk) nên KHÔNG cần
+ * ô trắng bo tròn nữa — ô đó sinh ra chỉ để che nền trắng nung sẵn trong mấy
+ * file .webp cũ, tức là lấy khuyết điểm làm thiết kế. Logo trắng đặt thẳng
+ * lên gradient, nhẹ và sắc hơn hẳn.
+ *
+ * !important vì instant-purchase.css và theme/dashboard.css đều tô nền trắng
+ * cho .platform-logo, và app-shell còn một bản nữa trong media query.
  */
 .mb-app .mb-brands .platform-logo {
   display: grid;
-  width: 74px;
-  height: 74px;
+  width: 62px;
+  height: 62px;
   place-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .9);
-  border-radius: 22px;
-  background: var(--surface);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+  overflow: visible;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: #fff;
+  background: none !important;
+  box-shadow: none !important;
   transition: transform .18s ease;
 }
 
@@ -1402,22 +1440,10 @@ a.mb-store:hover {
   transform: scale(1.06);
 }
 
-/*
- * Dark mode: ô logo để TRẮNG TINH, đúng bằng nền trắng nằm sẵn trong ảnh.
- * Trước đó dùng trắng ngà cho đỡ chói thì hoá ra hai sắc trắng khác nhau
- * chồng lên nhau — nhìn thành hai lớp, còn rối hơn. Một màu trắng duy nhất
- * thì ô và ảnh liền mạch thành một huy hiệu.
- */
-:root[data-theme="dark"] .mb-app .mb-brands .platform-logo {
-  border-color: #fff;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
-}
-
-.mb-app .mb-brands .platform-logo img {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
+.mb-app .mb-brands .platform-logo svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .28));
 }
 
 /*
@@ -2573,9 +2599,8 @@ a.mb-store:hover {
   }
 
   .mb-app .mb-brands .platform-logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
+    width: 40px;
+    height: 40px;
   }
 
   .mb-app .mb-brands .platform-tab strong {
@@ -2988,9 +3013,8 @@ a.mb-store:hover {
 .mb-app .mb-brands .platform-grid .platform-tab.platform-tiktok.active,
 .mb-app .mb-brands .platform-grid .platform-tab.platform-lazada.active {
   box-shadow:
-    0 0 0 3px var(--paper),
-    0 0 0 6px var(--brand),
-    0 14px 30px -14px rgba(15, 23, 42, .45) !important;
+    inset 0 0 0 2px rgba(255, 255, 255, .92),
+    0 18px 34px -16px rgba(15, 23, 42, .55) !important;
 }
 
 /* Badge HOT/LIVE: app-shell ép nền navy #103071 !important. */
@@ -3001,4 +3025,20 @@ a.mb-store:hover {
   background: var(--mb-red-600) !important;
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9) !important;
   font-size: 9.5px !important;
+}
+
+/*
+ * Theme tối: app-shell còn một bộ nữa cho .dv13-commerce-shell ở bậc (0,5,0)
+ * kèm !important, kéo ba thẻ về nâu/xanh rêu đục — gradient biến mất sạch.
+ * Nhắc lại ở bậc (0,6,0). Màu giữ nguyên như bản sáng: gradient thương hiệu
+ * vốn đã đủ đậm, không cần bản tối riêng.
+ */
+:root[data-theme="dark"] .mb-app .mb-brands .platform-tab.platform-shopee,
+:root[data-theme="dark"] .mb-app .mb-brands .platform-tab.platform-tiktok,
+:root[data-theme="dark"] .mb-app .mb-brands .platform-tab.platform-lazada,
+:root[data-theme="dark"] .mb-app .mb-brands .platform-grid .platform-tab.platform-shopee.active,
+:root[data-theme="dark"] .mb-app .mb-brands .platform-grid .platform-tab.platform-tiktok.active,
+:root[data-theme="dark"] .mb-app .mb-brands .platform-grid .platform-tab.platform-lazada.active {
+  border: 0 !important;
+  background: linear-gradient(145deg, var(--pf-from), var(--pf-to)) !important;
 }
