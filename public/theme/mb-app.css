@@ -58,7 +58,7 @@
   padding: 16px var(--mb-gutter) 56px;
 }
 
-.mb-app .st-content > * + * {
+.mb-app .st-content>*+* {
   margin-top: 20px;
 }
 
@@ -260,7 +260,7 @@
   background: var(--mb-green-50);
 }
 
-.mb-wallet-stat > span > span {
+.mb-wallet-stat>span>span {
   display: block;
   color: var(--muted);
   font-size: 9px;
@@ -277,8 +277,13 @@
   line-height: 1.35;
 }
 
-.mb-wallet-stat.is-pending b { color: var(--mb-amber-600); }
-.mb-wallet-stat.is-available b { color: var(--mb-green-700); }
+.mb-wallet-stat.is-pending b {
+  color: var(--mb-amber-600);
+}
+
+.mb-wallet-stat.is-available b {
+  color: var(--mb-green-700);
+}
 
 .mb-wallet-divider {
   width: 1px;
@@ -1101,7 +1106,7 @@ a.mb-store:hover {
   gap: 12px;
 }
 
-.mb-converter-head > div {
+.mb-converter-head>div {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -1156,7 +1161,7 @@ a.mb-store:hover {
   display: none;
 }
 
-.mb-samples > span {
+.mb-samples>span {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 11px;
@@ -1249,8 +1254,13 @@ a.mb-store:hover {
   font-weight: 900;
 }
 
-.mb-sidepane-facts .is-money strong { color: #6ee7b7; }
-.mb-sidepane-facts .is-free strong { color: var(--mb-amber-400); }
+.mb-sidepane-facts .is-money strong {
+  color: #6ee7b7;
+}
+
+.mb-sidepane-facts .is-free strong {
+  color: var(--mb-amber-400);
+}
 
 /* ====================================================================== */
 /* 8. Ô SỐ LIỆU                                                            */
@@ -1290,10 +1300,25 @@ a.mb-store:hover {
   font-weight: 900;
 }
 
-.mb-kpi-money i { color: var(--mb-green-700); background: var(--mb-green-50); }
-.mb-kpi-point i { color: var(--mb-amber-600); background: var(--mb-amber-50); }
-.mb-kpi-order i { color: var(--brand); background: var(--brand-soft); }
-.mb-kpi-shield i { color: #7c3aed; background: #f5f3ff; }
+.mb-kpi-money i {
+  color: var(--mb-green-700);
+  background: var(--mb-green-50);
+}
+
+.mb-kpi-point i {
+  color: var(--mb-amber-600);
+  background: var(--mb-amber-50);
+}
+
+.mb-kpi-order i {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.mb-kpi-shield i {
+  color: #7c3aed;
+  background: #f5f3ff;
+}
 
 .mb-kpi-copy span {
   display: block;
@@ -1312,7 +1337,9 @@ a.mb-store:hover {
   letter-spacing: -.02em;
 }
 
-.mb-kpi-money b { color: var(--success); }
+.mb-kpi-money b {
+  color: var(--success);
+}
 
 /* ====================================================================== */
 /* 9. SÀN ĐỐI TÁC — bọc lại .platform-tab sẵn có                           */
@@ -1451,7 +1478,7 @@ a.mb-store:hover {
  * dòng tỉ lệ. Thẻ mới là cột flex — ở đó end/start nghĩa là dạt PHẢI/TRÁI,
  * làm chữ lệch khỏi logo. Ép về giữa (đúng lỗi từng gặp ở bản mobile cũ).
  */
-.mb-app .mb-brands .platform-tab > :is(span, strong, small, b, i, em) {
+.mb-app .mb-brands .platform-tab> :is(span, strong, small, b, i, em) {
   align-self: center;
   grid-row: auto;
   text-align: center;
@@ -1560,17 +1587,49 @@ a.mb-store:hover {
   stroke-linejoin: round;
 }
 
-.mb-tool-amber i  { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
-.mb-tool-green i  { background: linear-gradient(145deg, #34d399, #059669); }
-.mb-tool-emerald i{ background: linear-gradient(145deg, #2dd4bf, #0d9488); }
-.mb-tool-sky i    { background: linear-gradient(145deg, #38bdf8, #0284c7); }
-.mb-tool-rose i   { background: linear-gradient(145deg, #fb7185, #e11d48); }
-.mb-tool-violet i { background: linear-gradient(145deg, #a78bfa, #7c3aed); }
-.mb-tool-purple i { background: linear-gradient(145deg, #c084fc, #9333ea); }
-.mb-tool-cyan i   { background: linear-gradient(145deg, #22d3ee, #0891b2); }
-.mb-tool-indigo i { background: linear-gradient(145deg, #818cf8, #4f46e5); }
-.mb-tool-orange i { background: linear-gradient(145deg, #fb923c, #ea580c); }
-.mb-tool-pink i   { background: linear-gradient(145deg, #f472b6, #db2777); }
+.mb-tool-amber i {
+  background: linear-gradient(145deg, #fbbf24, #f59e0b);
+}
+
+.mb-tool-green i {
+  background: linear-gradient(145deg, #34d399, #059669);
+}
+
+.mb-tool-emerald i {
+  background: linear-gradient(145deg, #2dd4bf, #0d9488);
+}
+
+.mb-tool-sky i {
+  background: linear-gradient(145deg, #38bdf8, #0284c7);
+}
+
+.mb-tool-rose i {
+  background: linear-gradient(145deg, #fb7185, #e11d48);
+}
+
+.mb-tool-violet i {
+  background: linear-gradient(145deg, #a78bfa, #7c3aed);
+}
+
+.mb-tool-purple i {
+  background: linear-gradient(145deg, #c084fc, #9333ea);
+}
+
+.mb-tool-cyan i {
+  background: linear-gradient(145deg, #22d3ee, #0891b2);
+}
+
+.mb-tool-indigo i {
+  background: linear-gradient(145deg, #818cf8, #4f46e5);
+}
+
+.mb-tool-orange i {
+  background: linear-gradient(145deg, #fb923c, #ea580c);
+}
+
+.mb-tool-pink i {
+  background: linear-gradient(145deg, #f472b6, #db2777);
+}
 
 .mb-tool b {
   font-size: 12.5px;
@@ -1690,7 +1749,7 @@ a.mb-store:hover {
   filter: blur(28px);
 }
 
-.mb-points > * {
+.mb-points>* {
   position: relative;
   z-index: 1;
 }
@@ -1859,17 +1918,49 @@ a.mb-store:hover {
 }
 
 /* Bề rộng thanh tiến độ qua class (CSP chặn style nội tuyến). */
-.mb-points-track .mb-w-0 { width: 4%; }
-.mb-points-track .mb-w-10 { width: 10%; }
-.mb-points-track .mb-w-20 { width: 20%; }
-.mb-points-track .mb-w-30 { width: 30%; }
-.mb-points-track .mb-w-40 { width: 40%; }
-.mb-points-track .mb-w-50 { width: 50%; }
-.mb-points-track .mb-w-60 { width: 60%; }
-.mb-points-track .mb-w-70 { width: 70%; }
-.mb-points-track .mb-w-80 { width: 80%; }
-.mb-points-track .mb-w-90 { width: 90%; }
-.mb-points-track .mb-w-100 { width: 100%; }
+.mb-points-track .mb-w-0 {
+  width: 4%;
+}
+
+.mb-points-track .mb-w-10 {
+  width: 10%;
+}
+
+.mb-points-track .mb-w-20 {
+  width: 20%;
+}
+
+.mb-points-track .mb-w-30 {
+  width: 30%;
+}
+
+.mb-points-track .mb-w-40 {
+  width: 40%;
+}
+
+.mb-points-track .mb-w-50 {
+  width: 50%;
+}
+
+.mb-points-track .mb-w-60 {
+  width: 60%;
+}
+
+.mb-points-track .mb-w-70 {
+  width: 70%;
+}
+
+.mb-points-track .mb-w-80 {
+  width: 80%;
+}
+
+.mb-points-track .mb-w-90 {
+  width: 90%;
+}
+
+.mb-points-track .mb-w-100 {
+  width: 100%;
+}
 
 /* ====================================================================== */
 /* 13. DÒNG ĐƠN GẦN ĐÂY                                                    */
@@ -1986,22 +2077,18 @@ a.mb-store:hover {
  * trong khi app-shell lại xoá viền của chính form bọc đó — kết quả là ô tìm
  * đơn hàng mất sạch viền, trắng trên nền trắng, nhìn như không có ô nhập.
  */
-.mb-app .st-content :is(
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.mb-app .st-content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   select,
-  textarea
-) {
+  textarea) {
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
   color: var(--text);
   background: var(--surface-muted) !important;
 }
 
-.mb-app .st-content :is(
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.mb-app .st-content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   select,
-  textarea
-):focus {
+  textarea):focus {
   border-color: var(--brand) !important;
   background: var(--surface) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent) !important;
@@ -2087,7 +2174,7 @@ a.mb-store:hover {
 
 /* Dùng > * chứ không phải div: ở trang Chức năng thẻ hồ sơ là thẻ <a> nên
    con bên trong phải là <span> cho HTML hợp lệ, còn trang Hồ sơ vẫn là <div>. */
-.mb-profile-stats > * {
+.mb-profile-stats>* {
   padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 16px;
@@ -2095,7 +2182,7 @@ a.mb-store:hover {
   text-align: right;
 }
 
-.mb-profile-stats > * > span {
+.mb-profile-stats>*>span {
   display: block;
   color: #a5d8ff;
   font-size: 9.5px;
@@ -2170,7 +2257,7 @@ a.mb-store:hover {
   background: var(--brand-soft);
 }
 
-.mb-linkrow > svg {
+.mb-linkrow>svg {
   width: 19px;
   height: 19px;
   flex: 0 0 auto;
@@ -2199,7 +2286,7 @@ a.mb-store:hover {
   color: var(--danger);
 }
 
-.mb-linkrow.is-danger > svg {
+.mb-linkrow.is-danger>svg {
   color: var(--danger);
 }
 
@@ -2325,7 +2412,7 @@ a.mb-store:hover {
     padding: 14px 14px 18px;
   }
 
-  .mb-app .st-content > * + * {
+  .mb-app .st-content>*+* {
     margin-top: 16px;
   }
 
@@ -2522,7 +2609,7 @@ a.mb-store:hover {
     width: 100%;
   }
 
-  .mb-profile-stats > * {
+  .mb-profile-stats>* {
     flex: 1;
   }
 
@@ -2567,7 +2654,7 @@ a.mb-store:hover {
     gap: 10px;
   }
 
-  .mb-converter-head > div {
+  .mb-converter-head>div {
     align-items: flex-start;
   }
 
@@ -2589,6 +2676,7 @@ a.mb-store:hover {
 }
 
 @media (max-width: 600px) {
+
   .mb-app .mb-brands .platform-grid,
   .mb-app .mb-brands.platform-grid {
     gap: 10px;
@@ -2632,6 +2720,7 @@ a.mb-store:hover {
 /* ====================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
+
   .mb-header,
   .mb-bottomnav,
   .mb-tabs-bar {
@@ -2809,16 +2898,16 @@ a.mb-store:hover {
     justify-self: start;
   }
 
-  .mb-app .orders-history-payout > div {
+  .mb-app .orders-history-payout>div {
     justify-self: end;
     text-align: right;
   }
 
-  .mb-app .orders-history-payout > div small {
+  .mb-app .orders-history-payout>div small {
     font-size: 0.7rem;
   }
 
-  .mb-app .orders-history-payout > div strong {
+  .mb-app .orders-history-payout>div strong {
     font-size: 1.05rem;
   }
 
@@ -2869,7 +2958,7 @@ a.mb-store:hover {
   letter-spacing: .08em !important;
 }
 
-.mb-app .referral-hero > div:first-child > strong {
+.mb-app .referral-hero>div:first-child>strong {
   color: var(--brand) !important;
   font-size: clamp(34px, 4vw, 48px) !important;
   letter-spacing: .01em;
@@ -2892,7 +2981,7 @@ a.mb-store:hover {
   background: var(--brand-soft);
 }
 
-.mb-app .info-strip > span {
+.mb-app .info-strip>span {
   color: #fff;
   background: var(--brand);
 }
@@ -2918,8 +3007,8 @@ a.mb-store:hover {
  * Gom cả ba tên lớp vì các trang đời khác nhau đặt tên khác nhau
  * (.page-heading / .page-head / .st-page-head) nhưng vai trò y hệt.
  */
-.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head),
-.mb-app .st-content .discover-page > .st-shop-head {
+.mb-app .st-content> :is(.page-heading, .page-head, .st-page-head),
+.mb-app .st-content .discover-page>.st-shop-head {
   position: relative;
   display: flex;
   align-items: center;
@@ -2941,7 +3030,7 @@ a.mb-store:hover {
    đã đủ tách tiêu đề khỏi nội dung, thêm vạch chỉ làm rối thêm một chi tiết
    lặp lại ở mọi trang. */
 
-.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) > div {
+.mb-app .st-content> :is(.page-heading, .page-head, .st-page-head)>div {
   min-width: 0;
 }
 
@@ -2963,11 +3052,11 @@ a.mb-store:hover {
   padding-inline: 0;
 }
 
-.mb-app .st-content .discover-page > .st-shop-head {
+.mb-app .st-content .discover-page>.st-shop-head {
   margin-top: 0;
 }
 
-.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) h1 {
+.mb-app .st-content> :is(.page-heading, .page-head, .st-page-head) h1 {
   margin: 0;
   color: var(--text);
   font-size: 24px;
@@ -2976,7 +3065,7 @@ a.mb-store:hover {
   line-height: 1.25;
 }
 
-.mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) p {
+.mb-app .st-content> :is(.page-heading, .page-head, .st-page-head) p {
   max-width: 76ch;
   margin: 6px 0 0;
   color: var(--ink-soft);
@@ -2985,15 +3074,16 @@ a.mb-store:hover {
 }
 
 @media (max-width: 720px) {
-  .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head),
-  .mb-app .st-content .discover-page > .st-shop-head {
+
+  .mb-app .st-content> :is(.page-heading, .page-head, .st-page-head),
+  .mb-app .st-content .discover-page>.st-shop-head {
     margin-bottom: 16px;
     padding: 16px;
     border-radius: 16px;
   }
 
-  .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) h1,
-  .mb-app .st-content .discover-page > .st-shop-head h1 {
+  .mb-app .st-content> :is(.page-heading, .page-head, .st-page-head) h1,
+  .mb-app .st-content .discover-page>.st-shop-head h1 {
     font-size: 20px;
   }
 }
@@ -3125,8 +3215,15 @@ a.mb-store:hover {
 }
 
 @keyframes mb-fab-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
 }
 
 /* Kéo nút đi chỗ khác thì dừng nhún, không thì nó giật theo tay. */
@@ -3226,6 +3323,7 @@ a.mb-store:hover {
   display: block;
   font-size: 14.5px;
   font-weight: 800;
+  color: white;
 }
 
 .mb-app .support-pop-title small {
@@ -3314,6 +3412,7 @@ a.mb-store:hover {
 }
 
 @media (max-width: 640px) {
+
   /* Màn hẹp: bỏ bong bóng chữ, popup gần như phủ kín bề ngang. */
   .mb-app .support-fab-hint {
     display: none;
@@ -3370,7 +3469,7 @@ a.mb-store:hover {
   transition: border-color .15s ease, background .15s ease, transform .15s ease;
 }
 
-.mb-app .support-fab-link + .support-fab-link {
+.mb-app .support-fab-link+.support-fab-link {
   margin-top: 8px;
 }
 
@@ -3433,6 +3532,7 @@ a.mb-store:hover {
 /* ====================================================================== */
 
 @media (max-width: 720px) {
+
   /*
    * Ô tìm kiếm trên header navy đang kéo gần hết bề ngang, đẩy logo dính sát
    * mép trái và hai nút sang mép phải. Cho nó ngắn lại và nằm giữa khoảng
@@ -3481,7 +3581,7 @@ a.mb-store:hover {
     text-align: center;
   }
 
-  .mb-app .mb-converter-head > div {
+  .mb-app .mb-converter-head>div {
     width: 100%;
     flex-direction: column;
     align-items: center;
