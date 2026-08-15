@@ -3181,8 +3181,11 @@ a.mb-store:hover {
   right: 0;
   bottom: calc(100% + 14px);
   display: flex;
-  width: min(92vw, 380px);
-  max-height: min(72vh, 560px);
+  width: min(92vw, 390px);
+  /* Cao hẳn lên: khung 560px chỉ chứa được vài lượt trao đổi rồi đã phải
+     cuộn, mà chat hỗ trợ thì hay phải đọc lại đoạn trên. */
+  height: min(76vh, 640px);
+  max-height: min(76vh, 640px);
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -3257,9 +3260,9 @@ a.mb-store:hover {
 /* Khung tin nhắn trong popup: bỏ thẻ lõm của bản trang Hỗ trợ (popup đã là
    một thẻ riêng rồi, lồng thêm một lớp nữa là thừa). */
 .mb-app .support-pop .support-chat-messages {
-  /* Có chỗ cho vài lượt trao đổi ngay khi mở; để 0 thì popup rỗng chỉ cao
-     hơn ô nhập một chút, nhìn như hộp báo lỗi. */
-  min-height: 240px;
+  /* Popup đã có chiều cao cố định nên phần tin nhắn chỉ cần chiếm hết chỗ
+     còn lại; min-height giữ lại làm sàn cho màn hình rất thấp. */
+  min-height: 220px;
   max-height: none;
   flex: 1;
   margin: 0;
@@ -3315,8 +3318,9 @@ a.mb-store:hover {
 
   .mb-app .support-pop {
     right: -6px;
-    width: min(94vw, 380px);
-    max-height: 68vh;
+    width: min(94vw, 390px);
+    height: min(74vh, 560px);
+    max-height: 74vh;
   }
 }
 
