@@ -1,59 +1,75 @@
-/* Chat hỗ trợ trực tiếp — dùng chung design tokens --sh-* của app shell. */
+/*
+ * Chat hỗ trợ trực tiếp.
+ *
+ * Nạp trong app_content nên đứng SAU app-shell/mb-skin/mb-app — chỉ cần thêm
+ * .st-app vào selector là thắng, không phải dùng !important.
+ *
+ * Bố cục: panel là khung ngoài, bên trong có ĐÚNG một mức đệm. Khung tin
+ * nhắn và hàng soạn tin đều rộng bằng mức đệm đó nên mép trái/phải của
+ * chúng thẳng nhau — trước đây hàng soạn tin có thêm đệm riêng 20px nên
+ * thụt vào so với khung tin nhắn phía trên.
+ */
 
-.support-chat-panel {
+.st-app .support-chat-panel {
   display: flex;
   flex-direction: column;
   max-width: 860px;
-  padding: 0;
+  padding: 18px;
   overflow: hidden;
 }
 
-.support-chat-head {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--sh-line, #e5e7eb);
+.st-app .support-chat-head {
+  padding: 0 2px 14px;
+  border-bottom: 1px solid var(--line);
 }
 
 .support-chat-status {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: var(--sh-muted, #6b7280);
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .support-chat-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: var(--sh-muted, #9ca3af);
   flex: none;
+  border-radius: 50%;
+  background: var(--muted);
 }
 
 .support-chat-dot.is-online {
-  background: var(--sh-success, #16a34a);
+  background: var(--success);
 }
 
-.support-chat-messages {
+/* Khung tin nhắn là một thẻ lõm: nền khác bề mặt panel + viền + bo góc, để
+   các bong bóng chat nổi hẳn lên. Trước đây nền lấy --sh-bg (gần như trùng
+   màu panel) và góc vuông đét nên nhìn như một mảng trống bị dán vào. */
+.st-app .support-chat-messages {
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-height: 320px;
   max-height: min(56vh, 560px);
   overflow-y: auto;
-  padding: 20px;
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-muted);
   scroll-behavior: smooth;
-  background: var(--sh-bg, #f8fafc);
 }
 
-.support-chat-messages:focus-visible {
-  outline: 2px solid var(--sh-primary, #2563eb);
+.st-app .support-chat-messages:focus-visible {
+  outline: 2px solid var(--brand);
   outline-offset: -2px;
 }
 
 .support-chat-empty {
   margin: auto;
+  color: var(--muted);
   text-align: center;
-  color: var(--sh-muted, #6b7280);
 }
 
 .support-chat-empty p {
@@ -72,77 +88,106 @@
   justify-content: flex-start;
 }
 
-.support-chat-bubble {
+.st-app .support-chat-bubble {
   max-width: min(75%, 520px);
   padding: 10px 14px;
-  border-radius: var(--sh-radius-m, 12px);
-  background: var(--sh-surface, #ffffff);
-  border: 1px solid var(--sh-line, #e5e7eb);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
 }
 
-.support-chat-row.is-user .support-chat-bubble {
-  background: var(--sh-accent-soft, #eff6ff);
-  border-color: transparent;
+/* Tin của mình: navy đặc. Bản cũ dùng xanh rất nhạt, đặt trên nền xám nhạt
+   thì gần như không phân biệt được ai nói câu nào. */
+.st-app .support-chat-row.is-user .support-chat-bubble {
+  border-color: var(--brand);
+  background: var(--brand);
 }
 
-.support-chat-bubble p {
+.st-app .support-chat-row.is-user .support-chat-bubble p {
+  color: var(--on-brand);
+}
+
+.st-app .support-chat-row.is-user .support-chat-bubble time {
+  color: color-mix(in srgb, var(--on-brand) 72%, transparent);
+}
+
+/* Bong bóng của mình bo lệch một góc để nhìn ra hướng người nói. */
+.st-app .support-chat-row.is-user .support-chat-bubble {
+  border-bottom-right-radius: 6px;
+}
+
+.st-app .support-chat-row.is-agent .support-chat-bubble {
+  border-bottom-left-radius: 6px;
+}
+
+.st-app .support-chat-bubble p {
   margin: 0;
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: var(--sh-ink, #111827);
-  font-size: 0.95rem;
-  line-height: 1.5;
 }
 
-.support-chat-bubble time {
+.st-app .support-chat-bubble time {
   display: block;
   margin-top: 4px;
-  font-size: 0.72rem;
-  color: var(--sh-muted, #6b7280);
+  color: var(--muted);
+  font-size: 11.5px;
 }
 
-.support-chat-error {
-  margin: 0;
-  padding: 8px 20px;
-  font-size: 0.85rem;
-  color: var(--sh-warn, #b91c1c);
+.st-app .support-chat-error {
+  margin: 10px 2px 0;
+  padding: 0;
+  color: var(--danger);
+  font-size: 13px;
 }
 
-.support-chat-form {
+/* Hàng soạn tin: KHÔNG đệm ngang riêng, để mép trùng khung tin nhắn. */
+.st-app .support-chat-form {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--sh-line, #e5e7eb);
-  background: var(--sh-surface, #ffffff);
+  margin-top: 12px;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
 }
 
-.support-chat-form textarea {
+/*
+ * overflow-y: hidden là mặc định — ô nhập tự cao dần theo nội dung nên
+ * không bao giờ cần cuộn cho tới khi chạm trần 140px. Bản cũ để trình duyệt
+ * tự quyết nên thanh cuộn hiện ngay từ dòng đầu tiên, ô nhập trông như đang
+ * chứa nội dung bị cắt. support-chat.js bật lại 'auto' khi chạm trần.
+ */
+.st-app .support-chat-form textarea {
   flex: 1;
-  min-height: 42px;
+  min-height: 46px;
   max-height: 140px;
-  resize: none;
-  padding: 10px 12px;
-  border: var(--sh-control-border, 1px solid #d1d5db);
-  border-radius: var(--sh-radius-s, 8px);
+  padding: 12px 14px;
+  overflow-y: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--surface);
   font: inherit;
   line-height: 1.4;
-  background: var(--sh-bg, #f8fafc);
-  color: var(--sh-ink, #111827);
+  resize: none;
 }
 
-.support-chat-form textarea:focus-visible {
-  outline: 2px solid var(--sh-primary, #2563eb);
+.st-app .support-chat-form textarea:focus-visible {
+  outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
 
-.support-chat-send {
+.st-app .support-chat-send {
   flex: none;
-  min-width: 88px;
+  min-width: 96px;
+  min-height: 46px;
 }
 
 .support-chat-send[disabled] {
-  opacity: 0.6;
+  opacity: .6;
   cursor: not-allowed;
 }
 
@@ -181,16 +226,21 @@
 }
 
 @media (max-width: 640px) {
-  .support-chat-messages {
+  .st-app .support-chat-panel {
     padding: 14px;
+  }
+
+  .st-app .support-chat-messages {
     max-height: 52vh;
+    padding: 14px;
   }
 
   .support-chat-bubble {
     max-width: 85%;
   }
 
-  .support-chat-form {
-    padding: 12px 14px;
+  /* Nút Gửi xuống thành nút vuông cạnh ô nhập, đủ 46px vùng chạm. */
+  .st-app .support-chat-send {
+    min-width: 76px;
   }
 }

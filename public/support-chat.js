@@ -80,9 +80,22 @@
     errorBox.hidden = true;
   }
 
+  var INPUT_MAX_H = 140;
+
   function autosize() {
     input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    // scrollHeight KHÔNG tính viền, còn ô nhập đang box-sizing: border-box —
+    // gán thẳng scrollHeight thì chiều cao hụt đúng bằng hai đường viền và
+    // dòng cuối bị cắt mất một chút.
+    var style = window.getComputedStyle(input);
+    var border = style.boxSizing === "border-box"
+      ? (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0)
+      : 0;
+    var wanted = input.scrollHeight + border;
+    input.style.height = Math.min(wanted, INPUT_MAX_H) + "px";
+    // CSS để mặc định overflow-y: hidden nên ô nhập một dòng không mọc thanh
+    // cuộn. Chỉ khi nội dung vượt trần chiều cao mới cần cuộn thật.
+    input.style.overflowY = wanted > INPUT_MAX_H ? "auto" : "hidden";
   }
 
   async function poll() {

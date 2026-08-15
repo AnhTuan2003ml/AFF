@@ -2773,3 +2773,77 @@ a.mb-store:hover {
     padding-inline: 20px;
   }
 }
+
+/* ====================================================================== */
+/* 17. TRANG GIỚI THIỆU + DẢI GHI CHÚ                                      */
+/* ====================================================================== */
+
+/*
+ * Hero mã giới thiệu.
+ *
+ * Bản cũ (dv13-commerce) dựng nó theo kiểu banner ảnh: min-height 230px,
+ * align-items: end, padding 40px. Ảnh nền đã bị bỏ từ lâu nên chỉ còn lại
+ * cái khung cao 230px với nội dung dồn xuống đáy — nhìn ra là một mảng trống
+ * to đùng phía trên. Cho chiều cao chạy theo nội dung và canh giữa lại.
+ *
+ * Màu lấy từ token nên một công thức đúng cho cả hai theme: sáng thì xanh
+ * rất nhạt trên trắng, tối thì lớp navy mờ trên bề mặt tối — thay cho
+ * gradient gần-như-đen #0b1019 mà bản cũ dùng riêng cho theme tối.
+ */
+.mb-app .referral-hero {
+  align-items: center;
+  min-height: 0;
+  gap: 24px;
+  padding: 26px 28px !important;
+  border: 1px solid var(--brand-line) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(120deg, var(--brand-soft), var(--surface)) !important;
+}
+
+/* "MÃ CỦA BẠN" trước đây là chữ xám 10px — nhỏ tới mức không đọc ra, mà nó
+   lại chính là nhãn nói cho biết dãy ký tự bên dưới là cái gì. */
+.mb-app .referral-hero .eyebrow,
+:root[data-theme="dark"] .mb-app .st-content .referral-hero .eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--brand) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+}
+
+.mb-app .referral-hero > div:first-child > strong {
+  color: var(--brand) !important;
+  font-size: clamp(34px, 4vw, 48px) !important;
+  letter-spacing: .01em;
+}
+
+.mb-app .referral-hero p {
+  margin: 8px 0 0;
+  color: var(--ink-soft) !important;
+  font-size: 13.5px;
+}
+
+/*
+ * Dải ghi chú: bản cũ tô VIỀN XANH LÁ + nền bạc hà (--success-border /
+ * --mint-soft) cho mọi .info-strip. Xanh lá trong hệ này là màu tiền — dùng
+ * cho một ghi chú điều kiện thì vừa sai nghĩa vừa chỏi với cả trang navy.
+ */
+.mb-app .info-strip {
+  border: 1px solid var(--brand-line);
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+
+.mb-app .info-strip > span {
+  color: #fff;
+  background: var(--brand);
+}
+
+.mb-app .info-strip b {
+  color: var(--text);
+}
+
+.mb-app .info-strip p {
+  color: var(--ink-soft);
+}
