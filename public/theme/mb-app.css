@@ -947,25 +947,31 @@ a.mb-store:hover {
   margin-bottom: 16px;
 }
 
+/* 13.5px là cỡ của một dòng chú thích, không phải cỡ của tiêu đề mục — đọc
+   lướt cả trang thì mấy tiêu đề này chìm nghỉm giữa nội dung bên dưới. */
 .mb-panel-title {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   margin: 0;
-  font-size: 13.5px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: .01em;
 }
 
 /* Vạch navy đứng trước tiêu đề — dấu hiệu nhận biết của bản thiết kế. */
 .mb-panel-title::before {
   content: "";
   width: 5px;
-  height: 17px;
+  height: 20px;
   flex: 0 0 auto;
   border-radius: 999px;
   background: var(--brand);
+}
+
+.mb-see-all {
+  font-size: 13.5px;
+  font-weight: 750;
 }
 
 .mb-pill-note {
@@ -1317,32 +1323,60 @@ a.mb-store:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/*
+ * Thẻ sàn = ô gradient đặc, chữ TRẮNG.
+ *
+ * Bản trước mỗi thẻ một nền pastel nhạt khác nhau và chữ thì đổi màu theo
+ * trạng thái (đen → navy khi chọn), nên ba thẻ nhìn như ba thành phần rời.
+ * Nay thống nhất: chữ luôn trắng, chỉ NỀN khác nhau theo nhận diện từng sàn.
+ * Đây cũng là ngoại lệ duy nhất của quy ước "cam chỉ dành cho Shopee" —
+ * gradient cam nằm đúng trên thẻ Shopee.
+ */
 .mb-app .mb-brands .platform-tab {
   display: flex;
-  min-height: 0;
+  min-height: 172px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 24px 14px;
-  border: 1px solid var(--line);
+  padding: 22px 14px;
+  border: 0;
   border-radius: 20px;
-  background: var(--surface-muted);
+  background: linear-gradient(145deg, var(--pf-from), var(--pf-to));
   cursor: pointer;
-  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  transition: transform .15s ease, box-shadow .15s ease;
+  --pf-from: #64748b;
+  --pf-to: #334155;
+}
+
+.mb-app .mb-brands .platform-shopee {
+  --pf-from: #ff7a4d;
+  --pf-to: #ee4d2d;
+}
+
+.mb-app .mb-brands .platform-tiktok {
+  --pf-from: #ff3e64;
+  --pf-to: #361f1f;
+}
+
+.mb-app .mb-brands .platform-lazada {
+  --pf-from: #0dccff;
+  --pf-to: #4760ff;
 }
 
 .mb-app .mb-brands .platform-tab:hover {
-  border-color: var(--brand-line);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -14px rgba(15, 23, 42, .5);
+  transform: translateY(-3px);
 }
 
+/* Thẻ đang chọn: hai vòng — một vòng cùng màu nền trang để tách khỏi
+   gradient, một vòng navy. Viền chìm hay đổi nền đều không đọc được trên
+   ba gradient khác nhau. */
 .mb-app .mb-brands .platform-tab.active {
-  border-color: transparent;
-  background: var(--brand-soft);
-  box-shadow: inset 0 0 0 2px var(--brand);
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 6px var(--brand),
+    0 14px 30px -14px rgba(15, 23, 42, .45);
 }
 
 /*
@@ -1353,8 +1387,8 @@ a.mb-store:hover {
  */
 .mb-app .mb-brands .platform-logo {
   display: grid;
-  width: 68px;
-  height: 68px;
+  width: 74px;
+  height: 74px;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .9);
@@ -1380,17 +1414,9 @@ a.mb-store:hover {
   box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
 }
 
-/* Viên thuốc tỉ lệ hoàn: nền trắng mờ của bản sáng đặt lên nền tối thành xám
-   nhờ nhờ, chữ chìm hẳn. Trong dark dùng nền kính tối + chữ xanh lá sáng. */
-:root[data-theme="dark"] .mb-app .mb-brands .platform-tab small {
-  color: #5fe0ab !important;
-  background: rgba(0, 0, 0, .34);
-  box-shadow: inset 0 0 0 1px rgba(95, 224, 171, .28);
-}
-
 .mb-app .mb-brands .platform-logo img {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 
@@ -1405,40 +1431,43 @@ a.mb-store:hover {
   text-align: center;
 }
 
-.mb-app .mb-brands .platform-tab strong {
-  color: var(--text) !important;
-  font-size: 15px;
+.mb-app .mb-brands .platform-tab strong,
+.mb-app .mb-brands .platform-tab.active strong {
+  color: #fff !important;
+  font-size: 17px;
   font-weight: 900;
   letter-spacing: -.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .18);
 }
 
 /* Tỉ lệ hoàn thành viên thuốc trắng nổi trên nền pastel — đọc rõ hơn hẳn
    một dòng chữ xanh trôi nổi. */
+/* Tỉ lệ hoàn: viên kính mờ trắng trên gradient — cùng một kiểu cho cả ba
+   thẻ, không còn phụ thuộc nền sáng hay tối. */
 .mb-app .mb-brands .platform-tab small {
   padding: 4px 12px;
   border-radius: 999px;
-  color: var(--success) !important;
-  background: rgba(255, 255, 255, .82);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+  color: #fff !important;
+  background: rgba(255, 255, 255, .22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .38);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
-.mb-app .mb-brands .platform-tab.active strong {
-  color: var(--brand) !important;
-}
-
+/* HOT/LIVE: viên đỏ, thêm vòng trắng mỏng để đọc được cả trên gradient cam
+   của Shopee lẫn nền gần đen của TikTok. */
 .mb-app .mb-brands .platform-card-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   color: #fff;
-  background: var(--mb-navy-850);
-  font-size: 9px;
+  background: var(--mb-red-600);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9);
+  font-size: 9.5px;
   font-weight: 900;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
 }
 
 .mb-app .mb-brands .platform-tab {
@@ -2925,4 +2954,51 @@ a.mb-store:hover {
   .mb-app .st-content > :is(.page-heading, .page-head, .st-page-head) h1 {
     font-size: 20px;
   }
+}
+
+/* ====================================================================== */
+/* 19. THẺ SÀN — ĐÈ LỚP MÀU PASTEL ĐỜI TRƯỚC                               */
+/* ====================================================================== */
+
+/*
+ * app-shell.css tô nền pastel cho từng thẻ sàn bằng !important:
+ *     .st-app .platform-tab.platform-shopee { background: #fff0eb !important }
+ * và một bộ khác nữa cho trạng thái .active (bậc 5 lớp). Gradient khai ở mục
+ * 8 vì thế không bao giờ ăn — chữ trắng nằm trên nền hồng nhạt, gần như
+ * không đọc được. Ở đây nhắc lại đúng bậc đó kèm !important.
+ *
+ * Giữ nguyên biến --pf-from/--pf-to đã khai theo từng sàn, nên đổi màu về
+ * sau chỉ sửa một chỗ.
+ */
+.mb-app .mb-brands .platform-tab.platform-shopee,
+.mb-app .mb-brands .platform-tab.platform-tiktok,
+.mb-app .mb-brands .platform-tab.platform-lazada,
+.mb-app .mb-brands .platform-tab.platform-shopee.active,
+.mb-app .mb-brands .platform-tab.platform-tiktok.active,
+.mb-app .mb-brands .platform-tab.platform-lazada.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-shopee.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-tiktok.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-lazada.active {
+  border: 0 !important;
+  background: linear-gradient(145deg, var(--pf-from), var(--pf-to)) !important;
+}
+
+.mb-app .mb-brands .platform-grid .platform-tab.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-shopee.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-tiktok.active,
+.mb-app .mb-brands .platform-grid .platform-tab.platform-lazada.active {
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 6px var(--brand),
+    0 14px 30px -14px rgba(15, 23, 42, .45) !important;
+}
+
+/* Badge HOT/LIVE: app-shell ép nền navy #103071 !important. */
+.mb-app .mb-brands .platform-card-badge {
+  padding: 3px 9px !important;
+  border: 0 !important;
+  color: #fff !important;
+  background: var(--mb-red-600) !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9) !important;
+  font-size: 9.5px !important;
 }
