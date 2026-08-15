@@ -3467,13 +3467,36 @@ a.mb-store:hover {
     font-size: clamp(21px, 6.2vw, 27px);
   }
 
+  /*
+   * Đầu khoang "Dán link mua sắm": trên điện thoại KHÔNG xếp icon bên trái
+   * nữa. Icon chiếm 38px cộng khoảng cách, phần chữ chỉ còn hơn một nửa bề
+   * ngang nên tiêu đề vỡ làm hai dòng ngắn ngủn, còn bên trái thì trống trơn
+   * dưới icon. Xếp dọc và canh giữa: chữ dùng trọn bề ngang, thừa mới xuống
+   * dòng, và dòng nào cũng cân giữa.
+   */
+  .mb-app .mb-converter-head {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .mb-app .mb-converter-head > div {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
   .mb-app .mb-converter-head h2 {
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.3;
+    text-wrap: balance;
   }
 
   .mb-app .mb-converter-head p {
     font-size: 12.5px;
+    text-wrap: pretty;
   }
 
   .mb-app .mb-panel-title {
