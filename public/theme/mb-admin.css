@@ -466,11 +466,9 @@
    đề trang chỉ là chữ + một vạch kẻ chân. */
 .backoffice-shell .page-heading,
 .backoffice-shell .admin-page-heading {
-  margin-bottom: 22px;
-  padding: 0 0 18px;
+  /* Khoảng thở + vạch kẻ chân nằm ở mục 10 (bậc cao hơn mới thắng được
+     app-shell). Ở đây chỉ còn phần app-shell không khoá. */
   overflow: visible;
-  border: 0;
-  border-bottom: 1px solid var(--line);
   border-radius: 0 !important;
   color: inherit;
   background: none !important;
@@ -878,9 +876,9 @@
     padding: 18px 14px calc(96px + env(safe-area-inset-bottom));
   }
 
-  .backoffice-shell .page-heading {
-    margin-bottom: 16px;
-    padding-bottom: 14px;
+  .backoffice-shell .st-content :is(.page-heading, .admin-page-heading) {
+    margin-bottom: 20px !important;
+    padding-bottom: 16px !important;
   }
 
   .backoffice-shell .page-heading h1 {
@@ -1018,4 +1016,99 @@
     font-size: 11px;
     font-weight: 800;
   }
+}
+
+/* ====================================================================== */
+/* 10. VÁ BỐ CỤC RIÊNG TỪNG TRANG QUẢN TRỊ                                 */
+/* ====================================================================== */
+
+/*
+ * Hỗ trợ khách hàng: lưới hai khoang bị chặn max-width 1200px nên trên màn
+ * rộng nó dừng giữa chừng, bỏ trống một dải bên phải trong khi tiêu đề
+ * trang và bảng phía trên vẫn kéo hết bề ngang. Bỏ chặn.
+ */
+.backoffice-shell .bo-settings-grid {
+  max-width: none;
+}
+
+/*
+ * Doanh thu: nút "Tải CSV" phải nằm cùng dòng với tiêu đề, nép phải.
+ * dashboard.css chuyển .page-heading sang xếp dọc từ 960px trở xuống —
+ * quá sớm, vì tới tận ~720px vẫn còn thừa chỗ cho một nút nhỏ bên phải.
+ */
+/*
+ * Gộp toàn bộ dáng tiêu đề trang vào ĐÚNG một rule ở bậc (0,3,0), vì
+ * app-shell khoá ba thứ bằng !important ở đúng bậc đó:
+ *   .st-app .page-heading            { display: block !important }
+ *   .backoffice-shell .st-content .page-heading
+ *       { margin: 0 0 20px !important; padding: 0 !important; border: 0 !important }
+ * Viết ở bậc thấp hơn (dù có !important) vẫn thua, nên khoảng thở và vạch kẻ
+ * chân trước đây không hề ăn — chỉ nhìn ảnh thì tưởng đã xong.
+ */
+.backoffice-shell .st-content :is(.page-heading, .admin-page-heading) {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 28px !important;
+  padding: 0 0 22px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+@media (min-width: 721px) {
+  .backoffice-shell .st-content .page-heading {
+    flex-direction: row;
+  }
+
+  .backoffice-shell .st-content .page-heading > .button,
+  .backoffice-shell .st-content .page-heading > .admin-heading-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
+/*
+ * Nhật ký: cả hàng lọc phải nằm gọn một dòng.
+ *
+ * Hai lỗi cộng lại làm nó vỡ. Một, ô tìm email khai flex-basis 420px — riêng
+ * nó đã ăn gần nửa hàng nên khoảng ngày bị đẩy xuống. Hai, rule
+ * `.admin-filters > label:not(.admin-search-field) { display: grid }` bậc cao
+ * hơn nên nuốt luôn display:flex của .admin-date-range: nhãn "Từ", ô ngày,
+ * nhãn "đến", ô ngày xếp thành cột và nhảy lên trên các ô khác.
+ */
+.backoffice-shell .admin-search-field {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.backoffice-shell .admin-filters > label.admin-date-range {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+}
+
+/* Nhãn "Từ"/"đến" của khoảng ngày nằm CÙNG hàng với ô ngày, nên bỏ kiểu
+   nhãn-trên-đầu của các bộ lọc khác. */
+.backoffice-shell .admin-date-range > span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.backoffice-shell .admin-date-range input {
+  min-width: 0;
+  width: 100%;
+  padding-right: 10px;
+}
+
+/* Hai nút Lọc/Đặt lại luôn khép ở cuối hàng, không bị kéo giãn. */
+.backoffice-shell .admin-filters-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
 }

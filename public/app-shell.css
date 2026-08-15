@@ -661,7 +661,7 @@ body {
 :root[data-theme="dark"] .st-app .st-icon-button {
   border-color: #46505a !important;
   color: #d2d6da !important;
-  background: #171b20 !important;
+  background: #0e192e !important;
 }
 
 :root[data-theme="dark"] .st-app .st-icon-button:hover {
@@ -816,6 +816,7 @@ body {
 }
 
 @media (pointer: coarse) {
+
   .st-icon-button,
   .st-topbar-open,
   .st-account {
@@ -1063,6 +1064,7 @@ body.no-scroll {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .st-sidebar,
   .st-scrim,
   .st-nav a,
@@ -1206,13 +1208,13 @@ body.no-scroll {
   color: var(--dv-muted);
 }
 
-.st-app .withdraw-steps li > span {
+.st-app .withdraw-steps li>span {
   border: 1px solid var(--dv-line);
   color: var(--dv-muted);
   background: var(--dv-canvas);
 }
 
-.st-app .withdraw-steps li.active > span {
+.st-app .withdraw-steps li.active>span {
   border-color: var(--sh-primary);
   color: #fff;
   background: var(--sh-primary);
@@ -1240,7 +1242,7 @@ body.no-scroll {
   background: transparent !important;
 }
 
-.st-app .orders-history-search > span {
+.st-app .orders-history-search>span {
   position: absolute;
   top: 50%;
   left: 16px;
@@ -1575,8 +1577,7 @@ html {
   color: var(--sh-ink);
 }
 
-:root[data-theme="dark"] .backoffice-shell .st-content
-  :is(.panel, .kpi-card, .empty-state, .page-heading, .admin-hero) {
+:root[data-theme="dark"] .backoffice-shell .st-content :is(.panel, .kpi-card, .empty-state, .page-heading, .admin-hero) {
   color: var(--sh-copy) !important;
   border-color: var(--sh-line) !important;
   background: var(--sh-surface) !important;
@@ -1592,8 +1593,7 @@ html {
   color: var(--sh-copy);
 }
 
-:root[data-theme="dark"] .backoffice-shell .st-content
-  :is(input, select, textarea) {
+:root[data-theme="dark"] .backoffice-shell .st-content :is(input, select, textarea) {
   border-color: var(--sh-line-strong) !important;
   color: var(--sh-ink);
   background: var(--sh-surface) !important;
@@ -2566,7 +2566,7 @@ html {
   border-radius: 10px;
 }
 
-.st-app .commerce-home-link-grid a > span svg {
+.st-app .commerce-home-link-grid a>span svg {
   width: 24px !important;
   height: 24px !important;
 }
@@ -2909,6 +2909,7 @@ html {
    xếp chồng hai hàng làm nút tụt xuống). Nút Dán neo theo ô nhập —
    không theo cả hàng — nên không đè lên nút Tra cứu. */
 @media (max-width: 760px) {
+
   .st-app .shopping-panel .buy-input-row,
   .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis {
     display: grid !important;
@@ -2921,8 +2922,8 @@ html {
     position: relative;
   }
 
-  .st-app .shopping-panel .buy-input-row > button[type="submit"],
-  .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis > button[type="submit"] {
+  .st-app .shopping-panel .buy-input-row>button[type="submit"],
+  .st-app .shopping-panel .buy-input-row.buy-input-row-emphasis>button[type="submit"] {
     /* instant-purchase ≤600px trải nút full hàng (grid-column: 1/-1) —
        ghim lại cột 2 hàng 1 để đứng cạnh ô nhập. */
     grid-column: 2 !important;
@@ -2999,7 +3000,7 @@ html {
 }
 
 /* Chặn nội dung dài (chuỗi liền không khoảng trắng) làm nổ bề rộng cột. */
-.st-ticket-detail > .panel {
+.st-ticket-detail>.panel {
   min-width: 0;
 }
 
