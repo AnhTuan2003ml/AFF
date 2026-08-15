@@ -295,14 +295,23 @@
         </section>
 
         <div class="support-fab-panel" data-support-fab-panel hidden>
-          <button type="button" class="support-fab-link" data-support-pop-open>
+          <p class="support-fab-lead">Chọn cách bạn muốn liên hệ:</p>
+          <button type="button" class="support-fab-link is-primary" data-support-pop-open>
             <span class="support-fab-icon fab-live" aria-hidden="true">{{ icon('support') }}</span>
-            Hỗ trợ trực tiếp
+            <span class="support-fab-copy">
+              <b>Hỗ trợ trực tiếp</b>
+              <small>Nhắn ngay với đội CSKH</small>
+            </span>
+            <em class="support-fab-tag">Trực tuyến</em>
           </button>
           {% if communityZaloUrl %}
             <a class="support-fab-link" href="{{ communityZaloUrl }}" target="_blank" rel="noopener noreferrer">
               <span class="support-fab-icon fab-zalo" aria-hidden="true">Zalo</span>
-              Nhóm Zalo cộng đồng
+              <span class="support-fab-copy">
+                <b>Nhóm Zalo cộng đồng</b>
+                <small>Hỏi đáp cùng người dùng khác</small>
+              </span>
+              <em class="support-fab-tag is-out" aria-hidden="true">↗</em>
             </a>
           {% endif %}
           {# Chỉ hiện khi là link nhóm thật — "https://t.me/" trần (13 ký
@@ -310,7 +319,11 @@
           {% if communityTelegramUrl and (communityTelegramUrl | length) > 14 %}
             <a class="support-fab-link" href="{{ communityTelegramUrl }}" target="_blank" rel="noopener noreferrer">
               <span class="support-fab-icon fab-telegram" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 4.6 3.9 11.4c-1 .4-.95 1.5.05 1.8l4.4 1.4 1.7 5.2c.3.9 1.1 1 1.7.3l2.4-2.5 4.6 3.4c.7.5 1.6.1 1.8-.8l2.5-14c.2-1.1-.7-1.9-1.75-1.6zM9.2 14.3l8.5-6.6c.3-.25.65.2.4.5l-6.8 6.6-.3 3z"/></svg></span>
-              Nhóm Telegram cộng đồng
+              <span class="support-fab-copy">
+                <b>Nhóm Telegram cộng đồng</b>
+                <small>Kênh hỗ trợ nhanh 24/7</small>
+              </span>
+              <em class="support-fab-tag is-out" aria-hidden="true">↗</em>
             </a>
           {% endif %}
         </div>
