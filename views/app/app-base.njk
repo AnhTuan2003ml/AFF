@@ -1,337 +1,204 @@
 {% extends "base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
-{#
-  Khung trang người dùng theo bản thiết kế MB CashBack:
-  - Desktop: header trắng dính trên cùng + thanh tab viên thuốc. KHÔNG còn
-    sidebar trái — mọi mục điều hướng nằm trên thanh tab (cuộn ngang khi hẹp).
-  - Mobile: header gradient navy (avatar + lời chào + tìm kiếm + chuông) và
-    thanh điều hướng dưới 5 mục, mục giữa là nút tròn "Khám phá".
-
-  Class `st-app` / `st-content` được giữ để CSS nội dung trang sẵn có (bảng,
-  panel, trạng thái trống, guard dark-mode) vẫn khớp. Toàn bộ hook JS
-  (data-menu, data-notification-*, data-theme-toggle, data-support-fab...)
-  giữ nguyên tên nên app.js chạy y như cũ.
-#}
-
-{% block skin_styles %}{% endblock %}
-
 {% block body %}
-  <link rel="stylesheet" href="/assets/shoptik-premium-patch.css?v={{ assetVersion }}">
-  <link rel="stylesheet" href="/assets/app-shell.css?v={{ assetVersion }}">
-  <link rel="stylesheet" href="/assets/theme/mb-skin.css?v={{ assetVersion }}">
-  <link rel="stylesheet" href="/assets/theme/mb-app.css?v={{ assetVersion }}">
-  {# Chat hỗ trợ nạp ở KHUNG chứ không riêng trang Hỗ trợ, vì nút nổi ở góc
-     phải giờ mở thẳng một popup chat. Trang Hỗ trợ dùng lại chính hai file
-     này — không được nạp thêm lần nữa ở đó, nạp hai lần thì support-chat.js
-     gắn hai lần trình xử lý submit và mỗi lần bấm Gửi sẽ gửi hai tin. #}
-  <link rel="stylesheet" href="/assets/support-chat.css?v={{ assetVersion }}">
   <script src="/assets/support-chat.js?v={{ assetVersion }}" defer></script>
+  <link rel="stylesheet" href="/assets/blob-mascot.css?v={{ assetVersion }}">
+  <script src="/assets/blob-mascot.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/blob-logout.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/blob-notify.js?v={{ assetVersion }}" defer></script>
 
   {% set persistentBalances = headerBalances or balances %}
   {% set navItems = [
-    { href: '/app', section: 'dashboard', icon: 'discover', label: 'Tìm sản phẩm' },
-    { href: '/app/discover', section: 'discover', icon: 'compass', label: 'Khám phá ưu đãi' },
-    { href: '/app/orders', section: 'orders', icon: 'orders', label: 'Đơn hàng' },
-    { href: '/app/wallet', section: 'wallet', icon: 'wallet', label: 'Số dư & rút tiền' },
-    { href: '/app/nhiem-vu', section: 'missions', icon: 'mission', label: 'Nhiệm vụ' },
-    { href: '/app/links', section: 'links', icon: 'link', label: 'Link chia sẻ' },
-    { href: '/app/referrals', section: 'referrals', icon: 'referral', label: 'Giới thiệu' },
-    { href: '/app/support', section: 'support', icon: 'support', label: 'Hỗ trợ' }
+    { href: '/app', section: 'dashboard', label: 'Trang chủ' },
+    { href: '/app/discover', section: 'discover', label: 'Khám phá' },
+    { href: '/app/orders', section: 'orders', label: 'Đơn hàng' },
+    { href: '/app/wallet', section: 'wallet', label: 'Ví' },
+    { href: '/app/nhiem-vu', section: 'missions', label: 'Nhiệm vụ' },
+    { href: '/app/links', section: 'links', label: 'Chia sẻ' },
+    { href: '/app/referrals', section: 'referrals', label: 'Giới thiệu' },
+    { href: '/app/support', section: 'support', label: 'Hỗ trợ' }
   ] %}
   {% set financeSections = ['wallet', 'withdrawals', 'banks'] %}
 
-  <div class="mb-app dv13-commerce-shell app-section-{{ appSection or 'default' }} st-app" data-app-section="{{ appSection or 'default' }}">
-    <div class="mb-shell">
-      <header class="mb-header">
-        <div class="mb-header-inner mb-container">
-          {# Desktop: dấu hiệu + tên + dòng mô tả. Mobile: CSS ẩn phần chữ,
-             chỉ còn dấu hiệu để nhường chỗ cho ô tìm kiếm. #}
-          <a class="mb-brand" href="/app" aria-label="ShopTik">
-            <span class="mb-brand-mark"><img src="/assets/images/icon.png" alt="" aria-hidden="true"></span>
-            <span class="mb-brand-copy">
-              <span class="mb-brand-name">SHOPTIK<em class="mb-brand-tag">CASHBACK</em></span>
-              <small class="mb-brand-sub">Hoàn tiền Shopee · TikTok Shop · Lazada</small>
-            </span>
-          </a>
+  <div class="px-app st-app app-section-{{ appSection or 'default' }}" data-app-section="{{ appSection or 'default' }}">
+    <header class="px-header">
+      <div class="px-header-inner">
+        <a class="px-menu-shortcut" href="/app/settings" aria-label="Tất cả chức năng">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </a>
 
-          {# Ô tìm kiếm điều hướng sang trang Khám phá — nơi thật sự có bộ lọc. #}
-          <form class="mb-search" role="search" method="get" action="/app/discover">
-            {{ icon('search') }}
-            <input type="search" name="q" value="{{ discoverQuery or '' }}" placeholder="Tìm deal, voucher, sản phẩm..." aria-label="Tìm ưu đãi">
-          </form>
+        <a class="px-brand" href="/app" aria-label="ShopTik - Trang chủ">
+          <img src="/assets/images/icon.png" alt="" aria-hidden="true">
+          <span>ShopTik</span>
+        </a>
 
-          <div class="mb-header-actions">
-            {% if persistentBalances %}
-              <a class="mb-wallet-chip" href="/app/wallet">
-                <span class="mb-wallet-stat is-pending">
-                  <i aria-hidden="true">◷</i>
-                  <span>
-                    <span>Đang chờ</span>
-                    <b>{{ persistentBalances.pending | vnd }}</b>
-                  </span>
-                </span>
-                <span class="mb-wallet-divider" aria-hidden="true"></span>
-                <span class="mb-wallet-stat is-available">
-                  <i aria-hidden="true">₫</i>
-                  <span>
-                    <span>Khả dụng</span>
-                    <b>{{ persistentBalances.available | vnd }}</b>
-                  </span>
-                </span>
-              </a>
-            {% endif %}
-
-            <a class="mb-action mb-action-cta" href="/app/withdrawals">{{ icon('withdraw') }}<span>Rút tiền</span></a>
-
-            <div class="notification-menu">
-              <button type="button" class="mb-icon-button notification-trigger" data-notification-trigger aria-expanded="false" aria-label="Thông báo">
-                {{ icon('bell') }}
-                {% if unreadNotificationCount %}<b class="notification-badge" data-notification-badge>{{ unreadNotificationCount if unreadNotificationCount <= 9 else '9+' }}</b>{% endif %}
-              </button>
-              <div class="notification-dropdown" data-notification-panel>
-                <div class="notification-dropdown-head"><b>Thông báo</b></div>
-                {% if recentNotifications and recentNotifications.length %}
-                  <ul class="notification-list">
-                    {% for item in recentNotifications %}
-                      <li class="{{ 'unread' if not item.isRead }}">
-                        <b>{{ item.title }}</b>
-                        {% if item.body %}<p>{{ item.body }}</p>{% endif %}
-                        <time>{{ item.createdAt | datetime }}</time>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                {% else %}
-                  <p class="notification-empty">Bạn chưa có thông báo mới.</p>
-                {% endif %}
-              </div>
-            </div>
-
-            {% include "partials/theme-button.njk" %}
-
-            <div class="st-menu">
-              <button type="button" class="st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
-                <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
-                <span class="st-account-email">{{ currentUser.email }}</span>
-                <svg class="st-menu-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
-              </button>
-              <div class="st-menu-panel" data-menu>
-                <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
-                <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
-                <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
-                <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
-                <a href="/app/referrals">{{ icon('referral') }}<span>Giới thiệu bạn bè</span></a>
-                {% if currentUser.role != 'USER' %}
-                  <a href="/backoffice/console">{{ icon('ops') }}<span>Mở trang quản trị</span></a>
-                {% endif %}
-                <div class="st-menu-divider" role="separator"></div>
-                <form method="post" action="/dang-xuat">
-                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                  {# class button-ghost để rule CTA đỏ của dv13
-                     (button[type=submit]:not(.button-ghost)...) tự loại trừ nút này #}
-                  <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <nav class="mb-tabs mb-container" aria-label="Khu vực chức năng">
-        <div class="mb-tabs-bar">
+        <nav class="px-desktop-nav" aria-label="Điều hướng chính">
           {% for item in navItems %}
             {% set isActive = (item.section == appSection) or (item.section == 'wallet' and appSection in financeSections) %}
-            <a class="mb-tab{% if isActive %} active{% endif %}" href="{{ item.href }}"{% if isActive %} aria-current="page"{% endif %}>
-              {{ icon(item.icon) }}<span>{{ item.label }}</span>
-              {% if item.section == 'orders' and pendingOrdersCount %}<em class="mb-tab-badge">{{ pendingOrdersCount }}</em>{% endif %}
-            </a>
+            <a href="{{ item.href }}"{% if isActive %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a>
           {% endfor %}
-        </div>
-      </nav>
+        </nav>
 
-      {# tabindex="-1" để link "Bỏ qua menu" đặt được focus vào đây —
-         thiếu nó, focus rơi về <body> và Tab quay lại đầu trang. #}
-      <main class="st-content" id="main-content" tabindex="-1">
-        {% include "partials/flash.njk" %}
-        {# Nhóm Tài chính gộp thành MỘT giao diện: một tiêu đề chung + 3
-           tab (Số dư / Rút tiền / Ngân hàng) chuyển giữa 3 URL sẵn có —
-           không đổi route hay nghiệp vụ. Các trang khác tự mang tiêu đề
-           trong nội dung. #}
-        {% if appSection in financeSections %}
-          <div class="st-page-head">
-            <h1>Tài chính</h1>
-            <p>Số dư, lệnh rút và tài khoản nhận tiền trên cùng một màn hình.</p>
-          </div>
-          <nav class="st-subtabs" aria-label="Khu vực tài chính">
-            <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>Số dư</a>
-            <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>Rút tiền</a>
-            <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>Ngân hàng</a>
-          </nav>
-        {% endif %}
-        {% block app_content %}{% endblock %}
-      </main>
+        <div class="px-header-actions">
+          <a class="px-head-icon" href="/app/discover" aria-label="Tìm kiếm">{{ icon('search') }}</a>
 
-      {#
-        Hai nút cửa hàng ứng dụng đang là CHỖ ĐẶT TRƯỚC — cố ý dùng <span> chứ
-        không phải <a href="#"> để không tạo ra một liên kết dẫn đi đâu cả.
-        Khi có link thật thì đổi span thành thẻ a và bỏ dòng "Sắp ra mắt".
-      #}
-      <footer class="mb-footer">
-        <div class="mb-footer-apps">
-          <div class="mb-footer-apps-copy">
-            <b>Tải ứng dụng ShopTik</b>
-            <small>Theo dõi đơn và nhận tiền hoàn ngay trên điện thoại</small>
+          <div class="notification-menu">
+            {% set notifBase = unreadNotificationCount or 0 %}
+            {% set badgeTotal = notifBase + (unreadSupportCount or 0) %}
+            <button type="button" class="px-head-icon notification-trigger" data-notification-trigger aria-expanded="false" aria-label="Thông báo">
+              {{ icon('bell') }}
+              <b class="notification-badge" data-notification-badge data-notif-base="{{ notifBase }}"{% if not badgeTotal %} hidden{% endif %}>{{ badgeTotal if badgeTotal <= 9 else '9+' }}</b>
+            </button>
+            <div class="notification-dropdown" data-notification-panel>
+              <div class="notification-dropdown-head"><b>Thông báo</b></div>
+              {% if unreadSupportCount %}
+                <a class="notification-support-item" href="/app/support" data-support-notice>
+                  <b>Đội ngũ chăm sóc đã phản hồi</b>
+                  <p>{{ unreadSupportCount }} tin nhắn mới từ hỗ trợ. Bấm để mở.</p>
+                </a>
+              {% endif %}
+              {% if recentNotifications and recentNotifications.length %}
+                <ul class="notification-list">
+                  {% for item in recentNotifications %}
+                    <li class="{{ 'unread' if not item.isRead }}">
+                      <b>{{ item.title }}</b>
+                      {% if item.body %}<p>{{ item.body }}</p>{% endif %}
+                      <time>{{ item.createdAt | datetime }}</time>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% elif not unreadSupportCount %}
+                <p class="notification-empty">Bạn chưa có thông báo mới.</p>
+              {% endif %}
+            </div>
           </div>
-          <div class="mb-stores">
-            <span class="mb-store">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8s-1.6-.7-2.7-.7c-1.4 0-2.7.8-3.4 2-1.4 2.5-.4 6.2 1 8.2.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.2-.8-2.2-3.1z"/><path d="M14.6 6.3c.6-.7 1-1.6.9-2.6-.8 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5.9.1 1.8-.5 2.5-1.2z"/></svg>
-              <span><small>Tải về trên</small><b>App Store</b></span>
-            </span>
-            <span class="mb-store">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.2v17.6c0 .5.5.8.9.6l9.6-5.6-2.6-2.6z"/><path d="M4 3.2 11.9 11l2.6-2.6L4.9 2.6c-.4-.2-.9.1-.9.6z"/><path d="m17.6 9.9-3.1-1.5L11.9 11l2.6 2.6 3.1-1.8c.6-.4.6-1.5 0-1.9z"/></svg>
-              <span><small>Tải về trên</small><b>Google Play</b></span>
-            </span>
-          </div>
-          <span class="mb-store-soon">Sắp ra mắt</span>
-        </div>
 
-        <div class="mb-footer-bottom">
-          <span>© 2026 ShopTik Cashback</span>
-          <nav aria-label="Thông tin pháp lý">
-            <a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách người dùng</a>
-            <a href="/dieu-khoan">Điều khoản</a>
-            <a href="/quyen-rieng-tu">Quyền riêng tư</a>
-            <a href="/app/support">Hỗ trợ</a>
-          </nav>
+          <a class="px-head-icon px-wallet-link" href="/app/wallet" aria-label="Ví">
+            {{ icon('wallet') }}
+            {% if persistentBalances %}<span>{{ persistentBalances.available | vnd }}</span>{% endif %}
+          </a>
+
+          <div class="st-menu px-account-menu">
+            <button type="button" class="px-account-trigger st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
+              <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+              <span class="px-account-name">{{ currentUser.fullName or 'Tài khoản' }}</span>
+              {{ icon('chevron-down') }}
+            </button>
+            <div class="st-menu-panel" data-menu>
+              <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
+              <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
+              <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
+              <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
+              {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>Trang quản trị</span></a>{% endif %}
+              <div class="st-menu-divider" role="separator"></div>
+              <form method="post" action="/dang-xuat">
+                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
+              </form>
+            </div>
+          </div>
         </div>
-      </footer>
+      </div>
+    </header>
+
+    <main class="st-content px-main" id="main-content" tabindex="-1">
+      {% include "partials/flash.njk" %}
+      {% if appSection in financeSections %}
+        <section class="px-page-intro">
+          <span class="px-eyebrow">TÀI CHÍNH</span>
+          <h1>Tiền hoàn của bạn.</h1>
+          <p>Theo dõi số dư, tạo lệnh rút và quản lý tài khoản nhận tiền trong một nơi.</p>
+        </section>
+        <nav class="st-subtabs px-subtabs" aria-label="Khu vực tài chính">
+          <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>Số dư</a>
+          <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>Rút tiền</a>
+          <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>Ngân hàng</a>
+        </nav>
+      {% endif %}
+      {% block app_content %}{% endblock %}
+    </main>
+
+    <footer class="px-footer">
+      <div class="px-footer-top">
+        <div class="px-footer-brand">
+          <a href="/app"><img src="/assets/images/icon.png" alt=""><strong>ShopTik</strong></a>
+          <p>Một trải nghiệm mua sắm gọn hơn: kiểm tra hoàn tiền, mua qua liên kết và theo dõi ví minh bạch.</p>
+        </div>
+        <div class="px-footer-col"><b>Mua sắm</b><a href="/app">Dán link sản phẩm</a><a href="/app/discover">Khám phá ưu đãi</a><a href="/app/orders">Đơn hàng</a></div>
+        <div class="px-footer-col"><b>Tài khoản</b><a href="/app/wallet">Ví hoàn tiền</a><a href="/app/banks">Ngân hàng</a><a href="/app/profile">Hồ sơ</a></div>
+        <div class="px-footer-col"><b>Hỗ trợ</b><a href="/app/support">Trung tâm hỗ trợ</a><a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách</a><a href="/dieu-khoan">Điều khoản</a></div>
+      </div>
+
+      <div class="px-footer-apps">
+        <div class="px-footer-apps-copy">
+          <b>Tải ứng dụng ShopTik</b>
+          <small>Theo dõi đơn và nhận tiền hoàn ngay trên điện thoại.</small>
+        </div>
+        <div class="px-stores">
+          <span class="px-store" role="img" aria-label="App Store — sắp ra mắt">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8s-1.6-.7-2.7-.7c-1.4 0-2.7.8-3.4 2-1.4 2.5-.4 6.2 1 8.2.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.2-.8-2.2-3.1z"/><path d="M14.6 6.3c.6-.7 1-1.6.9-2.6-.8 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5.9.1 1.8-.5 2.5-1.2z"/></svg>
+            <span><small>Tải về trên</small><b>App Store</b></span>
+          </span>
+          <span class="px-store" role="img" aria-label="Google Play — sắp ra mắt">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.2v17.6c0 .5.5.8.9.6l9.6-5.6-2.6-2.6z"/><path d="M4 3.2 11.9 11l2.6-2.6L4.9 2.6c-.4-.2-.9.1-.9.6z"/><path d="m17.6 9.9-3.1-1.5L11.9 11l2.6 2.6 3.1-1.8c.6-.4.6-1.5 0-1.9z"/></svg>
+            <span><small>Tải về trên</small><b>Google Play</b></span>
+          </span>
+          <span class="px-store-soon">Sắp ra mắt</span>
+        </div>
+      </div>
+
+      <div class="px-footer-bottom"><span>© 2026 ShopTik</span><span>Shopee · TikTok Shop · Lazada</span></div>
+    </footer>
+
+    <nav class="mb-bottomnav px-bottomnav" aria-label="Điều hướng di động">
+      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>Trang chủ</b></a>
+      <a href="/app/discover" {% if appSection == 'discover' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<b>Khám phá</b></a>
+      <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>Đơn hàng</b></a>
+      <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Ví</b></a>
+      <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<b>Tài khoản</b></a>
+    </nav>
+
+    <a class="st-support-fab" href="/app/support" aria-label="Chăm sóc khách hàng">
+      {{ icon('support') }}<span>Hỗ trợ</span>
+    </a>
+
+    {# Modal xác nhận đăng xuất có linh vật #}
+    <div class="blob-modal-scrim" data-logout-modal hidden inert>
+      <div class="blob-modal" role="dialog" aria-modal="true" aria-labelledby="blob-logout-title">
+        <button class="blob-modal-close" type="button" data-logout-cancel aria-label="Đóng">×</button>
+        <div class="blob-modal-mascot" data-logout-mascot></div>
+        <span class="blob-modal-eyebrow">Sắp đi đâu à?</span>
+        <h2 id="blob-logout-title">Đăng xuất?</h2>
+        <p class="blob-modal-copy">Bạn sẽ cần đăng nhập lại để vào tài khoản.</p>
+        <div class="blob-modal-actions">
+          <button class="blob-btn-stay" type="button" data-logout-cancel>Ở lại</button>
+          <form method="post" action="/dang-xuat" data-logout-form>
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <button class="blob-btn-out" type="submit" data-logout-confirm>Đăng xuất</button>
+          </form>
+        </div>
+      </div>
     </div>
 
-    {# Thanh dưới mobile: 5 mục, mục giữa là nút tròn dẫn sang Khám phá.
-       Mọi chức năng còn lại vào qua lưới tiện ích ở trang chủ và tab Cá nhân. #}
-    <nav class="mb-bottomnav" aria-label="Điều hướng di động">
-      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>Trang chủ</b></a>
-      <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>Đơn hàng</b></a>
-      <a class="mb-nav-center{% if appSection == 'discover' %} active{% endif %}" href="/app/discover" aria-label="Khám phá ưu đãi"{% if appSection == 'discover' %} aria-current="page"{% endif %}>{{ icon('compass') }}<b>Khám phá</b></a>
-      <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Số dư</b></a>
-      <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('settings') }}<b>Chức năng</b></a>
-    </nav>
+    {# Linh vật góc màn hình: thông báo / CSKH phản hồi #}
+    <div class="blob-toast" data-blob-toast hidden role="status" aria-live="polite"
+      data-support-unread="{{ unreadSupportCount or 0 }}"
+      data-on-support="{{ 'yes' if appSection == 'support' else '' }}"></div>
 
     <div class="entry-promo-scrim" data-entry-promo hidden inert>
       <section class="entry-promo-modal" role="dialog" aria-modal="true" aria-labelledby="entry-promo-title-copy">
         <button class="entry-promo-close" type="button" data-entry-promo-close aria-label="Đóng quảng cáo">×</button>
         <div class="entry-promo-scroll">
           <div class="entry-promo-card">
-            <a class="entry-promo-visual" href="#" data-entry-promo-image-link target="_blank" rel="noopener noreferrer" hidden>
-              <img src="" alt="" data-entry-promo-image hidden>
-            </a>
-            <div class="entry-promo-visual" data-entry-promo-visual-static hidden>
-              <img src="" alt="" data-entry-promo-image-static hidden>
-            </div>
-            <div class="entry-promo-placeholder" data-entry-promo-placeholder hidden>
-              <span data-entry-promo-badge hidden></span>
-              <strong data-entry-promo-type></strong>
-              <h2 id="entry-promo-title" data-entry-promo-title>Ưu đãi mới từ ShopTik</h2>
-              <p data-entry-promo-description>Khám phá nội dung vừa được quản trị đăng lên.</p>
-            </div>
-            <div class="entry-promo-body">
-              <div class="entry-promo-copy">
-                <span class="entry-promo-chip" data-entry-promo-type-label hidden></span>
-                <b data-entry-promo-badge-inline hidden></b>
-                <h2 id="entry-promo-title-copy" data-entry-promo-title-copy></h2>
-                <p data-entry-promo-description-copy></p>
-              </div>
-              <a class="button button-primary entry-promo-cta" href="#" data-entry-promo-cta target="_blank" rel="noopener noreferrer" hidden>Xem chi tiết</a>
-            </div>
+            <a class="entry-promo-visual" href="#" data-entry-promo-image-link target="_blank" rel="noopener noreferrer" hidden><img src="" alt="" data-entry-promo-image hidden></a>
+            <div class="entry-promo-visual" data-entry-promo-visual-static hidden><img src="" alt="" data-entry-promo-image-static hidden></div>
+            <div class="entry-promo-placeholder" data-entry-promo-placeholder hidden><span data-entry-promo-badge hidden></span><strong data-entry-promo-type></strong><h2 id="entry-promo-title" data-entry-promo-title>Ưu đãi mới từ ShopTik</h2><p data-entry-promo-description>Khám phá nội dung vừa được quản trị đăng lên.</p></div>
+            <div class="entry-promo-body"><div class="entry-promo-copy"><span class="entry-promo-chip" data-entry-promo-type-label hidden></span><b data-entry-promo-badge-inline hidden></b><h2 id="entry-promo-title-copy" data-entry-promo-title-copy></h2><p data-entry-promo-description-copy></p></div><a class="button button-primary entry-promo-cta" href="#" data-entry-promo-cta target="_blank" rel="noopener noreferrer" hidden>Xem chi tiết</a></div>
           </div>
         </div>
       </section>
     </div>
-
-    {# Ẩn FAB trên chính trang Hỗ trợ để không lặp chức năng.
-       Không còn phụ thuộc link Zalo/Telegram: mục đầu tiên bây giờ là chat
-       trực tiếp, luôn có. #}
-    {% if appSection != 'support' %}
-      <div class="support-fab" data-support-fab>
-        {# Bong bóng mời chào cạnh nút. Ẩn khi menu hoặc popup đang mở. #}
-        <span class="support-fab-hint" data-support-fab-hint aria-hidden="true">Tôi có thể giúp gì cho bạn?</span>
-
-        {#
-          Popup chat dùng LẠI đúng bộ chat của trang Hỗ trợ: cùng data-chat /
-          data-endpoint / data-chat-* nên support-chat.js chạy y nguyên, không
-          phải viết bản thứ hai. Khác một điểm: data-chat-deferred để nó chưa
-          poll khi popup còn đóng — nếu không, mọi trang trong app đều gọi
-          mạng 5 giây một lần dù người dùng không mở chat.
-        #}
-        <section class="support-pop" data-support-pop hidden
-          data-chat data-chat-deferred
-          data-endpoint="/app/support/messages" data-csrf="{{ csrfToken }}"
-          role="dialog" aria-label="Chat hỗ trợ trực tuyến">
-          <header class="support-pop-head">
-            <span class="support-pop-mark" aria-hidden="true">{{ icon('support') }}</span>
-            <span class="support-pop-title">
-              <b>Hỗ trợ trực tuyến</b>
-              <small><i aria-hidden="true"></i>Đội CSKH đang trực</small>
-            </span>
-            <button type="button" class="support-pop-close" data-support-pop-close aria-label="Đóng chat">×</button>
-          </header>
-
-          <div class="support-chat-messages" data-chat-messages tabindex="0"
-            role="log" aria-label="Lịch sử trò chuyện" aria-live="polite">
-            <div class="support-chat-empty" data-chat-empty>
-              <p><b>Bạn cần hỗ trợ điều gì?</b></p>
-              <p>Nhắn tin tại đây — về đơn hàng, tiền hoàn, rút tiền hoặc tài khoản.</p>
-            </div>
-          </div>
-
-          <p class="support-chat-error" data-chat-error hidden role="alert"></p>
-
-          <form class="support-chat-form" data-chat-form>
-            <label class="visually-hidden" for="support-pop-input">Tin nhắn</label>
-            <textarea id="support-pop-input" data-chat-input rows="1" maxlength="3000"
-              placeholder="Nhập câu hỏi của bạn…" autocomplete="off"></textarea>
-            <button class="button button-primary support-chat-send" type="submit" data-chat-send aria-label="Gửi">Gửi</button>
-          </form>
-        </section>
-
-        <div class="support-fab-panel" data-support-fab-panel hidden>
-          <p class="support-fab-lead">Chọn cách bạn muốn liên hệ:</p>
-          <button type="button" class="support-fab-link is-primary" data-support-pop-open>
-            <span class="support-fab-icon fab-live" aria-hidden="true">{{ icon('support') }}</span>
-            <span class="support-fab-copy">
-              <b>Hỗ trợ trực tiếp</b>
-              <small>Nhắn ngay với đội CSKH</small>
-            </span>
-            <em class="support-fab-tag">Trực tuyến</em>
-          </button>
-          {% if communityZaloUrl %}
-            <a class="support-fab-link" href="{{ communityZaloUrl }}" target="_blank" rel="noopener noreferrer">
-              <span class="support-fab-icon fab-zalo" aria-hidden="true">Zalo</span>
-              <span class="support-fab-copy">
-                <b>Nhóm Zalo cộng đồng</b>
-                <small>Hỏi đáp cùng người dùng khác</small>
-              </span>
-              <em class="support-fab-tag is-out" aria-hidden="true">↗</em>
-            </a>
-          {% endif %}
-          {# Chỉ hiện khi là link nhóm thật — "https://t.me/" trần (13 ký
-             tự) không trỏ tới nhóm nào. #}
-          {% if communityTelegramUrl and (communityTelegramUrl | length) > 14 %}
-            <a class="support-fab-link" href="{{ communityTelegramUrl }}" target="_blank" rel="noopener noreferrer">
-              <span class="support-fab-icon fab-telegram" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 4.6 3.9 11.4c-1 .4-.95 1.5.05 1.8l4.4 1.4 1.7 5.2c.3.9 1.1 1 1.7.3l2.4-2.5 4.6 3.4c.7.5 1.6.1 1.8-.8l2.5-14c.2-1.1-.7-1.9-1.75-1.6zM9.2 14.3l8.5-6.6c.3-.25.65.2.4.5l-6.8 6.6-.3 3z"/></svg></span>
-              <span class="support-fab-copy">
-                <b>Nhóm Telegram cộng đồng</b>
-                <small>Kênh hỗ trợ nhanh 24/7</small>
-              </span>
-              <em class="support-fab-tag is-out" aria-hidden="true">↗</em>
-            </a>
-          {% endif %}
-        </div>
-        <button type="button" class="support-fab-trigger" data-support-fab-trigger aria-expanded="false" aria-haspopup="true" aria-label="Mở hỗ trợ nhanh">
-          {{ icon('support') }}
-        </button>
-      </div>
-    {% endif %}
   </div>
   <script src="/assets/app-entry-promo.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

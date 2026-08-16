@@ -73,6 +73,38 @@ export async function listSupportChatMessages(
   }));
 }
 
+// Số phản hồi CSKH (tin AGENT) khách chưa xem — mốc là user_last_read_at.
+export async function countUnreadSupportReplies(
+  db: Database,
+  userId: string,
+): Promise<number> {
+  const result = await query<{ count: string }>(
+    db,
+    `
+      SELECT count(*)::text AS count
+      FROM support_chat_messages m
+      JOIN support_conversations c ON c.id = m.conversation_id
+      WHERE c.user_id = $1
+        AND m.author_role = 'AGENT'
+        AND m.created_at > c.user_last_read_at
+    `,
+    [userId],
+  );
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+// Đánh dấu khách đã xem hỗ trợ tới thời điểm hiện tại (mở trang / poll tin).
+export async function markSupportRead(
+  db: Database,
+  userId: string,
+): Promise<void> {
+  await query(
+    db,
+    `UPDATE support_conversations SET user_last_read_at = now() WHERE user_id = $1`,
+    [userId],
+  );
+}
+
 // Tin gốc của thread mang hồ sơ khách để nhân viên khỏi tra cứu chéo.
 async function buildThreadRootMessage(
   db: Database,

@@ -1,104 +1,63 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
-{#
-  Trang chủ dựng theo bố cục MB CashBack:
-    1. Tiêu đề hero
-    2. Hai khoang: dán link (trái) + thẻ ví navy (phải)
-    3. 4 ô số liệu
-    4. Sàn đối tác hoàn tiền
-    5. Lưới tiện ích
-    6. Băng chuyền sản phẩm đang hot
-    7. Đơn hàng gần đây
-    8. Băng quảng cáo navy
-
-  [data-buy-flow] bọc CẢ khoang dán link lẫn khối sàn đối tác vì purchase.js
-  lấy danh sách sàn bằng finder.closest("[data-buy-flow]").querySelector(".platform-tabs").
-#}
-
 {% block app_content %}
   {% set defaultPlatform = "SHOPEE" if platformAvailability.SHOPEE else ("TIKTOK" if platformAvailability.TIKTOK else "LAZADA") %}
 
-  <section class="mb-hero" data-buy-flow data-platform-purchase='{{ platformAvailability | dump | safe }}'>
-    <div class="mb-hero-intro">
-      {# Hai phiên bản chữ: bản dài cho desktop, bản ngắn cho điện thoại. Một
-         câu duy nhất thì trên máy hẹp nó gãy làm hai dòng trong viên thuốc,
-         nhìn rất rối. #}
-      <span class="mb-hero-badge">
-        {{ icon('discover') }}
-        <span class="mb-only-wide">Hoàn tiền tự động cho mọi đơn Shopee · TikTok Shop · Lazada</span>
-        <span class="mb-only-narrow">Hoàn tiền tự động mọi đơn</span>
-      </span>
-      <h1>Dán link sản phẩm — <em>nhận đúng tiền hoàn</em></h1>
-      <p>ShopTik nhận diện sàn, gắn mã Affiliate của bạn và theo dõi đơn tới lúc tiền về ví. Rút về tài khoản ngân hàng bất kỳ.</p>
+  <section class="px-home-hero" aria-labelledby="px-home-title">
+    <div class="px-home-hero-bg" aria-hidden="true"></div>
+    <div class="px-home-hero-shade" aria-hidden="true"></div>
+    <div class="px-home-hero-copy">
+      <span>SHOP · TRACK · CASHBACK</span>
+      <h1 id="px-home-title">Mua sắm.<br>Hoàn tiền.<br>Rõ ràng.</h1>
+      <p>Dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada. ShopTik xử lý liên kết Affiliate và theo dõi khoản hoàn cho bạn.</p>
+      <div class="px-home-hero-actions">
+        <a class="px-btn px-btn-light" href="#shop-search">Kiểm tra hoàn tiền</a>
+        <a class="px-text-link px-text-link-light" href="/app/discover">Khám phá sản phẩm <span>→</span></a>
+      </div>
     </div>
+    <div class="px-home-hero-meta">
+      <span><b>3 sàn</b><small>Mua sắm trong một nơi</small></span>
+      <span><b>{{ cashbackRate }}%</b><small>Mức hoàn có thể đạt tới</small></span>
+      <span><b>Minh bạch</b><small>Theo dõi từng trạng thái ví</small></span>
+    </div>
+  </section>
 
-    <div class="mb-hero-grid">
+  <section class="px-section px-start" data-buy-flow data-platform-purchase='{{ platformAvailability | dump | safe }}' aria-label="Dán link kiểm tra hoàn tiền">
+    <div class="px-start-grid">
       {% include "app/dashboard/product-search.njk" %}
       {% include "app/dashboard/wallet-card.njk" %}
     </div>
 
-    <div class="mb-panel mb-brands">
-      <div class="mb-panel-head">
-        <h2 class="mb-panel-title">Sàn thương mại đối tác hoàn tiền</h2>
-        <span class="mb-pill-note">Rút về mọi ngân hàng</span>
-      </div>
-      <div class="platform-tabs platform-grid" role="tablist" aria-label="Chọn sàn">
-        {% include "app/dashboard/platform-tabs.njk" %}
-      </div>
-    </div>
+    {% include "app/dashboard/platform-tabs.njk" %}
   </section>
 
-  {# Hàng 4 ô số liệu đã bỏ: "khả dụng", "đang chờ" và "sản phẩm đã mua" đều
-     đã nằm trên thẻ ví ngay phía trên, để lại thì cùng một con số hiện ba lần
-     trong một màn hình. Việc duy nhất còn giá trị riêng — nhắc liên kết ngân
-     hàng — chuyển thành dải cảnh báo bên dưới, và chỉ hiện khi chưa liên kết. #}
   {% if not hasVerifiedBank %}
-    <a class="mb-alert" href="/app/banks">
+    <a class="mb-alert px-alert" href="/app/banks">
       <span class="mb-alert-icon" aria-hidden="true">{{ icon('bank') }}</span>
-      <span class="mb-alert-copy">
-        <b>Chưa có tài khoản nhận tiền</b>
-        <small>Thêm và xác minh tài khoản ngân hàng trước để rút được tiền hoàn.</small>
-      </span>
-      <span class="mb-alert-go" aria-hidden="true">›</span>
+      <span class="mb-alert-copy"><b>Hoàn tất tài khoản nhận tiền.</b><small>Thêm và xác minh ngân hàng để có thể rút tiền hoàn khi đủ điều kiện.</small></span>
+      <span class="mb-alert-go" aria-hidden="true">→</span>
     </a>
   {% endif %}
 
-  {% include "app/dashboard/tools.njk" %}
-
-  {# Băng chuyền sản phẩm bán chạy — JS nạp từ /app/promo-products, tự ẩn nếu
-     kho trống. Tự xoay, dừng khi hover; nút mua đi qua luồng affiliate. #}
-  <section class="promo-carousel" data-promo-carousel hidden aria-label="Sản phẩm đang hot trên Shopee">
-    <header class="promo-carousel-head">
-      <div>
-        <span class="promo-carousel-kicker">Đang hot trên Shopee</span>
-        <h2>Mua là có hoàn tiền</h2>
-      </div>
-      <div class="promo-carousel-nav">
-        <button type="button" class="promo-carousel-arrow" data-promo-prev aria-label="Sản phẩm trước">‹</button>
-        <button type="button" class="promo-carousel-arrow" data-promo-next aria-label="Sản phẩm sau">›</button>
-      </div>
-    </header>
-    <div class="promo-carousel-viewport" data-promo-viewport>
-      <div class="promo-carousel-track" data-promo-track></div>
-    </div>
-    <div class="promo-carousel-dots" data-promo-dots aria-hidden="true"></div>
-  </section>
-
-  {% include "app/dashboard/recent-orders.njk" %}
-
-  <section class="mb-promo">
-    <div class="mb-promo-copy">
-      <span class="mb-promo-tag">Đủ ba sàn trong một nơi</span>
-      <h2>SHOPEE · TIKTOK SHOP · LAZADA</h2>
-      <p>Mọi đơn mua qua ShopTik đều có lịch sử đối soát minh bạch — biết khoản đang chờ, khoản có thể rút và khoản đã nhận.</p>
-    </div>
-    <a class="mb-action mb-action-cta" href="/app/discover">{{ icon('compass') }}<span>Xem ưu đãi</span></a>
-  </section>
+  {# 3 băng sản phẩm — mỗi mục MỘT HÀNG, nạp riêng theo list. #}
+  {% for row in [
+    { list: 'recommend', title: 'Đề xuất' },
+    { list: 'best', title: 'Bán chạy' },
+    { list: 'exclusive', title: 'Ưu đãi độc quyền' }
+  ] %}
+    <section class="promo-carousel px-products-section" data-promo-carousel data-endpoint="/app/promo-products?list={{ row.list }}" hidden aria-label="{{ row.title }}">
+      <header class="px-section-head px-products-head">
+        <div><h2>{{ row.title }}</h2></div>
+        <div class="promo-carousel-nav"><button type="button" class="promo-carousel-arrow" data-promo-prev aria-label="Trước">←</button><button type="button" class="promo-carousel-arrow" data-promo-next aria-label="Sau">→</button></div>
+      </header>
+      <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+      <div class="promo-carousel-dots" data-promo-dots aria-hidden="true"></div>
+    </section>
+  {% endfor %}
 {% endblock %}
 
 {% block page_scripts %}
   <script src="/assets/purchase.js?v={{ assetVersion }}" defer></script>
-  <link rel="stylesheet" href="/assets/promo-carousel.css?v={{ assetVersion }}">
   <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

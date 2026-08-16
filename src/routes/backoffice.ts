@@ -33,6 +33,7 @@ import { selectedValue } from "./admin-console-shared.js";
 import {
   approveMissionClaim,
   createMissionDefinition,
+  createNotification,
   deleteMissionDefinition,
   listMissionClaims,
   listMissionDefinitions,
@@ -317,12 +318,13 @@ export async function registerBackofficeRoutes(
             reason: input.reason,
           });
         } else {
-          const result = await query(
+          const result = await query<{ user_id: string; amount_vnd: string }>(
             deps.db,
             `
               UPDATE withdrawals
               SET status = 'APPROVED', decided_by = $2, decided_at = now()
               WHERE id = $1 AND status = 'FUNDS_HELD'
+              RETURNING user_id, amount_vnd
             `,
             [request.params.id, request.currentUser!.id],
           );
@@ -332,6 +334,14 @@ export async function registerBackofficeRoutes(
               "Yêu cầu rút tiền đã được xử lý trước đó.",
             );
           }
+          // Yêu cầu rút vừa được DUYỆT → báo cho chủ tài khoản.
+          const approved = result.rows[0]!;
+          await createNotification(deps.db, {
+            userId: approved.user_id,
+            type: "WITHDRAWAL_APPROVED",
+            title: "Yêu cầu rút tiền đã được duyệt",
+            body: `Lệnh rút ${Number(approved.amount_vnd).toLocaleString("vi-VN")}₫ đã được duyệt và đang chuyển sang đối tác chi hộ.`,
+          });
         }
         await writeAuditLog(deps.db, deps.config, request, {
           action: `WITHDRAWAL_${input.decision}`,

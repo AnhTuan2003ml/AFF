@@ -2,185 +2,89 @@
 {% from "partials/icons.njk" import icon %}
 
 {% block page_scripts %}
-  <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
   <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/discover-bestsellers.js?v={{ assetVersion }}" defer></script>
-  <script src="/assets/discover-category-sheet.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
 
 {% block app_content %}
-  <div class="discover-page" data-discover-page>
-    {# Trang bán hàng: vào là thấy hàng — một dòng tiêu đề gọn, không kicker,
-       không hero giới thiệu. #}
-    <section class="st-shop-head" aria-labelledby="discover-title">
-      <h1 id="discover-title">Săn deal hôm nay</h1>
-      {% if maxCashbackRate > 0 %}
-        <span class="st-shop-head-badge">Hoàn tiền đến {{ maxCashbackRate }}%</span>
-      {% endif %}
+  <div class="discover-page px-discover" data-discover-page>
+    <section class="px-discover-hero" aria-labelledby="discover-title">
+      <div>
+        <span class="px-eyebrow">SHOPPING DISCOVERY</span>
+        <h1 id="discover-title">Sản phẩm đáng để khám phá.</h1>
+        <p>Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.</p>
+      </div>
+      {% if maxCashbackRate > 0 %}<span class="px-rate-pill">Hoàn đến {{ maxCashbackRate }}%</span>{% endif %}
     </section>
 
     {% if items.length %}
-      <section class="discover-filters" aria-label="Tìm kiếm và lọc nội dung">
-        <div class="discover-filter-main">
-          <label class="discover-search">
-            <span aria-hidden="true">{{ icon('search') }}</span>
-            <span class="sr-only">Tìm nội dung</span>
-            <input type="search" placeholder="Tìm theo tên sản phẩm, voucher, thương hiệu..." autocomplete="off" data-discover-search>
-          </label>
+      <section class="discover-filters px-discover-filters" aria-label="Tìm kiếm và lọc nội dung">
+        <label class="discover-search px-discover-search">
+          <span aria-hidden="true">{{ icon('search') }}</span>
+          <span class="sr-only">Tìm nội dung</span>
+          <input type="search" placeholder="Tìm sản phẩm, thương hiệu hoặc voucher" autocomplete="off" data-discover-search>
+        </label>
 
-          {% if platforms.length %}
-            <div class="discover-platform-tabs" role="group" aria-label="Lọc theo sàn">
-              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
-              {% for platform in platforms %}
-                <button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
+        {% if platforms.length %}
+          <div class="discover-platform-tabs px-filter-tabs" role="group" aria-label="Lọc theo sàn">
+            <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
+            {% for platform in platforms %}<button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>{% endfor %}
+          </div>
+        {% endif %}
 
-        <div class="discover-category-row" id="discover-cat-sheet" data-cat-sheet>
-          <span class="discover-cat-title"><b aria-hidden="true">◇</b> Danh mục</span>
-          <div class="discover-category-tabs" role="group" aria-label="Lọc theo danh mục">
-            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả danh mục</button>
-            {# Ba danh mục sống lấy thẳng từ Shopee, phân trang riêng từng mục. #}
+        <div class="discover-category-row px-category-row" id="discover-cat-sheet" data-cat-sheet>
+          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Lọc theo danh mục">
+            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
             <button type="button" data-discover-livelist="recommend" aria-pressed="false">Đề xuất</button>
-            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy nhất</button>
-            <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Ưu đãi độc quyền</button>
-            {% for category in categories %}
-              <button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>
-            {% endfor %}
+            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
+            <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Độc quyền</button>
+            {% for category in categories %}<button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>{% endfor %}
           </div>
         </div>
       </section>
 
-      {# Nút mở combobox danh mục + lớp mờ (chỉ hiện trên mobile qua CSS;
-         desktop giữ dải danh mục ngang trong ô filter như cũ). #}
-      <button type="button" class="discover-cat-fab" data-cat-open aria-expanded="false" aria-controls="discover-cat-sheet" aria-label="Chọn danh mục">
-        <span aria-hidden="true">◇</span>
-        <b data-cat-current>Tất cả danh mục</b>
-        <i aria-hidden="true">▲</i>
-      </button>
-
-      <section class="discover-grid" aria-live="polite" data-discover-grid>
+      <section class="discover-grid px-product-grid" aria-live="polite" data-discover-grid>
         {% for item in items %}
-          <article
-            class="discover-card discover-card-{{ item.typeKey }}"
-            data-discover-card
-            data-platform="{{ item.platform }}"
-            data-category="{{ item.category }}"
-          >
-            <div class="discover-card-media">
-              {% if item.image_url %}
-                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-discover-image>
-              {% else %}
-                <div class="discover-card-placeholder" aria-hidden="true">
-                  <span>
-                    {% if item.type == 'VOUCHER' %}％
-                    {% elif item.type == 'PRODUCT' %}▣
-                    {% elif item.type == 'TRENDING' %}↗
-                    {% elif item.type == 'GUIDE' %}◎
-                    {% else %}!
-                    {% endif %}
-                  </span>
-                </div>
-              {% endif %}
-
-              {# Tối đa 2 badge, không lặp cùng một chữ (Voucher/HOT trùng
-                 danh mục hoặc tiêu đề từng xuất hiện 3-4 lần trên một thẻ). #}
+          <article class="discover-card discover-card-{{ item.typeKey }} px-product-card" data-discover-card data-platform="{{ item.platform }}" data-category="{{ item.category }}">
+            <div class="discover-card-media px-product-media">
+              {% if item.image_url %}<img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-discover-image>
+              {% else %}<div class="discover-card-placeholder" aria-hidden="true"><span>ShopTik</span></div>{% endif %}
               <div class="discover-card-badges">
-                {% if item.category and item.category | lower != (item.typeLabel or '') | lower %}
-                  <span class="discover-category-badge">{{ item.category }}</span>
-                {% endif %}
-                {% if item.platformName %}
-                  <span class="discover-platform-badge platform-{{ item.platform }}">{{ item.platformName }}</span>
-                {% else %}
-                  <span class="discover-type-badge">{{ item.typeLabel }}</span>
-                {% endif %}
+                {% if item.platformName %}<span class="discover-platform-badge platform-{{ item.platform }}">{{ item.platformName }}</span>{% endif %}
+                {% if item.isProduct and item.cashbackRate is not none and item.cashbackRate > 0 %}<span class="discover-cashback-badge">+{{ item.cashbackRate }}%</span>{% endif %}
               </div>
-
-              {# Tối đa 2 badge trên thẻ: sàn + loại nội dung — HOT/Nổi bật
-                 bỏ hẳn vì lặp thông tin và gây nhiễu. #}
-              {% if item.isProduct and item.cashbackRate is not none and item.cashbackRate > 0 %}
-                <span class="discover-cashback-badge">Hoàn +{{ item.cashbackRate }}%</span>
-              {% endif %}
             </div>
-
-            <div class="discover-card-body">
-              <div class="discover-card-meta">
-                <time>{{ item.published_at | date }}</time>
-              </div>
-
+            <div class="discover-card-body px-product-body">
+              {% if item.category %}<span class="px-product-category">{{ item.category }}</span>{% endif %}
               <h2>{{ item.title }}</h2>
-              {# Không lặp lại tiêu đề khi mô tả trùng nội dung. #}
-              {% if item.description and item.description | trim | lower != item.title | trim | lower %}
-                <p class="discover-card-description">{{ item.description }}</p>
-              {% endif %}
-
               {% if item.isProduct %}
-                <div class="discover-price-box">
-                  <div>
-                    <strong>{% if item.salePrice is not none %}{{ item.salePrice | vnd }}{% else %}Xem giá trên sàn{% endif %}</strong>
-                    {% if item.originalPrice is not none %}<del>{{ item.originalPrice | vnd }}</del>{% endif %}
-                  </div>
-                  <p>
-                    <span>Nhận về Ví ShopTik:</span>
-                    <b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}Kiểm tra khi mua{% endif %}</b>
-                  </p>
+                <div class="discover-price-box px-price-box">
+                  <div><strong>{% if item.salePrice is not none %}{{ item.salePrice | vnd }}{% else %}Xem giá trên sàn{% endif %}</strong>{% if item.originalPrice is not none %}<del>{{ item.originalPrice | vnd }}</del>{% endif %}</div>
+                  <p><span>Hoàn về ví</span><b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}Kiểm tra khi mua{% endif %}</b></p>
                 </div>
-              {% endif %}
-              {# Dải typeLabel/badge phụ đã bỏ — thông tin trùng với badge
-                 trên ảnh, chỉ gây lặp "Voucher → HOT → Voucher". #}
+              {% elif item.description %}<p class="discover-card-description">{{ item.description }}</p>{% endif %}
             </div>
-
-            <footer class="discover-card-footer">
-              {% if item.isProduct and item.target_url %}
-                <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}">
-                  <b data-buy-label>Mua và nhận hoàn tiền</b><span aria-hidden="true">↗</span>
-                </button>
-              {% elif item.target_url %}
-                <a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer">
-                  <b>Xem chi tiết</b><span aria-hidden="true">↗</span>
-                </a>
-              {% else %}
-                <span class="discover-static-action">Nội dung thông tin</span>
-              {% endif %}
+            <footer class="discover-card-footer px-product-footer">
+              {% if item.isProduct and item.target_url %}<button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}"><b data-buy-label>Mua qua ShopTik</b><span aria-hidden="true">→</span></button>
+              {% elif item.target_url %}<a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer"><b>Xem chi tiết</b><span aria-hidden="true">→</span></a>
+              {% else %}<span class="discover-static-action">Thông tin</span>{% endif %}
             </footer>
           </article>
         {% endfor %}
       </section>
 
-      <section class="discover-filter-empty" data-discover-filter-empty hidden>
-        <span aria-hidden="true">⌕</span>
-        <h2>Không tìm thấy nội dung phù hợp</h2>
-        <p>Thử đổi từ khóa, sàn hoặc danh mục đang chọn.</p>
-      </section>
+      <section class="discover-filter-empty" data-discover-filter-empty hidden><h2>Không tìm thấy sản phẩm phù hợp.</h2><p>Thử đổi từ khóa, sàn hoặc danh mục.</p></section>
     {% else %}
-      <section class="discover-database-empty">
-        <span aria-hidden="true">◇</span>
-        <h2>Chưa có nội dung Khám phá</h2>
-        <p>Nội dung mới sẽ xuất hiện sau khi quản trị viên tạo bài đăng và gắn danh mục.</p>
-      </section>
+      <section class="discover-database-empty"><h2>Chưa có nội dung để khám phá.</h2><p>Sản phẩm mới sẽ xuất hiện tại đây khi dữ liệu được cập nhật.</p></section>
     {% endif %}
 
-    {# Danh mục sống (Đề xuất / Bán chạy nhất): dữ liệu theo trang
-       (20 sp/trang) cache DB; trang chưa có thì worker gọi Shopee lấy.
-       Hiện khi chọn nút danh mục tương ứng, thay cho lưới nội dung thường. #}
-    <section class="bestseller-section" data-bestseller
-      data-endpoint="/app/discover/offer-products" hidden
-      aria-labelledby="bestseller-title">
-      <header class="bestseller-head">
-        <h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee</h2>
-        <p>Mua qua ShopTik để nhận hoàn tiền — mỗi trang 20 sản phẩm.</p>
-      </header>
-      <div class="discover-grid" data-bestseller-grid aria-live="polite"></div>
-      <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true">
-        <span class="bestseller-spinner"></span>
-      </div>
+    <section class="bestseller-section" data-bestseller data-endpoint="/app/discover/offer-products" hidden aria-labelledby="bestseller-title">
+      <header class="px-section-head bestseller-head"><div><span class="px-eyebrow">LIVE CATALOG</span><h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee.</h2></div><p>Mỗi trang 20 sản phẩm. Mua qua ShopTik để nhận hoàn tiền.</p></header>
+      <div class="discover-grid px-product-grid" data-bestseller-grid aria-live="polite"></div>
+      <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true"><span class="bestseller-spinner"></span></div>
       <p class="bestseller-status" data-bestseller-status hidden></p>
-      <nav class="bestseller-pagination" data-bestseller-pagination
-        aria-label="Chuyển trang" hidden></nav>
+      <nav class="bestseller-pagination" data-bestseller-pagination aria-label="Chuyển trang" hidden></nav>
     </section>
-
     <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
   </div>
 {% endblock %}

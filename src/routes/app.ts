@@ -31,7 +31,9 @@ import {
 } from "../services/withdrawal.js";
 import { writeAuditLog } from "../services/audit.js";
 import {
+  countUnreadSupportReplies,
   listSupportChatMessages,
+  markSupportRead,
   sendSupportChatMessage,
 } from "../services/support-chat.js";
 import {
@@ -55,7 +57,9 @@ import {
 import { isSlackSupportEnabled } from "../services/slack.js";
 import {
   claimMissionReward,
+  getUnreadNotificationCount,
   getUserMissionOverview,
+  listNotifications,
   markAllNotificationsRead,
 } from "../services/mission.js";
 
@@ -968,6 +972,14 @@ export async function registerAppRoutes(
       Math.max(Number.parseInt(String(queryParams.limit ?? "16"), 10) || 16, 4),
       24,
     );
+    // Cho phép chọn mục: Đề xuất / Bán chạy / Độc quyền (mặc định Bán chạy).
+    const listTypeByList: Record<string, number> = {
+      recommend: RECOMMEND_LIST_TYPE,
+      best: BEST_SELLER_LIST_TYPE,
+      exclusive: EXCLUSIVE_LIST_TYPE,
+    };
+    const listType =
+      listTypeByList[String(queryParams.list ?? "best")] ?? BEST_SELLER_LIST_TYPE;
     const [rows, businessConfig] = await Promise.all([
       query<StoredOfferProduct>(
         deps.db,
@@ -979,7 +991,7 @@ export async function registerAppRoutes(
           ORDER BY random()
           LIMIT $2
         `,
-        [BEST_SELLER_LIST_TYPE, limit],
+        [listType, limit],
       ),
       getBusinessConfig(deps.db, deps.config),
     ]);
@@ -1163,6 +1175,8 @@ export async function registerAppRoutes(
     const platformLabel = requestedPlatform
       ? platformDisplayName(requestedPlatform)
       : "";
+    // Mở trang hỗ trợ = đã xem mọi phản hồi CSKH tới lúc này.
+    await markSupportRead(deps.db, uid);
     return reply.view("app/support.njk", {
       pageTitle: "Hỗ trợ",
       appSection: "support",
@@ -1251,9 +1265,41 @@ export async function registerAppRoutes(
   });
 
   app.get("/support/messages", async (request, reply) => {
-    const messages = await listSupportChatMessages(deps.db, userId(request));
+    const uid = userId(request);
+    const messages = await listSupportChatMessages(deps.db, uid);
+    // Đang xem hỗ trợ → coi như đã đọc mọi phản hồi CSKH tới lúc này.
+    await markSupportRead(deps.db, uid);
     reply.header("cache-control", "private, no-store");
     return reply.send({ messages });
+  });
+
+  // Đếm phản hồi CSKH chưa xem — cho linh vật poll nhẹ trên mọi trang app.
+  app.get("/support/unread", async (request, reply) => {
+    const count = await countUnreadSupportReplies(deps.db, userId(request));
+    reply.header("cache-control", "private, no-store");
+    return reply.send({ count });
+  });
+
+  // Trạng thái thông báo cho linh vật/chuông: số chưa đọc + danh sách gần đây +
+  // số phản hồi CSKH. Poll trên mọi trang để cập nhật KHÔNG cần tải lại.
+  app.get("/notifications/state", async (request, reply) => {
+    const uid = userId(request);
+    const [notif, support, items] = await Promise.all([
+      getUnreadNotificationCount(deps.db, uid),
+      countUnreadSupportReplies(deps.db, uid),
+      listNotifications(deps.db, uid, 8),
+    ]);
+    reply.header("cache-control", "private, no-store");
+    return reply.send({
+      notif,
+      support,
+      items: items.map((i) => ({
+        title: i.title,
+        body: i.body,
+        isRead: i.isRead,
+        createdAt: i.createdAt,
+      })),
+    });
   });
 
   /*

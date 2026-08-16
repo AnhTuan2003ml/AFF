@@ -39,6 +39,7 @@ import {
   listNotifications,
 } from "./services/mission.js";
 import { getWalletBalances } from "./services/ledger.js";
+import { countUnreadSupportReplies } from "./services/support-chat.js";
 
 const projectRoot = process.cwd();
 // Đổi mỗi lần khởi động để né cache immutable 30 ngày của /assets/*.
@@ -224,15 +225,23 @@ app.addHook("preHandler", async (request, reply) => {
   let recentNotifications: Awaited<ReturnType<typeof listNotifications>> = [];
   let headerBalances: Awaited<ReturnType<typeof getWalletBalances>> | null =
     null;
+  let unreadSupportCount = 0;
   if (request.currentUser && request.url.startsWith("/app")) {
-    [unreadNotificationCount, recentNotifications, headerBalances] =
-      await Promise.all([
-        getUnreadNotificationCount(db, request.currentUser.id),
-        listNotifications(db, request.currentUser.id, 8),
-        request.method === "GET"
-          ? getWalletBalances(db, request.currentUser.id)
-          : Promise.resolve(null),
-      ]);
+    [
+      unreadNotificationCount,
+      recentNotifications,
+      headerBalances,
+      unreadSupportCount,
+    ] = await Promise.all([
+      getUnreadNotificationCount(db, request.currentUser.id),
+      listNotifications(db, request.currentUser.id, 8),
+      request.method === "GET"
+        ? getWalletBalances(db, request.currentUser.id)
+        : Promise.resolve(null),
+      request.method === "GET"
+        ? countUnreadSupportReplies(db, request.currentUser.id)
+        : Promise.resolve(0),
+    ]);
   }
 
   Object.assign(target.locals, {
@@ -250,6 +259,7 @@ app.addHook("preHandler", async (request, reply) => {
     minimumWithdrawal: config.MIN_WITHDRAWAL_VND,
     unreadNotificationCount,
     recentNotifications,
+    unreadSupportCount,
   });
 });
 

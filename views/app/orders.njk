@@ -30,7 +30,7 @@
   <section class="orders-history-shell">
     <header class="orders-history-hero">
       <div class="orders-history-title">
-        <span class="orders-history-icon">{{ icon('orders') }}</span>
+        <span class="orders-history-icon" aria-hidden="true">{{ icon('orders') }}</span>
         <div>
           <h1>Đơn hàng</h1>
           <p>{{ orders.length }} đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik Affiliate</p>
@@ -189,7 +189,6 @@
 {% block page_scripts %}
   {# discover.css/js phục vụ tab "Sản phẩm đã xem" (thẻ + nút "Mua lại").
      discover.js tự thoát nếu không có [data-discover-page] nên tab khác vô hại. #}
-  <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
   <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/orders.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

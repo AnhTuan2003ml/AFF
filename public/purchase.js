@@ -12,7 +12,7 @@
   const finder = document.querySelector("[data-product-finder]");
   if (!(finder instanceof HTMLFormElement)) return;
   const buyFlow = finder.closest("[data-buy-flow]");
-  const platformTabs = buyFlow?.querySelector(".platform-tabs");
+  const platformShowcase = buyFlow?.querySelector("[data-platform-showcase]");
 
   // Sàn nào đã có tài khoản Affiliate thật (mua được ngay) — sàn còn lại vẫn
   // tra cứu/xem trước bình thường, chỉ nút Mua ngay hiện "Sắp mở".
@@ -95,7 +95,7 @@
     const anchor = isMobile
       ? result instanceof HTMLElement && !result.hidden
         ? result
-        : platformTabs
+        : platformShowcase
       : buyFlow;
     if (!(anchor instanceof HTMLElement)) return;
 
@@ -613,32 +613,22 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  // Đổi tab đang bật (do người dùng bấm HOẶC do hệ thống tự nhận diện sàn từ
-  // link vừa dán) — chỉ đổi màu/trạng thái, không đổi kích thước nút.
+  // Sàn được nhận diện trực tiếp từ URL. Ba logo phía dưới chỉ là quảng bá,
+  // KHÔNG còn là nút chọn sàn. Khi nhận diện được link, slide tương ứng được
+  // đưa lên trước để phản hồi trực quan mà không thay đổi cơ chế mua.
+  const PLATFORM_LABELS = { SHOPEE: "Shopee", TIKTOK: "TikTok Shop", LAZADA: "Lazada" };
   const activatePlatformTab = (platform) => {
-    const tab = document.querySelector(`[data-platform-tab="${platform}"]`);
-    if (!(tab instanceof HTMLElement)) return;
-    document.querySelectorAll("[data-platform-tab]").forEach((other) => {
-      other.classList.remove("active");
-      other.setAttribute("aria-selected", "false");
-    });
-    tab.classList.add("active");
-    tab.setAttribute("aria-selected", "true");
-    if (platformInput instanceof HTMLInputElement) {
-      platformInput.value = platform;
-    }
+    if (platformInput instanceof HTMLInputElement) platformInput.value = platform;
     if (urlInput instanceof HTMLInputElement) {
-      const platformLabel = tab.getAttribute("data-platform-label") || platform;
-      urlInput.placeholder = `Dán link ${platformLabel}`;
+      urlInput.placeholder = `Dán link ${PLATFORM_LABELS[platform] || platform}`;
     }
-  };
-
-  document.querySelectorAll("[data-platform-tab]").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const platform = tab.getAttribute("data-platform-tab");
-      if (platform) activatePlatformTab(platform);
+    document.querySelectorAll("[data-platform-ad]").forEach((slide) => {
+      const active = slide.getAttribute("data-platform-ad") === platform;
+      slide.classList.toggle("is-active", active);
+      slide.setAttribute("aria-hidden", active ? "false" : "true");
     });
-  });
+    document.dispatchEvent(new CustomEvent("shoptik:platform-detected", { detail: { platform } }));
+  };
 
   // Dán link (tay hoặc qua nút) là tìm luôn, không cần bấm thêm.
   const submitIfLink = () => {

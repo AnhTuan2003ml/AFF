@@ -2,6 +2,20 @@
 {% from "partials/icons.njk" import icon %}
 {% from "partials/macros.njk" import role_label %}
 
+{% block base_styles %}
+  <link rel="stylesheet" href="/assets/styles.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/instant-purchase.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/ui-refresh.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/tokens.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/shell.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/dashboard.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/pages.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/withdrawals.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/theme/responsive.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/dv13-commerce.css?v={{ assetVersion }}">
+  <link rel="stylesheet" href="/assets/auth-commerce.css?v={{ assetVersion }}">
+{% endblock %}
+
 {% block skin_styles %}{% endblock %}
 
 {% block body %}

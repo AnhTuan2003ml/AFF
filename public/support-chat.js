@@ -111,7 +111,15 @@
       var data = await response.json();
       var added = false;
       (data.messages || []).forEach(function (message) {
-        if (appendMessage(message)) added = true;
+        if (appendMessage(message)) {
+          added = true;
+          // Tin mới từ CSKH → báo cho linh vật góc màn hình hiện lên.
+          if (message.authorRole === "AGENT") {
+            document.dispatchEvent(new CustomEvent("support-chat:agent", {
+              detail: { preview: (message.body || "").slice(0, 90) }
+            }));
+          }
+        }
       });
       if (added) scrollToBottom();
     } catch (error) {

@@ -269,7 +269,11 @@
     const isOpen = notificationPanel?.classList.toggle("open") ?? false;
     notificationTrigger.setAttribute("aria-expanded", String(isOpen));
     if (isOpen && notificationBadge) {
-      notificationBadge.remove();
+      // Mở chuông = đã xem các thông báo thường → hạ phần này về 0, nhưng GIỮ
+      // phần đếm phản hồi CSKH (chỉ mất khi mở trang Hỗ trợ). blob-notify.js
+      // nghe sự kiện dưới đây để tính lại số trên badge.
+      notificationBadge.setAttribute("data-notif-base", "0");
+      document.dispatchEvent(new CustomEvent("notifications:read"));
       const csrfToken =
         document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
       fetch("/app/notifications/mark-read", {

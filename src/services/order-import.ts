@@ -12,6 +12,7 @@ import {
   type CommissionAllocation,
 } from "./ledger.js";
 import { maybeRewardReferral } from "./referral-reward.js";
+import { createNotification } from "./mission.js";
 import {
   PRODUCT_PLATFORMS,
   type ProductPlatform,
@@ -1154,6 +1155,19 @@ export async function importOrderRow(
       `,
       [rawId],
     );
+    // Đơn vừa được sàn XÁC NHẬN (lần đầu chuyển sang APPROVED) → báo cho khách.
+    if (
+      row.status === "APPROVED" &&
+      (!existing || existing.status !== "APPROVED") &&
+      split.buyerVnd > 0
+    ) {
+      await createNotification(db, {
+        userId: owner.userId,
+        type: "ORDER_APPROVED",
+        title: "Đơn hàng đã được xác nhận",
+        body: `Đơn ${platformOrderId} trên ${platform} đã được xác nhận. Tiền hoàn ${split.buyerVnd.toLocaleString("vi-VN")}₫ đã ghi nhận vào ví.`,
+      });
+    }
     return { orderId, status: row.status };
   } catch (error) {
     await query(

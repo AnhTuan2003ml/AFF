@@ -1,0 +1,139 @@
+/* Linh vật Blob — bảng màu vàng-cam mặc định, đổi qua biến --jelly-* trên
+   phần tử bao ngoài. Không dùng ảnh/CDN, chỉ SVG + CSS. */
+.blob-mascot {
+  --jelly-body-1: #ffce56;
+  --jelly-body-2: #ff9f2e;
+  --jelly-body-stroke: #e07a12;
+  --jelly-arm: #ff9f2e;
+  --jelly-cheek: #ff7a59;
+  --jelly-eye: #4a2a10;
+  --jelly-mouth: #4a2a10;
+  --jelly-gloss: rgba(255, 255, 255, .55);
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  max-width: 100%;
+  line-height: 0;
+}
+.blob-svg { width: 100%; height: auto; overflow: visible; display: block; }
+
+.blob-shadow { fill: rgba(120, 70, 20, .16); }
+.blob-body { fill: var(--jelly-body-2); stroke: var(--jelly-body-stroke); stroke-width: 2.5; }
+.blob-gloss { fill: var(--jelly-gloss); }
+.blob-arm { fill: var(--jelly-arm); stroke: var(--jelly-body-stroke); stroke-width: 2; transform-origin: center; }
+.blob-cheek { fill: var(--jelly-cheek); opacity: 0; transition: opacity .2s ease; }
+.eye-dot { fill: var(--jelly-eye); }
+.eye-shine { fill: #fff; }
+.eye-lid { fill: none; stroke: var(--jelly-eye); stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.blob-mouth { fill: none; stroke: var(--jelly-mouth); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: d .2s ease; }
+
+/* Thân dùng gradient vàng→cam qua hai lớp: tô nền body-2, thêm gloss sáng */
+.blob-bodyg { transform-origin: 60px 64px; }
+
+/* Nhắm mắt khi vui / nhập mật khẩu */
+.blob-mascot[data-mood="happy"] .eye-dot,
+.blob-mascot[data-mood="happy"] .eye-shine,
+.blob-mascot[data-mood="password"] .eye-dot,
+.blob-mascot[data-mood="password"] .eye-shine { opacity: 0; }
+.blob-mascot[data-mood="happy"] .eye-lid,
+.blob-mascot[data-mood="password"] .eye-lid { opacity: 1; }
+.blob-mascot[data-mood="happy"] .blob-cheek { opacity: .9; }
+
+/* Buồn: mắt trĩu xuống, má nhạt */
+.blob-mascot[data-mood="sad"] .blob-eyes { transform: translateY(2px); }
+/* Giận: lông mày chau (kéo mắt lại gần), thân đỏ hơn qua biến ở nơi dùng */
+.blob-mascot[data-mood="angry"] .eye-dot { transform: scaleY(.8); transform-origin: center; }
+
+/* Nhún dẻo idle + tay vẫy — tôn trọng prefers-reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .blob-bodyg { animation: blob-jelly 3.6s ease-in-out infinite; }
+  .blob-arm-l { animation: blob-wave-l 2.8s ease-in-out infinite; }
+  .blob-arm-r { animation: blob-wave-r 2.8s ease-in-out infinite; }
+  .blob-mascot.is-poked .blob-bodyg { animation: blob-squish .45s ease; }
+}
+@keyframes blob-jelly {
+  0%, 100% { transform: scale(1, 1); }
+  30% { transform: scale(1.04, .96); }
+  55% { transform: scale(.97, 1.03); }
+  80% { transform: scale(1.02, .98); }
+}
+@keyframes blob-squish {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(1.14, .82); }
+  70% { transform: scale(.92, 1.08); }
+  100% { transform: scale(1, 1); }
+}
+@keyframes blob-wave-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-16deg); } }
+@keyframes blob-wave-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(16deg); } }
+
+/* Bong bóng thoại */
+.blob-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 4px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #fff;
+  color: #3a2410;
+  border: 1px solid var(--jelly-body-stroke);
+  border-radius: 12px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 6px 16px rgba(120, 70, 20, .18);
+  z-index: 2;
+  animation: blob-bubble-in .18s ease both;
+}
+.blob-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+}
+@keyframes blob-bubble-in { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ============================================================
+   MODAL XÁC NHẬN ĐĂNG XUẤT
+   ============================================================ */
+.blob-modal-scrim { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 20px; background: rgba(40, 22, 8, .42); backdrop-filter: blur(3px); opacity: 0; transition: opacity .2s ease; }
+.blob-modal-scrim.is-open { opacity: 1; }
+.blob-modal { position: relative; width: min(380px, 100%); background: #fffdfa; border: 1px solid #f0dcc8; border-radius: 24px; padding: 24px 26px; text-align: center; box-shadow: 0 30px 70px rgba(80, 45, 15, .28); transform: translateY(10px) scale(.97); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+.blob-modal-scrim.is-open .blob-modal { transform: none; }
+.blob-modal-close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f4e7db; color: #6a4a2c; font-size: 18px; line-height: 1; cursor: pointer; }
+.blob-modal-close:hover { background: #ecd8c6; }
+.blob-modal-mascot { width: 116px; margin: 2px auto 4px; }
+.blob-modal-eyebrow { display: block; color: var(--lx-orange); font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.blob-modal h2 { margin: 6px 0 8px; font-size: 24px; letter-spacing: -.03em; }
+.blob-modal-copy { margin: 0 0 20px; color: var(--lx-muted); font-size: 13.5px; }
+.blob-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.blob-modal-actions form { margin: 0; }
+.blob-modal-actions .blob-btn-stay,
+.blob-modal-actions .blob-btn-out { width: 100%; height: 46px; min-width: 0; border-radius: 13px; font-weight: 800; font-size: 14px; cursor: pointer; padding: 0; }
+.blob-modal-actions .blob-btn-stay { background: #fff; border: 1px solid var(--lx-line-strong); color: var(--lx-ink); }
+.blob-modal-actions .blob-btn-stay:hover { background: var(--lx-orange-soft); border-color: var(--lx-orange); color: var(--lx-orange); }
+.blob-modal-actions .blob-btn-out { background: linear-gradient(135deg, #ff7a2e, #ff4d2d); color: #fff; border: 0; }
+.blob-modal-actions .blob-btn-out:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(219, 72, 39, .3); }
+
+/* ============================================================
+   TOAST LINH VẬT GÓC MÀN HÌNH (thông báo / CSKH phản hồi)
+   ============================================================ */
+.blob-toast { position: fixed; left: 20px; bottom: 20px; z-index: 200; width: min(340px, calc(100vw - 40px)); display: grid; grid-template-columns: 54px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; background: #fffdfa; border: 1px solid #f0dcc8; border-radius: 18px; box-shadow: 0 18px 44px rgba(80, 45, 15, .24); transform: translateY(16px); opacity: 0; transition: transform .28s cubic-bezier(.2, .8, .2, 1), opacity .28s ease; }
+.blob-toast.is-open { transform: none; opacity: 1; }
+.blob-toast-mascot { width: 54px; }
+.blob-toast-copy { min-width: 0; display: grid; gap: 2px; }
+.blob-toast-copy b { font-size: 13px; }
+.blob-toast-copy span { font-size: 11.5px; color: var(--lx-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blob-toast-go { border: 0; border-radius: 10px; padding: 8px 13px; background: var(--lx-orange); color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
+.blob-toast-go:hover { filter: brightness(1.05); }
+.blob-toast-close { position: absolute; top: 5px; right: 8px; width: 20px; height: 20px; border: 0; background: transparent; color: var(--lx-muted); font-size: 15px; line-height: 1; cursor: pointer; }
+
+/* Mobile: đưa toast lên banner TRÊN CÙNG (dưới header) để không đụng thanh
+   điều hướng đáy và nút hỗ trợ nổi, luôn dễ thấy. Trượt từ trên xuống. */
+@media (max-width: 720px) {
+  .blob-toast { top: 72px; left: 12px; right: 12px; bottom: auto; width: auto; transform: translateY(-18px); }
+  .blob-toast.is-open { transform: none; }
+}

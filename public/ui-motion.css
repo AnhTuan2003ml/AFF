@@ -1,0 +1,4 @@
+/* Motion layer shared by public/user/backoffice without changing business layout. */
+.ui-progress{position:fixed;z-index:9999;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#ee4d2d,#ff8a5f);box-shadow:0 0 14px rgba(238,77,45,.45);opacity:0;transition:width .2s ease,opacity .25s ease}.ui-progress.is-active{opacity:1}
+@keyframes ui-fade-up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){.px-main>*:not(.entry-promo-scrim),.auth-card{animation:ui-fade-up .34s cubic-bezier(.2,.8,.2,1) both}.discover-card,.orders-history-card,.promo-card,.stat-card,.panel,.mb-panel{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.discover-card:hover,.orders-history-card:hover,.promo-card:hover,.stat-card:hover{transform:translateY(-2px)}}
