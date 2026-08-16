@@ -15,6 +15,7 @@ import {
 } from "../services/bank.js";
 import { getBusinessConfig } from "../services/business-config.js";
 import { listOrderHistory } from "../services/order-history.js";
+import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard } from "../services/app-dashboard.js";
 import { buildSeriesLineChart } from "../services/chart-data.js";
@@ -353,16 +354,34 @@ export async function registerAppRoutes(
       "INVALID",
       "CANCELLED",
       "REVERSED",
+      // "Sản phẩm đã xem" là MỘT tab ngay trong trang Đơn hàng (giữ hàng tab
+      // để chuyển qua lại), không phải trang riêng.
+      "VIEWED",
     ];
     const status = allowedStatuses.includes(String(queryParams.status))
       ? String(queryParams.status)
       : "ALL";
+    const searchTerm = String(queryParams.q ?? "").trim().slice(0, 120);
+
+    // Tab "Sản phẩm đã xem": hiển thị các lượt đã bấm Mua ngay thay cho danh
+    // sách đơn, nhưng vẫn trong cùng trang + cùng hàng tab.
+    if (status === "VIEWED") {
+      const viewedItems = await listViewedProducts(deps.db, userId(request));
+      return reply.view("app/orders.njk", {
+        pageTitle: "Sản phẩm đã xem",
+        appSection: "orders",
+        orders: [],
+        viewedItems,
+        selectedStatus: status,
+        searchTerm: "",
+      });
+    }
+
     const filterStatus = status === "PAID" ? "APPROVED" : status;
     // Tab "Đã về ví" chỉ gồm đơn đã hết thời gian giữ tiền và đã cộng vào
     // số dư khả dụng; tab "Đã duyệt" là đơn hoàn thành còn đang chờ.
     const releasedFilter =
       status === "PAID" ? "RELEASED" : status === "APPROVED" ? "HELD" : "ALL";
-    const searchTerm = String(queryParams.q ?? "").trim().slice(0, 120);
     // Bấm "Mua ngay" tạo ngay một bản ghi affiliate_links. Trước khi báo cáo
     // sàn trả về mã đơn thật, bản ghi đó hiện trong lịch sử dưới dạng lượt mua
     // "chờ sàn xác nhận" và tự biến mất khi đồng bộ gán được đơn cho link.
@@ -378,9 +397,15 @@ export async function registerAppRoutes(
       pageTitle: "Đơn hoàn tiền",
       appSection: "orders",
       orders,
+      viewedItems: [],
       selectedStatus: status,
       searchTerm,
     });
+  });
+
+  // Tương thích link cũ: /app/viewed → tab "Sản phẩm đã xem" trong Đơn hàng.
+  app.get("/viewed", async (_request, reply) => {
+    return reply.redirect("/app/orders?status=VIEWED");
   });
 
   app.get("/wallet", async (request, reply) => {
@@ -699,7 +724,7 @@ export async function registerAppRoutes(
   );
 
   app.get("/discover", async (request, reply) => {
-    const [contentRows, balances] = await Promise.all([
+    const [contentRows, balances, featuredStoreRows] = await Promise.all([
       query<{
         id: string;
         type: string;
@@ -727,6 +752,23 @@ export async function registerAppRoutes(
         `,
       ),
       getWalletBalances(deps.db, userId(request)),
+      query<{
+        shop_name: string;
+        product_count: string;
+        image_url: string | null;
+        sales_count: string | null;
+      }>(
+        deps.db,
+        `
+          SELECT shop_name, count(*)::text AS product_count,
+            max(image_url) AS image_url, max(sales_count)::text AS sales_count
+          FROM shopee_offer_products
+          WHERE shop_name IS NOT NULL AND btrim(shop_name) <> ''
+          GROUP BY shop_name
+          ORDER BY max(sales_count) DESC NULLS LAST, count(*) DESC, shop_name
+          LIMIT 6
+        `,
+      ),
     ]);
 
     const typeLabels: Record<string, string> = {
@@ -809,12 +851,20 @@ export async function registerAppRoutes(
       0,
     );
 
+    const featuredStores = featuredStoreRows.rows.map((row) => ({
+      name: row.shop_name,
+      productCount: Number(row.product_count),
+      imageUrl: row.image_url,
+      salesCount: row.sales_count !== null ? Number(row.sales_count) : null,
+    }));
+
     return reply.view("app/discover.njk", {
       pageTitle: "Khám phá",
       appSection: "discover",
       items,
       categories,
       platforms,
+      featuredStores,
       maxCashbackRate,
       productCount: items.filter((item) => item.isProduct).length,
       voucherCount: items.filter((item) => item.type === "VOUCHER").length,

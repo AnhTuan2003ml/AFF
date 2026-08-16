@@ -804,6 +804,34 @@ export async function createPurchaseIntent(
     ],
   );
 
+  // "Mua ngay" ghi NGAY sản phẩm vào "đã xem" để hiển thị liền (không chờ job
+  // dọn). Khóa (user, sub_id) chống trùng; mua lại cùng sản phẩm sinh Sub ID
+  // mới nên vẫn vào, listViewedProducts gộp lại theo sản phẩm khi hiển thị.
+  if (campaign === "instantbuy") {
+    await query(
+      db,
+      `
+        INSERT INTO viewed_products (
+          user_id, platform, product_id, product_name, product_url,
+          product_image_url, product_price_vnd, sub_id, click_id, campaign
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (user_id, sub_id) DO NOTHING
+      `,
+      [
+        params.userId,
+        resolved.platform,
+        params.product.productId,
+        params.product.productName,
+        resolved.normalizedUrl,
+        params.product.imageUrl,
+        params.product.priceVnd,
+        built.subId,
+        clickId,
+        campaign,
+      ],
+    );
+  }
+
   return {
     platform: resolved.platform,
     clickId,

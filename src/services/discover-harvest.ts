@@ -466,6 +466,24 @@ export async function enqueueOfferRangeFetch(
       503,
     );
   }
+  // Dọn job treo trước khi kiểm tra "bận": RUNNING quá 15 phút = worker chết
+  // giữa chừng; PENDING quá 15 phút = không worker nào nhận (offline). Nếu
+  // không dọn, một job kẹt sẽ chặn vĩnh viễn mọi lệnh mới của profile này.
+  // Cùng ngưỡng 15 phút với cơ chế thu hồi RUNNING trong claimNextHarvestJob.
+  await query(
+    db,
+    `
+      UPDATE harvest_jobs
+      SET status = 'ERROR', finished_at = now(),
+          error = 'Tự hủy: job treo quá 15 phút (worker offline hoặc dừng giữa chừng)'
+      WHERE profile_id = $1
+        AND (
+          (status = 'RUNNING' AND started_at < now() - interval '15 minutes')
+          OR (status = 'PENDING' AND created_at < now() - interval '15 minutes')
+        )
+    `,
+    [profile.rows[0].id],
+  );
   const busy = await query<{ id: string }>(
     db,
     `

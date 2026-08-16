@@ -38,6 +38,11 @@ const BROWSER_CONTROL_URL = (process.env.BROWSER_CONTROL_URL || "http://127.0.0.
 const POLL_INTERVAL_MS = 5000;
 const LOGIN_TIMEOUT_MS = 10 * 60 * 1000;
 const AFFILIATE_ORIGIN = "https://affiliate.shopee.vn";
+// Browser Control chỉ chạy MỘT lệnh mỗi profile tại một thời điểm; lệnh trước
+// chưa xong thì lệnh sau bị từ chối ("Profile đang bận với một lệnh khác").
+// Trạng thái này chỉ tạm thời — chờ rồi thử lại thay vì để cả job hỏng.
+const BC_BUSY_RETRIES = 6;
+const BC_BUSY_BACKOFF_MS = 1500;
 
 if (!TOKEN) {
   console.error("Thiếu HARVEST_WORKER_TOKEN (đặt biến môi trường hoặc trong ../.env).");
@@ -74,13 +79,20 @@ async function api(route, body) {
 // ---------------------------------------------------------------------------
 // Browser Control (http://127.0.0.1:9222/api-docs)
 
-async function bc(route, options = {}) {
+async function bc(route, options = {}, attempt = 0) {
   const response = await fetch(`${BROWSER_CONTROL_URL}${route}`, {
     headers: { "content-type": "application/json", accept: "application/json" },
     ...options,
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
+    // "Profile đang bận với một lệnh khác" (thường HTTP 409): lệnh trước còn
+    // chạy. Chờ rồi thử lại — backoff tăng dần — trước khi coi là lỗi thật.
+    const busy = response.status === 409 || /đang bận|busy/i.test(text);
+    if (busy && attempt < BC_BUSY_RETRIES) {
+      await sleep(BC_BUSY_BACKOFF_MS * (attempt + 1));
+      return bc(route, options, attempt + 1);
+    }
     throw new Error(`Browser Control ${route}: HTTP ${response.status} ${text.slice(0, 200)}`);
   }
   return response.json().catch(() => null);
@@ -105,7 +117,12 @@ async function ensureProfileRunning(profileId) {
   const wasRunning = profile.status === "running" && profile.cdp_url;
   if (!wasRunning) {
     profile = await bc(`/api/profiles/${profileId}/start`, { method: "POST" });
-    await sleep(3000); // chờ trình duyệt mở xong
+    // Poll trạng thái tới khi trình duyệt mở xong (có cdp_url) thay vì đợi cứng
+    // — gửi lệnh kế tiếp khi profile còn khởi động chính là nguyên nhân "đang bận".
+    for (let i = 0; i < 20 && !(profile?.status === "running" && profile.cdp_url); i += 1) {
+      await sleep(1000);
+      profile = await getBcProfile(profileId).catch(() => profile);
+    }
   }
   if (!profile?.cdp_url) {
     throw new Error("Browser Control không trả về cdp_url sau khi start profile.");
@@ -157,7 +174,14 @@ async function ensureAffiliateTab(cdpUrl, profileId, url) {
 
 // Tab UI ứng với từng list_type (đối chiếu thực tế). list_type=8 (Ưu đãi cho
 // tôi) nằm ở trang riêng offer_for_me, KHÔNG có tab → null (bỏ qua click tab).
-const TAB_BY_LIST_TYPE = { 0: "Tất cả", 2: "Bán chạy nhất", 8: null };
+// Nhãn tab theo list_type. Trang affiliate có thể hiển thị tiếng Việt HOẶC
+// tiếng Anh tùy cài đặt ngôn ngữ của tài khoản — nhận cả hai để không phụ
+// thuộc ngôn ngữ. list_type=8 (Ưu đãi cho tôi) ở trang riêng → không có tab.
+const TAB_BY_LIST_TYPE = {
+  0: ["Tất cả", "All"],
+  2: ["Bán chạy nhất", "Top Performing"],
+  8: null,
+};
 
 /** URL trang offer theo list_type (server gửi trong config.pageUrlByListType). */
 function offerPageUrlFor(listType, config) {
@@ -210,7 +234,7 @@ async function openCdpSession(cdpUrl) {
     }
   });
 
-  const command = (method, params) =>
+  const command = (method, params, timeoutMs = 30_000) =>
     new Promise((resolve, reject) => {
       const id = ++seq;
       pending.set(id, (msg) =>
@@ -222,18 +246,18 @@ async function openCdpSession(cdpUrl) {
           pending.delete(id);
           reject(new Error(`CDP timeout: ${method}`));
         }
-      }, 30_000);
+      }, timeoutMs);
     });
 
   await command("Network.enable");
 
   return {
-    async evaluate(expression) {
-      const result = await command("Runtime.evaluate", {
-        expression,
-        awaitPromise: true,
-        returnByValue: true,
-      });
+    async evaluate(expression, timeoutMs) {
+      const result = await command(
+        "Runtime.evaluate",
+        { expression, awaitPromise: true, returnByValue: true },
+        timeoutMs,
+      );
       if (result?.exceptionDetails) {
         const detail =
           result.exceptionDetails.exception?.description ||
@@ -250,8 +274,12 @@ async function openCdpSession(cdpUrl) {
     async waitForOfferPage(timeoutMs = 15_000) {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
+        // Timeout ngắn (4s) để thật sự POLL: lúc trang đang điều hướng, một
+        // evaluate có thể treo; đừng để nó ăn hết ngân sách chờ — bỏ qua rồi
+        // thử lại nhịp sau, tới khi context mới ổn định và trang có phân trang.
         const ready = await this.evaluate(
           `document.readyState === "complete" && !!document.querySelector(".PaginationNoTotal__wrap")`,
+          4000,
         ).catch(() => false);
         if (ready) return true;
         await sleep(600);
@@ -290,13 +318,14 @@ async function openCdpSession(cdpUrl) {
 /** Click tab danh mục; trả "ACTIVE" nếu đã đứng sẵn, "NO_TAB_NEEDED" nếu
  *  list_type này không dùng tab (trang riêng). */
 async function selectListTab(session, listType) {
-  const tabName =
-    listType in TAB_BY_LIST_TYPE ? TAB_BY_LIST_TYPE[listType] : "Tất cả";
-  if (tabName === null) return "NO_TAB_NEEDED";
+  const tabNames =
+    listType in TAB_BY_LIST_TYPE ? TAB_BY_LIST_TYPE[listType] : ["Tất cả", "All"];
+  if (tabNames === null) return "NO_TAB_NEEDED";
   return session.evaluate(
     `(() => {
+      const want = ${JSON.stringify(tabNames)};
       const tabs = [...document.querySelectorAll(".rc-tabs-tab")];
-      const tab = tabs.find((el) => el.textContent.trim() === ${JSON.stringify(tabName)});
+      const tab = tabs.find((el) => want.includes(el.textContent.trim()));
       if (!tab) return "NO_TAB";
       if (tab.classList.contains("rc-tabs-tab-active")) return "ACTIVE";
       (tab.querySelector(".rc-tabs-tab-btn") || tab).click();
@@ -324,8 +353,19 @@ async function paginationStep(session, targetPage) {
       if (targetEl) { targetEl.click(); return { state: "CLICKED_PAGE", active }; }
       if (nums.length && target > Math.max(...nums)) {
         const next = wrap.querySelector(".page-next");
-        if (next && !next.className.includes("disabled")) { next.click(); return { state: "CLICKED_NEXT", active }; }
-        return { state: "END", active };
+        // Hết danh sách thật: nút next bị disable.
+        if (!next || next.className.includes("disabled")) return { state: "END", active };
+        // Nhảy nhanh: click SỐ TRANG lớn nhất đang hiện (luôn ≤ target nên không
+        // vượt quá) để trượt ~5 trang mỗi lần, thay vì bấm "next" từng trang.
+        // Nếu số lớn nhất chính là trang đang đứng (cửa sổ chưa nới) thì mới
+        // dùng next để đẩy cửa sổ tiến thêm.
+        const maxNum = Math.max(...nums);
+        const jump = pages.find(
+          (el) => Number(el.textContent.trim()) === maxNum && !el.classList.contains("active"),
+        );
+        if (jump) { jump.click(); return { state: "CLICKED_JUMP", active }; }
+        next.click();
+        return { state: "CLICKED_NEXT", active };
       }
       const prev = wrap.querySelector(".page-prev");
       if (prev && !prev.className.includes("disabled")) { prev.click(); return { state: "CLICKED_PREV", active }; }

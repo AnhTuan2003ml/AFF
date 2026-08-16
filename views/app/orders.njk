@@ -38,23 +38,72 @@
       </div>
 
       <div class="orders-history-controls">
-        <form class="orders-history-search" method="get" action="/app/orders">
-          <input type="hidden" name="status" value="{{ selectedStatus }}">
-          <label class="sr-only" for="orders-search-input">Tìm đơn hàng theo mã đơn hoặc tên sản phẩm</label>
-          <span aria-hidden="true">{{ icon('search') }}</span>
-          <input id="orders-search-input" type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn, tên sản phẩm" autocomplete="off">
-        </form>
+        {% if selectedStatus != 'VIEWED' %}
+          <form class="orders-history-search" method="get" action="/app/orders">
+            <input type="hidden" name="status" value="{{ selectedStatus }}">
+            <label class="sr-only" for="orders-search-input">Tìm đơn hàng theo mã đơn hoặc tên sản phẩm</label>
+            <span aria-hidden="true">{{ icon('search') }}</span>
+            <input id="orders-search-input" type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn, tên sản phẩm" autocomplete="off">
+          </form>
+        {% endif %}
 
         <nav class="orders-history-tabs" aria-label="Lọc trạng thái đơn">
           {{ order_tab('ALL', 'Tất cả') }}
           {{ order_tab('PENDING', 'Đang chờ') }}
           {{ order_tab('APPROVED', 'Đã duyệt') }}
           {{ order_tab('PAID', 'Đã về ví') }}
+          {# "Sản phẩm đã xem" là một tab ngay tại đây (cạnh "Đã về ví") — hàng
+             tab luôn hiện nên chuyển qua lại các lựa chọn không bị lạc trang. #}
+          {{ order_tab('VIEWED', 'Sản phẩm đã xem') }}
         </nav>
       </div>
     </header>
 
-    {% if orders.length %}
+    {% if selectedStatus == 'VIEWED' %}
+      {# Tab "Sản phẩm đã xem": các lượt đã bấm Mua ngay. Bọc [data-discover-page]
+         để tái dùng discover.js cho nút "Mua lại" (đi đúng luồng affiliate). #}
+      <div class="discover-page orders-viewed" data-discover-page>
+        {% if viewedItems.length %}
+          <section class="discover-grid" aria-label="Sản phẩm đã xem">
+            {% for item in viewedItems %}
+              <article class="discover-card discover-card-product">
+                <div class="discover-card-media">
+                  {% if item.productImageUrl %}
+                    <img src="{{ item.productImageUrl }}" alt="{{ item.productName }}" loading="lazy" referrerpolicy="no-referrer">
+                  {% else %}
+                    <div class="discover-card-placeholder" aria-hidden="true"><span>▣</span></div>
+                  {% endif %}
+                  <div class="discover-card-badges">
+                    <span class="discover-platform-badge platform-{{ item.platform | lower }}">
+                      {% if item.platform == 'TIKTOK' %}TikTok{% elif item.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}
+                    </span>
+                  </div>
+                </div>
+                <div class="discover-card-body">
+                  <div class="discover-card-meta"><time>Đã xem {{ item.archivedAt | date }}</time></div>
+                  <h2>{{ item.productName }}</h2>
+                  {% if item.productPriceVnd %}
+                    <div class="discover-price-box"><div><strong>{{ item.productPriceVnd | vnd }}</strong></div></div>
+                  {% endif %}
+                </div>
+                <footer class="discover-card-footer">
+                  {% if item.productUrl %}
+                    <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.productUrl }}"><b>Mua lại</b><span aria-hidden="true">↗</span></button>
+                  {% else %}
+                    <span class="discover-static-action">Không còn liên kết sản phẩm</span>
+                  {% endif %}
+                </footer>
+              </article>
+            {% endfor %}
+          </section>
+        {% else %}
+          <section class="orders-history-empty">
+            {{ empty_state("Chưa có sản phẩm đã xem", "Khi bạn bấm “Mua ngay”, sản phẩm sẽ hiện ở đây để xem và mua lại.", "/app", "Tìm sản phẩm") }}
+          </section>
+        {% endif %}
+        <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
+      </div>
+    {% elif orders.length %}
       <div class="orders-history-list">
         {% for order in orders %}
           <article class="orders-history-card">
@@ -138,5 +187,9 @@
 {% endblock %}
 
 {% block page_scripts %}
+  {# discover.css/js phục vụ tab "Sản phẩm đã xem" (thẻ + nút "Mua lại").
+     discover.js tự thoát nếu không có [data-discover-page] nên tab khác vô hại. #}
+  <link rel="stylesheet" href="/assets/discover.css?v={{ assetVersion }}">
+  <script src="/assets/discover.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/orders.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

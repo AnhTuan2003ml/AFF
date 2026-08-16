@@ -84,4 +84,26 @@ describe("pruneUnconfirmedInstantBuys", () => {
     expect(await pruneUnconfirmedInstantBuys(db, testConfig())).toBe(0);
     expect(await exists(link)).toBe(true);
   });
+
+  it("chép sản phẩm + Sub ID sang viewed_products trước khi xóa", async () => {
+    const link = await insertLink({ clickId: "f", campaign: "instantbuy", ageDays: 2 });
+    await pruneUnconfirmedInstantBuys(db, testConfig());
+    expect(await exists(link)).toBe(false); // đã gỡ khỏi lịch sử chờ
+
+    const archived = await db.query<{
+      product_name: string;
+      sub_id: string;
+      click_id: string;
+      product_url: string;
+    }>(
+      `SELECT product_name, sub_id, click_id, product_url
+       FROM viewed_products WHERE user_id = $1`,
+      [userId],
+    );
+    expect(archived.rows.length).toBe(1);
+    expect(archived.rows[0]!.product_name).toBe("Sản phẩm test");
+    expect(archived.rows[0]!.sub_id).toBe("sub");
+    expect(archived.rows[0]!.click_id).toBe("f");
+    expect(archived.rows[0]!.product_url).toBe("https://shopee.vn/x");
+  });
 });
