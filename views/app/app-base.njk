@@ -163,20 +163,18 @@
       {{ icon('support') }}<span>Hỗ trợ</span>
     </a>
 
-    {# Modal xác nhận đăng xuất có linh vật #}
-    <div class="blob-modal-scrim" data-logout-modal hidden inert>
-      <div class="blob-modal" role="dialog" aria-modal="true" aria-labelledby="blob-logout-title">
-        <button class="blob-modal-close" type="button" data-logout-cancel aria-label="Đóng">×</button>
-        <div class="blob-modal-mascot" data-logout-mascot></div>
-        <span class="blob-modal-eyebrow">Sắp đi đâu à?</span>
-        <h2 id="blob-logout-title">Đăng xuất?</h2>
-        <p class="blob-modal-copy">Bạn sẽ cần đăng nhập lại để vào tài khoản.</p>
+    {# Modal xác nhận có linh vật — dùng chung cho đăng xuất và các thao tác
+       nhạy cảm (form gắn data-blob-confirm). #}
+    <div class="blob-modal-scrim" data-confirm-modal hidden inert>
+      <div class="blob-modal" role="dialog" aria-modal="true" aria-labelledby="blob-confirm-title">
+        <button class="blob-modal-close" type="button" data-confirm-cancel aria-label="Đóng">×</button>
+        <div class="blob-modal-mascot" data-confirm-mascot></div>
+        <span class="blob-modal-eyebrow" data-confirm-eyebrow>Sắp đi đâu à?</span>
+        <h2 id="blob-confirm-title" data-confirm-title>Đăng xuất?</h2>
+        <p class="blob-modal-copy" data-confirm-copy>Bạn sẽ cần đăng nhập lại để vào tài khoản.</p>
         <div class="blob-modal-actions">
-          <button class="blob-btn-stay" type="button" data-logout-cancel>Ở lại</button>
-          <form method="post" action="/dang-xuat" data-logout-form>
-            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-            <button class="blob-btn-out" type="submit" data-logout-confirm>Đăng xuất</button>
-          </form>
+          <button class="blob-btn-stay" type="button" data-confirm-cancel>Ở lại</button>
+          <button class="blob-btn-out" type="button" data-confirm-ok>Đăng xuất</button>
         </div>
       </div>
     </div>

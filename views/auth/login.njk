@@ -32,6 +32,10 @@
     </label>
 
     <div class="login-inline-actions">
+      <label class="remember-check">
+        <input type="checkbox" name="remember" value="on" data-remember-checkbox>
+        <span>Ghi nhớ đăng nhập</span>
+      </label>
       <a href="/quen-mat-khau">Quên mật khẩu?</a>
     </div>
     <button class="button button-primary button-block button-large login-submit" type="submit" data-submit-button>
@@ -49,4 +53,8 @@
   {% endif %}
 
   <p class="auth-switch login-register-link">Chưa có tài khoản? <a href="/dang-ky">Tạo tài khoản</a></p>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/login-remember.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

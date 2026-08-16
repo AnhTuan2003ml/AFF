@@ -61,6 +61,7 @@ const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Hãy nhập mật khẩu.").max(128),
   next: z.string().optional().default(""),
+  remember: z.string().optional(),
 });
 
 const PENDING_EMAIL_COOKIE = "aff_pending_email";
@@ -257,7 +258,9 @@ export async function registerAuthRoutes(
           input.email,
           input.password,
         );
-        await createSession(deps.db, deps.config, request, reply, user.id);
+        await createSession(deps.db, deps.config, request, reply, user.id, {
+          remember: Boolean(input.remember),
+        });
         return reply.redirect(safeNextPath(input.next, "/app"));
       } catch (error) {
         const body = (request.body ?? {}) as Record<string, unknown>;

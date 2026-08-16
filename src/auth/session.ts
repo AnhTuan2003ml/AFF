@@ -26,13 +26,18 @@ interface SessionRow {
   referral_code: string;
 }
 
-function cookieOptions(config: AppConfig) {
+// "Ghi nhớ đăng nhập": giữ phiên 30 ngày thay vì TTL mặc định. KHÔNG lưu mật
+// khẩu ở đâu cả — chỉ kéo dài phiên; email điền sẵn và mật khẩu do trình duyệt
+// tự nhớ (password manager).
+const REMEMBER_TTL_HOURS = 24 * 30;
+
+function cookieOptions(config: AppConfig, ttlHours: number) {
   return {
     path: "/",
     httpOnly: true,
     secure: config.NODE_ENV === "production",
     sameSite: "lax" as const,
-    maxAge: config.SESSION_TTL_HOURS * 60 * 60,
+    maxAge: ttlHours * 60 * 60,
   };
 }
 
@@ -99,11 +104,13 @@ export async function createSession(
   request: FastifyRequest,
   reply: FastifyReply,
   userId: string,
+  options: { remember?: boolean } = {},
 ): Promise<void> {
+  const ttlHours = options.remember
+    ? REMEMBER_TTL_HOURS
+    : config.SESSION_TTL_HOURS;
   const rawToken = randomToken(32);
-  const expiresAt = new Date(
-    Date.now() + config.SESSION_TTL_HOURS * 60 * 60 * 1000,
-  );
+  const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
   const userAgent = String(request.headers["user-agent"] ?? "");
 
   await query(
@@ -122,7 +129,7 @@ export async function createSession(
     ],
   );
 
-  reply.setCookie(SESSION_COOKIE, rawToken, cookieOptions(config));
+  reply.setCookie(SESSION_COOKIE, rawToken, cookieOptions(config, ttlHours));
 }
 
 export async function revokeCurrentSession(
