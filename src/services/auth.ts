@@ -22,6 +22,7 @@ interface UserAuthRow {
   status: CurrentUser["status"];
   role: CurrentUser["role"];
   referral_code: string;
+  avatar_url: string;
 }
 
 const DUMMY_PASSWORD_HASH =
@@ -205,7 +206,7 @@ export async function authenticateWithEmail(
   const result = await query<UserAuthRow>(
     db,
     `
-      SELECT id, email, full_name, password_hash, status, role, referral_code
+      SELECT id, email, full_name, password_hash, status, role, referral_code, avatar_url
       FROM users WHERE lower(email) = $1 LIMIT 1
     `,
     [email],
@@ -237,6 +238,7 @@ export async function authenticateWithEmail(
     role: user.role,
     status: user.status,
     referralCode: user.referral_code,
+    avatarUrl: user.avatar_url,
   };
 }
 

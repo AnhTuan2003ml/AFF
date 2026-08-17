@@ -13,7 +13,7 @@
   {% set profileBalances = headerBalances or balances %}
   <section class="mb-profile" aria-label="Tài khoản của bạn">
     <span class="mb-profile-avatar" aria-hidden="true">
-      <span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+      {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
     </span>
     <div class="mb-profile-copy">
       <b>{{ currentUser.fullName or 'Tài khoản ShopTik' }}</b>

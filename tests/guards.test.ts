@@ -11,6 +11,7 @@ function mockUser(role: CurrentUser["role"]): CurrentUser {
     role,
     status: "ACTIVE",
     referralCode: "REF1",
+    avatarUrl: "",
   };
 }
 

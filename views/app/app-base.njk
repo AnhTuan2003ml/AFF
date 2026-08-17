@@ -7,6 +7,7 @@
   <script src="/assets/blob-mascot.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/blob-logout.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/blob-notify.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/blob-fab.js?v={{ assetVersion }}" defer></script>
 
   {% set persistentBalances = headerBalances or balances %}
   {% set navItems = [
@@ -81,7 +82,7 @@
 
           <div class="st-menu px-account-menu">
             <button type="button" class="px-account-trigger st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
-              <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+              <span class="st-avatar" aria-hidden="true">{% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}{% endif %}</span>
               <span class="px-account-name">{{ currentUser.fullName or 'Tài khoản' }}</span>
               {{ icon('chevron-down') }}
             </button>
@@ -160,7 +161,7 @@
     </nav>
 
     <a class="st-support-fab" href="/app/support" aria-label="Chăm sóc khách hàng">
-      {{ icon('support') }}<span>Hỗ trợ</span>
+      <span class="st-fab-mascot" data-fab-mascot aria-hidden="true"></span><span class="st-fab-label">Hỗ trợ</span>
     </a>
 
     {# Modal xác nhận có linh vật — dùng chung cho đăng xuất và các thao tác

@@ -87,3 +87,46 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
+
+/* Scroll-reveal: hé lộ dần các thẻ khi cuộn vào khung nhìn (giống whileInView).
+   Nội dung LUÔN hiển thị mặc định; chỉ khi được phép chuyển động mới ẩn rồi
+   hé lộ — nên máy bật "giảm chuyển động" vẫn thấy đủ nội dung. */
+(function () {
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || !("IntersectionObserver" in window)) return;
+
+  var SELECTOR =
+    "[data-reveal], .discover-card, .promo-card, .product-card, .px-product-card, .stat-card, .orders-history-card, .mission-row, .referral-row";
+
+  function setup() {
+    var nodes = Array.prototype.slice.call(document.querySelectorAll(SELECTOR));
+    if (!nodes.length) return;
+    nodes.forEach(function (n, i) {
+      if (n.classList.contains("reveal-init")) return;
+      n.classList.add("reveal-init");
+      // Xếp trễ theo cụm 6 để tạo hiệu ứng lần lượt, không lệch quá xa.
+      n.style.setProperty("--reveal-delay", (i % 6) * 55 + "ms");
+    });
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add("reveal-in");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -60px 0px" }
+    );
+    nodes.forEach(function (n) { io.observe(n); });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setup);
+  } else {
+    setup();
+  }
+  // Băng chuyền/khám phá nạp thẻ bằng JS sau đó — quét lại một lần cho chắc.
+  window.setTimeout(setup, 1200);
+})();

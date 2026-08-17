@@ -24,6 +24,7 @@ interface SessionRow {
   role: CurrentUser["role"];
   status: CurrentUser["status"];
   referral_code: string;
+  avatar_url: string;
 }
 
 // "Ghi nhớ đăng nhập": giữ phiên 30 ngày thay vì TTL mặc định. KHÔNG lưu mật
@@ -58,7 +59,7 @@ export async function registerSessionHooks(
       `
         SELECT
           s.id, s.token_hash, s.last_seen_at, u.id AS user_id, u.email,
-          u.full_name, u.role, u.status, u.referral_code
+          u.full_name, u.role, u.status, u.referral_code, u.avatar_url
         FROM sessions s
         JOIN users u ON u.id = s.user_id
         WHERE s.token_hash = $1
@@ -84,6 +85,7 @@ export async function registerSessionHooks(
       role: row.role,
       status: row.status,
       referralCode: row.referral_code,
+      avatarUrl: row.avatar_url,
     };
 
     if (Date.now() - row.last_seen_at.getTime() > 15 * 60 * 1000) {

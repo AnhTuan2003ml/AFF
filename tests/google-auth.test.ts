@@ -21,6 +21,7 @@ function profile(overrides: Partial<GoogleProfile> = {}): GoogleProfile {
     email: "khach@example.com",
     emailVerified: true,
     name: "Nguyễn Văn A",
+    avatarUrl: "",
     ...overrides,
   };
 }

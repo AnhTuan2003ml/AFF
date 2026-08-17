@@ -7,6 +7,7 @@ export interface CurrentUser {
   role: "USER" | "SUPPORT" | "FINANCE" | "RISK" | "ADMIN" | "AUDITOR" | "SUPER_ADMIN";
   status: "PENDING_EMAIL" | "ACTIVE" | "LOCKED" | "DISABLED";
   referralCode: string;
+  avatarUrl: string;
 }
 
 declare module "fastify" {

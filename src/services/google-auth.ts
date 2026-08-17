@@ -24,6 +24,7 @@ export interface GoogleProfile {
   email: string;
   emailVerified: boolean;
   name: string;
+  avatarUrl: string;
 }
 
 /** Có đủ Client ID + Secret thì tính năng Google mới bật. */
@@ -114,6 +115,7 @@ export async function fetchGoogleProfile(
     email_verified?: boolean | string;
     name?: string;
     given_name?: string;
+    picture?: string;
   };
 
   if (!info.sub || !info.email) {
@@ -129,6 +131,7 @@ export async function fetchGoogleProfile(
     // userinfo trả boolean; token id trả chuỗi "true" — chấp nhận cả hai.
     emailVerified: info.email_verified === true || info.email_verified === "true",
     name: (info.name ?? info.given_name ?? "").trim(),
+    avatarUrl: (info.picture ?? "").trim().slice(0, 500),
   };
 }
 
@@ -192,10 +195,11 @@ export async function findOrCreateGoogleUser(
         UPDATE users
         SET status = CASE WHEN status = 'PENDING_EMAIL' THEN 'ACTIVE' ELSE status END,
           email_verified_at = COALESCE(email_verified_at, now()),
+          avatar_url = COALESCE(NULLIF($2, ''), avatar_url),
           last_login_at = now()
         WHERE id = $1
       `,
-      [user.id],
+      [user.id, profile.avatarUrl],
     );
     return { userId: user.id, isNew: false };
   }
@@ -227,10 +231,11 @@ export async function findOrCreateGoogleUser(
           UPDATE users
           SET status = CASE WHEN status = 'PENDING_EMAIL' THEN 'ACTIVE' ELSE status END,
             email_verified_at = COALESCE(email_verified_at, now()),
+            avatar_url = COALESCE(NULLIF($2, ''), avatar_url),
             last_login_at = now()
           WHERE id = $1
         `,
-        [current.id],
+        [current.id, profile.avatarUrl],
       );
       return { userId: current.id, isNew: false };
     }
@@ -252,11 +257,11 @@ export async function findOrCreateGoogleUser(
       `
         INSERT INTO users (
           email, full_name, password_hash, status, email_verified_at,
-          referral_code, last_login_at
-        ) VALUES ($1, $2, NULL, 'ACTIVE', now(), $3, now())
+          referral_code, avatar_url, last_login_at
+        ) VALUES ($1, $2, NULL, 'ACTIVE', now(), $3, $4, now())
         RETURNING id
       `,
-      [email, fullName, referralCode],
+      [email, fullName, referralCode, profile.avatarUrl],
     );
     const userId = inserted.rows[0]!.id;
     await query(
