@@ -178,20 +178,61 @@ export async function runShopeeOrderSync(
   return summary;
 }
 
-/** Đến giờ chạy lượt đồng bộ định kỳ tiếp theo chưa? */
+// Báo cáo Shopee được sàn cập nhật MỖI NGÀY LÚC 9:00 SÁNG (giờ Việt Nam).
+// Vì vậy chỉ đồng bộ trong khung 09:05–09:30: thử lại (giãn cách 5 phút) cho
+// tới khi có một lượt THÀNH CÔNG trong ngày rồi dừng — khỏi gọi nhiều lần cả
+// ngày cho tốn tài nguyên và tránh rate-limit.
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // Việt Nam UTC+7 (không có DST)
+const SHOPEE_WINDOW_START_MIN = 9 * 60 + 5; // 09:05
+const SHOPEE_WINDOW_END_MIN = 9 * 60 + 30; // 09:30
+const SHOPEE_RETRY_SPACING_MS = 5 * 60_000; // giãn tối thiểu 5 phút giữa các lần thử
+
+function vnDayParts(d: Date): { ymd: number; minutes: number } {
+  const v = new Date(d.getTime() + VN_OFFSET_MS);
+  return {
+    ymd: v.getUTCFullYear() * 10000 + (v.getUTCMonth() + 1) * 100 + v.getUTCDate(),
+    minutes: v.getUTCHours() * 60 + v.getUTCMinutes(),
+  };
+}
+
+/**
+ * Đến giờ chạy lượt đồng bộ Shopee tự động chưa?
+ * Chỉ đúng trong khung 09:05–09:30 giờ VN, chưa thành công trong ngày, và cách
+ * lần thử trước tối thiểu 5 phút. (Nút "Đồng bộ ngay" của admin dùng force,
+ * không qua hàm này.)
+ */
 export function isShopeeSyncDue(
   settings: {
     shopeeEnabled: boolean;
     shopeeHasCookie: boolean;
-    shopeeIntervalMinutes: number;
     shopeeLastRunAt: Date | null;
+    shopeeLastSuccessAt: Date | null;
   },
   now: Date = new Date(),
 ): boolean {
   if (!settings.shopeeEnabled || !settings.shopeeHasCookie) return false;
-  if (!settings.shopeeLastRunAt) return true;
-  const nextRunAt =
-    settings.shopeeLastRunAt.getTime() +
-    settings.shopeeIntervalMinutes * 60_000;
-  return now.getTime() >= nextRunAt;
+
+  const nowVn = vnDayParts(now);
+  // Ngoài khung 09:05–09:30 giờ VN → không chạy.
+  if (
+    nowVn.minutes < SHOPEE_WINDOW_START_MIN ||
+    nowVn.minutes >= SHOPEE_WINDOW_END_MIN
+  ) {
+    return false;
+  }
+  // Đã có lượt THÀNH CÔNG trong hôm nay (giờ VN) → thôi, dữ liệu đã lấy xong.
+  if (
+    settings.shopeeLastSuccessAt &&
+    vnDayParts(settings.shopeeLastSuccessAt).ymd === nowVn.ymd
+  ) {
+    return false;
+  }
+  // Chưa thành công hôm nay → thử lại, nhưng giãn cách tối thiểu 5 phút.
+  if (
+    settings.shopeeLastRunAt &&
+    now.getTime() - settings.shopeeLastRunAt.getTime() < SHOPEE_RETRY_SPACING_MS
+  ) {
+    return false;
+  }
+  return true;
 }

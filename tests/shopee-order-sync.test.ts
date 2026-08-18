@@ -8,7 +8,10 @@ import {
   parseShopeeReportOrders,
   shopeeAmountToVnd,
 } from "../src/services/shopee-report.js";
-import { toOrderImportRow } from "../src/services/shopee-order-sync.js";
+import {
+  isShopeeSyncDue,
+  toOrderImportRow,
+} from "../src/services/shopee-order-sync.js";
 import { createTestDb, testConfig } from "./helpers.js";
 
 let cleanup: (() => Promise<void>) | undefined;
@@ -296,5 +299,55 @@ describe("Đồng bộ Shopee → lịch sử đơn hàng và ví", () => {
       user_amount_vnd: "24000",
       status: "PENDING",
     });
+  });
+});
+
+// Lịch đồng bộ Shopee: chỉ chạy trong khung 09:05–09:30 giờ VN (UTC+7), thử
+// lại giãn 5 phút, thành công trong ngày là dừng. VN 09:HH = UTC (HH-7).
+describe("isShopeeSyncDue — khung 09:05–09:30 giờ VN", () => {
+  const base = {
+    shopeeEnabled: true,
+    shopeeHasCookie: true,
+    shopeeLastRunAt: null as Date | null,
+    shopeeLastSuccessAt: null as Date | null,
+  };
+  const at = (utcIso: string) => new Date(utcIso);
+
+  it("chạy khi trong khung, chưa thành công hôm nay", () => {
+    // VN 09:10 = UTC 02:10
+    expect(isShopeeSyncDue(base, at("2026-08-17T02:10:00Z"))).toBe(true);
+  });
+
+  it("không chạy trước 09:05 (VN 09:00)", () => {
+    expect(isShopeeSyncDue(base, at("2026-08-17T02:00:00Z"))).toBe(false);
+  });
+
+  it("không chạy từ 09:30 trở đi (VN 09:31)", () => {
+    expect(isShopeeSyncDue(base, at("2026-08-17T02:31:00Z"))).toBe(false);
+  });
+
+  it("dừng khi đã thành công trong hôm nay (giờ VN)", () => {
+    const s = { ...base, shopeeLastSuccessAt: at("2026-08-17T02:06:00Z") };
+    expect(isShopeeSyncDue(s, at("2026-08-17T02:12:00Z"))).toBe(false);
+  });
+
+  it("vẫn chạy nếu lần thành công là hôm qua", () => {
+    const s = { ...base, shopeeLastSuccessAt: at("2026-08-16T02:06:00Z") };
+    expect(isShopeeSyncDue(s, at("2026-08-17T02:07:00Z"))).toBe(true);
+  });
+
+  it("giãn cách 5 phút: vừa thử 2 phút trước thì chưa thử lại", () => {
+    const s = { ...base, shopeeLastRunAt: at("2026-08-17T02:08:00Z") };
+    expect(isShopeeSyncDue(s, at("2026-08-17T02:10:00Z"))).toBe(false);
+  });
+
+  it("giãn cách 5 phút: đã 6 phút thì thử lại", () => {
+    const s = { ...base, shopeeLastRunAt: at("2026-08-17T02:04:00Z") };
+    expect(isShopeeSyncDue(s, at("2026-08-17T02:10:00Z"))).toBe(true);
+  });
+
+  it("tắt hoặc thiếu cookie thì không chạy", () => {
+    expect(isShopeeSyncDue({ ...base, shopeeEnabled: false }, at("2026-08-17T02:10:00Z"))).toBe(false);
+    expect(isShopeeSyncDue({ ...base, shopeeHasCookie: false }, at("2026-08-17T02:10:00Z"))).toBe(false);
   });
 });

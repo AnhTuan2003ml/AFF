@@ -32,6 +32,8 @@ import {
 import { writeAuditLog } from "../services/audit.js";
 import {
   countUnreadSupportReplies,
+  getLatestSupportExchange,
+  getLatestUnreadSupportReply,
   listSupportChatMessages,
   markSupportRead,
   sendSupportChatMessage,
@@ -1123,7 +1125,8 @@ export async function registerAppRoutes(
   app.get("/support", async (request, reply) => {
     const uid = userId(request);
     const businessConfig = await getBusinessConfig(deps.db, deps.config);
-    const [messages, orderHistory, conversationRow] = await Promise.all([
+    const [messages, orderHistory, conversationRow, latestExchange] =
+      await Promise.all([
       listSupportChatMessages(deps.db, uid),
       listOrderHistory(deps.db, {
         userId: uid,
@@ -1138,6 +1141,7 @@ export async function registerAppRoutes(
         `SELECT notify_email FROM support_conversations WHERE user_id = $1`,
         [uid],
       ),
+      getLatestSupportExchange(deps.db, uid),
     ]);
     const dateFormat = new Intl.DateTimeFormat("vi-VN", {
       timeZone: "Asia/Ho_Chi_Minh",
@@ -1181,6 +1185,8 @@ export async function registerAppRoutes(
       pageTitle: "Hỗ trợ",
       appSection: "support",
       messages,
+      latestRequest: latestExchange.request,
+      latestReply: latestExchange.reply,
       chatOnline: isSlackSupportEnabled(deps.config),
       supportTopics: SUPPORT_TOPICS,
       orderOptions,
@@ -1280,19 +1286,36 @@ export async function registerAppRoutes(
     return reply.send({ count });
   });
 
+  // Trao đổi mới nhất (yêu cầu + phản hồi) để cập nhật bảng "Phản Hồi" realtime.
+  // Đang xem trang hỗ trợ → coi như đã đọc.
+  app.get("/support/latest", async (request, reply) => {
+    const uid = userId(request);
+    const ex = await getLatestSupportExchange(deps.db, uid);
+    await markSupportRead(deps.db, uid);
+    reply.header("cache-control", "private, no-store");
+    return reply.send({
+      request: ex.request
+        ? { body: ex.request.body, at: ex.request.createdAt }
+        : null,
+      reply: ex.reply ? { body: ex.reply.body, at: ex.reply.createdAt } : null,
+    });
+  });
+
   // Trạng thái thông báo cho linh vật/chuông: số chưa đọc + danh sách gần đây +
   // số phản hồi CSKH. Poll trên mọi trang để cập nhật KHÔNG cần tải lại.
   app.get("/notifications/state", async (request, reply) => {
     const uid = userId(request);
-    const [notif, support, items] = await Promise.all([
+    const [notif, support, items, supportPreview] = await Promise.all([
       getUnreadNotificationCount(deps.db, uid),
       countUnreadSupportReplies(deps.db, uid),
       listNotifications(deps.db, uid, 8),
+      getLatestUnreadSupportReply(deps.db, uid),
     ]);
     reply.header("cache-control", "private, no-store");
     return reply.send({
       notif,
       support,
+      supportPreview,
       items: items.map((i) => ({
         title: i.title,
         body: i.body,

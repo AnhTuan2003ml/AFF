@@ -119,21 +119,57 @@
 .blob-modal-actions .blob-btn-out:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(219, 72, 39, .3); }
 
 /* ============================================================
-   TOAST LINH VẬT GÓC MÀN HÌNH (thông báo / CSKH phản hồi)
+   LINH VẬT NGÓ RA TỪ MÉP PHẢI + BONG BÓNG TRUYỆN TRANH (thông báo / CSKH)
    ============================================================ */
-.blob-toast { position: fixed; left: 20px; bottom: 20px; z-index: 200; width: min(340px, calc(100vw - 40px)); display: grid; grid-template-columns: 54px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; background: #fffdfa; border: 1px solid #f0dcc8; border-radius: 18px; box-shadow: 0 18px 44px rgba(80, 45, 15, .24); transform: translateY(16px); opacity: 0; transition: transform .28s cubic-bezier(.2, .8, .2, 1), opacity .28s ease; }
-.blob-toast.is-open { transform: none; opacity: 1; }
-.blob-toast-mascot { width: 54px; }
-.blob-toast-copy { min-width: 0; display: grid; gap: 2px; }
-.blob-toast-copy b { font-size: 13px; }
-.blob-toast-copy span { font-size: 11.5px; color: var(--lx-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.blob-toast-go { border: 0; border-radius: 10px; padding: 8px 13px; background: var(--lx-orange); color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
-.blob-toast-go:hover { filter: brightness(1.05); }
-.blob-toast-close { position: absolute; top: 5px; right: 8px; width: 20px; height: 20px; border: 0; background: transparent; color: var(--lx-muted); font-size: 15px; line-height: 1; cursor: pointer; }
-
-/* Mobile: đưa toast lên banner TRÊN CÙNG (dưới header) để không đụng thanh
-   điều hướng đáy và nút hỗ trợ nổi, luôn dễ thấy. Trượt từ trên xuống. */
-@media (max-width: 720px) {
-  .blob-toast { top: 72px; left: 12px; right: 12px; bottom: auto; width: auto; transform: translateY(-18px); }
-  .blob-toast.is-open { transform: none; }
+.blob-toast {
+  position: fixed; right: 0; bottom: 18%; z-index: 200;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  width: min(300px, 82vw);
+  transform: translateX(120%); opacity: 0;
+  transition: transform .5s cubic-bezier(.2, .9, .3, 1.25), opacity .3s ease;
+  pointer-events: none;
 }
+.blob-toast.is-open { transform: translateX(0); opacity: 1; }
+
+/* Bong bóng thoại kiểu truyện tranh: viền đậm, bóng khối, đuôi chỉ xuống linh vật */
+.blob-toast-bubble {
+  pointer-events: auto; position: relative; margin-right: 16px; max-width: 100%;
+  background: #fffdf7; color: #241a12;
+  border: 3px solid #241a12; border-radius: 20px;
+  padding: 12px 14px 10px; box-shadow: 4px 4px 0 rgba(36, 26, 18, .9);
+}
+.blob-toast-bubble b { display: block; font-size: 13px; font-weight: 900; letter-spacing: -.01em; color: var(--lx-orange); }
+.blob-toast-bubble > span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; font-weight: 600; word-break: break-word; }
+.blob-toast-bubble::before, .blob-toast-bubble::after {
+  content: ""; position: absolute; right: 28px; width: 0; height: 0;
+  border-left: 11px solid transparent; border-right: 11px solid transparent;
+}
+.blob-toast-bubble::before { bottom: -16px; border-top: 16px solid #241a12; }
+.blob-toast-bubble::after { bottom: -11px; border-top: 13px solid #fffdf7; }
+
+.blob-toast-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.blob-toast-go { border: 2px solid #241a12; border-radius: 999px; padding: 5px 14px; background: var(--lx-orange); color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
+.blob-toast-go:hover { filter: brightness(1.05); }
+.blob-toast-close { margin-left: auto; width: 24px; height: 24px; border: 2px solid #241a12; border-radius: 50%; background: #fff; color: #241a12; font-size: 14px; line-height: 1; cursor: pointer; }
+
+/* Linh vật ngó ra: một phần vượt ra ngoài cạnh phải màn hình */
+.blob-toast-mascot { width: 94px; margin-right: -22px; pointer-events: none; }
+.blob-toast-mascot .blob-mascot { width: 100%; }
+
+@media (max-width: 720px) {
+  .blob-toast { bottom: auto; top: 74px; width: min(280px, 80vw); }
+  .blob-toast-mascot { width: 82px; }
+}
+
+/* Biến thể: phản hồi CSKH → linh vật ra GIỮA màn hình (nổi bật hơn) */
+.blob-toast.is-center {
+  right: auto; left: 50%; bottom: auto; top: 50%;
+  align-items: center; width: min(320px, 86vw); z-index: 350;
+  transform: translate(-50%, -50%) translateY(14px) scale(.95);
+}
+.blob-toast.is-center.is-open { transform: translate(-50%, -50%) scale(1); }
+.blob-toast.is-center .blob-toast-bubble { margin-right: 0; text-align: center; }
+.blob-toast.is-center .blob-toast-actions { justify-content: center; }
+.blob-toast.is-center .blob-toast-bubble::before,
+.blob-toast.is-center .blob-toast-bubble::after { right: auto; left: 50%; transform: translateX(-50%); }
+.blob-toast.is-center .blob-toast-mascot { margin-right: 0; width: 122px; }

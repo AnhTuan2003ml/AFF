@@ -93,6 +93,63 @@ export async function countUnreadSupportReplies(
   return Number(result.rows[0]?.count ?? 0);
 }
 
+// Nội dung phản hồi CSKH MỚI NHẤT mà khách chưa xem — để hiện trong bong bóng
+// thoại của linh vật (giải quyết theo từng yêu cầu, không cần lịch sử).
+export async function getLatestUnreadSupportReply(
+  db: Database,
+  userId: string,
+): Promise<string> {
+  const result = await query<{ body: string }>(
+    db,
+    `
+      SELECT m.body
+      FROM support_chat_messages m
+      JOIN support_conversations c ON c.id = m.conversation_id
+      WHERE c.user_id = $1
+        AND m.author_role = 'AGENT'
+        AND m.created_at > c.user_last_read_at
+      ORDER BY m.created_at DESC
+      LIMIT 1
+    `,
+    [userId],
+  );
+  return result.rows[0]?.body ?? "";
+}
+
+// Trao đổi GẦN NHẤT: yêu cầu mới nhất của khách + phản hồi mới nhất của CSKH.
+// Chỉ lấy một cặp gần nhất — không hiện lịch sử quá khứ.
+export interface SupportExchangeMessage {
+  body: string;
+  createdAt: Date;
+}
+export async function getLatestSupportExchange(
+  db: Database,
+  userId: string,
+): Promise<{
+  request: SupportExchangeMessage | null;
+  reply: SupportExchangeMessage | null;
+}> {
+  const latest = async (role: "USER" | "AGENT") => {
+    const r = await query<{ body: string; created_at: Date }>(
+      db,
+      `
+        SELECT m.body, m.created_at
+        FROM support_chat_messages m
+        JOIN support_conversations c ON c.id = m.conversation_id
+        WHERE c.user_id = $1 AND m.author_role = $2
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      `,
+      [userId, role],
+    );
+    return r.rows[0]
+      ? { body: r.rows[0].body, createdAt: r.rows[0].created_at }
+      : null;
+  };
+  const [request, reply] = await Promise.all([latest("USER"), latest("AGENT")]);
+  return { request, reply };
+}
+
 // Đánh dấu khách đã xem hỗ trợ tới thời điểm hiện tại (mở trang / poll tin).
 export async function markSupportRead(
   db: Database,

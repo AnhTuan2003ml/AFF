@@ -25,14 +25,15 @@
           <input type="search" placeholder="Tìm sản phẩm, thương hiệu hoặc voucher" autocomplete="off" data-discover-search>
         </label>
 
-        {% if platforms.length %}
-          <div class="discover-platform-tabs px-filter-tabs" role="group" aria-label="Lọc theo sàn">
-            <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
-            {% for platform in platforms %}<button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>{% endfor %}
-          </div>
-        {% endif %}
+        {# Tầng 2: tất cả nút lọc (sàn + danh mục) chung một hàng, tự xuống dòng #}
+        <div class="discover-filter-buttons">
+          {% if platforms.length %}
+            <div class="discover-platform-tabs px-filter-tabs" role="group" aria-label="Lọc theo sàn">
+              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
+              {% for platform in platforms %}<button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>{% endfor %}
+            </div>
+          {% endif %}
 
-        <div class="discover-category-row px-category-row" id="discover-cat-sheet" data-cat-sheet>
           <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Lọc theo danh mục">
             <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
             <button type="button" data-discover-livelist="recommend" aria-pressed="false">Đề xuất</button>

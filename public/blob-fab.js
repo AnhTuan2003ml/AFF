@@ -4,6 +4,19 @@
 (function () {
   "use strict";
   if (!window.BlobMascot) return;
+
+  // Avatar phía CSKH trong bảng trao đổi = linh vật (icon động).
+  Array.prototype.forEach.call(
+    document.querySelectorAll("[data-agent-mascot]"),
+    function (h) {
+      if (h.getAttribute("data-blobbed")) return;
+      h.setAttribute("data-blobbed", "1");
+      var m = window.BlobMascot.create({ mood: "happy", label: "Đội CSKH" });
+      m.setGaze(-6, -4);
+      h.appendChild(m.el);
+    }
+  );
+
   var host = document.querySelector("[data-fab-mascot]");
   if (!host) return;
 

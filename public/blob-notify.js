@@ -82,34 +82,66 @@
     updateBell(supportNow);
   });
 
+  // Đang ở trang Hỗ trợ = đã xem phản hồi CSKH (server cũng markSupportRead) →
+  // bỏ đánh dấu ngay: hạ phần CSKH trên chuông về 0 và xoá mục "đã phản hồi".
+  if (onSupportPage) {
+    supportNow = 0;
+    updateBell(0);
+    if (panel) {
+      var __sup = panel.querySelector(".notification-support-item");
+      if (__sup) __sup.remove();
+    }
+  }
+
+  // Bấm vào một mục trong chuông → linh vật NGÓ RA và hiện nội dung phản hồi.
+  // (uỷ quyền trên panel để bắt cả các mục do JS vẽ lại.)
+  if (panel) {
+    panel.addEventListener("click", function (e) {
+      var t = e.target;
+      // Mục "Đội ngũ chăm sóc đã phản hồi" là <a href="/app/support"> → để nó
+      // điều hướng MỞ TRANG HỖ TRỢ như bình thường (không chặn).
+      if (t && t.closest && t.closest(".notification-support-item")) return;
+      var li = t && t.closest ? t.closest(".notification-list li") : null;
+      if (li) {
+        panel.classList.remove("open");
+        var b = li.querySelector("b");
+        var p = li.querySelector("p");
+        show(b ? b.textContent : "Thông báo", p ? p.textContent : "", null);
+      }
+    });
+  }
+
   var mascot = window.BlobMascot.create({ mood: "happy", label: "Thông báo ShopTik" });
 
-  var mHost = document.createElement("div");
-  mHost.className = "blob-toast-mascot";
-  mHost.appendChild(mascot.el);
-
-  var copy = document.createElement("div");
-  copy.className = "blob-toast-copy";
+  // Bong bóng thoại kiểu truyện tranh (đặt PHÍA TRÊN linh vật).
+  var bubble = document.createElement("div");
+  bubble.className = "blob-toast-bubble";
   var title = document.createElement("b");
   var body = document.createElement("span");
-  copy.appendChild(title);
-  copy.appendChild(body);
-
+  var actions = document.createElement("div");
+  actions.className = "blob-toast-actions";
   var action = document.createElement("button");
   action.type = "button";
   action.className = "blob-toast-go";
   action.textContent = "Xem";
-
   var closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "blob-toast-close";
   closeBtn.setAttribute("aria-label", "Đóng");
   closeBtn.textContent = "×";
+  actions.appendChild(action);
+  actions.appendChild(closeBtn);
+  bubble.appendChild(title);
+  bubble.appendChild(body);
+  bubble.appendChild(actions);
 
+  // Linh vật NGÓ RA từ mép phải màn hình.
+  var mHost = document.createElement("div");
+  mHost.className = "blob-toast-mascot";
+  mHost.appendChild(mascot.el);
+
+  toast.appendChild(bubble);
   toast.appendChild(mHost);
-  toast.appendChild(copy);
-  toast.appendChild(action);
-  toast.appendChild(closeBtn);
 
   var hideTimer = null;
   var onAction = null;
@@ -119,12 +151,14 @@
     body.textContent = b || "";
     onAction = handler || null;
     action.hidden = !handler;
+    toast.classList.remove("is-center"); // mặc định: ngó ra mép phải
     toast.hidden = false;
     window.requestAnimationFrame(function () { toast.classList.add("is-open"); });
+    // Linh vật ngó vào trong (nhìn về phía nội dung/người dùng).
     mascot.setMood("happy");
-    mascot.say("!", 1200);
+    mascot.setGaze(-16, -4);
     if (hideTimer) window.clearTimeout(hideTimer);
-    hideTimer = window.setTimeout(hide, 9000);
+    hideTimer = window.setTimeout(hide, 11000);
   }
   function hide() {
     toast.classList.remove("is-open");
@@ -143,17 +177,22 @@
       window.location.href = "/app/support";
     }
   }
-  function showSupport(count) {
-    show(
-      "Đội ngũ chăm sóc đã phản hồi",
-      count > 1 ? count + " tin nhắn mới đang chờ bạn." : "Bạn có tin nhắn mới từ đội hỗ trợ.",
-      goSupport
-    );
+  // Hiện nội dung phản hồi ngay trong bong bóng thoại (không cần lịch sử).
+  function showSupport(count, preview) {
+    var text = (preview && String(preview).trim())
+      ? (String(preview).length > 140 ? String(preview).slice(0, 140) + "…" : String(preview))
+      : (count > 1 ? count + " phản hồi mới đang chờ bạn." : "Bạn có phản hồi mới từ đội hỗ trợ.");
+    show("CSKH vừa phản hồi", text, goSupport);
+    // Phản hồi CSKH → linh vật ra GIỮA màn hình cho nổi bật.
+    toast.classList.add("is-center");
   }
 
-  // 1) Lúc tải trang / đăng nhập lại: còn phản hồi CSKH chưa xem → báo ngay.
-  if (supportUnread > 0 && !onSupportPage) {
-    window.setTimeout(function () { showSupport(supportUnread); }, 900);
+  var forceSupportShow = supportUnread > 0 && !onSupportPage;
+
+  // 1) Lúc tải trang / đăng nhập lại: còn phản hồi CSKH chưa xem → lấy nội dung
+  //    phản hồi mới nhất rồi cho linh vật ngó ra báo.
+  if (forceSupportShow) {
+    window.setTimeout(pollState, 900);
   } else {
     // Không có phản hồi hỗ trợ → nhắc thông báo chung (một lần mỗi phiên).
     var badge = document.querySelector("[data-notification-badge]");
@@ -174,13 +213,13 @@
     var d = (e && e.detail) || {};
     supportNow += 1;
     updateBell(supportNow);
-    show("Đội ngũ chăm sóc đã phản hồi", d.preview || "Bạn có tin nhắn mới từ đội hỗ trợ.", goSupport);
+    showSupport(supportNow, d.preview);
   });
 
   // 3) Poll trạng thái thông báo trên MỌI trang → cập nhật badge chuông + vẽ lại
   //    nội dung dropdown + bật linh vật khi có thông báo/tin CSKH mới. Nhờ vậy
   //    KHÔNG cần tải lại trang (áp dụng cả mobile lẫn desktop).
-  var POLL_MS = 20000;
+  var POLL_MS = 15000;
   var timer = null;
   function pollState() {
     fetch("/app/notifications/state", { credentials: "same-origin", headers: { accept: "application/json" } })
@@ -199,8 +238,12 @@
             function () { if (bell) bell.click(); }
           );
         }
-        // Phản hồi CSKH mới → chỉ báo khi KHÔNG ở trang hỗ trợ.
-        if (support > supportNow && !onSupportPage) { showSupport(support); }
+        // Phản hồi CSKH mới (hoặc lượt hiện lúc tải trang) → linh vật ngó ra báo,
+        // kèm nội dung phản hồi mới nhất trong bong bóng.
+        if ((support > supportNow || (forceSupportShow && support > 0)) && !onSupportPage) {
+          showSupport(support, data.supportPreview);
+        }
+        forceSupportShow = false;
         notifNow = notif;
         notifBase = notif;
         supportNow = support;
@@ -214,5 +257,10 @@
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) stop(); else { pollState(); start(); }
   });
-  window.setTimeout(start, POLL_MS);
+  // Mobile hay tạm dừng timer khi rời tab → poll NGAY khi quay lại / focus /
+  // hiển thị lại trang, để không phải reload tay mới thấy linh vật.
+  window.addEventListener("focus", pollState);
+  window.addEventListener("pageshow", pollState);
+  // Poll sớm ngay sau khi tải (không chờ trọn chu kỳ), rồi chạy định kỳ.
+  window.setTimeout(function () { pollState(); start(); }, 2500);
 })();
