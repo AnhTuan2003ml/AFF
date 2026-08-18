@@ -16,10 +16,12 @@
         <a class="px-text-link px-text-link-light" href="/app/discover">Khám phá sản phẩm <span>→</span></a>
       </div>
     </div>
+    {# Dải số liệu = ví thật của người dùng (số dư + đang chờ) kết hợp một ô
+       thương hiệu (mức hoàn + số sản phẩm đã mua), thay cho 3 con số tĩnh cũ. #}
     <div class="px-home-hero-meta">
-      <span><b>3 sàn</b><small>Mua sắm trong một nơi</small></span>
-      <span><b>{{ cashbackRate }}%</b><small>Mức hoàn có thể đạt tới</small></span>
-      <span><b>Minh bạch</b><small>Theo dõi từng trạng thái ví</small></span>
+      <span><b>{{ (balances.available or 0) | vnd }}</b><small>Số dư khả dụng</small></span>
+      <span><b>{{ (balances.pending or 0) | vnd }}</b><small>Đang chờ về ví</small></span>
+      <span><b>Hoàn tới {{ cashbackRate }}%</b><small>Đã mua {{ purchaseStats.products or 0 }} sản phẩm</small></span>
     </div>
   </section>
 
@@ -51,8 +53,10 @@
         <div><h2>{{ row.title }}</h2></div>
         <div class="promo-carousel-nav"><button type="button" class="promo-carousel-arrow" data-promo-prev aria-label="Trước">←</button><button type="button" class="promo-carousel-arrow" data-promo-next aria-label="Sau">→</button></div>
       </header>
+      {# Điều hướng dùng DUY NHẤT cặp mũi tên ‹ › ở header (kèm vuốt ngang trên
+         mobile). Đã bỏ hàng chấm trang để tránh trùng điều hướng và tránh đè
+         lên nút hỗ trợ nổi. promo-carousel.js tự bỏ qua khi không có dots. #}
       <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
-      <div class="promo-carousel-dots" data-promo-dots aria-hidden="true"></div>
     </section>
   {% endfor %}
 {% endblock %}
