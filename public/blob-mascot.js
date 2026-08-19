@@ -15,6 +15,9 @@
   "use strict";
 
   var BASE = "/assets/images/mascot/camio-";
+  // Ảnh nạp qua JS (không có ?v của template) — bump VER khi đổi ảnh để ép
+  // trình duyệt tải lại, khỏi phải Ctrl+F5.
+  var VER = "?v=2";
 
   // Ánh xạ tên cảm xúc (kể cả các mood cũ) sang 1 trong 6 biểu cảm CamiO.
   var EXPR = {
@@ -28,12 +31,12 @@
   var KEYS = ["vuive", "haohung", "thichthu", "ngacnhien", "tutin", "baocao"];
 
   function fileFor(mood) {
-    return BASE + (EXPR[mood] || "vuive") + ".png";
+    return BASE + (EXPR[mood] || "vuive") + ".png" + VER;
   }
   function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
   // Nạp trước 6 ảnh để đổi biểu cảm không bị chớp.
-  KEYS.forEach(function (k) { var i = new Image(); i.src = BASE + k + ".png"; });
+  KEYS.forEach(function (k) { var i = new Image(); i.src = BASE + k + ".png" + VER; });
 
   function create(opts) {
     opts = opts || {};
