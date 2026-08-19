@@ -8,7 +8,7 @@ import type { AppConfig } from "../config.js";
 import type { Database } from "../db.js";
 import { maskEmail, randomToken } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
-import { setFlash, setWelcome } from "../lib/flash.js";
+import { setFlash } from "../lib/flash.js";
 import { passwordSchema } from "../lib/password.js";
 import { parseInput } from "../lib/validation.js";
 import {
@@ -261,7 +261,6 @@ export async function registerAuthRoutes(
         await createSession(deps.db, deps.config, request, reply, user.id, {
           remember: Boolean(input.remember),
         });
-        setWelcome(reply, deps.config);
         return reply.redirect(safeNextPath(input.next, "/app"));
       } catch (error) {
         const body = (request.body ?? {}) as Record<string, unknown>;
@@ -440,7 +439,6 @@ export async function registerAuthRoutes(
           profile,
         );
         await createSession(deps.db, deps.config, request, reply, userId);
-        setWelcome(reply, deps.config);
         return reply.redirect(safeNextPath(nextCookie, "/app"));
       } catch (error) {
         const message =

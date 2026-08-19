@@ -1,46 +1,70 @@
 /* Linh vật Blob — bảng màu vàng-cam mặc định, đổi qua biến --jelly-* trên
    phần tử bao ngoài. Không dùng ảnh/CDN, chỉ SVG + CSS. */
 .blob-mascot {
-  /* Giữ biến viền cho bong bóng thoại (.blob-bubble dùng --jelly-body-stroke). */
+  --jelly-body-1: #ffce56;
+  --jelly-body-2: #ff9f2e;
   --jelly-body-stroke: #e07a12;
+  --jelly-arm: #ff9f2e;
+  --jelly-cheek: #ff7a59;
+  --jelly-eye: #4a2a10;
+  --jelly-mouth: #4a2a10;
+  --jelly-gloss: rgba(255, 255, 255, .55);
   position: relative;
   display: inline-block;
   width: 120px;
   max-width: 100%;
   line-height: 0;
 }
-/* Ảnh biểu cảm CamiO. Float + "liếc" (gaze) gộp qua biến --gx/--gy nên không
-   đè lên nhau; pop/poke chạy trên wrap (scale) để tách biệt với transform ảnh. */
-.blob-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  transform: translate(var(--gx, 0px), var(--gy, 0px));
-  filter: drop-shadow(0 6px 8px rgba(80, 45, 15, .22));
-  -webkit-user-drag: none;
-  user-select: none;
-}
+.blob-svg { width: 100%; height: auto; overflow: visible; display: block; }
 
+.blob-shadow { fill: rgba(120, 70, 20, .16); }
+.blob-body { fill: var(--jelly-body-2); stroke: var(--jelly-body-stroke); stroke-width: 2.5; }
+.blob-gloss { fill: var(--jelly-gloss); }
+.blob-arm { fill: var(--jelly-arm); stroke: var(--jelly-body-stroke); stroke-width: 2; transform-origin: center; }
+.blob-cheek { fill: var(--jelly-cheek); opacity: 0; transition: opacity .2s ease; }
+.eye-dot { fill: var(--jelly-eye); }
+.eye-shine { fill: #fff; }
+.eye-lid { fill: none; stroke: var(--jelly-eye); stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.blob-mouth { fill: none; stroke: var(--jelly-mouth); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: d .2s ease; }
+
+/* Thân dùng gradient vàng→cam qua hai lớp: tô nền body-2, thêm gloss sáng */
+.blob-bodyg { transform-origin: 60px 64px; }
+
+/* Nhắm mắt khi vui / nhập mật khẩu */
+.blob-mascot[data-mood="happy"] .eye-dot,
+.blob-mascot[data-mood="happy"] .eye-shine,
+.blob-mascot[data-mood="password"] .eye-dot,
+.blob-mascot[data-mood="password"] .eye-shine { opacity: 0; }
+.blob-mascot[data-mood="happy"] .eye-lid,
+.blob-mascot[data-mood="password"] .eye-lid { opacity: 1; }
+.blob-mascot[data-mood="happy"] .blob-cheek { opacity: .9; }
+
+/* Buồn: mắt trĩu xuống, má nhạt */
+.blob-mascot[data-mood="sad"] .blob-eyes { transform: translateY(2px); }
+/* Giận: lông mày chau (kéo mắt lại gần), thân đỏ hơn qua biến ở nơi dùng */
+.blob-mascot[data-mood="angry"] .eye-dot { transform: scaleY(.8); transform-origin: center; }
+
+/* Nhún dẻo idle + tay vẫy — tôn trọng prefers-reduced-motion */
 @media (prefers-reduced-motion: no-preference) {
-  .blob-svg { animation: camio-float 3.8s ease-in-out infinite; }
-  .blob-mascot.is-swap { animation: camio-swap .4s ease; }
-  .blob-mascot.is-poked { animation: camio-poke .5s ease; }
+  .blob-bodyg { animation: blob-jelly 3.6s ease-in-out infinite; }
+  .blob-arm-l { animation: blob-wave-l 2.8s ease-in-out infinite; }
+  .blob-arm-r { animation: blob-wave-r 2.8s ease-in-out infinite; }
+  .blob-mascot.is-poked .blob-bodyg { animation: blob-squish .45s ease; }
 }
-@keyframes camio-float {
-  0%, 100% { transform: translate(var(--gx, 0px), calc(var(--gy, 0px) - 1px)); }
-  50% { transform: translate(var(--gx, 0px), calc(var(--gy, 0px) - 7px)); }
+@keyframes blob-jelly {
+  0%, 100% { transform: scale(1, 1); }
+  30% { transform: scale(1.04, .96); }
+  55% { transform: scale(.97, 1.03); }
+  80% { transform: scale(1.02, .98); }
 }
-@keyframes camio-swap {
-  0% { transform: scale(1); }
-  38% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+@keyframes blob-squish {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(1.14, .82); }
+  70% { transform: scale(.92, 1.08); }
+  100% { transform: scale(1, 1); }
 }
-@keyframes camio-poke {
-  0% { transform: scale(1) rotate(0); }
-  25% { transform: scale(1.1, .9) rotate(-4deg); }
-  55% { transform: scale(.94, 1.06) rotate(3deg); }
-  100% { transform: scale(1) rotate(0); }
-}
+@keyframes blob-wave-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-16deg); } }
+@keyframes blob-wave-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(16deg); } }
 
 /* Bong bóng thoại */
 .blob-bubble {
@@ -149,64 +173,3 @@
 .blob-toast.is-center .blob-toast-bubble::before,
 .blob-toast.is-center .blob-toast-bubble::after { right: auto; left: 50%; transform: translateX(-50%); }
 .blob-toast.is-center .blob-toast-mascot { margin-right: 0; width: 122px; }
-
-/* ============================================================
-   TRỢ LÝ CAMIO CỐ ĐỊNH GÓC DƯỚI-PHẢI (như trợ lý AI)
-   ============================================================ */
-.camio-asst {
-  position: fixed; right: 22px; bottom: 22px; z-index: 210;
-  width: 116px; display: flex; flex-direction: column; align-items: center;
-  touch-action: none; user-select: none;
-}
-.camio-asst[data-state="min"] { width: 66px; }
-.camio-asst-stage { width: 100%; cursor: grab; }
-.camio-asst.dragging, .camio-asst.dragging .camio-asst-stage { cursor: grabbing; }
-.camio-asst-stage .blob-mascot { width: 100%; }
-/* Idle do WAAPI trên .camio-asst-stage điều khiển → tắt float CSS của ảnh để
-   không chồng hai chuyển động lên nhau. */
-.camio-asst .blob-svg { animation: none !important; }
-
-.camio-asst-tools { position: absolute; top: -4px; right: -4px; display: flex; gap: 4px; z-index: 3; }
-.camio-asst-tool {
-  width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--lx-line-strong);
-  background: #fff; color: var(--lx-ink-2); font-size: 13px; line-height: 1; cursor: pointer;
-  display: grid; place-items: center; box-shadow: 0 2px 6px rgba(80, 45, 15, .18); padding: 0;
-  opacity: 0; transition: opacity .18s ease;
-}
-.camio-asst:hover .camio-asst-tool, .camio-asst.dragging .camio-asst-tool { opacity: 1; }
-.camio-asst-tool:hover { background: var(--lx-orange-soft); color: var(--lx-orange); border-color: var(--lx-orange); }
-
-/* Bong bóng thoại kiểu truyện tranh, đặt PHÍA TRÊN linh vật, đuôi chỉ xuống. */
-.camio-asst-bubble {
-  position: absolute; bottom: calc(100% - 2px); right: 4px; width: max-content; max-width: 240px;
-  background: #fffdf7; color: #241a12; border: 3px solid #241a12; border-radius: 18px;
-  padding: 10px 12px 9px; box-shadow: 4px 4px 0 rgba(36, 26, 18, .9); z-index: 2;
-}
-.camio-asst-bubble b { display: block; font-size: 13px; font-weight: 900; letter-spacing: -.01em; color: var(--lx-orange); }
-.camio-asst-bubble > span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; font-weight: 600; word-break: break-word; }
-.camio-asst-actions { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
-.camio-asst-go { border: 2px solid #241a12; border-radius: 999px; padding: 4px 13px; background: var(--lx-orange); color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
-.camio-asst-go:hover { filter: brightness(1.05); }
-.camio-asst-bx { margin-left: auto; width: 22px; height: 22px; border: 2px solid #241a12; border-radius: 50%; background: #fff; color: #241a12; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
-.camio-asst-bubble::before, .camio-asst-bubble::after {
-  content: ""; position: absolute; right: 30px; width: 0; height: 0;
-  border-left: 10px solid transparent; border-right: 10px solid transparent;
-}
-.camio-asst-bubble::before { bottom: -15px; border-top: 15px solid #241a12; }
-.camio-asst-bubble::after { bottom: -10px; border-top: 12px solid #fffdf7; }
-
-/* Tab nhỏ ở mép phải để MỞ LẠI khi đã tắt trợ lý. */
-.camio-asst-reopen {
-  position: fixed; right: 0; bottom: 20%; z-index: 210; width: 40px; height: 52px;
-  border: 0; border-radius: 14px 0 0 14px; cursor: pointer; overflow: hidden;
-  background: var(--lx-orange) url("/assets/images/mascot/camio-vuive.png") center 24% / 58px no-repeat;
-  box-shadow: -4px 6px 16px rgba(219, 72, 39, .34);
-}
-.camio-asst-reopen:hover { filter: brightness(1.05); }
-
-@media (max-width: 720px) {
-  .camio-asst { right: 14px; bottom: 84px; width: 96px; }
-  .camio-asst[data-state="min"] { width: 58px; }
-  .camio-asst-bubble { max-width: 200px; }
-  .camio-asst-tool { opacity: 1; } /* màn hình cảm ứng không hover → luôn hiện */
-}

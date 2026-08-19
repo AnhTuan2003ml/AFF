@@ -14,7 +14,7 @@ import { bootstrapDefaultAdmins, syncAdminAccountsFromEnv } from "./auth/admin-s
 import { loadConfig } from "./config.js";
 import { assertDatabaseReady, createDatabase, query } from "./db.js";
 import { AppError, asAppError, respondWithAppError } from "./lib/errors.js";
-import { consumeFlash, consumeWelcome } from "./lib/flash.js";
+import { consumeFlash } from "./lib/flash.js";
 import {
   auditActionTone,
   formatAuditAction,
@@ -255,7 +255,6 @@ app.addHook("preHandler", async (request, reply) => {
     currentUser: request.currentUser,
     currentPath: request.url.split("?")[0],
     flash: consumeFlash(request, reply),
-    welcomeBack: consumeWelcome(request, reply),
     headerBalances,
     minimumWithdrawal: config.MIN_WITHDRAWAL_VND,
     unreadNotificationCount,

@@ -350,7 +350,7 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 }
 
 /* ===== Linh vật trong nút hỗ trợ nổi: nhỏ gọn, màu sáng nổi trên nền cam ===== */
-.st-support-fab .st-fab-mascot { display: inline-flex; align-items: center; justify-content: center; width: 36px; line-height: 0; background: radial-gradient(circle at 50% 44%, rgba(255, 255, 255, .92) 52%, rgba(255, 255, 255, 0) 72%); }
+.st-support-fab .st-fab-mascot { display: inline-flex; align-items: center; width: 34px; line-height: 0; }
 .st-support-fab .st-fab-mascot .blob-mascot {
   width: 100%;
   --jelly-body-1: #ffffff;

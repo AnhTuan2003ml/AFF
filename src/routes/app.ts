@@ -1317,7 +1317,6 @@ export async function registerAppRoutes(
       support,
       supportPreview,
       items: items.map((i) => ({
-        type: i.type,
         title: i.title,
         body: i.body,
         isRead: i.isRead,
