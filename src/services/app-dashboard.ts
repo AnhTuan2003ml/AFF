@@ -3,6 +3,11 @@ import { query, type Database } from "../db.js";
 import { isPlatformPurchaseEnabled } from "./affiliate.js";
 import { getBusinessConfig } from "./business-config.js";
 import { getWalletBalances } from "./ledger.js";
+import { recordDailyCheckin, type CheckinStatus } from "./checkin.js";
+import {
+  getPlatformLeaderboard,
+  type PlatformLeaderboard,
+} from "./platform-stats.js";
 
 export interface RecentDashboardOrder {
   id: string;
@@ -47,6 +52,8 @@ export async function getAppDashboard(
     businessConfig,
     featuredVoucher,
     interestedCount,
+    checkin,
+    leaderboard,
   ] = await Promise.all([
     getWalletBalances(db, userId),
     getRecentOrders(db, userId),
@@ -55,6 +62,8 @@ export async function getAppDashboard(
     getBusinessConfig(db, config),
     getFeaturedVoucher(db),
     getInterestedCount(db, userId),
+    recordDailyCheckin(db, userId),
+    getPlatformLeaderboard(db),
   ]);
 
   return {
@@ -62,6 +71,8 @@ export async function getAppDashboard(
     recentOrders,
     purchaseStats,
     interestedCount,
+    checkin,
+    leaderboard,
     hasVerifiedBank: bankStats,
     platformAvailability: {
       SHOPEE: isPlatformPurchaseEnabled(config, "SHOPEE"),
@@ -79,12 +90,17 @@ export async function getAppDashboard(
 /** Dữ liệu trang chủ cho KHÁCH (chưa đăng nhập): số dư rỗng, không đơn; tỉ lệ
  *  hoàn + danh sách sàn lấy từ cấu hình để vẫn dán link kiểm tra hoàn tiền. */
 export async function getGuestDashboard(db: Database, config: AppConfig) {
-  const businessConfig = await getBusinessConfig(db, config);
+  const [businessConfig, leaderboard] = await Promise.all([
+    getBusinessConfig(db, config),
+    getPlatformLeaderboard(db),
+  ]);
   return {
     balances: { pending: 0, available: 0, held: 0, paid: 0 },
     recentOrders: [] as RecentDashboardOrder[],
     purchaseStats: { products: "0", clicks: "0" } as PurchaseStats,
     interestedCount: 0,
+    checkin: null as CheckinStatus | null,
+    leaderboard,
     hasVerifiedBank: false,
     platformAvailability: {
       SHOPEE: isPlatformPurchaseEnabled(config, "SHOPEE"),

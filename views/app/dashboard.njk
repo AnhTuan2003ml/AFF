@@ -57,6 +57,17 @@
     </a>
   {% endif %}
 
+  {# Điểm danh 1 lần/ngày — tự ghi khi vào trang chủ (chỉ khi đăng nhập). #}
+  {% if checkin %}
+    <div class="checkin-badge">
+      <span class="checkin-flame" aria-hidden="true">🔥</span>
+      <div class="checkin-copy">
+        <b>{% if checkin.justCheckedIn %}Điểm danh thành công hôm nay!{% else %}Đã điểm danh hôm nay{% endif %}</b>
+        <small>Chuỗi <strong>{{ checkin.streak }}</strong> ngày liên tiếp · Tổng {{ checkin.totalDays }} ngày</small>
+      </div>
+    </div>
+  {% endif %}
+
   {# 3 băng sản phẩm — mỗi mục MỘT HÀNG, nạp riêng theo list. #}
   {% for row in [
     { list: 'recommend', title: 'Đề xuất' },
@@ -77,6 +88,35 @@
       <div class="promo-carousel-dots" data-promo-progress></div>
     </section>
   {% endfor %}
+
+  {# Bảng vàng nền tảng: top người mua + top sản phẩm được mua nhiều nhất. #}
+  {% if leaderboard and (leaderboard.topBuyers.length or leaderboard.topProducts.length) %}
+    <section class="px-section leaderboard-section" aria-label="Bảng vàng nền tảng">
+      <header class="px-section-head"><div><span class="px-eyebrow">THỐNG KÊ NỀN TẢNG</span><h2>Bảng vàng ShopTik</h2></div></header>
+      <div class="leaderboard-grid">
+        <div class="leaderboard-card">
+          <h3>{{ icon('user') }} Top người mua nhiều nhất</h3>
+          {% if leaderboard.topBuyers.length %}
+            <ol class="leaderboard-list">
+              {% for b in leaderboard.topBuyers %}
+                <li><span class="lb-rank lb-rank-{{ loop.index }}">{{ loop.index }}</span><span class="lb-name">{{ b.name }}</span><b class="lb-count">{{ b.count }} đơn</b></li>
+              {% endfor %}
+            </ol>
+          {% else %}<p class="leaderboard-empty">Chưa có dữ liệu.</p>{% endif %}
+        </div>
+        <div class="leaderboard-card">
+          <h3>{{ icon('orders') }} Top sản phẩm được mua nhiều</h3>
+          {% if leaderboard.topProducts.length %}
+            <ol class="leaderboard-list leaderboard-products">
+              {% for p in leaderboard.topProducts %}
+                <li><span class="lb-rank lb-rank-{{ loop.index }}">{{ loop.index }}</span><span class="lb-thumb">{% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span><span class="lb-name">{{ p.name }}</span><b class="lb-count">{{ p.count }} đơn</b></li>
+              {% endfor %}
+            </ol>
+          {% else %}<p class="leaderboard-empty">Chưa có dữ liệu.</p>{% endif %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
 {% endblock %}
 
 {% block page_scripts %}

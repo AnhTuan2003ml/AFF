@@ -46,20 +46,12 @@
             </div>
           </figure>
 
-          <ul class="auth-commerce-points">
-            <li>
-              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
-              <div><b>Hoàn tiền tự động</b><small>Không cần khai báo đơn, không cần chụp màn hình</small></div>
-            </li>
-            <li>
-              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M4 7.5 7 4h10l3 3.5"/><path d="M9.5 12h5"/></svg></span>
-              <div><b>Rút về mọi ngân hàng</b><small>Vietcombank, Techcombank, MB, BIDV, VPBank…</small></div>
-            </li>
-            <li>
-              <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 5 6.5v5.2c0 4 2.9 7.4 7 8.8 4.1-1.4 7-4.8 7-8.8V6.5z"/><path d="m9.2 12 2 2 3.6-3.8"/></svg></span>
-              <div><b>Đối soát minh bạch</b><small>Mọi biến động ví đều có lịch sử kiểm tra được</small></div>
-            </li>
-          </ul>
+          {# Quảng bá: top sản phẩm bán chạy nhất, cuộn ngang để xem thêm. Nạp
+             từ endpoint công khai /app/promo-products (auth-bestsellers.js). #}
+          <div class="auth-bestsellers" data-auth-bestsellers hidden>
+            <div class="auth-bestsellers-head"><b>🔥 Bán chạy nhất trên ShopTik</b><small>Cuộn để xem thêm →</small></div>
+            <div class="auth-bestsellers-track" data-auth-bestsellers-track></div>
+          </div>
         </div>
 
         <div class="auth-commerce-trust" aria-label="Điểm nổi bật">
@@ -131,4 +123,5 @@
 
   {% include "partials/policy-sheet.njk" %}
   <script src="/assets/policy-sheet.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/auth-bestsellers.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
