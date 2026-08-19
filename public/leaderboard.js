@@ -1,27 +1,29 @@
-/* Bảng vàng: cập nhật chấm chỉ báo khi lướt giữa 2 slide (top người mua / top
-   bán chạy); bấm chấm để chuyển. */
+/* Bảng vàng: bộ chuyển "Người mua / Bán chạy" (segmented) đồng bộ với vuốt
+   ngang. Bấm nút hoặc vuốt đều đổi bảng; nút active cập nhật theo vị trí cuộn. */
 (function () {
   "use strict";
-  var wrap = document.querySelector("[data-lbwrap]");
-  if (!wrap) return;
-  var track = wrap.querySelector("[data-lbwrap-track]");
-  var dots = wrap.querySelector("[data-lbwrap-dots]");
-  if (!track || !dots) return;
+  var viewport = document.querySelector("[data-lb2-viewport]");
+  var seg = document.querySelector("[data-lb2-seg]");
+  if (!viewport || !seg) return;
+  var tabs = seg.querySelectorAll("[data-lb2-tab]");
 
-  function update() {
-    var i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
-    Array.prototype.forEach.call(dots.children, function (d, idx) {
-      d.classList.toggle("is-active", idx === i);
+  function setActive(i) {
+    Array.prototype.forEach.call(tabs, function (t, idx) {
+      t.classList.toggle("is-active", idx === i);
     });
   }
   var raf = null;
-  track.addEventListener("scroll", function () {
+  viewport.addEventListener("scroll", function () {
     if (raf) return;
-    raf = window.requestAnimationFrame(function () { raf = null; update(); });
+    raf = window.requestAnimationFrame(function () {
+      raf = null;
+      setActive(Math.round(viewport.scrollLeft / Math.max(1, viewport.clientWidth)));
+    });
   });
-  Array.prototype.forEach.call(dots.children, function (d, idx) {
-    d.addEventListener("click", function () {
-      track.scrollTo({ left: idx * track.clientWidth, behavior: "smooth" });
+  Array.prototype.forEach.call(tabs, function (t, idx) {
+    t.addEventListener("click", function () {
+      viewport.scrollTo({ left: idx * viewport.clientWidth, behavior: "smooth" });
+      setActive(idx);
     });
   });
 })();

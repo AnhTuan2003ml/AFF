@@ -27,6 +27,37 @@
   }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
 
+  // Dải 7 ngày trong TUẦN NÀY (T2–CN) kiểu điểm danh của các sàn.
+  var week = scrim.querySelector("[data-checkin-week]");
+  var LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  function renderWeek(set) {
+    if (!week || !state) return;
+    var t = String(state.today).split("-");
+    var base = new Date(Date.UTC(+t[0], +t[1] - 1, +t[2]));
+    var dow = (base.getUTCDay() + 6) % 7; // T2 = 0
+    var monday = new Date(base);
+    monday.setUTCDate(base.getUTCDate() - dow);
+    week.innerHTML = "";
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(monday);
+      d.setUTCDate(monday.getUTCDate() + i);
+      var iso = d.toISOString().slice(0, 10);
+      var cell = document.createElement("div");
+      cell.className = "cw-day";
+      var lab = document.createElement("small");
+      lab.textContent = LABELS[i];
+      var dot = document.createElement("span");
+      dot.className = "cw-dot";
+      if (set[iso]) { cell.classList.add("is-done"); dot.textContent = "✓"; }
+      else { dot.textContent = d.getUTCDate(); }
+      if (iso === state.today) cell.classList.add("is-today");
+      if (iso > state.today) cell.classList.add("is-future");
+      cell.appendChild(lab);
+      cell.appendChild(dot);
+      week.appendChild(cell);
+    }
+  }
+
   function render() {
     if (!state) return;
     el.streak.textContent = state.streak;
@@ -41,6 +72,8 @@
     var pct = todayDay > 0 ? Math.round((doneThisMonth / todayDay) * 100) : 0;
     el.prog.style.width = Math.min(100, pct) + "%";
     el.progLabel.textContent = doneThisMonth + "/" + todayDay + " ngày trong tháng này";
+
+    renderWeek(set);
 
     el.cal.innerHTML = "";
     var firstDow = new Date(Date.UTC(year, month, 1)).getUTCDay(); // 0=CN
@@ -134,6 +167,15 @@
     if (!(e.target instanceof Element)) return;
     if (e.target.closest("[data-checkin-open]")) { e.preventDefault(); open(); return; }
     if (e.target.closest("[data-checkin-close]")) { e.preventDefault(); close(); return; }
+    var calBtn = e.target.closest("[data-checkin-cal-toggle]");
+    if (calBtn) {
+      var wrap = scrim.querySelector("[data-checkin-calwrap]");
+      var willOpen = wrap.hidden;
+      wrap.hidden = !willOpen;
+      calBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      calBtn.textContent = willOpen ? "Ẩn lịch tháng ▴" : "Xem lịch tháng ▾";
+      return;
+    }
     if (e.target === scrim) close();
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !scrim.hidden) close(); });

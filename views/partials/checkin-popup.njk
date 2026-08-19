@@ -17,9 +17,15 @@
       <small class="checkin-progress-label" data-checkin-progress-label></small>
     </div>
 
-    <div class="checkin-cal-head" data-checkin-month></div>
-    <div class="checkin-weekdays"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
-    <div class="checkin-cal" data-checkin-cal></div>
+    {# Dải tuần này (T2–CN) kiểu điểm danh của các sàn — trạng thái thật. #}
+    <div class="checkin-week" data-checkin-week></div>
+
+    <button type="button" class="checkin-cal-toggle" data-checkin-cal-toggle aria-expanded="false">Xem lịch tháng ▾</button>
+    <div class="checkin-calwrap" data-checkin-calwrap hidden>
+      <div class="checkin-cal-head" data-checkin-month></div>
+      <div class="checkin-weekdays"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+      <div class="checkin-cal" data-checkin-cal></div>
+    </div>
 
     <button type="button" class="button button-primary button-block checkin-do" data-checkin-do disabled>Đang tải…</button>
     <p class="checkin-note" data-checkin-note>Điểm danh mỗi ngày để giữ chuỗi. Bấm vào ô hôm nay hoặc nút bên trên.</p>

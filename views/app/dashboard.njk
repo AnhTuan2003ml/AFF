@@ -1,17 +1,18 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
-{% macro rank_row(item, rank, kind) %}
+{% macro lb2_row(item, rank, kind) %}
   {% if item %}
-    <li class="lb-row">
-      <img class="lb-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="40">
+    <div class="lb2-row lb2-r{{ rank }}">
+      <img class="lb2-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="34">
       {% if kind == 'product' %}
-        <span class="lb-thumb2">{% if item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
+        <span class="lb2-thumb">{% if item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
       {% else %}
-        <span class="lb-ava2">{{ item.name | first | upper }}</span>
+        <span class="lb2-ava">{{ item.name | first | upper }}</span>
       {% endif %}
-      <span class="lb-info"><b>{{ item.name }}</b><small>{{ item.count }} đơn</small></span>
-    </li>
+      <span class="lb2-name">{{ item.name }}</span>
+      <span class="lb2-metric"><b>{{ item.count }}</b><small>đơn</small></span>
+    </div>
   {% endif %}
 {% endmacro %}
 
@@ -81,31 +82,35 @@
     </a>
   {% endif %}
 
-  {# Bảng vàng: danh sách dọc top 1/2/3 (huy chương), lướt ngang đổi giữa
-     TOP NGƯỜI MUA và TOP BÁN CHẠY. #}
+  {# Bảng vàng: một thẻ liền mạch, có bộ chuyển Người mua / Bán chạy (segmented)
+     kèm vuốt ngang; top 1/2/3 có huy chương, hạng 1 nổi bật. #}
   {% if leaderboard and (leaderboard.topBuyers.length or leaderboard.topProducts.length) %}
-    <section class="lbwrap-section" aria-label="Bảng vàng nền tảng">
-      <header class="px-section-head podium-head"><div><span class="px-eyebrow">THỐNG KÊ NỀN TẢNG</span><h2>Bảng vàng ShopTik</h2></div></header>
-      <div class="lbwrap" data-lbwrap>
-        <div class="lbwrap-track" data-lbwrap-track>
-          <div class="lbslide">
-            <h3>{{ icon('user') }} Top người mua nhiều nhất</h3>
-            <ol class="lb-rows">
-              {{ rank_row(leaderboard.topBuyers[0], 1, 'buyer') }}
-              {{ rank_row(leaderboard.topBuyers[1], 2, 'buyer') }}
-              {{ rank_row(leaderboard.topBuyers[2], 3, 'buyer') }}
-            </ol>
+    <section class="lb2-section" aria-label="Bảng vàng nền tảng">
+      <div class="lb2-card">
+        <div class="lb2-head">
+          <div class="lb2-heading">
+            <span class="lb2-trophy" aria-hidden="true">🏆</span>
+            <div><span class="px-eyebrow">BẢNG VÀNG NỀN TẢNG</span><h2>Top ShopTik</h2></div>
           </div>
-          <div class="lbslide">
-            <h3>{{ icon('orders') }} Top sản phẩm bán chạy nhất</h3>
-            <ol class="lb-rows">
-              {{ rank_row(leaderboard.topProducts[0], 1, 'product') }}
-              {{ rank_row(leaderboard.topProducts[1], 2, 'product') }}
-              {{ rank_row(leaderboard.topProducts[2], 3, 'product') }}
-            </ol>
+          <div class="lb2-seg" role="tablist" data-lb2-seg>
+            <button type="button" class="is-active" data-lb2-tab="0" role="tab">Người mua</button>
+            <button type="button" data-lb2-tab="1" role="tab">Bán chạy</button>
           </div>
         </div>
-        <div class="lbwrap-dots" data-lbwrap-dots><span class="is-active"></span><span></span></div>
+        <div class="lb2-viewport" data-lb2-viewport>
+          <div class="lb2-track">
+            <div class="lb2-panel">
+              {{ lb2_row(leaderboard.topBuyers[0], 1, 'buyer') }}
+              {{ lb2_row(leaderboard.topBuyers[1], 2, 'buyer') }}
+              {{ lb2_row(leaderboard.topBuyers[2], 3, 'buyer') }}
+            </div>
+            <div class="lb2-panel">
+              {{ lb2_row(leaderboard.topProducts[0], 1, 'product') }}
+              {{ lb2_row(leaderboard.topProducts[1], 2, 'product') }}
+              {{ lb2_row(leaderboard.topProducts[2], 3, 'product') }}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   {% endif %}
