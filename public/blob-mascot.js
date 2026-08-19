@@ -17,7 +17,7 @@
   var BASE = "/assets/images/mascot/camio-";
   // Ảnh nạp qua JS (không có ?v của template) — bump VER khi đổi ảnh để ép
   // trình duyệt tải lại, khỏi phải Ctrl+F5.
-  var VER = "?v=2";
+  var VER = "?v=3";
 
   // Ánh xạ tên cảm xúc (kể cả các mood cũ) sang 1 trong 6 biểu cảm CamiO.
   var EXPR = {
