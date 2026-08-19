@@ -23,11 +23,20 @@
 
         <div class="auth-commerce-message">
           <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
-          <h2 class="auth-commerce-lead">Sản phẩm nổi bật đang hoàn tiền</h2>
+          <h1 class="auth-commerce-title">Mua sắm như thường.<br>Nhận lại tiền thật.</h1>
+          <p class="auth-commerce-sub">Gộp Shopee, TikTok Shop và Lazada về một ví hoàn tiền minh bạch — mua qua liên kết ShopTik, tiền tự về ví.</p>
+          <ul class="auth-commerce-values" aria-label="Lợi ích">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Hoàn tiền tự động</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Theo dõi ví minh bạch</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Rút về ngân hàng</li>
+          </ul>
+        </div>
 
-          {# Băng sản phẩm giống trang chính: trỏ chuột + lăn chuột để chuyển
-             sản phẩm, có mũi tên ‹ › và chấm trang (promo-carousel.js). Nạp từ
-             endpoint công khai /app/promo-products (khách vẫn xem được). #}
+        {# Băng sản phẩm bọc trong khối kính (glass) có nhãn — để không "nổi"
+           rời rạc trên ảnh. Trỏ chuột + lăn để chuyển, mũi tên ‹ › và chấm
+           (promo-carousel.js). Nạp từ endpoint công khai /app/promo-products. #}
+        <div class="auth-showcase">
+          <div class="auth-showcase-head"><b>Đang hoàn tiền hôm nay</b><span>Trỏ chuột &amp; lăn để xem</span></div>
           <section class="promo-carousel auth-promo" data-promo-carousel data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
             <div class="promo-carousel-stage">
               <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -38,10 +47,10 @@
           </section>
         </div>
 
-        <div class="auth-commerce-trust" aria-label="Điểm nổi bật">
-          <span>SHOPEE</span>
-          <span>TIKTOK SHOP</span>
-          <span>LAZADA</span>
+        <div class="auth-commerce-trust" aria-label="Nền tảng hỗ trợ">
+          <span>Shopee</span>
+          <span>TikTok Shop</span>
+          <span>Lazada</span>
         </div>
       </div>
     </section>
@@ -69,6 +78,10 @@
           {% block auth_content %}{% endblock %}
         </div>
 
+        <div class="auth-card-secure">
+          <span class="auth-secure-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg></span>
+          <span>Kết nối bảo mật · ShopTik không lưu mật khẩu tài khoản sàn của bạn</span>
+        </div>
       </div>
     </section>
   </main>
