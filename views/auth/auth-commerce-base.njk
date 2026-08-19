@@ -31,15 +31,12 @@
           </ul>
         </div>
 
-        {# Băng sản phẩm bọc trong khối kính (glass) kéo rộng sát form. 3 thẻ đầu
-           xếp "xòe quạt" hình chữ V (data-promo-fan → promo-carousel.js chỉ giữ
-           3 thẻ, CSS .auth-fan nghiêng thẻ). Nạp từ /app/promo-products. #}
-        <div class="auth-showcase">
-          <div class="auth-showcase-head"><b>Đang hoàn tiền hôm nay</b><span>Ưu đãi nổi bật</span></div>
-          <section class="promo-carousel auth-promo auth-fan" data-promo-carousel data-promo-fan data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
-            <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
-          </section>
-        </div>
+        {# 3 thẻ sản phẩm xòe quạt hình chữ V (data-promo-fan → promo-carousel.js
+           chỉ giữ 3 thẻ, CSS .auth-fan nghiêng thẻ). Không khung ngoài. Nạp từ
+           /app/promo-products. #}
+        <section class="promo-carousel auth-promo auth-fan" data-promo-carousel data-promo-fan data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
+          <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+        </section>
 
         <div class="auth-commerce-trust" aria-label="Nền tảng hỗ trợ">
           <span>Shopee</span>

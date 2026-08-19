@@ -792,15 +792,7 @@ button.cal-cell.is-today:hover:not(:disabled){background:var(--lx-orange-soft)}
 .auth-commerce-values li{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#fff}
 .auth-commerce-values svg{width:17px;height:17px;fill:none;stroke:#8ff0a4;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 
-.auth-showcase{max-width:none;border:1px solid rgba(255,255,255,.22);border-radius:20px;background:rgba(26,13,7,.34);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(20,8,4,.34);padding:16px 18px 18px}
-.auth-showcase-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
-.auth-showcase-head b{font-size:14px;color:#fff;font-weight:800;letter-spacing:-.01em}
-.auth-showcase-head b:before{content:"🔥 "}
-.auth-showcase-head span{font-size:11px;color:rgba(255,255,255,.66);white-space:nowrap}
-.auth-showcase .auth-promo{margin-top:0;max-width:none}
-.auth-showcase .auth-promo .promo-carousel-dots{margin-top:12px}
-
-/* Xòe quạt chữ V: 3 thẻ, thẻ giữa nâng cao, 2 thẻ bên nghiêng ±9°. */
+/* Xòe quạt chữ V: 3 thẻ, thẻ giữa nâng cao, 2 thẻ bên nghiêng ±9°, không khung ngoài. */
 .auth-fan{max-width:none;margin-top:0}
 .auth-fan .promo-carousel-viewport{overflow:visible}
 .auth-fan .promo-carousel-track{display:flex;justify-content:center;align-items:flex-end;gap:0;padding:26px 6px 10px}
