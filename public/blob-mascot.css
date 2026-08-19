@@ -1,70 +1,30 @@
 /* Linh vật Blob — bảng màu vàng-cam mặc định, đổi qua biến --jelly-* trên
    phần tử bao ngoài. Không dùng ảnh/CDN, chỉ SVG + CSS. */
 .blob-mascot {
-  --jelly-body-1: #ffce56;
-  --jelly-body-2: #ff9f2e;
+  /* Giữ biến viền cho bong bóng thoại (.blob-bubble dùng --jelly-body-stroke). */
   --jelly-body-stroke: #e07a12;
-  --jelly-arm: #ff9f2e;
-  --jelly-cheek: #ff7a59;
-  --jelly-eye: #4a2a10;
-  --jelly-mouth: #4a2a10;
-  --jelly-gloss: rgba(255, 255, 255, .55);
   position: relative;
   display: inline-block;
   width: 120px;
   max-width: 100%;
   line-height: 0;
 }
-.blob-svg { width: 100%; height: auto; overflow: visible; display: block; }
-
-.blob-shadow { fill: rgba(120, 70, 20, .16); }
-.blob-body { fill: var(--jelly-body-2); stroke: var(--jelly-body-stroke); stroke-width: 2.5; }
-.blob-gloss { fill: var(--jelly-gloss); }
-.blob-arm { fill: var(--jelly-arm); stroke: var(--jelly-body-stroke); stroke-width: 2; transform-origin: center; }
-.blob-cheek { fill: var(--jelly-cheek); opacity: 0; transition: opacity .2s ease; }
-.eye-dot { fill: var(--jelly-eye); }
-.eye-shine { fill: #fff; }
-.eye-lid { fill: none; stroke: var(--jelly-eye); stroke-width: 3; stroke-linecap: round; opacity: 0; }
-.blob-mouth { fill: none; stroke: var(--jelly-mouth); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: d .2s ease; }
-
-/* Thân dùng gradient vàng→cam qua hai lớp: tô nền body-2, thêm gloss sáng */
-.blob-bodyg { transform-origin: 60px 64px; }
-
-/* Nhắm mắt khi vui / nhập mật khẩu */
-.blob-mascot[data-mood="happy"] .eye-dot,
-.blob-mascot[data-mood="happy"] .eye-shine,
-.blob-mascot[data-mood="password"] .eye-dot,
-.blob-mascot[data-mood="password"] .eye-shine { opacity: 0; }
-.blob-mascot[data-mood="happy"] .eye-lid,
-.blob-mascot[data-mood="password"] .eye-lid { opacity: 1; }
-.blob-mascot[data-mood="happy"] .blob-cheek { opacity: .9; }
-
-/* Buồn: mắt trĩu xuống, má nhạt */
-.blob-mascot[data-mood="sad"] .blob-eyes { transform: translateY(2px); }
-/* Giận: lông mày chau (kéo mắt lại gần), thân đỏ hơn qua biến ở nơi dùng */
-.blob-mascot[data-mood="angry"] .eye-dot { transform: scaleY(.8); transform-origin: center; }
-
-/* Nhún dẻo idle + tay vẫy — tôn trọng prefers-reduced-motion */
-@media (prefers-reduced-motion: no-preference) {
-  .blob-bodyg { animation: blob-jelly 3.6s ease-in-out infinite; }
-  .blob-arm-l { animation: blob-wave-l 2.8s ease-in-out infinite; }
-  .blob-arm-r { animation: blob-wave-r 2.8s ease-in-out infinite; }
-  .blob-mascot.is-poked .blob-bodyg { animation: blob-squish .45s ease; }
+/* Ảnh biểu cảm CamiO. Float + "liếc" (gaze) gộp qua biến --gx/--gy nên không
+   đè lên nhau; pop/poke chạy trên wrap (scale) để tách biệt với transform ảnh. */
+.blob-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: translate(var(--gx, 0px), var(--gy, 0px));
+  filter: drop-shadow(0 6px 8px rgba(80, 45, 15, .22));
+  -webkit-user-drag: none;
+  user-select: none;
 }
-@keyframes blob-jelly {
-  0%, 100% { transform: scale(1, 1); }
-  30% { transform: scale(1.04, .96); }
-  55% { transform: scale(.97, 1.03); }
-  80% { transform: scale(1.02, .98); }
-}
-@keyframes blob-squish {
-  0% { transform: scale(1, 1); }
-  35% { transform: scale(1.14, .82); }
-  70% { transform: scale(.92, 1.08); }
-  100% { transform: scale(1, 1); }
-}
-@keyframes blob-wave-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-16deg); } }
-@keyframes blob-wave-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(16deg); } }
+
+/* Hoạt ảnh (float idle, pop khi đổi biểu cảm, poke) do JS điều khiển bằng
+   Web Animations API trong blob-mascot.js — KHÔNG dùng CSS @keyframes/@media
+   để không bị rule reduced-motion (luxury-ui.css) ép về 0. Nhờ vậy linh vật
+   vẫn nhún nhảy kể cả khi máy tắt hiệu ứng hệ thống. */
 
 /* Bong bóng thoại */
 .blob-bubble {
