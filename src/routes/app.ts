@@ -18,6 +18,7 @@ import { listOrderHistory } from "../services/order-history.js";
 import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
+import { getCheckinState, recordDailyCheckin } from "../services/checkin.js";
 import { buildSeriesLineChart } from "../services/chart-data.js";
 import { lookupProductPreview } from "../services/product-preview.js";
 import type { EmailService } from "../services/email.js";
@@ -973,6 +974,15 @@ export async function registerAppRoutes(
 
   // Băng chuyền quảng cáo trang chủ: nhiều sản phẩm NGẪU NHIÊN từ danh mục
   // Bán chạy (cache DB). Nút mua đi qua luồng affiliate như thẻ Khám phá.
+  // Điểm danh: đọc trạng thái (lịch + chuỗi) và ghi điểm danh hôm nay.
+  app.get("/checkin", async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    return reply.send(await getCheckinState(deps.db, userId(request)));
+  });
+  app.post("/checkin", async (request, reply) => {
+    return reply.send(await recordDailyCheckin(deps.db, userId(request)));
+  });
+
   app.get("/promo-products", async (request, reply) => {
     reply.header("cache-control", "private, no-store");
     const queryParams = request.query as Record<string, unknown>;

@@ -3,7 +3,7 @@ import { query, type Database } from "../db.js";
 import { isPlatformPurchaseEnabled } from "./affiliate.js";
 import { getBusinessConfig } from "./business-config.js";
 import { getWalletBalances } from "./ledger.js";
-import { recordDailyCheckin, type CheckinStatus } from "./checkin.js";
+import { getCheckinState, type CheckinStatus } from "./checkin.js";
 import {
   getPlatformLeaderboard,
   type PlatformLeaderboard,
@@ -52,6 +52,7 @@ export async function getAppDashboard(
     businessConfig,
     featuredVoucher,
     interestedCount,
+    interestedProducts,
     checkin,
     leaderboard,
   ] = await Promise.all([
@@ -62,7 +63,8 @@ export async function getAppDashboard(
     getBusinessConfig(db, config),
     getFeaturedVoucher(db),
     getInterestedCount(db, userId),
-    recordDailyCheckin(db, userId),
+    getInterestedProducts(db, userId),
+    getCheckinState(db, userId),
     getPlatformLeaderboard(db),
   ]);
 
@@ -71,6 +73,7 @@ export async function getAppDashboard(
     recentOrders,
     purchaseStats,
     interestedCount,
+    interestedProducts,
     checkin,
     leaderboard,
     hasVerifiedBank: bankStats,
@@ -99,6 +102,7 @@ export async function getGuestDashboard(db: Database, config: AppConfig) {
     recentOrders: [] as RecentDashboardOrder[],
     purchaseStats: { products: "0", clicks: "0" } as PurchaseStats,
     interestedCount: 0,
+    interestedProducts: [] as InterestedProduct[],
     checkin: null as CheckinStatus | null,
     leaderboard,
     hasVerifiedBank: false,
@@ -197,6 +201,46 @@ async function getInterestedCount(
     [userId],
   );
   return Number(result.rows[0]?.n ?? 0);
+}
+
+export interface InterestedProduct {
+  name: string;
+  imageUrl: string | null;
+  productUrl: string | null;
+}
+
+/** Danh sách sản phẩm quan tâm chưa mua (instantbuy chưa thành đơn), gộp theo
+ *  sản phẩm, mới nhất trước — để hiển thị ảnh thay vì chỉ đếm số. */
+async function getInterestedProducts(
+  db: Database,
+  userId: string,
+  limit = 10,
+): Promise<InterestedProduct[]> {
+  const result = await query<{
+    product_name: string | null;
+    product_image_url: string | null;
+    normalized_url: string | null;
+    created_at: Date;
+  }>(
+    db,
+    `
+      SELECT DISTINCT ON (COALESCE(product_id, id::text))
+        product_name, product_image_url, normalized_url, created_at
+      FROM affiliate_links l
+      WHERE l.user_id = $1 AND l.campaign = 'instantbuy'
+        AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.affiliate_link_id = l.id)
+      ORDER BY COALESCE(product_id, id::text), created_at DESC
+      LIMIT $2
+    `,
+    [userId, limit],
+  );
+  return result.rows
+    .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+    .map((r) => ({
+      name: r.product_name ?? "Sản phẩm",
+      imageUrl: r.product_image_url,
+      productUrl: r.normalized_url,
+    }));
 }
 
 async function hasVerifiedBank(

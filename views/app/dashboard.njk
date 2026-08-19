@@ -1,20 +1,17 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
-{% macro podium_place(item, rank, kind) %}
+{% macro rank_row(item, rank, kind) %}
   {% if item %}
-    <div class="podium-place p{{ rank }}">
-      <div class="podium-figure">
-        {% if kind == 'product' %}
-          <span class="podium-thumb">{% if item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
-        {% else %}
-          <span class="podium-ava">{{ item.name | first | upper }}</span>
-        {% endif %}
-        <b class="podium-name">{{ item.name }}</b>
-        <small>{{ item.count }} đơn</small>
-      </div>
-      <div class="podium-block"><span>{{ rank }}</span></div>
-    </div>
+    <li class="lb-row">
+      <img class="lb-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="40">
+      {% if kind == 'product' %}
+        <span class="lb-thumb2">{% if item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
+      {% else %}
+        <span class="lb-ava2">{{ item.name | first | upper }}</span>
+      {% endif %}
+      <span class="lb-info"><b>{{ item.name }}</b><small>{{ item.count }} đơn</small></span>
+    </li>
   {% endif %}
 {% endmacro %}
 
@@ -57,13 +54,23 @@
     {% include "app/dashboard/platform-tabs.njk" %}
   </section>
 
-  {# Nhắc khi vào app: sản phẩm đã bấm Mua ngay nhưng chưa thành đơn (giữ 7 ngày). #}
-  {% if currentUser and interestedCount and interestedCount > 0 %}
-    <a class="mb-alert px-alert px-alert-interest" href="/app/orders">
-      <span class="mb-alert-icon" aria-hidden="true">{{ icon('orders') }}</span>
-      <span class="mb-alert-copy"><b>Bạn có {{ interestedCount }} sản phẩm quan tâm chưa mua.</b><small>Xem lại sản phẩm bạn đã bấm mua để hoàn tất và nhận hoàn tiền.</small></span>
-      <span class="mb-alert-go" aria-hidden="true">→</span>
-    </a>
+  {# Nhắc khi vào app: HIỂN THỊ SẢN PHẨM đã bấm Mua ngay nhưng chưa thành đơn
+     (giữ 7 ngày), thay vì chỉ ghi số. #}
+  {% if currentUser and interestedProducts and interestedProducts.length %}
+    <section class="interest-section" aria-label="Sản phẩm quan tâm chưa mua">
+      <div class="interest-head">
+        <div><b>Bạn có {{ interestedCount }} sản phẩm quan tâm chưa mua</b><small>Xem lại để hoàn tất và nhận hoàn tiền.</small></div>
+        <a class="interest-more" href="/app/orders">Xem tất cả →</a>
+      </div>
+      <div class="interest-track">
+        {% for p in interestedProducts %}
+          <a class="interest-card" href="/app/orders">
+            <span class="interest-thumb">{% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<i aria-hidden="true">▣</i>{% endif %}</span>
+            <span class="interest-name">{{ p.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
   {% endif %}
 
   {% if not hasVerifiedBank %}
@@ -74,38 +81,31 @@
     </a>
   {% endif %}
 
-  {# Điểm danh 1 lần/ngày — tự ghi khi vào trang chủ (chỉ khi đăng nhập). #}
-  {% if checkin %}
-    <div class="checkin-badge">
-      <span class="checkin-flame" aria-hidden="true">🔥</span>
-      <div class="checkin-copy">
-        <b>{% if checkin.justCheckedIn %}Điểm danh thành công hôm nay!{% else %}Đã điểm danh hôm nay{% endif %}</b>
-        <small>Chuỗi <strong>{{ checkin.streak }}</strong> ngày liên tiếp · Tổng {{ checkin.totalDays }} ngày</small>
-      </div>
-    </div>
-  {% endif %}
-
-  {# Bảng vàng: bục thứ hạng top 1/2/3 người mua + sản phẩm, đưa lên đầu. #}
+  {# Bảng vàng: danh sách dọc top 1/2/3 (huy chương), lướt ngang đổi giữa
+     TOP NGƯỜI MUA và TOP BÁN CHẠY. #}
   {% if leaderboard and (leaderboard.topBuyers.length or leaderboard.topProducts.length) %}
-    <section class="podium-section" aria-label="Bảng vàng nền tảng">
+    <section class="lbwrap-section" aria-label="Bảng vàng nền tảng">
       <header class="px-section-head podium-head"><div><span class="px-eyebrow">THỐNG KÊ NỀN TẢNG</span><h2>Bảng vàng ShopTik</h2></div></header>
-      <div class="podium-grid">
-        <div class="podium">
-          <h3>{{ icon('user') }} Top người mua nhiều nhất</h3>
-          <div class="podium-stage">
-            {{ podium_place(leaderboard.topBuyers[1], 2, 'buyer') }}
-            {{ podium_place(leaderboard.topBuyers[0], 1, 'buyer') }}
-            {{ podium_place(leaderboard.topBuyers[2], 3, 'buyer') }}
+      <div class="lbwrap" data-lbwrap>
+        <div class="lbwrap-track" data-lbwrap-track>
+          <div class="lbslide">
+            <h3>{{ icon('user') }} Top người mua nhiều nhất</h3>
+            <ol class="lb-rows">
+              {{ rank_row(leaderboard.topBuyers[0], 1, 'buyer') }}
+              {{ rank_row(leaderboard.topBuyers[1], 2, 'buyer') }}
+              {{ rank_row(leaderboard.topBuyers[2], 3, 'buyer') }}
+            </ol>
+          </div>
+          <div class="lbslide">
+            <h3>{{ icon('orders') }} Top sản phẩm bán chạy nhất</h3>
+            <ol class="lb-rows">
+              {{ rank_row(leaderboard.topProducts[0], 1, 'product') }}
+              {{ rank_row(leaderboard.topProducts[1], 2, 'product') }}
+              {{ rank_row(leaderboard.topProducts[2], 3, 'product') }}
+            </ol>
           </div>
         </div>
-        <div class="podium">
-          <h3>{{ icon('orders') }} Top sản phẩm được mua nhiều</h3>
-          <div class="podium-stage">
-            {{ podium_place(leaderboard.topProducts[1], 2, 'product') }}
-            {{ podium_place(leaderboard.topProducts[0], 1, 'product') }}
-            {{ podium_place(leaderboard.topProducts[2], 3, 'product') }}
-          </div>
-        </div>
+        <div class="lbwrap-dots" data-lbwrap-dots><span class="is-active"></span><span></span></div>
       </div>
     </section>
   {% endif %}
@@ -135,4 +135,5 @@
 {% block page_scripts %}
   <script src="/assets/purchase.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/leaderboard.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

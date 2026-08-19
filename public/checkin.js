@@ -1,0 +1,141 @@
+/*
+ * Popup điểm danh: mở từ menu ([data-checkin-open]). Nạp trạng thái qua
+ * GET /app/checkin (chuỗi ngày, tổng, danh sách ngày), vẽ LỊCH THÁNG + THANH
+ * TIẾN ĐỘ; bấm nút "Điểm danh hôm nay" hoặc ô ngày hôm nay → POST /app/checkin.
+ */
+(function () {
+  "use strict";
+  var scrim = document.querySelector("[data-checkin-scrim]");
+  if (!scrim) return;
+  var modal = scrim.querySelector(".checkin-modal");
+  var el = {
+    streak: scrim.querySelector("[data-checkin-streak]"),
+    total: scrim.querySelector("[data-checkin-total]"),
+    prog: scrim.querySelector("[data-checkin-progress]"),
+    progLabel: scrim.querySelector("[data-checkin-progress-label]"),
+    month: scrim.querySelector("[data-checkin-month]"),
+    cal: scrim.querySelector("[data-checkin-cal]"),
+    doBtn: scrim.querySelector("[data-checkin-do]"),
+    note: scrim.querySelector("[data-checkin-note]"),
+  };
+  var state = null;
+  var lastFocused = null;
+
+  function csrf() {
+    var m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.getAttribute("content") : "";
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  function render() {
+    if (!state) return;
+    el.streak.textContent = state.streak;
+    el.total.textContent = state.totalDays;
+    var p = String(state.today).split("-");
+    var year = +p[0], month = +p[1] - 1, todayDay = +p[2];
+    el.month.textContent = "Tháng " + (month + 1) + " / " + year;
+    var set = {};
+    (state.dates || []).forEach(function (d) { set[d] = true; });
+    var prefix = year + "-" + pad(month + 1) + "-";
+    var doneThisMonth = (state.dates || []).filter(function (d) { return d.indexOf(prefix) === 0; }).length;
+    var pct = todayDay > 0 ? Math.round((doneThisMonth / todayDay) * 100) : 0;
+    el.prog.style.width = Math.min(100, pct) + "%";
+    el.progLabel.textContent = doneThisMonth + "/" + todayDay + " ngày trong tháng này";
+
+    el.cal.innerHTML = "";
+    var firstDow = new Date(Date.UTC(year, month, 1)).getUTCDay(); // 0=CN
+    var offset = (firstDow + 6) % 7; // T2 = 0
+    var daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    for (var i = 0; i < offset; i++) {
+      var em = document.createElement("span");
+      em.className = "cal-cell cal-empty";
+      el.cal.appendChild(em);
+    }
+    for (var day = 1; day <= daysInMonth; day++) {
+      var iso = year + "-" + pad(month + 1) + "-" + pad(day);
+      var isToday = day === todayDay;
+      var cell = document.createElement(isToday ? "button" : "span");
+      cell.className = "cal-cell";
+      cell.textContent = day;
+      if (set[iso]) cell.classList.add("is-done");
+      if (day > todayDay) cell.classList.add("is-future");
+      if (isToday) {
+        cell.classList.add("is-today");
+        cell.type = "button";
+        if (state.checkedInToday) cell.disabled = true;
+        else cell.addEventListener("click", checkIn);
+      }
+      el.cal.appendChild(cell);
+    }
+    if (state.checkedInToday) {
+      el.doBtn.disabled = true;
+      el.doBtn.textContent = "Đã điểm danh hôm nay ✓";
+    } else {
+      el.doBtn.disabled = false;
+      el.doBtn.textContent = "Điểm danh hôm nay";
+    }
+  }
+
+  function load() {
+    el.doBtn.disabled = true;
+    el.doBtn.textContent = "Đang tải…";
+    fetch("/app/checkin", { credentials: "same-origin", headers: { accept: "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) { state = d; render(); } })
+      .catch(function () { el.doBtn.textContent = "Không tải được"; });
+  }
+
+  function checkIn() {
+    if (state && state.checkedInToday) return;
+    el.doBtn.disabled = true;
+    el.doBtn.textContent = "Đang điểm danh…";
+    fetch("/app/checkin", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { accept: "application/json", "x-csrf-token": csrf() },
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (d) {
+          state = d;
+          render();
+          if (d.justCheckedIn) el.note.textContent = "Điểm danh thành công! Chuỗi " + d.streak + " ngày liên tiếp.";
+        } else { el.doBtn.disabled = false; el.doBtn.textContent = "Thử lại"; }
+      })
+      .catch(function () { el.doBtn.disabled = false; el.doBtn.textContent = "Thử lại"; });
+  }
+
+  function open() {
+    lastFocused = document.activeElement;
+    // đóng menu tài khoản nếu đang mở
+    Array.prototype.forEach.call(document.querySelectorAll(".open"), function (n) {
+      if (n.hasAttribute("data-menu") || n.classList.contains("st-menu") || n.classList.contains("px-account-menu")) n.classList.remove("open");
+    });
+    scrim.hidden = false;
+    scrim.removeAttribute("inert");
+    document.body.classList.add("no-scroll");
+    if (scrim.animate) scrim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, fill: "forwards" });
+    if (modal && modal.animate) modal.animate(
+      [{ transform: "translateY(16px) scale(.97)", opacity: 0 }, { transform: "none", opacity: 1 }],
+      { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" },
+    );
+    load();
+    var c = scrim.querySelector("[data-checkin-close]");
+    if (c) c.focus();
+  }
+  function close() {
+    scrim.hidden = true;
+    scrim.setAttribute("inert", "");
+    document.body.classList.remove("no-scroll");
+    if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!(e.target instanceof Element)) return;
+    if (e.target.closest("[data-checkin-open]")) { e.preventDefault(); open(); return; }
+    if (e.target.closest("[data-checkin-close]")) { e.preventDefault(); close(); return; }
+    if (e.target === scrim) close();
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !scrim.hidden) close(); });
+  if (el.doBtn) el.doBtn.addEventListener("click", checkIn);
+})();

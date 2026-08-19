@@ -1,0 +1,27 @@
+{# Popup điểm danh: lịch tháng + thanh tiến độ + nút điểm danh. Nội dung (lịch,
+   chuỗi ngày) do checkin.js nạp qua /app/checkin khi mở. #}
+<div class="checkin-scrim" data-checkin-scrim hidden inert>
+  <section class="checkin-modal" role="dialog" aria-modal="true" aria-labelledby="checkin-title">
+    <header class="checkin-modal-head">
+      <div><span class="eyebrow">🔥 ĐIỂM DANH</span><h2 id="checkin-title">Điểm danh mỗi ngày</h2></div>
+      <button type="button" class="checkin-close" data-checkin-close aria-label="Đóng">×</button>
+    </header>
+
+    <div class="checkin-stats">
+      <div><b data-checkin-streak>–</b><small>Chuỗi ngày liên tiếp</small></div>
+      <div><b data-checkin-total>–</b><small>Tổng ngày đã điểm danh</small></div>
+    </div>
+
+    <div class="checkin-progress-wrap">
+      <div class="checkin-progress"><i data-checkin-progress></i></div>
+      <small class="checkin-progress-label" data-checkin-progress-label></small>
+    </div>
+
+    <div class="checkin-cal-head" data-checkin-month></div>
+    <div class="checkin-weekdays"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+    <div class="checkin-cal" data-checkin-cal></div>
+
+    <button type="button" class="button button-primary button-block checkin-do" data-checkin-do disabled>Đang tải…</button>
+    <p class="checkin-note" data-checkin-note>Điểm danh mỗi ngày để giữ chuỗi. Bấm vào ô hôm nay hoặc nút bên trên.</p>
+  </section>
+</div>
