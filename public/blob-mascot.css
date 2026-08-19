@@ -155,18 +155,17 @@
    (transition, không bị prefers-reduced-motion tắt)
    ============================================================ */
 .camio-welcome {
-  position: fixed; left: 50%; top: 50%; z-index: 360;
+  position: fixed; left: 128%; top: 50%; z-index: 360;
   width: min(320px, 86vw);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  transform: translate(calc(-50% + 130vw), -50%);
-  opacity: 0; pointer-events: none;
-  transition: transform 1.4s cubic-bezier(.22, .7, .2, 1), opacity .5s ease;
+  transform: translate(-50%, -50%); /* chỉ để căn giữa; vị trí trượt do left */
+  opacity: 0; pointer-events: auto;
+  /* Chuyển động chính do JS (element.animate) điều khiển; transition dưới đây
+     chỉ là fallback khi trình duyệt không hỗ trợ Web Animations API. */
+  transition: left 1.4s cubic-bezier(.22, .7, .2, 1), opacity .5s ease;
 }
-.camio-welcome.is-in { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
-.camio-welcome.is-out {
-  transform: translate(calc(-50% + 130vw), -50%); opacity: 0;
-  transition: transform .85s ease-in, opacity .6s ease;
-}
+.camio-welcome.is-in { left: 50%; opacity: 1; }
+.camio-welcome.is-out { left: 128%; opacity: 0; transition: left .85s ease-in, opacity .6s ease; }
 .camio-welcome-mascot { width: 150px; }
 .camio-welcome-mascot .blob-mascot { width: 100%; }
 

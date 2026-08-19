@@ -11,12 +11,12 @@
   "use strict";
 
   function start() {
+    // Chỉ chạy khi server đã đặt cờ (cookie aff_welcome đã tiêu thụ → có phần tử
+    // này). Cookie chỉ set một lần mỗi lần đăng nhập và bị xoá ngay ở render
+    // /app đầu tiên, nên tự động "một lần/đăng nhập", tải lại không lặp — không
+    // cần chặn thêm bằng sessionStorage (sẽ cản đăng nhập lại trong cùng phiên).
     var trigger = document.querySelector("[data-camio-welcome]");
     if (!trigger || !window.BlobMascot) return;
-    try {
-      if (window.sessionStorage.getItem("camio-welcomed") === "1") return;
-      window.sessionStorage.setItem("camio-welcomed", "1");
-    } catch (e) { /* sessionStorage bị chặn: vẫn chạy bình thường */ }
 
     var name = (trigger.getAttribute("data-welcome-name") || "").trim();
 
@@ -45,39 +45,64 @@
     host.appendChild(mascotBox);
     document.body.appendChild(host);
 
-    // Bắt đầu ở ngoài mép phải, rồi trượt vào giữa (đợi 2 frame để transition chạy).
-    window.requestAnimationFrame(function () {
-      window.requestAnimationFrame(function () {
-        host.classList.add("is-in");
-        mascot.setGaze(-8, -2);
-      });
-    });
+    mascot.setGaze(-8, -2);
+
+    var removed = false;
+    function remove() {
+      if (removed) return;
+      removed = true;
+      if (host.parentNode) host.parentNode.removeChild(host);
+    }
+
+    var canAnimate = typeof host.animate === "function";
+
+    // Đi TỪ mép phải VÀO giữa. Dùng Web Animations API thay cho CSS transition
+    // vì dự án có rule @media(reduced-motion){*{transition-duration:.001ms}}
+    // sẽ ép mọi transition về 0 (máy tắt hiệu ứng sẽ thấy nhảy cứng một chỗ).
+    // element.animate KHÔNG bị rule đó tắt nên chuyển động luôn chạy.
+    if (canAnimate) {
+      host.animate(
+        [
+          { left: "128%", opacity: 0 },
+          { left: "50%", opacity: 1 }
+        ],
+        { duration: 1500, easing: "cubic-bezier(.22,.7,.2,1)", fill: "forwards" }
+      );
+    } else {
+      host.classList.add("is-in");
+    }
 
     // Tới nơi thì vẫy tay (đổi biểu cảm) cho sinh động.
     var t1 = window.setTimeout(function () {
       mascot.setMood("vuive");
       mascot.setGaze(6, 0);
-    }, 1600);
+    }, 1700);
 
-    // Giữ ~3.6s rồi trượt ra phải và gỡ khỏi DOM.
-    var t2 = window.setTimeout(function () {
-      host.classList.remove("is-in");
-      host.classList.add("is-out");
-    }, 4200);
-    var t3 = window.setTimeout(function () {
-      if (host.parentNode) host.parentNode.removeChild(host);
-    }, 5300);
+    var leaving = false;
+    function leave() {
+      if (leaving) return;
+      leaving = true;
+      window.clearTimeout(t1);
+      if (canAnimate) {
+        var out = host.animate(
+          [
+            { left: "50%", opacity: 1 },
+            { left: "128%", opacity: 0 }
+          ],
+          { duration: 900, easing: "ease-in", fill: "forwards" }
+        );
+        out.onfinish = remove;
+        window.setTimeout(remove, 1100); // phòng khi onfinish không bắn
+      } else {
+        host.classList.remove("is-in");
+        host.classList.add("is-out");
+        window.setTimeout(remove, 900);
+      }
+    }
 
-    // Bấm vào để đóng sớm.
-    host.addEventListener("click", function () {
-      window.clearTimeout(t1); window.clearTimeout(t2);
-      host.classList.remove("is-in");
-      host.classList.add("is-out");
-      window.clearTimeout(t3);
-      window.setTimeout(function () {
-        if (host.parentNode) host.parentNode.removeChild(host);
-      }, 900);
-    });
+    // Giữ ~3.6s rồi tự trượt ra; bấm vào đóng sớm.
+    window.setTimeout(leave, 4200);
+    host.addEventListener("click", leave);
   }
 
   if (document.readyState === "loading") {
