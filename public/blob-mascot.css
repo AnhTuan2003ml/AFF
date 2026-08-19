@@ -163,3 +163,12 @@
   .camio-welcome { width: min(270px, 82vw); }
   .camio-welcome-mascot { width: 122px; }
 }
+
+/* Hạt lấp lánh (sparkle) — bung ra khi poke / chào mừng. Vị trí do WAAPI trong
+   blob-mascot.js điều khiển (translate từ tâm ra). */
+.blob-spark {
+  position: absolute; left: 50%; top: 50%;
+  color: #ffcf3f; line-height: 1; pointer-events: none; z-index: 3;
+  text-shadow: 0 0 7px rgba(255, 179, 54, .95), 0 0 2px #fff;
+  will-change: transform, opacity;
+}

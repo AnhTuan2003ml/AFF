@@ -32,7 +32,7 @@
 
     var mascotBox = document.createElement("div");
     mascotBox.className = "camio-welcome-mascot";
-    var mascot = window.BlobMascot.create({ mood: "happy", label: "CamiO" });
+    var mascot = window.BlobMascot.create({ mood: "happy", label: "CamiO", entrance: false });
     mascotBox.appendChild(mascot.el);
 
     host.appendChild(bubble);
@@ -45,18 +45,38 @@
     var removed = false;
     function remove() { if (!removed) { removed = true; if (host.parentNode) host.parentNode.removeChild(host); } }
 
-    // Đi từ ngoài mép phải VÀO giữa (animate thuộc tính left, giữ transform căn giữa).
+    // Đi từ ngoài mép phải VÀO giữa, vọt hơi quá rồi lắng lại (điện ảnh hơn).
     if (canAnimate) {
       host.animate(
-        [{ left: "128%", opacity: 0 }, { left: "50%", opacity: 1 }],
-        { duration: 1500, easing: "cubic-bezier(.22,.7,.2,1)", fill: "forwards" }
+        [
+          { left: "128%", opacity: 0 },
+          { left: "45%", opacity: 1, offset: .8 },
+          { left: "51%", opacity: 1, offset: .92 },
+          { left: "50%", opacity: 1 }
+        ],
+        { duration: 1550, easing: "cubic-bezier(.2,.7,.25,1)", fill: "forwards" }
       );
     } else {
       host.style.opacity = "1";
     }
 
-    // Tới nơi thì vẫy tay.
-    var t1 = window.setTimeout(function () { mascot.setMood("vuive"); mascot.setGaze(6, 0); }, 1700);
+    // Tới nơi: bung lấp lánh + vẫy tay + nảy chào.
+    var t1 = window.setTimeout(function () {
+      mascot.setMood("vuive");
+      mascot.setGaze(6, 0);
+      if (mascot.sparkle) mascot.sparkle(9);
+      if (mascotBox.animate) {
+        mascotBox.animate(
+          [
+            { transform: "translateY(0) rotate(0)" },
+            { transform: "translateY(-16px) rotate(-4deg)", offset: .4 },
+            { transform: "translateY(0) rotate(3deg)", offset: .7 },
+            { transform: "translateY(0) rotate(0)" }
+          ],
+          { duration: 700, easing: "cubic-bezier(.3,1.2,.5,1)" }
+        );
+      }
+    }, 1600);
 
     var leaving = false;
     function leave() {
