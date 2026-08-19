@@ -669,20 +669,34 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 .st-menu-checkin:hover{background:var(--lx-orange-soft);color:var(--lx-orange)}
 .st-menu-checkin svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;color:var(--lx-orange)}
 
-/* ===== Sản phẩm quan tâm chưa mua (hiển thị ảnh) ===== */
-.interest-section{margin-top:16px;border:1px solid #f0d2c2;border-radius:18px;background:#fff6ef;padding:16px 18px}
-.interest-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}
-.interest-head b{display:block;font-size:14px}
-.interest-head small{color:var(--lx-muted);font-size:11px}
-.interest-more{color:var(--lx-orange);font-weight:800;font-size:12px;white-space:nowrap}
-.interest-track{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-.interest-track::-webkit-scrollbar{display:none}
-.interest-card{flex:0 0 118px;background:var(--lx-paper);border:1px solid var(--lx-line);border-radius:14px;overflow:hidden;color:var(--lx-ink)}
-.interest-card:hover{border-color:var(--lx-orange)}
-.interest-thumb{display:block;height:100px;background:#f2e9e2}
-.interest-thumb img{width:100%;height:100%;object-fit:cover}
-.interest-thumb i{display:grid;place-items:center;height:100%;color:#b6a294;font-style:normal;font-size:22px}
-.interest-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.3;padding:8px 9px;min-height:41px}
+/* ===== Điểm danh: entry nổi bật trên dashboard (kiểu sàn) ===== */
+.checkin-entry{width:100%;display:flex;align-items:center;gap:14px;margin-top:16px;padding:13px 16px;border:1px solid #ffd9b8;border-radius:18px;background:linear-gradient(120deg,#fff7ee,#ffe9d8);color:var(--lx-ink);text-align:left;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
+.checkin-entry:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(238,77,45,.14)}
+.checkin-entry-icon{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ffce56,#ff9f2e);color:#fff;box-shadow:0 8px 18px rgba(255,159,46,.35)}
+.checkin-entry-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.checkin-entry-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.checkin-entry-copy b{font-size:15px;font-weight:850;letter-spacing:-.01em}
+.checkin-entry-copy small{color:var(--lx-muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.checkin-entry-streak{flex:none;font-weight:900;font-size:13px;color:#ff7a1a;background:#fff;border:1px solid #ffd9b8;border-radius:999px;padding:5px 11px}
+.checkin-entry-cta{flex:none;background:var(--lx-orange);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:10px 18px;white-space:nowrap}
+.checkin-entry:hover .checkin-entry-cta{background:#d63c1e}
+@media(max-width:560px){.checkin-entry{gap:11px;padding:12px 13px}.checkin-entry-icon{width:42px;height:42px}.checkin-entry-streak{display:none}.checkin-entry-cta{padding:9px 14px;font-size:12px}}
+
+/* ===== Sản phẩm quan tâm chưa mua — băng như "Đề xuất" ===== */
+.interest-carousel{padding-top:40px}
+.interest-carousel-head{align-items:flex-end}
+.interest-carousel-head .px-eyebrow{color:var(--lx-orange)}
+.interest-carousel-head p{margin:4px 0 0;color:var(--lx-muted);font-size:13px}
+.interest-carousel-head .px-text-link{white-space:nowrap;font-weight:800;color:var(--lx-orange)}
+.pc-interest{color:var(--lx-ink);text-decoration:none}
+.pc-interest .promo-card-media{height:220px}
+.pc-interest-noimg{display:grid;place-items:center;height:100%;color:#b6a294;font-size:34px}
+.pc-interest-badge{color:#c0491f;background:rgba(255,247,239,.96)}
+.pc-interest-body{grid-template-rows:minmax(40px,auto) auto;gap:12px;padding:14px 15px 16px}
+.pc-interest-cta{display:inline-flex;align-items:center;gap:6px;align-self:start;font-size:12px;font-weight:800;color:var(--lx-orange)}
+.pc-interest-cta span{transition:transform .2s ease}
+.pc-interest:hover .pc-interest-cta span{transform:translateX(3px)}
+@media(max-width:820px){.interest-carousel{padding-top:28px}.pc-interest .promo-card-media{height:180px}}
 
 /* ===== Popup điểm danh: lịch + tiến độ ===== */
 .checkin-scrim{position:fixed;inset:0;z-index:700;display:grid;place-items:center;padding:18px;background:rgba(40,22,8,.46);backdrop-filter:blur(4px)}

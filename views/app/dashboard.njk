@@ -55,22 +55,56 @@
     {% include "app/dashboard/platform-tabs.njk" %}
   </section>
 
+  {# Điểm danh: entry nổi bật kiểu sàn (Shopee/Lazada/TikTok) — icon + chuỗi +
+     nút, mở popup lịch. Chỉ hiện khi đã đăng nhập. #}
+  {% if currentUser %}
+    <button type="button" class="checkin-entry" data-checkin-open aria-label="Mở điểm danh mỗi ngày">
+      <span class="checkin-entry-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg>
+      </span>
+      <span class="checkin-entry-copy">
+        <b>Điểm danh mỗi ngày</b>
+        <small>{% if checkin and checkin.checkedInToday %}Đã điểm danh hôm nay · giữ chuỗi liên tiếp{% else %}Điểm danh nhận thưởng · đừng để mất chuỗi{% endif %}</small>
+      </span>
+      {% if checkin and checkin.streak %}<span class="checkin-entry-streak" aria-label="Chuỗi {{ checkin.streak }} ngày">🔥 {{ checkin.streak }}</span>{% endif %}
+      <span class="checkin-entry-cta">{% if checkin and checkin.checkedInToday %}Đã điểm danh ✓{% else %}Điểm danh{% endif %}</span>
+    </button>
+  {% endif %}
+
   {# Nhắc khi vào app: HIỂN THỊ SẢN PHẨM đã bấm Mua ngay nhưng chưa thành đơn
-     (giữ 7 ngày), thay vì chỉ ghi số. #}
+     (giữ 7 ngày). Trình bày như băng "Đề xuất": thẻ .promo-card, cuộn ngang,
+     mũi tên/chấm dùng chung logic (data-promo-static: thẻ render sẵn từ server). #}
   {% if currentUser and interestedProducts and interestedProducts.length %}
-    <section class="interest-section" aria-label="Sản phẩm quan tâm chưa mua">
-      <div class="interest-head">
-        <div><b>Bạn có {{ interestedCount }} sản phẩm quan tâm chưa mua</b><small>Xem lại để hoàn tất và nhận hoàn tiền.</small></div>
-        <a class="interest-more" href="/app/orders">Xem tất cả →</a>
+    <section class="promo-carousel px-products-section interest-carousel" data-promo-carousel data-promo-static aria-label="Sản phẩm quan tâm chưa mua">
+      <header class="px-section-head px-products-head interest-carousel-head">
+        <div>
+          <span class="px-eyebrow">CHƯA HOÀN TẤT</span>
+          <h2>Sản phẩm bạn quan tâm</h2>
+          <p>{{ interestedCount }} sản phẩm đã xem chưa mua — hoàn tất để nhận hoàn tiền.</p>
+        </div>
+        <a class="px-text-link" href="/app/orders">Xem tất cả <span aria-hidden="true">→</span></a>
+      </header>
+      <div class="promo-carousel-stage">
+        <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="promo-carousel-viewport" data-promo-viewport>
+          <div class="promo-carousel-track" data-promo-track>
+            {% for p in interestedProducts %}
+              <a class="promo-card pc-interest" href="/app/orders">
+                <div class="promo-card-media">
+                  {% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="pc-interest-noimg" aria-hidden="true">▣</span>{% endif %}
+                  <span class="promo-card-badge pc-interest-badge">Chưa mua</span>
+                </div>
+                <div class="promo-card-body pc-interest-body">
+                  <p class="promo-card-name">{{ p.name }}</p>
+                  <span class="pc-interest-cta">Hoàn tất mua <span aria-hidden="true">→</span></span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+        <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
-      <div class="interest-track">
-        {% for p in interestedProducts %}
-          <a class="interest-card" href="/app/orders">
-            <span class="interest-thumb">{% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<i aria-hidden="true">▣</i>{% endif %}</span>
-            <span class="interest-name">{{ p.name }}</span>
-          </a>
-        {% endfor %}
-      </div>
+      <div class="promo-carousel-dots" data-promo-progress></div>
     </section>
   {% endif %}
 

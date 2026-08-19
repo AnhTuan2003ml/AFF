@@ -251,6 +251,22 @@
       resizeTimer = window.setTimeout(function () { resizeTimer = null; syncDots(); updateProgress(); }, 150);
     });
 
+    // Băng "quan tâm chưa mua": thẻ đã render sẵn từ server. Bỏ fetch, chỉ gắn
+    // điều khiển (mũi tên/chấm/vuốt/tự xoay) để giống hệt băng "Đề xuất".
+    if (root.hasAttribute("data-promo-static")) {
+      Array.prototype.forEach.call(track.querySelectorAll("img"), function (img) {
+        img.addEventListener("error", function () {
+          var card = img.closest(".promo-card");
+          if (card) { card.remove(); syncDots(); updateProgress(); }
+        });
+      });
+      if (track.children.length) {
+        root.hidden = false;
+        window.setTimeout(function () { syncDots(); updateProgress(); startAuto(); }, 80);
+      }
+      return;
+    }
+
     fetch(endpoint, { credentials: "same-origin", headers: { accept: "application/json" } })
       .then(function (response) {
         if (!response.ok) throw new Error("HTTP " + response.status);
