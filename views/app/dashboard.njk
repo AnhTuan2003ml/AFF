@@ -61,10 +61,11 @@
       {# Vuốt ngang để lướt (scroll-snap, không cần bấm nút). Mũi tên đặt ở 2 mép
          trái/phải cho desktop; ẩn trên mobile vì đã vuốt được. #}
       <div class="promo-carousel-stage">
-        <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Trước">←</button>
+        <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
-        <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sau">→</button>
+        <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
+      <div class="promo-carousel-progress" data-promo-progress aria-hidden="true"><i></i></div>
     </section>
   {% endfor %}
 {% endblock %}

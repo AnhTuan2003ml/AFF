@@ -76,6 +76,7 @@
     var dotsBox = root.querySelector("[data-promo-dots]");
     var prevBtn = root.querySelector("[data-promo-prev]");
     var nextBtn = root.querySelector("[data-promo-next]");
+    var progressThumb = root.querySelector("[data-promo-progress] > i");
     if (!viewport || !track) return;
     var endpoint = root.getAttribute("data-endpoint") || "/app/promo-products";
 
@@ -173,22 +174,48 @@
     root.addEventListener("focusout", function () { paused = false; });
     // Vuốt tay: tạm dừng tự xoay khi đang chạm/kéo, chạy lại sau vài giây.
     var resumeTimer = null;
+    function pauseFor(ms) { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); resumeTimer = window.setTimeout(function () { paused = false; }, ms || 4500); }
     viewport.addEventListener("pointerdown", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); });
     viewport.addEventListener("touchstart", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); }, { passive: true });
-    window.addEventListener("pointerup", function () {
-      if (resumeTimer) window.clearTimeout(resumeTimer);
-      resumeTimer = window.setTimeout(function () { paused = false; }, 4500);
-    });
+    window.addEventListener("pointerup", function () { pauseFor(4500); });
+
+    // Thanh chỉ báo cuộn (mini-scrollbar) dưới sản phẩm.
+    function updateProgress() {
+      if (!progressThumb) return;
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      if (max <= 1) { progressThumb.style.width = "100%"; progressThumb.style.left = "0%"; return; }
+      var w = Math.max(14, (viewport.clientWidth / viewport.scrollWidth) * 100);
+      progressThumb.style.width = w.toFixed(2) + "%";
+      progressThumb.style.left = ((viewport.scrollLeft / max) * (100 - w)).toFixed(2) + "%";
+    }
+
+    // Desktop: trỏ chuột vào rồi LĂN CHUỘT để cuộn NGANG (như trang quảng cáo
+    // sản phẩm chuyên nghiệp). Chỉ chặn cuộn trang khi băng còn cuộn được theo
+    // hướng đó — tới mép thì trả lại cuộn trang bình thường.
+    viewport.addEventListener("wheel", function (e) {
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      if (max <= 0) return;
+      var delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!delta) return;
+      var atStart = viewport.scrollLeft <= 0;
+      var atEnd = viewport.scrollLeft >= max - 1;
+      if ((delta < 0 && !atStart) || (delta > 0 && !atEnd)) {
+        e.preventDefault();
+        viewport.scrollLeft += delta;
+        pauseFor(3500);
+      }
+    }, { passive: false });
 
     var scrollThrottle = null;
     viewport.addEventListener("scroll", function () {
+      updateProgress();
       if (scrollThrottle) return;
       scrollThrottle = window.setTimeout(function () { scrollThrottle = null; highlightDot(); }, 80);
     });
     var resizeTimer = null;
     window.addEventListener("resize", function () {
       if (resizeTimer) return;
-      resizeTimer = window.setTimeout(function () { resizeTimer = null; syncDots(); }, 150);
+      resizeTimer = window.setTimeout(function () { resizeTimer = null; syncDots(); updateProgress(); }, 150);
     });
 
     fetch(endpoint, { credentials: "same-origin", headers: { accept: "application/json" } })
@@ -202,7 +229,7 @@
         products.forEach(function (product) { if (product.imageUrl) track.appendChild(renderCard(product)); });
         if (!track.children.length) return;
         root.hidden = false;
-        window.setTimeout(function () { syncDots(); startAuto(); }, 80);
+        window.setTimeout(function () { syncDots(); updateProgress(); startAuto(); }, 80);
       })
       .catch(function (error) {
         console.warn("[promo-carousel] không nạp được " + endpoint + ":", (error && error.message) || error);
