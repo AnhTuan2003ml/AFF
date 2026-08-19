@@ -40,6 +40,15 @@
     {% include "app/dashboard/platform-tabs.njk" %}
   </section>
 
+  {# Nhắc khi vào app: sản phẩm đã bấm Mua ngay nhưng chưa thành đơn (giữ 7 ngày). #}
+  {% if currentUser and interestedCount and interestedCount > 0 %}
+    <a class="mb-alert px-alert px-alert-interest" href="/app/orders">
+      <span class="mb-alert-icon" aria-hidden="true">{{ icon('orders') }}</span>
+      <span class="mb-alert-copy"><b>Bạn có {{ interestedCount }} sản phẩm quan tâm chưa mua.</b><small>Xem lại sản phẩm bạn đã bấm mua để hoàn tất và nhận hoàn tiền.</small></span>
+      <span class="mb-alert-go" aria-hidden="true">→</span>
+    </a>
+  {% endif %}
+
   {% if not hasVerifiedBank %}
     <a class="mb-alert px-alert" href="/app/banks">
       <span class="mb-alert-icon" aria-hidden="true">{{ icon('bank') }}</span>
@@ -65,7 +74,7 @@
         <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
         <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
-      <div class="promo-carousel-progress" data-promo-progress aria-hidden="true"><i></i></div>
+      <div class="promo-carousel-dots" data-promo-progress></div>
     </section>
   {% endfor %}
 {% endblock %}

@@ -46,6 +46,7 @@ export async function getAppDashboard(
     bankStats,
     businessConfig,
     featuredVoucher,
+    interestedCount,
   ] = await Promise.all([
     getWalletBalances(db, userId),
     getRecentOrders(db, userId),
@@ -53,12 +54,14 @@ export async function getAppDashboard(
     hasVerifiedBank(db, userId),
     getBusinessConfig(db, config),
     getFeaturedVoucher(db),
+    getInterestedCount(db, userId),
   ]);
 
   return {
     balances,
     recentOrders,
     purchaseStats,
+    interestedCount,
     hasVerifiedBank: bankStats,
     platformAvailability: {
       SHOPEE: isPlatformPurchaseEnabled(config, "SHOPEE"),
@@ -81,6 +84,7 @@ export async function getGuestDashboard(db: Database, config: AppConfig) {
     balances: { pending: 0, available: 0, held: 0, paid: 0 },
     recentOrders: [] as RecentDashboardOrder[],
     purchaseStats: { products: "0", clicks: "0" } as PurchaseStats,
+    interestedCount: 0,
     hasVerifiedBank: false,
     platformAvailability: {
       SHOPEE: isPlatformPurchaseEnabled(config, "SHOPEE"),
@@ -157,6 +161,26 @@ async function getPurchaseStats(
     [userId],
   );
   return result.rows[0] ?? { products: "0", clicks: "0" };
+}
+
+/** Số "sản phẩm quan tâm chưa mua": các lượt bấm Mua ngay (instantbuy) CHƯA có
+ *  đơn nào khớp — giữ tới INSTANTBUY_KEEP_DAYS ngày để nhắc người dùng. Gộp
+ *  theo sản phẩm để không đếm trùng lượt bấm cùng một món. */
+async function getInterestedCount(
+  db: Database,
+  userId: string,
+): Promise<number> {
+  const result = await query<{ n: string }>(
+    db,
+    `
+      SELECT count(DISTINCT COALESCE(product_id, id::text))::text AS n
+      FROM affiliate_links l
+      WHERE l.user_id = $1 AND l.campaign = 'instantbuy'
+        AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.affiliate_link_id = l.id)
+    `,
+    [userId],
+  );
+  return Number(result.rows[0]?.n ?? 0);
 }
 
 async function hasVerifiedBank(

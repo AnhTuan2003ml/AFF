@@ -479,8 +479,8 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 .entry-promo-close:hover { background: var(--lx-orange-soft); color: var(--lx-orange); border-color: var(--lx-orange); }
 
 /* ===== Checkbox đồng ý điều khoản (đăng ký): gọn, không phá form ===== */
-.check-row{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--lx-ink-2);cursor:pointer}
-.check-row input[type="checkbox"]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--lx-orange);cursor:pointer;flex:0 0 auto}
+.check-row{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;margin-top:2px;font-size:12.5px;line-height:1.45;color:var(--lx-ink-2);cursor:pointer}
+.check-row input[type="checkbox"]{width:18px;height:18px;margin:0;align-self:start;accent-color:var(--lx-orange);cursor:pointer;flex:0 0 auto}
 .check-row span{min-width:0}
 .check-row a{color:var(--lx-orange);font-weight:700}
 .check-row a:hover{text-decoration:underline}
@@ -565,3 +565,14 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 .promo-carousel-stage .promo-card{transition:transform .22s ease, box-shadow .22s ease}
 .promo-carousel-stage .promo-card:hover{transform:translateY(-8px);box-shadow:0 20px 42px rgba(77,49,34,.18)}
 .promo-carousel-progress{margin-top:4px}
+
+/* ===== Băng đề xuất: chỉ báo dạng chấm "..." (thay thanh gạch) ===== */
+.promo-carousel-dots{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:14px}
+.promo-carousel-dots[hidden]{display:none}
+.promo-carousel-dots span{width:7px;height:7px;border-radius:50%;background:#dbcabd;cursor:pointer}
+.promo-carousel-dots span.is-active{width:22px;border-radius:99px;background:var(--lx-orange)}
+@media(max-width:820px){.promo-carousel-dots{margin-top:10px}}
+
+/* ===== Banner nhắc "sản phẩm quan tâm chưa mua" ===== */
+.px-alert-interest{background:linear-gradient(120deg,#fff3ea,#ffe6d6);border-color:#f3c9b3}
+.px-alert-interest .mb-alert-icon{background:var(--lx-orange);color:#fff}

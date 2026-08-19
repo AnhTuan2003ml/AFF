@@ -76,7 +76,7 @@
     var dotsBox = root.querySelector("[data-promo-dots]");
     var prevBtn = root.querySelector("[data-promo-prev]");
     var nextBtn = root.querySelector("[data-promo-next]");
-    var progressThumb = root.querySelector("[data-promo-progress] > i");
+    var progressEl = root.querySelector("[data-promo-progress]");
     if (!viewport || !track) return;
     var endpoint = root.getAttribute("data-endpoint") || "/app/promo-products";
 
@@ -179,14 +179,31 @@
     viewport.addEventListener("touchstart", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); }, { passive: true });
     window.addEventListener("pointerup", function () { pauseFor(4500); });
 
-    // Thanh chỉ báo cuộn (mini-scrollbar) dưới sản phẩm.
+    // Chỉ báo dạng chấm "..." dưới sản phẩm (mỗi chấm = một trang, chấm đang
+    // xem kéo dài thành viên thuốc cam). Bấm chấm để nhảy trang.
     function updateProgress() {
-      if (!progressThumb) return;
-      var max = viewport.scrollWidth - viewport.clientWidth;
-      if (max <= 1) { progressThumb.style.width = "100%"; progressThumb.style.left = "0%"; return; }
-      var w = Math.max(14, (viewport.clientWidth / viewport.scrollWidth) * 100);
-      progressThumb.style.width = w.toFixed(2) + "%";
-      progressThumb.style.left = ((viewport.scrollLeft / max) * (100 - w)).toFixed(2) + "%";
+      if (!progressEl) return;
+      var pages = pageCount();
+      if (pages <= 1) { progressEl.innerHTML = ""; progressEl.hidden = true; return; }
+      progressEl.hidden = false;
+      if (progressEl.children.length !== pages) {
+        progressEl.innerHTML = "";
+        for (var i = 0; i < pages; i += 1) {
+          var dot = document.createElement("span");
+          dot.dataset.page = String(i);
+          progressEl.appendChild(dot);
+        }
+      }
+      var cur = currentPage();
+      Array.prototype.forEach.call(progressEl.children, function (d, i) {
+        d.classList.toggle("is-active", i === cur);
+      });
+    }
+    if (progressEl) {
+      progressEl.addEventListener("click", function (e) {
+        var t = e.target;
+        if (t && t.dataset && t.dataset.page != null) goTo(Number(t.dataset.page));
+      });
     }
 
     // Bề rộng một sản phẩm (thẻ + khoảng cách) để bước từng sản phẩm.

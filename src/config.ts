@@ -137,7 +137,7 @@ const configSchema = z.object({
   AFFILIATE_ATTRIBUTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   // Lượt bấm "Mua ngay" quá số ngày này mà đối soát vẫn chưa gán được đơn
   // thật thì tự xóa khỏi lịch sử (dọn lượt mua thử/không thành).
-  INSTANTBUY_KEEP_DAYS: z.coerce.number().int().min(1).max(90).default(1),
+  INSTANTBUY_KEEP_DAYS: z.coerce.number().int().min(1).max(90).default(7),
   CASHBACK_HOLD_DAYS: z.coerce.number().int().min(0).max(365).default(30),
   MIN_WITHDRAW_AMOUNT: z.coerce.number().int().positive().default(100000),
   ENABLE_SHARE_LINK: booleanFromStringDefault("true"),
