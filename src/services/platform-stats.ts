@@ -42,7 +42,7 @@ export async function getPlatformLeaderboard(
         WHERE o.status = 'APPROVED'
         GROUP BY u.id, u.full_name
         ORDER BY count(*) DESC, u.full_name
-        LIMIT 5
+        LIMIT 3
       `,
     ),
     query<{
@@ -57,7 +57,7 @@ export async function getPlatformLeaderboard(
         WHERE o.status = 'APPROVED' AND l.product_name IS NOT NULL
         GROUP BY l.product_name, l.product_image_url
         ORDER BY count(*) DESC
-        LIMIT 5
+        LIMIT 3
       `,
     ),
   ]);
