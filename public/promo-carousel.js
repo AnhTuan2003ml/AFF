@@ -45,7 +45,9 @@
 
   async function buyProduct(product, buy, label) {
     if (buy.disabled) return;
-    var purchaseWindow = window.open("about:blank", "_blank");
+    // Mobile: điều hướng ngay tab hiện tại thay vì mở tab about:blank mới.
+    var isMobile = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+    var purchaseWindow = isMobile ? null : window.open("about:blank", "_blank");
     buy.disabled = true;
     var original = label.textContent;
     label.textContent = "Đang tạo link mua…";
@@ -79,6 +81,9 @@
     var progressEl = root.querySelector("[data-promo-progress]");
     if (!viewport || !track) return;
     var endpoint = root.getAttribute("data-endpoint") || "/app/promo-products";
+    // Chế độ "xòe quạt" (trang đăng nhập): chỉ 3 thẻ đầu, xếp hình chữ V bằng
+    // CSS, không cuộn/tự xoay.
+    var fanMode = root.hasAttribute("data-promo-fan");
 
     var AUTO_MS = 5000;
     var autoTimer = null;
@@ -278,6 +283,7 @@
         products.forEach(function (product) { if (product.imageUrl) track.appendChild(renderCard(product)); });
         if (!track.children.length) return;
         root.hidden = false;
+        if (fanMode) { while (track.children.length > 3) track.removeChild(track.lastElementChild); return; }
         window.setTimeout(function () { syncDots(); updateProgress(); startAuto(); }, 80);
       })
       .catch(function (error) {

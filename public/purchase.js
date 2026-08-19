@@ -578,8 +578,10 @@
     const originalText = el.buy.innerHTML;
     el.buy.disabled = true;
     el.buy.textContent = "Đang mở trang mua…";
-    // Mở tab trống ngay trong sự kiện click để không bị chặn popup.
-    const pending = window.open("about:blank", "_blank");
+    // Mở tab trống ngay trong sự kiện click để không bị chặn popup. Mobile:
+    // điều hướng ngay tab hiện tại thay vì mở tab about:blank mới.
+    const isMobile = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+    const pending = isMobile ? null : window.open("about:blank", "_blank");
     try {
       const payload = await postJson("/api/v1/products/purchase", {
         previewId,

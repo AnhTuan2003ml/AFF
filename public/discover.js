@@ -139,7 +139,9 @@
       const label = button.querySelector("[data-buy-label]");
       if (!productUrl) return;
 
-      const purchaseWindow = window.open("about:blank", "_blank");
+      // Mobile: điều hướng ngay tab hiện tại thay vì mở tab about:blank mới.
+      const isMobile = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+      const purchaseWindow = isMobile ? null : window.open("about:blank", "_blank");
       button.disabled = true;
       if (label) label.textContent = "Đang tạo link mua…";
 
