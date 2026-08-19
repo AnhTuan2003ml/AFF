@@ -8,6 +8,7 @@
   <script src="/assets/blob-logout.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/blob-notify.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/blob-fab.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/blob-welcome.js?v={{ assetVersion }}" defer></script>
 
   {% set persistentBalances = headerBalances or balances %}
   {% set navItems = [
@@ -184,6 +185,9 @@
     <div class="blob-toast" data-blob-toast hidden role="status" aria-live="polite"
       data-support-unread="{{ unreadSupportCount or 0 }}"
       data-on-support="{{ 'yes' if appSection == 'support' else '' }}"></div>
+
+    {# Vừa đăng nhập: linh vật đi từ mép phải ra giữa màn hình chào mừng (1 lần) #}
+    {% if welcomeBack %}<div data-camio-welcome data-welcome-name="{{ currentUser.fullName or '' }}" hidden></div>{% endif %}
 
     <div class="entry-promo-scrim" data-entry-promo hidden inert>
       <section class="entry-promo-modal" role="dialog" aria-modal="true" aria-labelledby="entry-promo-title-copy">

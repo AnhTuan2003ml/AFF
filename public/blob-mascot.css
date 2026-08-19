@@ -149,3 +149,43 @@
 .blob-toast.is-center .blob-toast-bubble::before,
 .blob-toast.is-center .blob-toast-bubble::after { right: auto; left: 50%; transform: translateX(-50%); }
 .blob-toast.is-center .blob-toast-mascot { margin-right: 0; width: 122px; }
+
+/* ============================================================
+   CHÀO MỪNG KHI ĐĂNG NHẬP: linh vật đi từ mép phải ra GIỮA màn hình
+   (transition, không bị prefers-reduced-motion tắt)
+   ============================================================ */
+.camio-welcome {
+  position: fixed; left: 50%; top: 50%; z-index: 360;
+  width: min(320px, 86vw);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transform: translate(calc(-50% + 130vw), -50%);
+  opacity: 0; pointer-events: none;
+  transition: transform 1.4s cubic-bezier(.22, .7, .2, 1), opacity .5s ease;
+}
+.camio-welcome.is-in { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+.camio-welcome.is-out {
+  transform: translate(calc(-50% + 130vw), -50%); opacity: 0;
+  transition: transform .85s ease-in, opacity .6s ease;
+}
+.camio-welcome-mascot { width: 150px; }
+.camio-welcome-mascot .blob-mascot { width: 100%; }
+
+.camio-welcome-bubble {
+  position: relative; max-width: 100%; text-align: center;
+  background: #fffdf7; color: #241a12;
+  border: 3px solid #241a12; border-radius: 20px; padding: 12px 18px 11px;
+  box-shadow: 4px 4px 0 rgba(36, 26, 18, .9);
+}
+.camio-welcome-bubble b { display: block; font-size: 15px; font-weight: 900; letter-spacing: -.01em; color: var(--lx-orange); }
+.camio-welcome-bubble span { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; word-break: break-word; }
+.camio-welcome-bubble::before, .camio-welcome-bubble::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent;
+}
+.camio-welcome-bubble::before { bottom: -16px; border-top: 16px solid #241a12; }
+.camio-welcome-bubble::after { bottom: -11px; border-top: 13px solid #fffdf7; }
+
+@media (max-width: 720px) {
+  .camio-welcome { width: min(280px, 82vw); }
+  .camio-welcome-mascot { width: 124px; }
+}
