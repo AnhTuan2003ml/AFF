@@ -325,7 +325,7 @@
                 {% if product.image_url %}
                   <img src="{{ product.image_url }}" alt="{{ product.item_name }}" loading="lazy" data-product-thumb>
                 {% else %}
-                  <img src="/assets/images/logo.png" alt="{{ product.item_name }}" class="is-placeholder">
+                  <img src="/assets/images/logo.png?v={{ assetVersion }}" alt="{{ product.item_name }}" class="is-placeholder">
                 {% endif %}
                 <span class="product-platform-badge">{{ product.platform }}</span>
               </div>

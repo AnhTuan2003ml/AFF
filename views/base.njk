@@ -8,9 +8,9 @@
   <meta name="csrf-token" content="{{ csrfToken }}">
   <title>{{ pageTitle }} · {{ appName }}</title>
   <link rel="manifest" href="/assets/manifest.webmanifest">
-  <link rel="icon" href="/assets/images/icon.png" sizes="any">
-  <link rel="shortcut icon" href="/assets/images/icon.png">
-  <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
+  <link rel="icon" href="/assets/images/icon.png?v={{ assetVersion }}" sizes="any">
+  <link rel="shortcut icon" href="/assets/images/icon.png?v={{ assetVersion }}">
+  <link rel="apple-touch-icon" href="/assets/images/icon-192.png?v={{ assetVersion }}">
   {% block base_styles %}
     <link rel="stylesheet" href="/assets/luxury-ui.css?v={{ assetVersion }}">
   {% endblock %}
@@ -30,7 +30,7 @@
   {% block body %}
     <header class="public-header px-public-header">
       <a class="px-public-brand" href="/" aria-label="ShopTik - Trang chủ">
-        <img src="/assets/images/icon.png" alt="" aria-hidden="true">
+        <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
         <span>ShopTik</span>
       </a>
       <nav class="px-public-nav" aria-label="Điều hướng chính">
@@ -44,7 +44,7 @@
     </main>
     <footer class="public-footer px-public-footer">
       <div class="px-public-footer-brand">
-        <img src="/assets/images/icon.png" alt="" aria-hidden="true">
+        <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
         <strong>ShopTik</strong>
         <p>Mua đúng link. Theo dõi đúng đơn. Nhận đúng tiền hoàn.</p>
       </div>
