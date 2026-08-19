@@ -151,40 +151,65 @@
 .blob-toast.is-center .blob-toast-mascot { margin-right: 0; width: 122px; }
 
 /* ============================================================
-   CHÀO MỪNG KHI ĐĂNG NHẬP: linh vật đi từ mép phải ra GIỮA màn hình
-   (transition, không bị prefers-reduced-motion tắt)
+   TRỢ LÝ CAMIO CỐ ĐỊNH GÓC DƯỚI-PHẢI (như trợ lý AI)
    ============================================================ */
-.camio-welcome {
-  position: fixed; left: 128%; top: 50%; z-index: 360;
-  width: min(320px, 86vw);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  transform: translate(-50%, -50%); /* chỉ để căn giữa; vị trí trượt do left */
-  opacity: 0; pointer-events: auto;
-  /* Chuyển động chính do JS (element.animate) điều khiển; transition dưới đây
-     chỉ là fallback khi trình duyệt không hỗ trợ Web Animations API. */
-  transition: left 1.4s cubic-bezier(.22, .7, .2, 1), opacity .5s ease;
+.camio-asst {
+  position: fixed; right: 22px; bottom: 22px; z-index: 210;
+  width: 116px; display: flex; flex-direction: column; align-items: center;
+  touch-action: none; user-select: none;
 }
-.camio-welcome.is-in { left: 50%; opacity: 1; }
-.camio-welcome.is-out { left: 128%; opacity: 0; transition: left .85s ease-in, opacity .6s ease; }
-.camio-welcome-mascot { width: 150px; }
-.camio-welcome-mascot .blob-mascot { width: 100%; }
+.camio-asst[data-state="min"] { width: 66px; }
+.camio-asst-stage { width: 100%; cursor: grab; }
+.camio-asst.dragging, .camio-asst.dragging .camio-asst-stage { cursor: grabbing; }
+.camio-asst-stage .blob-mascot { width: 100%; }
+/* Idle do WAAPI trên .camio-asst-stage điều khiển → tắt float CSS của ảnh để
+   không chồng hai chuyển động lên nhau. */
+.camio-asst .blob-svg { animation: none !important; }
 
-.camio-welcome-bubble {
-  position: relative; max-width: 100%; text-align: center;
-  background: #fffdf7; color: #241a12;
-  border: 3px solid #241a12; border-radius: 20px; padding: 12px 18px 11px;
-  box-shadow: 4px 4px 0 rgba(36, 26, 18, .9);
+.camio-asst-tools { position: absolute; top: -4px; right: -4px; display: flex; gap: 4px; z-index: 3; }
+.camio-asst-tool {
+  width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--lx-line-strong);
+  background: #fff; color: var(--lx-ink-2); font-size: 13px; line-height: 1; cursor: pointer;
+  display: grid; place-items: center; box-shadow: 0 2px 6px rgba(80, 45, 15, .18); padding: 0;
+  opacity: 0; transition: opacity .18s ease;
 }
-.camio-welcome-bubble b { display: block; font-size: 15px; font-weight: 900; letter-spacing: -.01em; color: var(--lx-orange); }
-.camio-welcome-bubble span { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; word-break: break-word; }
-.camio-welcome-bubble::before, .camio-welcome-bubble::after {
-  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
-  width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent;
+.camio-asst:hover .camio-asst-tool, .camio-asst.dragging .camio-asst-tool { opacity: 1; }
+.camio-asst-tool:hover { background: var(--lx-orange-soft); color: var(--lx-orange); border-color: var(--lx-orange); }
+
+/* Bong bóng thoại kiểu truyện tranh, đặt PHÍA TRÊN linh vật, đuôi chỉ xuống. */
+.camio-asst-bubble {
+  position: absolute; bottom: calc(100% - 2px); right: 4px; width: max-content; max-width: 240px;
+  background: #fffdf7; color: #241a12; border: 3px solid #241a12; border-radius: 18px;
+  padding: 10px 12px 9px; box-shadow: 4px 4px 0 rgba(36, 26, 18, .9); z-index: 2;
 }
-.camio-welcome-bubble::before { bottom: -16px; border-top: 16px solid #241a12; }
-.camio-welcome-bubble::after { bottom: -11px; border-top: 13px solid #fffdf7; }
+.camio-asst-bubble b { display: block; font-size: 13px; font-weight: 900; letter-spacing: -.01em; color: var(--lx-orange); }
+.camio-asst-bubble > span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; font-weight: 600; word-break: break-word; }
+.camio-asst-actions { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+.camio-asst-go { border: 2px solid #241a12; border-radius: 999px; padding: 4px 13px; background: var(--lx-orange); color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
+.camio-asst-go:hover { filter: brightness(1.05); }
+.camio-asst-bx { margin-left: auto; width: 22px; height: 22px; border: 2px solid #241a12; border-radius: 50%; background: #fff; color: #241a12; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
+.camio-asst-bubble::before, .camio-asst-bubble::after {
+  content: ""; position: absolute; right: 30px; width: 0; height: 0;
+  border-left: 10px solid transparent; border-right: 10px solid transparent;
+}
+.camio-asst-bubble::before { bottom: -15px; border-top: 15px solid #241a12; }
+.camio-asst-bubble::after { bottom: -10px; border-top: 12px solid #fffdf7; }
+
+/* Tab nhỏ ở mép phải để MỞ LẠI khi đã tắt trợ lý. */
+.camio-asst-reopen {
+  position: fixed; right: 0; bottom: 20%; z-index: 210; width: 34px; height: 46px;
+  border: 0; border-radius: 12px 0 0 12px; cursor: pointer;
+  background: var(--lx-orange) url("/assets/images/mascot/camio-vuive.png") center/26px no-repeat;
+  box-shadow: -4px 6px 16px rgba(219, 72, 39, .34);
+}
+.camio-asst-reopen:hover { filter: brightness(1.05); }
+
+/* Khi trợ lý đang bật, ẩn nút hỗ trợ nổi cũ để tránh 2 CamiO ở góc phải. */
+body.camio-on .st-support-fab { display: none; }
 
 @media (max-width: 720px) {
-  .camio-welcome { width: min(280px, 82vw); }
-  .camio-welcome-mascot { width: 124px; }
+  .camio-asst { right: 14px; bottom: 84px; width: 96px; }
+  .camio-asst[data-state="min"] { width: 58px; }
+  .camio-asst-bubble { max-width: 200px; }
+  .camio-asst-tool { opacity: 1; } /* màn hình cảm ứng không hover → luôn hiện */
 }
