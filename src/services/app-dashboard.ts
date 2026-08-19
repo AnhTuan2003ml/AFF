@@ -73,6 +73,26 @@ export async function getAppDashboard(
   };
 }
 
+/** Dữ liệu trang chủ cho KHÁCH (chưa đăng nhập): số dư rỗng, không đơn; tỉ lệ
+ *  hoàn + danh sách sàn lấy từ cấu hình để vẫn dán link kiểm tra hoàn tiền. */
+export async function getGuestDashboard(db: Database, config: AppConfig) {
+  const businessConfig = await getBusinessConfig(db, config);
+  return {
+    balances: { pending: 0, available: 0, held: 0, paid: 0 },
+    recentOrders: [] as RecentDashboardOrder[],
+    purchaseStats: { products: "0", clicks: "0" } as PurchaseStats,
+    hasVerifiedBank: false,
+    platformAvailability: {
+      SHOPEE: isPlatformPurchaseEnabled(config, "SHOPEE"),
+      TIKTOK: isPlatformPurchaseEnabled(config, "TIKTOK"),
+      LAZADA: isPlatformPurchaseEnabled(config, "LAZADA"),
+    },
+    cashbackRate: businessConfig.buyerCashbackPercent,
+    minWithdrawAmountVnd: businessConfig.minWithdrawAmountVnd,
+    featuredVoucher: null as FeaturedVoucher | null,
+  };
+}
+
 /** Voucher ưu tiên hiển thị nhất (sort_order nhỏ nhất) — gợi ý bằng popup
  * ngay khi vào trang chính, giống banner khuyến mãi của Shopee. */
 async function getFeaturedVoucher(

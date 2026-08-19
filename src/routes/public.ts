@@ -20,10 +20,9 @@ export async function registerPublicRoutes(
   app: FastifyInstance,
   deps: PublicRouteDeps,
 ): Promise<void> {
-  app.get("/", async (request, reply) => {
-    if (request.currentUser) return reply.redirect("/app");
-    return reply.redirect("/dang-nhap");
-  });
+  // Ai cũng vào thẳng giao diện chính (/app). Khách có thể dán link kiểm tra
+  // hoàn tiền; chỉ khi Mua/xem ví... mới bị đẩy sang đăng nhập.
+  app.get("/", async (_request, reply) => reply.redirect("/app"));
 
   app.get("/favicon.ico", { config: { csrf: false } }, (_request, reply) =>
     reply.redirect("/assets/images/icon.png"),

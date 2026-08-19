@@ -592,6 +592,11 @@
       }
     } catch (error) {
       pending?.close();
+      // Khách chưa đăng nhập bấm Mua → đẩy sang trang đăng nhập.
+      if (error?.status === 401) {
+        window.location.assign("/dang-nhap?next=" + encodeURIComponent("/app"));
+        return;
+      }
       if (error?.code === "PREVIEW_EXPIRED") previewId = null;
       showError(
         error instanceof Error ? error.message : "Chưa tạo được link mua.",

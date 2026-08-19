@@ -17,7 +17,7 @@ import { getBusinessConfig } from "../services/business-config.js";
 import { listOrderHistory } from "../services/order-history.js";
 import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
-import { getAppDashboard } from "../services/app-dashboard.js";
+import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
 import { buildSeriesLineChart } from "../services/chart-data.js";
 import { lookupProductPreview } from "../services/product-preview.js";
 import type { EmailService } from "../services/email.js";
@@ -97,7 +97,13 @@ export async function registerAppRoutes(
   app: FastifyInstance,
   deps: AppRouteDeps,
 ): Promise<void> {
-  app.addHook("preHandler", requireUser);
+  // Trang chủ /app xem được cho KHÁCH (dán link kiểm tra hoàn tiền); mọi route
+  // khác trong /app vẫn bắt đăng nhập.
+  app.addHook("preHandler", async (request, reply) => {
+    const path = (request.url.split("?")[0] ?? "").replace(/\/+$/, "");
+    if (request.method === "GET" && path === "/app") return;
+    return requireUser(request, reply);
+  });
 
   app.get("/entry-promo", async (_request, reply) => {
     const result = await query<{
@@ -157,11 +163,9 @@ export async function registerAppRoutes(
   });
 
   app.get("/", async (request, reply) => {
-    const dashboard = await getAppDashboard(
-      deps.db,
-      deps.config,
-      userId(request),
-    );
+    const dashboard = request.currentUser
+      ? await getAppDashboard(deps.db, deps.config, request.currentUser.id)
+      : await getGuestDashboard(deps.db, deps.config);
     return reply.view("app/dashboard.njk", {
       pageTitle: "Mua hoàn tiền",
       appSection: "dashboard",

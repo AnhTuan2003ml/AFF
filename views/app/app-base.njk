@@ -45,6 +45,10 @@
         <div class="px-header-actions">
           <a class="px-head-icon" href="/app/discover" aria-label="Tìm kiếm">{{ icon('search') }}</a>
 
+          {% if not currentUser %}
+          <a class="px-btn px-btn-ghost px-guest-login" href="/dang-nhap">Đăng nhập</a>
+          <a class="px-btn px-btn-dark px-guest-register" href="/dang-ky">Đăng ký</a>
+          {% else %}
           <div class="notification-menu">
             {% set notifBase = unreadNotificationCount or 0 %}
             {% set badgeTotal = notifBase + (unreadSupportCount or 0) %}
@@ -100,6 +104,7 @@
               </form>
             </div>
           </div>
+          {% endif %}
         </div>
       </div>
     </header>

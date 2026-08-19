@@ -9,6 +9,19 @@
 {% set progressRaw = 100 if reachedWithdraw else ((available * 100 / minWithdraw) | round | int) %}
 {% set progressStep = ((progressRaw / 10) | round | int) * 10 %}
 
+{% if not currentUser %}
+<section class="mb-points mb-points-guest" aria-label="Ví hoàn tiền">
+  <div>
+    <span class="mb-points-label">Ví hoàn tiền</span>
+    <b class="mb-points-value">Đăng nhập để nhận</b>
+  </div>
+  <p class="mb-points-guest-copy">Dán link sản phẩm để xem trước tiền hoàn ngay. Đăng nhập để mua qua ShopTik và nhận tiền về ví.</p>
+  <div class="mb-points-actions">
+    <a class="is-primary" href="/dang-nhap">Đăng nhập</a>
+    <a href="/dang-ky">Tạo tài khoản</a>
+  </div>
+</section>
+{% else %}
 <section class="mb-points" aria-label="Ví hoàn tiền">
   <div class="mb-points-top">
     <div>
@@ -48,3 +61,4 @@
     </div>
   </div>
 </section>
+{% endif %}

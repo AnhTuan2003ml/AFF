@@ -15,13 +15,20 @@
         <a class="px-text-link px-text-link-light" href="/app/discover">Khám phá sản phẩm <span>→</span></a>
       </div>
     </div>
-    {# Dải số liệu = ví thật của người dùng (số dư + đang chờ) kết hợp một ô
-       thương hiệu (mức hoàn + số sản phẩm đã mua), thay cho 3 con số tĩnh cũ. #}
+    {# Đăng nhập: số liệu ví thật. Khách: số liệu giới thiệu. #}
+    {% if currentUser %}
     <div class="px-home-hero-meta">
       <span><b>{{ (balances.available or 0) | vnd }}</b><small>Số dư khả dụng</small></span>
       <span><b>{{ (balances.pending or 0) | vnd }}</b><small>Đang chờ về ví</small></span>
       <span><b>Hoàn tới {{ cashbackRate }}%</b><small>Đã mua {{ purchaseStats.products or 0 }} sản phẩm</small></span>
     </div>
+    {% else %}
+    <div class="px-home-hero-meta">
+      <span><b>3 sàn</b><small>Shopee · TikTok · Lazada</small></span>
+      <span><b>Hoàn tới {{ cashbackRate }}%</b><small>Về ví minh bạch</small></span>
+      <span><b>Miễn phí</b><small>Không phí ẩn</small></span>
+    </div>
+    {% endif %}
   </section>
 
   <section class="px-section px-start" data-buy-flow data-platform-purchase='{{ platformAvailability | dump | safe }}' aria-label="Dán link kiểm tra hoàn tiền">

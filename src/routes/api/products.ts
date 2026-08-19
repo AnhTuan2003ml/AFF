@@ -25,10 +25,11 @@ export async function registerProductApiRoutes(
   app: FastifyInstance,
   deps: ApiDeps,
 ): Promise<void> {
+  // Tra cứu hoàn tiền MỞ cho khách (không cần đăng nhập) để dán link dùng ngay.
+  // Chỉ bước "Mua" (purchase) mới bắt đăng nhập.
   app.post(
     "/products/preview",
     {
-      preHandler: requireApiUser,
       config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
     },
     async (request, reply) => {
@@ -47,7 +48,7 @@ export async function registerProductApiRoutes(
         fetch,
         input.platform,
       );
-      const previewId = storePreview(request.currentUser!.id, product);
+      const previewId = storePreview(request.currentUser?.id ?? "guest", product);
       return reply.send({ product, previewId });
     },
   );
