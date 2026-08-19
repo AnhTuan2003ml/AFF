@@ -765,3 +765,20 @@ button.cal-cell.is-today:hover:not(:disabled){background:var(--lx-orange-soft)}
 .cw-day.is-future .cw-dot{color:#c4b6ab;background:transparent;border:1.5px dashed #e4d5c8}
 .checkin-cal-toggle{display:block;margin:0 auto 10px;background:none;border:0;color:var(--lx-orange);font-weight:750;font-size:12px;cursor:pointer}
 .checkin-calwrap[hidden]{display:none}
+
+/* ===== Nút Điểm danh trên thanh menu chính (mở popup) ===== */
+.px-nav-checkin{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border:1px solid #ffd2ba;border-radius:999px;background:linear-gradient(120deg,#fff3ea,#ffe6d6);color:#c2431f;font:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:transform .18s ease,box-shadow .18s ease}
+.px-nav-checkin svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.px-nav-checkin:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(238,77,45,.18)}
+@media(max-width:900px){.px-nav-checkin{display:none}}
+
+/* ===== Băng sản phẩm trên trang đăng nhập (như trang chính, gọn cho panel) ===== */
+.auth-promo{margin-top:22px;max-width:560px}
+.auth-promo[hidden]{display:none}
+.auth-promo .promo-card{flex:0 0 calc((100% - 14px)/2)}
+.auth-promo .promo-card-media{height:170px}
+.auth-promo .promo-card-body{padding:13px;grid-template-rows:minmax(38px,auto) 24px 40px;gap:8px;color:var(--lx-ink)}
+.auth-promo .promo-card-name{font-size:13px}
+.auth-promo .promo-carousel-dots{margin-top:14px}
+.auth-commerce-lead{font-size:clamp(22px,2.4vw,30px);line-height:1.15;letter-spacing:-.02em;margin:14px 0 4px;font-weight:850}
+@media(max-width:1024px){.auth-promo .promo-card{flex:0 0 calc((100% - 14px)/2)}}

@@ -23,35 +23,19 @@
 
         <div class="auth-commerce-message">
           <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
-          {# Không có dấu chấm cuối dòng: chữ in hoa cỡ lớn mà chấm câu trông
-             rất rối. Mỗi dòng là một <span> để đặt được leading riêng. #}
-          <h1><span>MUA ĐÚNG LINK</span><span>NHẬN ĐÚNG TIỀN</span></h1>
-          <p>Dán link sản phẩm, mua qua liên kết Affiliate và theo dõi tiền hoàn minh bạch trên một nền tảng.</p>
+          <h2 class="auth-commerce-lead">Sản phẩm nổi bật đang hoàn tiền</h2>
 
-          {# Vật thể chính của cột: một "hoá đơn hoàn tiền" bằng kính mờ. Nói
-             thẳng lời hứa của sản phẩm bằng con số thay vì mô tả chung chung. #}
-          <figure class="auth-receipt">
-            <figcaption>
-              <span>Ví dụ một đơn hàng</span>
-              <b class="auth-receipt-rate">Hoàn 8%</b>
-            </figcaption>
-            <div class="auth-receipt-row">
-              <span>Bạn thanh toán trên sàn</span>
-              <b>500.000 ₫</b>
+          {# Băng sản phẩm giống trang chính: trỏ chuột + lăn chuột để chuyển
+             sản phẩm, có mũi tên ‹ › và chấm trang (promo-carousel.js). Nạp từ
+             endpoint công khai /app/promo-products (khách vẫn xem được). #}
+          <section class="promo-carousel auth-promo" data-promo-carousel data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
+            <div class="promo-carousel-stage">
+              <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+              <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+              <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
             </div>
-            <div class="auth-receipt-tear" aria-hidden="true"></div>
-            <div class="auth-receipt-row is-total">
-              <span>ShopTik hoàn về ví</span>
-              <b>+ 40.000 ₫</b>
-            </div>
-          </figure>
-
-          {# Quảng bá: top sản phẩm bán chạy nhất, cuộn ngang để xem thêm. Nạp
-             từ endpoint công khai /app/promo-products (auth-bestsellers.js). #}
-          <div class="auth-bestsellers" data-auth-bestsellers hidden>
-            <div class="auth-bestsellers-head"><b>🔥 Bán chạy nhất trên ShopTik</b><small>Cuộn để xem thêm →</small></div>
-            <div class="auth-bestsellers-track" data-auth-bestsellers-track></div>
-          </div>
+            <div class="promo-carousel-dots" data-promo-progress></div>
+          </section>
         </div>
 
         <div class="auth-commerce-trust" aria-label="Điểm nổi bật">
@@ -123,5 +107,5 @@
 
   {% include "partials/policy-sheet.njk" %}
   <script src="/assets/policy-sheet.js?v={{ assetVersion }}" defer></script>
-  <script src="/assets/auth-bestsellers.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
