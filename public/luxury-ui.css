@@ -398,9 +398,21 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 
 /* ===== Trang Hỗ trợ: form + "Phản Hồi" cạnh nhau (desktop); mobile là drawer ===== */
 .support-shell { max-width: 640px; margin: 0 auto; }
-.support-shell.has-reply { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+/* Desktop: 2 panel CÂN ĐỐI — cùng chiều rộng (1fr) và cùng chiều cao (stretch) */
+.support-shell.has-reply { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.support-shell.has-reply > .panel { display: flex; flex-direction: column; }
+.support-shell.has-reply .support-request-form { flex: 1 1 auto; display: flex; flex-direction: column; gap: 18px; }
+.support-shell.has-reply .support-request-form [data-support-submit] { margin-top: auto; }
+.support-shell.has-reply .support-thread { flex: 1 1 auto; align-content: start; }
 .support-shell .support-thread-panel { margin: 0; max-width: none; }
+/* Bỏ căn giữa (di sản bản 1 cột) để 2 panel căn trái đồng bộ khi cạnh nhau */
+.support-shell.has-reply .support-request-panel .panel-heading { text-align: left; }
+.support-shell.has-reply .support-request-panel .panel-heading > div { margin-left: 0; margin-right: 0; }
+.support-shell.has-reply .support-request-form .button-primary { margin-left: 0; margin-right: 0; width: 100%; }
 .support-thread-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.support-thread-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--lx-line); display: flex; gap: 10px; align-items: flex-start; color: var(--lx-muted); font-size: 12px; line-height: 1.45; }
+.support-thread-foot-ico { flex: 0 0 auto; color: var(--lx-orange); }
+.support-thread-foot-ico svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .support-reply-trigger { display: none; }
 .support-reply-close { display: none; }
 
@@ -428,7 +440,11 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
   }
   .support-thread-panel[data-reply-panel] .support-thread {
     flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    padding: 16px 16px calc(28px + env(safe-area-inset-bottom));
+    padding: 16px 16px 8px;
+  }
+  .support-thread-panel[data-reply-panel] .support-thread-foot {
+    flex: 0 0 auto; margin: 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--lx-line); background: var(--lx-paper);
   }
   .support-reply-close {
     display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto;
