@@ -197,15 +197,12 @@
 
 /* Tab nhỏ ở mép phải để MỞ LẠI khi đã tắt trợ lý. */
 .camio-asst-reopen {
-  position: fixed; right: 0; bottom: 20%; z-index: 210; width: 34px; height: 46px;
-  border: 0; border-radius: 12px 0 0 12px; cursor: pointer;
-  background: var(--lx-orange) url("/assets/images/mascot/camio-vuive.png") center/26px no-repeat;
+  position: fixed; right: 0; bottom: 20%; z-index: 210; width: 40px; height: 52px;
+  border: 0; border-radius: 14px 0 0 14px; cursor: pointer; overflow: hidden;
+  background: var(--lx-orange) url("/assets/images/mascot/camio-vuive.png") center 24% / 58px no-repeat;
   box-shadow: -4px 6px 16px rgba(219, 72, 39, .34);
 }
 .camio-asst-reopen:hover { filter: brightness(1.05); }
-
-/* Khi trợ lý đang bật, ẩn nút hỗ trợ nổi cũ để tránh 2 CamiO ở góc phải. */
-body.camio-on .st-support-fab { display: none; }
 
 @media (max-width: 720px) {
   .camio-asst { right: 14px; bottom: 84px; width: 96px; }

@@ -161,9 +161,8 @@
       <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<b>Tài khoản</b></a>
     </nav>
 
-    <a class="st-support-fab" href="/app/support" aria-label="Chăm sóc khách hàng">
-      <span class="st-fab-mascot" data-fab-mascot aria-hidden="true"></span><span class="st-fab-label">Hỗ trợ</span>
-    </a>
+    {# Nút hỗ trợ nổi cũ đã bỏ: trợ lý CamiO (camio-assistant.js) là điểm vào CSKH
+       duy nhất ở góc phải — bấm vào linh vật để mở trang hỗ trợ. #}
 
     {# Modal xác nhận có linh vật — dùng chung cho đăng xuất và các thao tác
        nhạy cảm (form gắn data-blob-confirm). #}

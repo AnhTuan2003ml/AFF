@@ -12,8 +12,8 @@
  * @media(prefers-reduced-motion:reduce){*{transition/animation-duration:.001ms}}
  * trong luxury-ui.css vô hiệu hoá — vẫn "sống" khi máy tắt hiệu ứng hệ thống.
  *
- * Là mascot DUY NHẤT ở góc phải: khi bật, ẩn nút hỗ trợ nổi cũ (body.camio-on);
- * khi tắt, nút hỗ trợ nổi hiện lại làm đường vào CSKH dự phòng.
+ * Là mascot DUY NHẤT ở góc phải (đã bỏ hẳn nút hỗ trợ nổi cũ để không trùng);
+ * bấm mascot mở /app/support. Khi tắt chỉ còn một tab nhỏ ở mép phải để mở lại.
  *
  * API: window.CamioAssistant.react(kind, {title, body, onAction}) — kind:
  * "notify" | "cashback" | "support" | "error" | "welcome".
@@ -25,10 +25,10 @@
   function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
 
-  var OFF = lsGet("camio-off") === "1";
-  var MIN = lsGet("camio-min") === "1";
+  var OFF = lsGet("camio-asst-off") === "1";
+  var MIN = lsGet("camio-asst-min") === "1";
   var busy = false;      // đang chạy reaction → tạm dừng chớp mắt/idle mood
-  var idleMood = "happy";
+  var idleMood = "confident"; // tư thế đứng tự tin làm nền idle (bình tĩnh)
 
   // ---------- DOM ----------
   var root = document.createElement("div");
@@ -58,7 +58,7 @@
   var stage = document.createElement("div");
   stage.className = "camio-asst-stage";
   stage.title = "Bấm để mở hỗ trợ · kéo để di chuyển";
-  var mascot = window.BlobMascot.create({ mood: "happy", label: "Trợ lý CamiO" });
+  var mascot = window.BlobMascot.create({ mood: "confident", label: "Trợ lý CamiO" });
   stage.appendChild(mascot.el);
 
   root.appendChild(tools);
@@ -76,7 +76,7 @@
   // ---------- vị trí lưu ----------
   (function applyPos() {
     var pos = null;
-    try { pos = JSON.parse(lsGet("camio-pos") || "null"); } catch (e) { pos = null; }
+    try { pos = JSON.parse(lsGet("camio-asst-pos") || "null"); } catch (e) { pos = null; }
     if (pos && typeof pos.right === "number" && typeof pos.bottom === "number") {
       root.style.right = Math.max(6, pos.right) + "px";
       root.style.bottom = Math.max(6, pos.bottom) + "px";
@@ -85,14 +85,13 @@
   })();
 
   // ---------- trạng thái bật/tắt/thu nhỏ ----------
-  function setActive(on) { document.body.classList.toggle("camio-on", on); }
   function setMin(m) {
-    MIN = m; lsSet("camio-min", m ? "1" : "0");
+    MIN = m; lsSet("camio-asst-min", m ? "1" : "0");
     root.setAttribute("data-state", m ? "min" : "open");
     if (m) hideBubble();
   }
-  function showOn() { root.hidden = false; reopen.hidden = true; setActive(true); setMin(MIN); startIdle(); }
-  function showOff() { root.hidden = true; reopen.hidden = false; setActive(false); }
+  function showOn() { root.hidden = false; reopen.hidden = true; setMin(MIN); startIdle(); }
+  function showOff() { root.hidden = true; reopen.hidden = false; }
 
   // ---------- idle: lơ lửng + đưa nhẹ (WAAPI, sống cả khi reduced-motion) ----------
   var floatAnim = null;
@@ -165,8 +164,8 @@
     );
   }
 
-  function settle(mood, ms) {
-    window.setTimeout(function () { idleMood = mood || "happy"; mascot.setMood(idleMood); busy = false; }, ms || 1500);
+  function settle(ms) {
+    window.setTimeout(function () { mascot.setMood(idleMood); busy = false; }, ms || 1500);
   }
 
   // ---------- reactions ----------
@@ -176,26 +175,26 @@
     if (MIN) setMin(false);
     busy = true;
     if (kind === "cashback") {
-      mascot.setMood("tutin");
+      mascot.setMood("haohung"); // giơ nắm đấm ăn mừng
       jump(90); window.setTimeout(function () { jump(55); }, 340);
       showBubble(opts.title || "Bạn vừa được hoàn tiền! 🎉", opts.body || "", opts.onAction, 6500);
-      settle("happy", 1900);
+      settle(1900);
     } else if (kind === "support") {
-      mascot.setMood("haohung"); jump(72);
+      mascot.setMood("thichthu"); jump(60); // chăm chú lắng nghe
       showBubble(opts.title || "CSKH vừa phản hồi", opts.body || "", opts.onAction, 11000);
-      settle("happy", 1500);
+      settle(1500);
     } else if (kind === "error") {
-      mascot.setMood("ngacnhien"); shake();
+      mascot.setMood("ngacnhien"); shake(); // ngạc nhiên + rung nhẹ, không chạy
       showBubble(opts.title || "Có lỗi xảy ra", opts.body || "", opts.onAction, 8000);
-      settle("happy", 1700);
+      settle(1700);
     } else if (kind === "welcome") {
-      mascot.setMood("haohung"); jump(46);
+      mascot.setMood("vuive"); jump(46); // vẫy tay chào
       showBubble("Chào mừng bạn quay lại!", opts.body || "", null, 6000);
-      settle("happy", 1700);
+      settle(1700);
     } else { // notify
       mascot.setMood("haohung"); jump(70);
       showBubble(opts.title || "Bạn có thông báo mới", opts.body || "", opts.onAction, 9000);
-      settle("happy", 1400);
+      settle(1400);
     }
   }
 
@@ -226,7 +225,7 @@
     dragging = false; root.classList.remove("dragging");
     try { root.releasePointerCapture(e.pointerId); } catch (er) { /* ignore */ }
     if (moved) {
-      lsSet("camio-pos", JSON.stringify({
+      lsSet("camio-asst-pos", JSON.stringify({
         right: window.innerWidth - root.getBoundingClientRect().right,
         bottom: window.innerHeight - root.getBoundingClientRect().bottom
       }));
@@ -249,8 +248,8 @@
 
   // ---------- điều khiển ----------
   btnMin.addEventListener("click", function (e) { e.stopPropagation(); setMin(!MIN); });
-  btnOff.addEventListener("click", function (e) { e.stopPropagation(); OFF = true; lsSet("camio-off", "1"); showOff(); });
-  reopen.addEventListener("click", function () { OFF = false; lsSet("camio-off", "0"); showOn(); });
+  btnOff.addEventListener("click", function (e) { e.stopPropagation(); OFF = true; lsSet("camio-asst-off", "1"); showOff(); });
+  reopen.addEventListener("click", function () { OFF = false; lsSet("camio-asst-off", "0"); showOn(); });
 
   // ---------- khởi động ----------
   if (OFF) { showOff(); } else { showOn(); }
