@@ -101,7 +101,9 @@ export async function registerAppRoutes(
   // khác trong /app vẫn bắt đăng nhập.
   app.addHook("preHandler", async (request, reply) => {
     const path = (request.url.split("?")[0] ?? "").replace(/\/+$/, "");
-    if (request.method === "GET" && path === "/app") return;
+    // Trang chủ + băng sản phẩm đề xuất (dữ liệu chung) mở cho khách.
+    const guestGet = new Set(["/app", "/app/promo-products"]);
+    if (request.method === "GET" && guestGet.has(path)) return;
     return requireUser(request, reply);
   });
 

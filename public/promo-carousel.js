@@ -33,10 +33,12 @@
     });
     var payload = await response.json().catch(function () { return null; });
     if (!response.ok) {
-      throw new Error(
+      var err = new Error(
         (payload && payload.error && payload.error.message) ||
           "Hệ thống đang bận. Vui lòng thử lại."
       );
+      err.status = response.status;
+      throw err;
     }
     return payload;
   }
@@ -56,6 +58,11 @@
       label.textContent = original;
     } catch (error) {
       if (purchaseWindow) purchaseWindow.close();
+      // Khách chưa đăng nhập bấm Mua → đẩy sang trang đăng nhập.
+      if (error && error.status === 401) {
+        window.location.assign("/dang-nhap?next=" + encodeURIComponent("/app"));
+        return;
+      }
       label.textContent = "Thử lại";
       window.setTimeout(function () { label.textContent = original; }, 2500);
     } finally {
