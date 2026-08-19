@@ -164,6 +164,14 @@
     root.addEventListener("mouseleave", function () { paused = false; });
     root.addEventListener("focusin", function () { paused = true; });
     root.addEventListener("focusout", function () { paused = false; });
+    // Vuốt tay: tạm dừng tự xoay khi đang chạm/kéo, chạy lại sau vài giây.
+    var resumeTimer = null;
+    viewport.addEventListener("pointerdown", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); });
+    viewport.addEventListener("touchstart", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); }, { passive: true });
+    window.addEventListener("pointerup", function () {
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(function () { paused = false; }, 4500);
+    });
 
     var scrollThrottle = null;
     viewport.addEventListener("scroll", function () {

@@ -10,7 +10,6 @@
     <div class="px-home-hero-copy">
       <span>SHOP · TRACK · CASHBACK</span>
       <h1 id="px-home-title">Mua sắm.<br>Hoàn tiền.<br>Rõ ràng.</h1>
-      <p>Dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada. ShopTik xử lý liên kết Affiliate và theo dõi khoản hoàn cho bạn.</p>
       <div class="px-home-hero-actions">
         <a class="px-btn px-btn-light" href="#shop-search">Kiểm tra hoàn tiền</a>
         <a class="px-text-link px-text-link-light" href="/app/discover">Khám phá sản phẩm <span>→</span></a>
@@ -51,12 +50,14 @@
     <section class="promo-carousel px-products-section" data-promo-carousel data-endpoint="/app/promo-products?list={{ row.list }}" hidden aria-label="{{ row.title }}">
       <header class="px-section-head px-products-head">
         <div><h2>{{ row.title }}</h2></div>
-        <div class="promo-carousel-nav"><button type="button" class="promo-carousel-arrow" data-promo-prev aria-label="Trước">←</button><button type="button" class="promo-carousel-arrow" data-promo-next aria-label="Sau">→</button></div>
       </header>
-      {# Điều hướng dùng DUY NHẤT cặp mũi tên ‹ › ở header (kèm vuốt ngang trên
-         mobile). Đã bỏ hàng chấm trang để tránh trùng điều hướng và tránh đè
-         lên nút hỗ trợ nổi. promo-carousel.js tự bỏ qua khi không có dots. #}
-      <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+      {# Vuốt ngang để lướt (scroll-snap, không cần bấm nút). Mũi tên đặt ở 2 mép
+         trái/phải cho desktop; ẩn trên mobile vì đã vuốt được. #}
+      <div class="promo-carousel-stage">
+        <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Trước">←</button>
+        <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+        <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sau">→</button>
+      </div>
     </section>
   {% endfor %}
 {% endblock %}

@@ -1,0 +1,15 @@
+{# Bảng chính sách kéo từ chân màn hình lên (bottom sheet) cho trang đăng nhập /
+   đăng ký. Mở từ các link có [data-policy-sheet]; nội dung nạp bằng fetch. Nếu
+   JS không chạy, link vẫn mở trang đầy đủ như bình thường. #}
+<div class="policy-sheet-scrim" data-policy-sheet-scrim hidden inert>
+  <section class="policy-sheet" role="dialog" aria-modal="true" aria-labelledby="policy-sheet-title">
+    <header class="policy-sheet-head">
+      <span class="policy-sheet-grip" aria-hidden="true"></span>
+      <h2 id="policy-sheet-title" data-policy-sheet-title>Chính sách</h2>
+      <button type="button" class="policy-sheet-close" data-policy-sheet-close aria-label="Đóng">×</button>
+    </header>
+    <div class="policy-sheet-body" data-policy-sheet-body tabindex="0">
+      <p class="policy-sheet-state">Đang tải nội dung…</p>
+    </div>
+  </section>
+</div>
