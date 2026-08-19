@@ -189,9 +189,23 @@
       progressThumb.style.left = ((viewport.scrollLeft / max) * (100 - w)).toFixed(2) + "%";
     }
 
-    // Desktop: trỏ chuột vào rồi LĂN CHUỘT để cuộn NGANG (như trang quảng cáo
-    // sản phẩm chuyên nghiệp). Chỉ chặn cuộn trang khi băng còn cuộn được theo
-    // hướng đó — tới mép thì trả lại cuộn trang bình thường.
+    // Bề rộng một sản phẩm (thẻ + khoảng cách) để bước từng sản phẩm.
+    function cardStep() {
+      var first = track.children[0];
+      if (!first) return viewport.clientWidth;
+      var w = first.getBoundingClientRect().width;
+      var gap = parseFloat(window.getComputedStyle(track).columnGap || window.getComputedStyle(track).gap || "14") || 14;
+      return w + gap;
+    }
+    function stepCard(dir) {
+      viewport.scrollTo({ left: viewport.scrollLeft + dir * cardStep(), behavior: "smooth" });
+      window.setTimeout(updateProgress, 320);
+    }
+
+    // Desktop: trỏ chuột vào rồi LĂN CHUỘT — mỗi nấc chuyển ĐÚNG MỘT sản phẩm.
+    // Lăn LÊN = sản phẩm trước, lăn XUỐNG = sản phẩm sau. Tới mép thì trả lại
+    // cuộn trang bình thường (không kẹt).
+    var wheelLock = false;
     viewport.addEventListener("wheel", function (e) {
       var max = viewport.scrollWidth - viewport.clientWidth;
       if (max <= 0) return;
@@ -199,11 +213,13 @@
       if (!delta) return;
       var atStart = viewport.scrollLeft <= 0;
       var atEnd = viewport.scrollLeft >= max - 1;
-      if ((delta < 0 && !atStart) || (delta > 0 && !atEnd)) {
-        e.preventDefault();
-        viewport.scrollLeft += delta;
-        pauseFor(3500);
-      }
+      if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return; // tới mép: cuộn trang
+      e.preventDefault();
+      if (wheelLock) return;
+      wheelLock = true;
+      stepCard(delta > 0 ? 1 : -1);
+      pauseFor(3500);
+      window.setTimeout(function () { wheelLock = false; }, 280);
     }, { passive: false });
 
     var scrollThrottle = null;

@@ -559,3 +559,9 @@ textarea{min-height:118px;resize:vertical}input:focus,select:focus,textarea:focu
 .promo-carousel-progress i{position:absolute;top:0;left:0;height:100%;width:24%;border-radius:99px;background:linear-gradient(90deg,var(--lx-orange),#ff9c6b)}
 .promo-carousel-viewport{cursor:default}
 @media(max-width:820px){.promo-carousel-progress{margin-top:12px;height:3px}}
+
+/* ===== Băng đề xuất: chừa chỗ cho card nhô khi hover + hiệu ứng nhô ===== */
+.promo-carousel-viewport{padding:10px 0 16px}
+.promo-carousel-stage .promo-card{transition:transform .22s ease, box-shadow .22s ease}
+.promo-carousel-stage .promo-card:hover{transform:translateY(-8px);box-shadow:0 20px 42px rgba(77,49,34,.18)}
+.promo-carousel-progress{margin-top:4px}
