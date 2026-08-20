@@ -13,9 +13,12 @@
 
 {% block body %}
   <main class="auth-shell auth-commerce" id="main-content">
-    {# Panel giới thiệu lấy VIDEO quảng cáo làm chủ thể: thương hiệu ở trên,
-       một dòng thông điệp ngắn, video lớn chiếm trung tâm, dải nền tảng dưới. #}
+    {# Panel giới thiệu: ẢNH sản phẩm quảng cáo làm NỀN toàn panel, tự đổi theo
+       vòng tròn (sản phẩm cuối → quay lại đầu). Thương hiệu / thông điệp / sản
+       phẩm đang hoàn tiền / dải nền tảng nổi trên lớp phủ tối. #}
     <section class="auth-commerce-story auth-vhero" aria-label="Giới thiệu ShopTik">
+      <div class="auth-vhero-bg" data-auth-ad data-endpoint="/app/promo-products?list=best" aria-hidden="true"></div>
+      <div class="auth-vhero-shade" aria-hidden="true"></div>
       <div class="auth-vhero-inner">
         <a class="auth-commerce-brand" href="/" aria-label="ShopTik - Trang chủ">
           <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="">
@@ -27,9 +30,9 @@
           <h2><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part"><em>Hoàn tiền tối ưu.</em></span></h2>
         </div>
 
-        {# Video quảng cáo — tự phát, lặp, tắt tiếng để trình duyệt cho autoplay. #}
-        <div class="auth-vhero-video" aria-label="Video giới thiệu ShopTik">
-          <video src="/assets/videologo.mp4?v={{ assetVersion }}" autoplay loop muted playsinline preload="auto"></video>
+        <div class="auth-ad-chip" data-auth-ad-chip hidden>
+          <span class="auth-ad-chip-badge" data-auth-ad-cashback hidden></span>
+          <span class="auth-ad-chip-name" data-auth-ad-name></span>
         </div>
 
         <div class="auth-vhero-trust" aria-label="Nền tảng hỗ trợ">
@@ -76,4 +79,6 @@
   </main>
 
   {% include "partials/public-footer.njk" %}
+
+  <script src="/assets/auth-ad.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
