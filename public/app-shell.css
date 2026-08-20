@@ -512,28 +512,34 @@ body {
   background: var(--sh-hover);
 }
 
-/* Đăng xuất: mặc định trung tính; hover mới chuyển đỏ nhạt. Khóa bằng
-   selector (0,3,1) vì dv13 có rule `button[type="submit"]` (0,2,1)
-   !important ép nền đỏ CTA lên mọi nút submit. */
+/* Đăng xuất: chữ và icon đỏ ngay từ trạng thái nghỉ để tách khỏi các mục điều
+   hướng bình thường; hover chỉ thêm nền đỏ nhạt. Khóa bằng selector (0,3,1) vì
+   dv13 có rule `button[type="submit"]` (0,2,1) !important ép nền đỏ CTA lên
+   mọi nút submit — nếu không, nút này sẽ thành khối đỏ đặc. */
 .st-app button.st-menu-logout[type="submit"],
 .backoffice-shell button.st-menu-logout[type="submit"],
 .st-menu-logout {
   border: 0 !important;
-  color: var(--sh-copy) !important;
+  color: var(--danger) !important;
   background: transparent !important;
   box-shadow: none !important;
   text-transform: none !important;
 }
 
+/* Ghi đè `color: var(--sh-muted)` của rule icon dùng chung phía trên. */
+.st-menu-logout svg {
+  color: var(--danger);
+}
+
 .st-app button.st-menu-logout[type="submit"]:hover,
 .backoffice-shell button.st-menu-logout[type="submit"]:hover,
 .st-menu-logout:hover {
-  color: var(--sh-accent-text) !important;
-  background: var(--sh-accent-soft) !important;
+  color: var(--danger) !important;
+  background: var(--danger-soft) !important;
 }
 
 .st-menu-logout:hover svg {
-  color: var(--sh-accent-text);
+  color: var(--danger);
 }
 
 .st-menu-divider {

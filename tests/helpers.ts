@@ -68,6 +68,8 @@ export function testConfig(): AppConfig {
     IP_HASH_PEPPER: "c".repeat(64),
     FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
     SESSION_TTL_HOURS: 168,
+    MOBILE_ACCESS_TOKEN_TTL_MINUTES: 30,
+    MOBILE_REFRESH_TOKEN_TTL_DAYS: 60,
     OTP_TTL_MINUTES: 10,
     OTP_MAX_ATTEMPTS: 5,
     OTP_MAX_SENDS_PER_HOUR: 5,

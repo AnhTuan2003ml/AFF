@@ -9,7 +9,8 @@ import view from "@fastify/view";
 import Fastify from "fastify";
 import nunjucks from "nunjucks";
 import { registerCsrfProtection } from "./auth/csrf.js";
-import { registerSessionHooks } from "./auth/session.js";
+import { readBearerToken, registerSessionHooks } from "./auth/session.js";
+import { sha256 } from "./lib/crypto.js";
 import { bootstrapDefaultAdmins, syncAdminAccountsFromEnv } from "./auth/admin-sync.js";
 import { loadConfig } from "./config.js";
 import { assertDatabaseReady, createDatabase, query } from "./db.js";
@@ -128,6 +129,23 @@ await app.register(rateLimit, {
     request.url.startsWith("/assets/") ||
     request.url === "/-/live" ||
     request.url === "/-/ready",
+  /*
+   * Khóa bộ đếm: token thiết bị nếu là app, còn lại vẫn là IP.
+   *
+   * Mặc định của plugin đếm theo IP. Với web thì tạm ổn, nhưng người dùng app
+   * đi qua NAT của nhà mạng — hàng nghìn thuê bao 4G dùng chung một IP công
+   * cộng, nghĩa là cả nhóm chia nhau đúng một hạn mức 300/phút rồi lãnh 429
+   * tập thể. Web còn đỡ vì tệp tĩnh đã được allowList bỏ qua, còn app thì MỌI
+   * request đều là API có tính hạn mức.
+   *
+   * Chưa đăng nhập (đăng nhập, quên mật khẩu…) thì vẫn đếm theo IP — đó đúng
+   * là chỗ cần chặn thử sai hàng loạt. Băm token để không ghi bí mật vào khóa
+   * bộ đếm nằm trong bộ nhớ.
+   */
+  keyGenerator: (request) => {
+    const bearer = readBearerToken(request);
+    return bearer ? `tok:${sha256(bearer)}` : request.ip;
+  },
   errorResponseBuilder: (_request, context) =>
     new AppError(
       "RATE_LIMITED",

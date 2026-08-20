@@ -8,6 +8,7 @@ AFF/
 ├── views/          # Template Nunjucks (server-rendered)
 ├── public/         # CSS/JS/ảnh tĩnh, phục vụ tại /assets/*
 ├── migrations/     # SQL thuần, chạy tuần tự bằng npm run db:migrate
+├── mobile/         # App React Native (Expo) — project riêng, xem mobile/README.md
 ├── tests/          # Vitest (DB test dùng PGlite, không cần Postgres)
 ├── scripts/        # Tiện ích CLI: migrate, seed, tạo admin, dọn demo...
 ├── infra/          # Cấu hình reverse proxy mẫu
@@ -34,8 +35,8 @@ AFF/
 
 | File | Vai trò |
 | --- | --- |
-| `session.ts` | Session cookie (token ngẫu nhiên đã băm, `HttpOnly`/`Secure`/`SameSite=Lax`), gắn `request.currentUser` |
-| `csrf.ts` | CSRF token cho form + API |
+| `session.ts` | Session cookie (token ngẫu nhiên đã băm, `HttpOnly`/`Secure`/`SameSite=Lax`) **và** `Authorization: Bearer` của app di động — cùng một hook, cùng bảng `sessions`. Gắn `request.currentUser` + `request.authScheme` |
+| `csrf.ts` | CSRF token cho form + API. Bỏ qua khi `authScheme === "bearer"` — trình duyệt không tự đính kèm header Authorization nên không có gì để chống |
 | `guards.ts` | `requireUser` (redirect về đăng nhập), `requireApiUser` (401 JSON), guard theo role cho backoffice |
 | `admin-sync.ts` | Admin mặc định hardcode + đồng bộ allowlist admin từ ENV khi khởi động |
 
@@ -92,6 +93,8 @@ Nhóm theo chức năng:
 | File | Vai trò |
 | --- | --- |
 | `auth.ts`, `otp.ts`, `email.ts` | Đăng ký/đăng nhập, OTP (băm + pepper, giới hạn gửi/thử), gửi mail (console/smtp) |
+| `mobile-token.ts` | Cặp access/refresh token cho app di động. Dùng lại bảng `sessions`, xoay cả hai token mỗi lần làm mới |
+| `account-deletion.ts` | Xóa tài khoản tự phục vụ (chặn cứng của App Store/CH Play). Xóa mềm theo đúng quy ước `deleted_at` của khu quản trị — gỡ danh tính, giữ nguyên ledger |
 | `business-config.ts` | Cấu hình nghiệp vụ trong DB (ưu tiên hơn ENV seed) |
 | `user-policy.ts` | **Nguồn duy nhất** của chính sách người dùng (trang + modal + email) |
 | `mission.ts` | Nhiệm vụ, claim thưởng, thông báo in-app |

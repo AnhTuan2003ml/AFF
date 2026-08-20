@@ -13,6 +13,23 @@ import {
 import type { CurrentUser } from "../types/fastify.js";
 
 const SESSION_COOKIE = "aff_session";
+const BEARER_PREFIX = "Bearer ";
+
+/**
+ * Rút access token từ header Authorization.
+ *
+ * App di động gọi API từ nguồn khác nên trình duyệt/cookie không tham gia —
+ * token đi thẳng trong header. Để ở đây (thay vì trong service) vì cả hook
+ * xác thực lẫn bộ đếm hạn mức ở server.ts đều cần đọc, và cần đọc y hệt nhau.
+ */
+export function readBearerToken(request: {
+  headers: { authorization?: string | undefined };
+}): string | null {
+  const header = request.headers.authorization;
+  if (!header || !header.startsWith(BEARER_PREFIX)) return null;
+  const token = header.slice(BEARER_PREFIX.length).trim();
+  return token || null;
+}
 
 interface SessionRow {
   token_hash: string;
@@ -49,9 +66,13 @@ export async function registerSessionHooks(
 ): Promise<void> {
   app.decorateRequest("currentUser", null);
   app.decorateRequest("sessionToken", null);
+  app.decorateRequest("authScheme", null);
 
   app.addHook("onRequest", async (request, reply) => {
-    const rawToken = request.cookies[SESSION_COOKIE];
+    // Bearer được ưu tiên: nếu app đã gửi token thì cookie (nếu có) không
+    // liên quan, và ngược lại web không bao giờ gửi header này.
+    const bearerToken = readBearerToken(request);
+    const rawToken = bearerToken ?? request.cookies[SESSION_COOKIE];
     if (!rawToken) return;
 
     const result = await query<SessionRow>(
@@ -73,10 +94,14 @@ export async function registerSessionHooks(
 
     const row = result.rows[0];
     if (!row) {
-      reply.clearCookie(SESSION_COOKIE, { path: "/" });
+      // Chỉ dọn cookie hỏng của trình duyệt. Access token của app hết hạn là
+      // chuyện bình thường — app sẽ tự gọi /auth/token/refresh — nên đừng
+      // đụng vào cookie chỉ vì header sai.
+      if (!bearerToken) reply.clearCookie(SESSION_COOKIE, { path: "/" });
       return;
     }
 
+    request.authScheme = bearerToken ? "bearer" : "cookie";
     request.sessionToken = rawToken;
     request.currentUser = {
       id: row.user_id,

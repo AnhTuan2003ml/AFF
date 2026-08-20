@@ -83,25 +83,10 @@ npm run shopee:report:test     # thử kéo báo cáo chuyển đổi Shopee
 
 | Tài liệu | Nội dung |
 | --- | --- |
-| [`docs/01-tong-quan.md`](docs/01-tong-quan.md) | Bài toán, mô hình chia tiền, kiến trúc tổng thể |
-| [`docs/02-luong-nghiep-vu.md`](docs/02-luong-nghiep-vu.md) | Luồng mua hoàn tiền end-to-end, đối soát đơn, giải ngân |
-| [`docs/03-cau-truc-ma-nguon.md`](docs/03-cau-truc-ma-nguon.md) | Bản đồ thư mục, routes, services, views |
-| [`docs/04-du-lieu-va-ledger.md`](docs/04-du-lieu-va-ledger.md) | Schema CSDL, mô hình ledger kế toán kép, 4 ví |
-| [`docs/05-cai-dat-va-van-hanh.md`](docs/05-cai-dat-va-van-hanh.md) | Biến môi trường, SMTP/OTP, tích hợp sàn, production |
-| [`docs/06-api-va-routes.md`](docs/06-api-va-routes.md) | Toàn bộ endpoint API + trang web |
-| [`docs/07-quy-uoc-phat-trien.md`](docs/07-quy-uoc-phat-trien.md) | Quy ước code, tiền tệ, bảo mật, kiểm thử |
 
-## Nguyên tắc bất di bất dịch
+Hai chỗ vẫn cần Boss
+iOS chưa build được. Không phải thiếu cấu hình — cấu hình xong hết rồi — mà vì .ipa bắt buộc có tài khoản Apple Developer 99 USD/năm ngay từ khâu kiểm thử, và bản ad-hoc còn phải đăng ký sẵn UDID của từng iPhone. Chưa có thì npm run build sẽ chạy xong Android rồi dừng ở khâu chứng chỉ iOS. Trong lúc đó dùng npm run build:android.
 
-- **Tiền VND là số nguyên**, hoa hồng tính bằng bps (1/10000), làm tròn xuống.
-- **Mọi thay đổi số dư đi qua bút toán ledger cân bằng** DEBIT/CREDIT — không bao giờ sửa trực tiếp số dư.
-- **Không bịa số tiền hoàn** khi sàn chưa trả hoa hồng — hiển thị "Đang cập nhật".
-- **Redirect Affiliate phải qua allowlist host** (`isSafeAffiliateRedirect`).
-- **Không suy ra người mua từ email** — chỉ đối soát qua clickId / Sub ID / tracking code.
-- Thông báo lỗi cho người dùng bằng tiếng Việt, qua `AppError(code, message, statusCode)`.
+Ba trường trong submit.production đang để giá trị tạm (CHUA_CO) — appleId, ascAppId, appleTeamId lấy từ App Store Connect, và tệp khoá Google Play đặt ở secrets/google-play-service-account.json. Chỉ cần tới GĐ 4 lúc nộp cửa hàng.
 
-## Kiểm tra trước khi bàn giao
-
-```bash
-npm run typecheck && npm test && npm run build
-```
+Và ba lệnh khởi động vẫn chờ Boss: npm run eas -- login, npm run eas -- init --id 25612d71-daf1-428d-afb6-8f2551167bbe, rồi npm run build:android.

@@ -3,7 +3,8 @@
 {#
   Đây là KHU QUẢNG BÁ SÀN, không phải bộ chọn. purchase.js tự nhận diện sàn từ
   URL được dán nên người dùng không cần chọn Shopee/TikTok/Lazada thủ công.
-  ui-motion.js tự luân phiên ba slide và tạm dừng khi tab không còn hiển thị.
+  ui-motion.js tự luân phiên ba slide, tạm dừng khi tab không còn hiển thị và
+  khi người dùng tự bấm vào ba vạch chỉ báo bên phải để chọn sàn.
 #}
 <div class="lux-platform-showcase" data-platform-showcase aria-label="ShopTik hỗ trợ Shopee, TikTok Shop và Lazada">
   <article class="lux-platform-slide is-active" data-platform-ad="SHOPEE" aria-hidden="false">
@@ -18,9 +19,9 @@
     <span class="lux-platform-logo">{{ platform_logo('LAZADA') }}</span>
     <span class="lux-platform-copy"><small>✓ ĐÃ HỖ TRỢ</small><strong>Lazada</strong><span>Tra cứu sản phẩm và khoản hoàn dự kiến mà không cần đổi chế độ.</span></span>
   </article>
-  <div class="lux-platform-dots" aria-hidden="true">
-    <button class="lux-platform-dot is-active" type="button" tabindex="-1"></button>
-    <button class="lux-platform-dot" type="button" tabindex="-1"></button>
-    <button class="lux-platform-dot" type="button" tabindex="-1"></button>
+  <div class="lux-platform-dots" role="tablist" aria-label="Chọn sàn để xem">
+    <button class="lux-platform-dot is-active" type="button" role="tab" aria-selected="true" aria-label="Shopee" data-platform-go="0"></button>
+    <button class="lux-platform-dot" type="button" role="tab" aria-selected="false" aria-label="TikTok Shop" data-platform-go="1"></button>
+    <button class="lux-platform-dot" type="button" role="tab" aria-selected="false" aria-label="Lazada" data-platform-go="2"></button>
   </div>
 </div>

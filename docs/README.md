@@ -12,6 +12,7 @@ Bộ tài liệu dành cho người mới tham gia dự án và AI/agent cần n
 | 5 | [Cài đặt và vận hành](05-cai-dat-va-van-hanh.md) | Chạy local/production thế nào? Cần biến môi trường gì? |
 | 6 | [API và routes](06-api-va-routes.md) | Có những endpoint và trang nào? |
 | 7 | [Quy ước phát triển](07-quy-uoc-phat-trien.md) | Viết code theo chuẩn nào? Test ra sao? |
+| 8 | [App di động — giai đoạn 0](08-mobile-giai-doan-0.md) | Cần làm gì trên máy để ra được file `.apk` đầu tiên? |
 
 ## Lộ trình đọc gợi ý
 

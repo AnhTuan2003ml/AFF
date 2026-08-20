@@ -51,6 +51,20 @@ const configSchema = z.object({
   IP_HASH_PEPPER: z.string().min(32),
   FIELD_ENCRYPTION_KEY: z.string().min(1),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(168),
+  // Phiên app di động: access token ngắn hạn + refresh token dài hạn. Cookie
+  // web vẫn dùng SESSION_TTL_HOURS ở trên, hai vòng đời không dính nhau.
+  MOBILE_ACCESS_TOKEN_TTL_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(5)
+    .max(720)
+    .default(30),
+  MOBILE_REFRESH_TOKEN_TTL_DAYS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(365)
+    .default(60),
   OTP_TTL_MINUTES: z.coerce.number().int().min(2).max(30).default(10),
   OTP_MAX_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
   OTP_MAX_SENDS_PER_HOUR: z.coerce.number().int().min(1).max(20).default(5),

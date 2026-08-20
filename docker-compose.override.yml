@@ -1,0 +1,16 @@
+# Chỉ dùng khi phát triển trên host (`npm run dev`).
+# Mở Postgres/Redis ra 127.0.0.1 để tiến trình tsx ngoài Docker kết nối được
+# theo DATABASE_URL / REDIS_URL trong .env. Docker Compose tự nạp file này.
+#
+# Cổng lệch chuẩn (15432/16379) là cố ý: máy này còn chạy AI_BC và SocAI, hai
+# dự án đó đã giữ 5432/6379 và 5433/6380. Dùng cổng riêng thì AFF không phải
+# tranh cổng với chúng nữa. Trong mạng nội bộ compose các service vẫn gọi nhau
+# bằng `postgres:5432` / `redis:6379` như cũ.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:15432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:16379:6379"

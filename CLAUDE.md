@@ -55,12 +55,17 @@ Frontend của luồng này: `views/app/dashboard.njk` + `public/purchase.js` +
 - `src/server.ts` — bootstrap Fastify, plugin, error handler, mount route.
 - `src/config.ts` — load/validate ENV (zod). `src/db.ts` — pool PG + helper `query`.
 - `src/auth/` — session cookie, CSRF, guards (`requireUser`, `requireApiUser`), đồng bộ admin.
+  Xác thực có HAI đường vào cùng bảng `sessions`: cookie `aff_session` cho web, và
+  `Authorization: Bearer` cho app di động (`services/mobile-token.ts` — access 30 phút,
+  refresh 60 ngày, xoay cả hai mỗi lần làm mới). Cùng một hook `session.ts` đọc cả hai
+  nên mọi guard sẵn có tự hiểu người dùng app. CSRF bỏ qua khi `authScheme === "bearer"`.
 - `src/routes/`
   - `public.ts` — landing, `/go/:clickId`, healthcheck.
   - `auth.ts` — trang đăng nhập/đăng ký (form).
   - `app.ts` — trang người dùng `/app/*` (dashboard, đơn, ví, ngân hàng, rút tiền…).
   - `api/` — JSON API `/api/v1/*`: `auth.ts`, `products.ts` (preview/purchase),
-    `account.ts` (me/orders/wallet/withdrawals/support), `deps.ts`, `index.ts`.
+    `account.ts` (me/orders/wallet/withdrawals/support), `me.ts` (ngân hàng, rút tiền,
+    hồ sơ, phiên, xóa tài khoản — nhánh cho app di động), `deps.ts`, `index.ts`.
   - `backoffice.ts`, `admin-*.ts` — trung tâm vận hành `/backoffice/*`.
 - `src/services/` — nghiệp vụ thuần, nhận `db`/`config` qua tham số, dễ test:
   affiliate, product-preview, preview-cache, ledger, withdrawal, bank, otp, email,
@@ -72,6 +77,11 @@ Frontend của luồng này: `views/app/dashboard.njk` + `public/purchase.js` +
   phải một khung admin khác.
 - `public/` — static, phục vụ tại `/assets/*`. Không CDN (CSP `self`).
 - `migrations/` — SQL thuần, chạy bằng `npm run db:migrate`.
+- `mobile/` — app React Native (Expo SDK 57, expo-router). Project riêng, có
+  `package.json`/`tsconfig` riêng; `npm run typecheck` và `npm test` ở gốc KHÔNG
+  chạm tới nó. Màu lấy từ `mobile/src/theme/tokens.ts` — bản dịch của
+  `public/theme/tokens.css`, đổi màu thì sửa file CSS trước rồi đồng bộ sang.
+  Xem `mobile/README.md` và `docs/08-mobile-giai-doan-0.md`.
 - `tests/` — Vitest; DB test dùng PGlite (`tests/helpers.ts`), không cần Postgres thật.
 
 ## Quy ước

@@ -28,33 +28,14 @@
 <body class="{{ bodyClass or '' }}">
   <a class="skip-link" href="#main-content">Bỏ qua menu</a>
   {% block body %}
-    <header class="public-header px-public-header">
-      <a class="px-public-brand" href="/" aria-label="ShopTik - Trang chủ">
-        <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
-        <span>ShopTik</span>
-      </a>
-      <nav class="px-public-nav" aria-label="Điều hướng chính">
-        <a href="#how-it-works">Cách hoạt động</a>
-        <a href="/dang-nhap">Đăng nhập</a>
-        <a class="px-btn px-btn-dark" href="/dang-ky">Bắt đầu</a>
-      </nav>
-    </header>
+    {# Khung cho các trang công khai ngoài app: điều khoản, quyền riêng tư,
+       chính sách người dùng, trang lỗi. Header và footer lấy nguyên từ partial
+       dùng chung với trang đăng nhập/đăng ký nên ba nơi luôn giống hệt nhau. #}
+    {% include "partials/public-header.njk" %}
     <main id="main-content">
       {% block content %}{% endblock %}
     </main>
-    <footer class="public-footer px-public-footer">
-      <div class="px-public-footer-brand">
-        <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
-        <strong>ShopTik</strong>
-        <p>Mua đúng link. Theo dõi đúng đơn. Nhận đúng tiền hoàn.</p>
-      </div>
-      <nav aria-label="Thông tin pháp lý">
-        <a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách người dùng</a>
-        <a href="/dieu-khoan">Điều khoản</a>
-        <a href="/quyen-rieng-tu">Quyền riêng tư</a>
-        <a href="/dang-nhap">Đăng nhập</a>
-      </nav>
-    </footer>
+    {% include "partials/public-footer.njk" %}
   {% endblock %}
   {% include "partials/user-policy-modal.njk" %}
 </body>

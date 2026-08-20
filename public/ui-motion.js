@@ -48,7 +48,8 @@
     window.addEventListener("load", done);
   }
 
-  /* Display-only advertising rotator for Shopee / TikTok Shop / Lazada. */
+  /* Khu quảng bá Shopee / TikTok Shop / Lazada: tự luân phiên, và bấm được
+     vào ba vạch chỉ báo để chọn thẳng một sàn. */
   function initPlatformShowcase(root) {
     var slides = Array.prototype.slice.call(root.querySelectorAll("[data-platform-ad]"));
     var dots = Array.prototype.slice.call(root.querySelectorAll(".lux-platform-dot"));
@@ -62,11 +63,23 @@
         slide.classList.toggle("is-active", active);
         slide.setAttribute("aria-hidden", active ? "false" : "true");
       });
-      dots.forEach(function (dot, i) { dot.classList.toggle("is-active", i === index); });
+      dots.forEach(function (dot, i) {
+        dot.classList.toggle("is-active", i === index);
+        dot.setAttribute("aria-selected", i === index ? "true" : "false");
+      });
     }
     function platformIndex(platform) {
       return slides.findIndex(function (slide) { return slide.getAttribute("data-platform-ad") === platform; });
     }
+    // Bấm vào một vạch chỉ báo thì nhảy tới sàn đó và hoãn vòng tự chạy, nếu
+    // không slide sẽ tự đổi ngay sau đó và cú bấm coi như vô hiệu.
+    dots.forEach(function (dot, i) {
+      dot.addEventListener("click", function () {
+        pausedUntil = Date.now() + 9000;
+        show(i);
+      });
+    });
+
     document.addEventListener("shoptik:platform-detected", function (event) {
       var platform = event && event.detail && event.detail.platform;
       var i = platformIndex(platform);

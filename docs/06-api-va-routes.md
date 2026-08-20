@@ -8,6 +8,30 @@ Toàn bộ endpoint của hệ thống, nhóm theo khu vực. Mã nguồn tươn
   Lỗi trả `{ error: { code, message, requestId } }` với message tiếng Việt (`AppError`).
 - **Form web** dùng POST + CSRF token; API lấy token qua `GET /api/v1/csrf`.
 - Rate limit toàn cục 300 req/phút; một số endpoint có limit riêng chặt hơn (ghi chú bên dưới).
+  Bộ đếm khóa theo **token thiết bị** nếu request có bearer, còn lại theo IP — người dùng
+  app đi qua NAT nhà mạng nên khóa theo IP sẽ khiến cả nghìn thuê bao 4G chia chung một
+  hạn mức (`server.ts`, `keyGenerator`).
+
+### Hai cơ chế xác thực chạy song song
+
+| | Web | App di động |
+| --- | --- | --- |
+| Mang danh tính bằng | Cookie `aff_session` | Header `Authorization: Bearer` |
+| Vòng đời | `SESSION_TTL_HOURS` (mặc định 168h) | Access 30 phút + refresh 60 ngày |
+| Kiểm tra CSRF | Có (double-submit + Origin) | **Không** — xem lý do bên dưới |
+| Lưu ở đâu | Bảng `sessions`, `client = 'web'` | Cùng bảng `sessions`, `client = 'mobile'` |
+
+Cả hai dùng chung cột `token_hash`, nên hook xác thực ở `auth/session.ts` chỉ đọc thêm
+header là mọi guard sẵn có tự hiểu người dùng app — không phải sửa từng route.
+
+CSRF được bỏ qua ở nhánh bearer (`auth/csrf.ts`) vì CSRF chỉ tồn tại để chống việc trình
+duyệt **tự** đính kèm cookie vào yêu cầu do trang của kẻ tấn công tạo ra. Trình duyệt
+không bao giờ tự thêm header `Authorization`, nên ở nhánh này không có quyền hạn ngầm nào
+để lợi dụng.
+
+Refresh token bị **xoay** mỗi lần dùng: cả access lẫn refresh được ghi đè trên đúng dòng
+`sessions` cũ. Hệ quả là refresh token vừa dùng chết ngay, và một thiết bị luôn chiếm
+đúng một dòng.
 
 ## API JSON — `/api/v1` (`src/routes/api/`)
 
@@ -15,12 +39,20 @@ Toàn bộ endpoint của hệ thống, nhóm theo khu vực. Mã nguồn tươn
 
 | Method + path | Việc |
 | --- | --- |
-| `POST /auth/register` | Đăng ký (email + mật khẩu) |
-| `POST /auth/verify-email` | Xác thực OTP email |
-| `POST /auth/resend-otp` | Gửi lại OTP |
-| `POST /auth/login` | Đăng nhập (set session cookie) |
-| `POST /auth/logout` | Đăng xuất |
+| `POST /auth/register` | Đăng ký (email + mật khẩu) → gửi OTP. Limit 5/giờ |
+| `POST /auth/verify-email` | Xác thực OTP email, **set session cookie** |
+| `POST /auth/login` | Đăng nhập, **set session cookie**. Limit 10/15 phút |
+| `POST /auth/logout` | Đăng xuất phiên cookie |
 | `POST /auth/forgot-password` / `POST /auth/reset-password` | Quên / đặt lại mật khẩu |
+
+Nhánh token — dành cho app di động. **Không** đặt cookie, **không** đọc cookie:
+
+| Method + path | Việc |
+| --- | --- |
+| `POST /auth/token` | Đăng nhập → `{ accessToken, refreshToken, expiresIn, user }`. Limit 10/15 phút |
+| `POST /auth/token/verify-email` | Xác thực OTP → trả luôn cặp token, khỏi đăng nhập lại |
+| `POST /auth/token/refresh` | Đổi refresh token lấy cặp mới (xoay cả hai). Limit 60/giờ |
+| `POST /auth/token/revoke` | Đăng xuất đúng thiết bị đang cầm token |
 
 ### Sản phẩm — luồng mua hoàn tiền (`api/products.ts`)
 
@@ -40,6 +72,37 @@ Toàn bộ endpoint của hệ thống, nhóm theo khu vực. Mã nguồn tươn
 | `GET /me/wallet` | Số dư 4 ví |
 | `GET /me/withdrawals` | Lịch sử rút tiền |
 | `POST /support/missing-order` | Khiếu nại đơn hàng chưa được ghi nhận (tạo ticket) |
+
+### Ví và tài khoản (`api/me.ts`)
+
+Nhánh này sinh ra cho app di động: trên web những việc tương ứng nằm ở các form trong
+`routes/app.ts` và kết thúc bằng redirect + flash, app không dùng được. Các route ở đây
+là lớp vỏ JSON mỏng, **gọi lại đúng service mà web đang gọi** — không chép lại logic,
+nếu không luật rút tiền sẽ tách đôi giữa web và app.
+
+Ngân hàng và rút tiền đều **hai bước, có OTP qua email**, y hệt web:
+
+| Method + path | Việc |
+| --- | --- |
+| `GET /me/bank-accounts` | Danh sách tài khoản ngân hàng (đã che số) + `supportedBanks` |
+| `POST /me/bank-accounts` | Bước 1 — gửi yêu cầu thêm, trả `{ requestId }` + gửi OTP. Limit 5/giờ |
+| `POST /me/bank-accounts/:id/confirm` | Bước 2 — nhập OTP, tài khoản chuyển `VERIFIED`. Limit 10/15 phút |
+| `POST /me/withdrawals` | Bước 1 — tạo lệnh rút, trả `{ intentId }` + gửi OTP. Limit 5/giờ |
+| `POST /me/withdrawals/:id/confirm` | Bước 2 — nhập OTP, ghi bút toán giữ tiền. Limit 10/15 phút |
+| `PATCH /me` | Đổi tên hiển thị |
+| `POST /me/sessions/revoke-all` | Đăng xuất mọi thiết bị (kể cả thiết bị đang gọi) |
+| `DELETE /me` | **Xóa tài khoản tự phục vụ** — xem bên dưới |
+
+`DELETE /me` là chặn cứng của cả App Store lẫn CH Play (app có tài khoản thì phải cho tự
+xóa ngay trong app). Quy tắc:
+
+- Còn lệnh rút đang xử lý → chặn cứng, `409 WITHDRAWAL_IN_PROGRESS`
+- Ví còn tiền mà chưa xác nhận → `409 BALANCE_REMAINING` kèm `details.remainingVnd`;
+  gửi lại với `{ "forfeitBalance": true }` mới xóa
+- Xóa **mềm**, dùng lại đúng cơ chế của khu quản trị (`deleted_at` + `deletion_reason`,
+  status `DISABLED`). Bút toán ledger và đơn hàng giữ nguyên để đối soát không thủng;
+  cái bị gỡ là danh tính — email đổi sang dạng vô hiệu (giải phóng chỉ mục để đăng ký
+  lại được), tên, mật khẩu, liên kết Google và toàn bộ thông tin ngân hàng
 
 ### Khác
 

@@ -1,0 +1,32 @@
+{#
+  Thanh trên cùng cho các trang công khai ngoài app: điều khoản, quyền riêng tư,
+  chính sách người dùng, trang lỗi.
+
+  Dùng đúng bộ class .px-header/.px-brand/.px-desktop-nav như header của /app ở
+  trạng thái CHƯA đăng nhập, nên khách đi từ trang chủ sang trang pháp lý không
+  thấy đổi khung. Sửa header khách trong app/app-base.njk thì soát lại file này.
+#}
+<header class="px-header">
+  <div class="px-header-inner">
+    <a class="px-brand" href="/app" aria-label="ShopTik - Trang chủ">
+      <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
+      <span>ShopTik</span>
+    </a>
+
+    <nav class="px-desktop-nav" aria-label="Điều hướng chính">
+      <a href="/app">Trang chủ</a>
+      <a href="/app/discover">Khám phá</a>
+      <a href="/app/orders">Đơn hàng</a>
+      <a href="/app/wallet">Ví</a>
+      <a href="/app/nhiem-vu">Nhiệm vụ</a>
+      <a href="/app/links">Chia sẻ</a>
+      <a href="/app/referrals">Giới thiệu</a>
+      <a href="/app/support">Hỗ trợ</a>
+    </nav>
+
+    <div class="px-header-actions">
+      <a class="px-btn px-btn-ghost px-guest-login" href="/dang-nhap">Đăng nhập</a>
+      <a class="px-btn px-btn-dark px-guest-register" href="/dang-ky">Đăng ký</a>
+    </div>
+  </div>
+</header>

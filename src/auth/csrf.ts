@@ -45,6 +45,20 @@ export async function registerCsrfProtection(
   app.decorateRequest("csrfToken", "");
 
   app.addHook("preHandler", async (request, reply) => {
+    /*
+     * App di động xác thực bằng header Authorization chứ không bằng cookie.
+     *
+     * CSRF tồn tại đúng vì một lý do: trình duyệt TỰ đính kèm cookie vào mọi
+     * yêu cầu gửi tới miền đó, kể cả yêu cầu do trang của kẻ tấn công tạo ra.
+     * Trình duyệt không bao giờ tự thêm header Authorization, nên ở nhánh
+     * bearer không có quyền hạn ngầm nào để lợi dụng — kiểm tra CSRF không
+     * bảo vệ thêm được gì, mà cấp cookie CSRF cho app cũng vô nghĩa.
+     *
+     * Hook xác thực ở auth/session.ts chạy trong onRequest nên đã gán xong
+     * authScheme trước khi tới đây.
+     */
+    if (request.authScheme === "bearer") return;
+
     let secret: string | undefined;
     const signedCookie = request.cookies[CSRF_COOKIE];
     if (signedCookie) {

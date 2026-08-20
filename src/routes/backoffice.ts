@@ -756,7 +756,7 @@ export async function registerBackofficeRoutes(
     const summary = totals.rows[0];
     const csvEscape = (value: string) => `"${value.replaceAll('"', '""')}"`;
     const lines: string[] = [
-      "TỔNG QUAN DOANH THU SHOPTIK",
+      "TỔNG QUAN DOANH THU ShopTik",
       `Xuất lúc;${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`,
       "",
       "Chỉ số;Giá trị (VND)",

@@ -26,7 +26,9 @@
    để không bị rule reduced-motion (luxury-ui.css) ép về 0. Nhờ vậy linh vật
    vẫn nhún nhảy kể cả khi máy tắt hiệu ứng hệ thống. */
 
-/* Bong bóng thoại */
+/* Bong bóng thoại. Neo bottom: calc(100% - 4px) nên nó TRÀN LÊN TRÊN khỏi hộp
+   linh vật — chỗ nào đặt linh vật sát mép trên đều phải chừa chỗ cho nó
+   (xem padding-top của .blob-modal). */
 .blob-bubble {
   position: absolute;
   left: 50%;
@@ -61,7 +63,7 @@
    ============================================================ */
 .blob-modal-scrim { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 20px; background: rgba(40, 22, 8, .42); backdrop-filter: blur(3px); opacity: 0; transition: opacity .2s ease; }
 .blob-modal-scrim.is-open { opacity: 1; }
-.blob-modal { position: relative; width: min(380px, 100%); background: #fffdfa; border: 1px solid #f0dcc8; border-radius: 24px; padding: 24px 26px; text-align: center; box-shadow: 0 30px 70px rgba(80, 45, 15, .28); transform: translateY(10px) scale(.97); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+.blob-modal { position: relative; width: min(380px, 100%); background: #fffdfa; border: 1px solid #f0dcc8; border-radius: 24px; padding: 40px 26px 24px; text-align: center; box-shadow: 0 30px 70px rgba(80, 45, 15, .28); transform: translateY(10px) scale(.97); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
 .blob-modal-scrim.is-open .blob-modal { transform: none; }
 .blob-modal-close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f4e7db; color: #6a4a2c; font-size: 18px; line-height: 1; cursor: pointer; }
 .blob-modal-close:hover { background: #ecd8c6; }

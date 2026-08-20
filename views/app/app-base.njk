@@ -26,10 +26,6 @@
   <div class="px-app st-app app-section-{{ appSection or 'default' }}" data-app-section="{{ appSection or 'default' }}">
     <header class="px-header">
       <div class="px-header-inner">
-        <a class="px-menu-shortcut" href="/app/settings" aria-label="Tất cả chức năng">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </a>
-
         <a class="px-brand" href="/app" aria-label="ShopTik - Trang chủ">
           <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
           <span>ShopTik</span>
@@ -49,7 +45,11 @@
         </nav>
 
         <div class="px-header-actions">
+          {# Khách chưa đăng nhập chỉ thấy hai nút Đăng nhập / Đăng ký — icon tìm
+             kiếm trỏ vào /app/discover nên để lộ ra chỉ gây rối. #}
+          {% if currentUser %}
           <a class="px-head-icon" href="/app/discover" aria-label="Tìm kiếm">{{ icon('search') }}</a>
+          {% endif %}
 
           {% if not currentUser %}
           <a class="px-btn px-btn-ghost px-guest-login" href="/dang-nhap">Đăng nhập</a>

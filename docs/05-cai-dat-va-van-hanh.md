@@ -47,7 +47,9 @@ Dưới đây là các nhóm chính:
 | `APP_NAME` | `ShopTik` | |
 | `TRUST_PROXY` | `false` | Bật khi chạy sau reverse proxy tin cậy |
 | `REDIS_URL` | (trống) | |
-| `SESSION_TTL_HOURS` | `168` | |
+| `SESSION_TTL_HOURS` | `168` | Vòng đời cookie phiên của **web** |
+| `MOBILE_ACCESS_TOKEN_TTL_MINUTES` | `30` | Access token của app di động (5–720) |
+| `MOBILE_REFRESH_TOKEN_TTL_DAYS` | `60` | Refresh token của app di động (1–365) |
 | `COMMUNITY_ZALO_URL` / `COMMUNITY_TELEGRAM_URL` | (trống) | Hiện nút cộng đồng nổi khi được đặt |
 
 ### Email / OTP
