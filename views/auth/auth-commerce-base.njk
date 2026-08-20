@@ -13,12 +13,9 @@
 
 {% block body %}
   <main class="auth-shell auth-commerce" id="main-content">
-    {# Panel giới thiệu: ẢNH sản phẩm quảng cáo làm NỀN toàn panel, tự đổi theo
-       vòng tròn (sản phẩm cuối → quay lại đầu). Thương hiệu / thông điệp / sản
-       phẩm đang hoàn tiền / dải nền tảng nổi trên lớp phủ tối. #}
+    {# Panel giới thiệu: băng quảng cáo sản phẩm giống mục "Đề xuất" — thẻ cuộn
+       ngang, chấm cho mỗi sản phẩm, tự lướt vòng tròn, kéo/vuốt được. #}
     <section class="auth-commerce-story auth-vhero" aria-label="Giới thiệu ShopTik">
-      <div class="auth-vhero-bg" data-auth-ad data-endpoint="/app/promo-products?list=best" aria-hidden="true"></div>
-      <div class="auth-vhero-shade" aria-hidden="true"></div>
       <div class="auth-vhero-inner">
         <a class="auth-commerce-brand" href="/" aria-label="ShopTik - Trang chủ">
           <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="">
@@ -30,10 +27,14 @@
           <h2><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part"><em>Hoàn tiền tối ưu.</em></span></h2>
         </div>
 
-        <div class="auth-ad-chip" data-auth-ad-chip hidden>
-          <span class="auth-ad-chip-badge" data-auth-ad-cashback hidden></span>
-          <span class="auth-ad-chip-name" data-auth-ad-name></span>
-        </div>
+        <section class="promo-carousel auth-promo" data-promo-carousel data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
+          <div class="promo-carousel-stage">
+            <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
+            <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+          <div class="promo-carousel-dots" data-promo-progress></div>
+        </section>
 
         <div class="auth-vhero-trust" aria-label="Nền tảng hỗ trợ">
           <span>Shopee</span>
@@ -80,5 +81,5 @@
 
   {% include "partials/public-footer.njk" %}
 
-  <script src="/assets/auth-ad.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

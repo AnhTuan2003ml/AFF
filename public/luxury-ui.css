@@ -7201,25 +7201,28 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round
 }
 
-/* Panel giới thiệu: quảng cáo sản phẩm làm NỀN, tự đổi theo vòng tròn. */
+/* Panel giới thiệu: băng quảng cáo sản phẩm giống mục "Đề xuất" (cuộn + chấm). */
 .auth-vhero{background:radial-gradient(120% 110% at 18% 0%,#e84d15 0%,#7c3018 58%,#361a10 100%)}
 .auth-vhero .auth-commerce-media{display:none}
 .auth-vhero:after{display:none}
-.auth-vhero-bg{position:absolute;inset:0;z-index:0;background:#2a1409}
-.auth-ad-slide{position:absolute;inset:0;opacity:0;will-change:opacity}
-.auth-ad-slide img{width:100%;height:100%;object-fit:cover;display:block}
-.auth-vhero-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(20,8,4,.86),rgba(24,10,5,.5) 52%,rgba(24,10,5,.28)),linear-gradient(180deg,rgba(20,8,4,.45),rgba(20,8,4,.15) 34%,rgba(20,8,4,.72))}
-.auth-vhero-inner{position:relative;z-index:2;min-height:100vh;padding:clamp(30px,4vh,54px) clamp(30px,4vw,68px);display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.6vh,30px)}
+.auth-vhero-inner{position:relative;z-index:1;min-height:100vh;padding:clamp(30px,4vh,54px) clamp(30px,4vw,68px);display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.6vh,30px)}
 .auth-vhero .auth-commerce-brand{width:max-content;display:flex;align-items:center;gap:12px;font-size:21px}
 .auth-vhero .auth-commerce-brand img{width:46px;height:46px}
 .auth-vhero-copy .auth-commerce-kicker{display:inline-block;font-size:11px;letter-spacing:.18em;font-weight:850;color:#ffd9c9}
 .auth-vhero-copy h2{margin:12px 0 0;font-size:clamp(28px,3.2vw,44px);line-height:1.04;letter-spacing:-.04em;font-weight:800;color:#fff;max-width:620px}
 .auth-vhero-copy h2 em{font-style:normal;color:#ffd27a}
-.auth-ad-chip{display:inline-flex;align-items:center;gap:11px;max-width:min(560px,100%);padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(10px);width:max-content}
-.auth-ad-chip[hidden]{display:none}
-.auth-ad-chip-badge{flex:0 0 auto;padding:5px 10px;border-radius:999px;background:linear-gradient(135deg,var(--lx-orange),#ff8a5f);color:#fff;font-size:11px;font-weight:850;white-space:nowrap}
-.auth-ad-chip-badge[hidden]{display:none}
-.auth-ad-chip-name{min-width:0;color:#fff;font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Băng "Đề xuất" trong panel: thẻ nhỏ gọn, ẩn nút mua (chỉ quảng cáo), chấm sáng. */
+.auth-promo{width:100%;max-width:640px}
+.auth-promo[hidden]{display:none}
+.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2)}
+.auth-promo .promo-card-media{height:clamp(150px,20vh,210px)}
+.auth-promo .promo-card-body{padding:13px;grid-template-rows:minmax(38px,auto) 24px;gap:8px;color:var(--lx-ink)}
+.auth-promo .promo-card-name{font-size:13px}
+.auth-promo .promo-card-buy{display:none}
+.auth-promo .promo-carousel-dots{margin-top:14px}
+.auth-promo .promo-carousel-dots span{background:rgba(255,255,255,.45)}
+.auth-promo .promo-carousel-dots span.is-active{background:#fff}
+@media(max-width:1180px){.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2)}}
 .auth-vhero-trust{display:flex;flex-wrap:wrap;gap:10px}
 .auth-vhero-trust span{padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.24);font-size:12.5px;font-weight:750;color:#fff}
 
