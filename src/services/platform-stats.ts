@@ -14,7 +14,22 @@ export interface PlatformLeaderboard {
   topProducts: TopProduct[];
   /** Nhãn kỳ xếp hạng, ví dụ "Tháng 8/2026" — bảng chỉ tính đơn trong tháng. */
   monthLabel: string;
+  /** true khi ít nhất một bảng dùng dữ liệu minh họa vì DB chưa đủ 3 mục. */
+  isSample: boolean;
 }
+
+/** Dữ liệu minh họa cho podium khi nền tảng chưa đủ 3 mục thật — để giao diện
+ *  không trống. Số đơn giảm dần rõ để phân biệt hạng. */
+const SAMPLE_BUYERS: TopBuyer[] = [
+  { name: "T. M. Hà", count: 128 },
+  { name: "N. V. Nam", count: 94 },
+  { name: "L. Q. Anh", count: 67 },
+];
+const SAMPLE_PRODUCTS: TopProduct[] = [
+  { name: "Combo dưỡng da 5 món chính hãng", imageUrl: null, count: 156 },
+  { name: "Tai nghe Bluetooth chống ồn", imageUrl: null, count: 112 },
+  { name: "Nồi chiên không dầu 5L", imageUrl: null, count: 83 },
+];
 
 /** Che bớt tên người mua để bảo vệ riêng tư: giữ tên gọi (từ cuối), viết tắt
  *  phần họ đệm. "Nguyễn Văn An" → "N. V. An". */
@@ -66,16 +81,23 @@ export async function getPlatformLeaderboard(
     ),
   ]);
   const now = new Date();
+  const useSampleBuyers = buyers.rows.length < 3;
+  const useSampleProducts = products.rows.length < 3;
   return {
-    topBuyers: buyers.rows.map((r) => ({
-      name: maskName(r.full_name),
-      count: Number(r.n),
-    })),
-    topProducts: products.rows.map((r) => ({
-      name: r.product_name ?? "Sản phẩm",
-      imageUrl: r.product_image_url,
-      count: Number(r.n),
-    })),
+    topBuyers: useSampleBuyers
+      ? SAMPLE_BUYERS
+      : buyers.rows.map((r) => ({
+          name: maskName(r.full_name),
+          count: Number(r.n),
+        })),
+    topProducts: useSampleProducts
+      ? SAMPLE_PRODUCTS
+      : products.rows.map((r) => ({
+          name: r.product_name ?? "Sản phẩm",
+          imageUrl: r.product_image_url,
+          count: Number(r.n),
+        })),
     monthLabel: `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`,
+    isSample: useSampleBuyers || useSampleProducts,
   };
 }

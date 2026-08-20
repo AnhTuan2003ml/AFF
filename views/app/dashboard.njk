@@ -130,7 +130,7 @@
         <div class="lb2-hero">
           <span class="lb2-eyebrow"><span aria-hidden="true">🔥</span> SỰ KIỆN THÁNG</span>
           <h2>Bảng xếp hạng</h2>
-          <p class="lb2-period">{{ leaderboard.monthLabel }}</p>
+          <p class="lb2-period">{{ leaderboard.monthLabel }}{% if leaderboard.isSample %} · <span class="lb2-sample">dữ liệu minh họa</span>{% endif %}</p>
           <div class="lb2-seg" role="tablist" data-lb2-seg>
             <button type="button" class="is-active" data-lb2-tab="0" role="tab">Người mua</button>
             <button type="button" data-lb2-tab="1" role="tab">Bán chạy</button>
