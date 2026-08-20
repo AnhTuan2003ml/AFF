@@ -12,6 +12,8 @@ export interface TopProduct {
 export interface PlatformLeaderboard {
   topBuyers: TopBuyer[];
   topProducts: TopProduct[];
+  /** Nhãn kỳ xếp hạng, ví dụ "Tháng 8/2026" — bảng chỉ tính đơn trong tháng. */
+  monthLabel: string;
 }
 
 /** Che bớt tên người mua để bảo vệ riêng tư: giữ tên gọi (từ cuối), viết tắt
@@ -40,6 +42,7 @@ export async function getPlatformLeaderboard(
         SELECT u.full_name, count(*)::text AS n
         FROM orders o JOIN users u ON u.id = o.user_id
         WHERE o.status = 'APPROVED'
+          AND o.created_at >= date_trunc('month', now())
         GROUP BY u.id, u.full_name
         ORDER BY count(*) DESC, u.full_name
         LIMIT 3
@@ -55,12 +58,14 @@ export async function getPlatformLeaderboard(
         SELECT l.product_name, l.product_image_url, count(*)::text AS n
         FROM orders o JOIN affiliate_links l ON l.id = o.affiliate_link_id
         WHERE o.status = 'APPROVED' AND l.product_name IS NOT NULL
+          AND o.created_at >= date_trunc('month', now())
         GROUP BY l.product_name, l.product_image_url
         ORDER BY count(*) DESC
         LIMIT 3
       `,
     ),
   ]);
+  const now = new Date();
   return {
     topBuyers: buyers.rows.map((r) => ({
       name: maskName(r.full_name),
@@ -71,5 +76,6 @@ export async function getPlatformLeaderboard(
       imageUrl: r.product_image_url,
       count: Number(r.n),
     })),
+    monthLabel: `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`,
   };
 }

@@ -1,19 +1,23 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/icons.njk" import icon %}
 
-{% macro lb2_row(item, rank, kind) %}
-  {% if item %}
-    <div class="lb2-row lb2-r{{ rank }}">
-      <img class="lb2-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="34">
+{# Một vị trí trên bục vinh danh (hạng 1/2/3). Rỗng thì hiện chỗ trống giữ dáng bục. #}
+{% macro lb2_spot(item, rank, kind) %}
+  <div class="lb2-spot lb2-spot-{{ rank }}{% if not item %} is-empty{% endif %}">
+    <div class="lb2-spot-top">
+      {% if rank == 1 %}<span class="lb2-crown" aria-hidden="true">👑</span>{% endif %}
       {% if kind == 'product' %}
-        <span class="lb2-thumb">{% if item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
+        <span class="lb2-avatar lb2-avatar-img">{% if item and item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
       {% else %}
-        <span class="lb2-ava">{{ item.name | first | upper }}</span>
+        <span class="lb2-avatar">{% if item %}{{ item.name | first | upper }}{% else %}?{% endif %}</span>
       {% endif %}
-      <span class="lb2-name">{{ item.name }}</span>
-      <span class="lb2-metric"><b>{{ item.count }}</b><small>đơn</small></span>
+      <span class="lb2-name">{% if item %}{{ item.name }}{% else %}Chưa có{% endif %}</span>
     </div>
-  {% endif %}
+    <div class="lb2-block lb2-block-{{ rank }}">
+      <img class="lb2-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="30">
+      <span class="lb2-metric"><b>{% if item %}{{ item.count }}{% else %}—{% endif %}</b><small>đơn</small></span>
+    </div>
+  </div>
 {% endmacro %}
 
 {% block app_content %}
@@ -116,16 +120,16 @@
     </a>
   {% endif %}
 
-  {# Bảng vàng: một thẻ liền mạch, có bộ chuyển Người mua / Bán chạy (segmented)
-     kèm vuốt ngang; top 1/2/3 có huy chương, hạng 1 nổi bật. #}
+  {# Bảng xếp hạng kiểu "đua top": hero cam + bục vinh danh top 3 (huy chương,
+     hạng 1 ở giữa cao nhất có vương miện), bộ chuyển Người mua / Bán chạy kèm
+     vuốt ngang. Chỉ tính đơn đã duyệt trong tháng (monthLabel). #}
   {% if leaderboard and (leaderboard.topBuyers.length or leaderboard.topProducts.length) %}
-    <section class="lb2-section" aria-label="Bảng vàng nền tảng">
+    <section class="lb2-section" aria-label="Bảng xếp hạng ShopTik">
       <div class="lb2-card">
-        <div class="lb2-head">
-          <div class="lb2-heading">
-            <span class="lb2-trophy" aria-hidden="true">🏆</span>
-            <div><span class="px-eyebrow">BẢNG VÀNG NỀN TẢNG</span><h2>Top ShopTik</h2></div>
-          </div>
+        <div class="lb2-hero">
+          <span class="lb2-eyebrow"><span aria-hidden="true">🔥</span> SỰ KIỆN THÁNG</span>
+          <h2>Bảng xếp hạng</h2>
+          <p class="lb2-period">{{ leaderboard.monthLabel }}</p>
           <div class="lb2-seg" role="tablist" data-lb2-seg>
             <button type="button" class="is-active" data-lb2-tab="0" role="tab">Người mua</button>
             <button type="button" data-lb2-tab="1" role="tab">Bán chạy</button>
@@ -134,14 +138,26 @@
         <div class="lb2-viewport" data-lb2-viewport>
           <div class="lb2-track">
             <div class="lb2-panel">
-              {{ lb2_row(leaderboard.topBuyers[0], 1, 'buyer') }}
-              {{ lb2_row(leaderboard.topBuyers[1], 2, 'buyer') }}
-              {{ lb2_row(leaderboard.topBuyers[2], 3, 'buyer') }}
+              {% if leaderboard.topBuyers.length %}
+                <div class="lb2-podium">
+                  {{ lb2_spot(leaderboard.topBuyers[1], 2, 'buyer') }}
+                  {{ lb2_spot(leaderboard.topBuyers[0], 1, 'buyer') }}
+                  {{ lb2_spot(leaderboard.topBuyers[2], 3, 'buyer') }}
+                </div>
+              {% else %}
+                <p class="lb2-empty">Chưa có người mua nào trong tháng này.</p>
+              {% endif %}
             </div>
             <div class="lb2-panel">
-              {{ lb2_row(leaderboard.topProducts[0], 1, 'product') }}
-              {{ lb2_row(leaderboard.topProducts[1], 2, 'product') }}
-              {{ lb2_row(leaderboard.topProducts[2], 3, 'product') }}
+              {% if leaderboard.topProducts.length %}
+                <div class="lb2-podium">
+                  {{ lb2_spot(leaderboard.topProducts[1], 2, 'product') }}
+                  {{ lb2_spot(leaderboard.topProducts[0], 1, 'product') }}
+                  {{ lb2_spot(leaderboard.topProducts[2], 3, 'product') }}
+                </div>
+              {% else %}
+                <p class="lb2-empty">Chưa có sản phẩm nổi bật trong tháng này.</p>
+              {% endif %}
             </div>
           </div>
         </div>

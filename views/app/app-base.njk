@@ -12,14 +12,14 @@
 
   {% set persistentBalances = headerBalances or balances %}
   {% set navItems = [
-    { href: '/app', section: 'dashboard', label: 'Trang chủ' },
-    { href: '/app/discover', section: 'discover', label: 'Khám phá' },
-    { href: '/app/orders', section: 'orders', label: 'Đơn hàng' },
-    { href: '/app/wallet', section: 'wallet', label: 'Ví' },
-    { href: '/app/nhiem-vu', section: 'missions', label: 'Nhiệm vụ' },
-    { href: '/app/links', section: 'links', label: 'Chia sẻ' },
-    { href: '/app/referrals', section: 'referrals', label: 'Giới thiệu' },
-    { href: '/app/support', section: 'support', label: 'Hỗ trợ' }
+    { href: '/app', section: 'dashboard', label: 'Trang chủ', icon: 'dashboard' },
+    { href: '/app/discover', section: 'discover', label: 'Khám phá', icon: 'compass' },
+    { href: '/app/orders', section: 'orders', label: 'Đơn hàng', icon: 'orders' },
+    { href: '/app/wallet', section: 'wallet', label: 'Ví', icon: 'wallet' },
+    { href: '/app/nhiem-vu', section: 'missions', label: 'Nhiệm vụ', icon: 'mission' },
+    { href: '/app/links', section: 'links', label: 'Chia sẻ', icon: 'link' },
+    { href: '/app/referrals', section: 'referrals', label: 'Giới thiệu', icon: 'referral' },
+    { href: '/app/support', section: 'support', label: 'Hỗ trợ', icon: 'support' }
   ] %}
   {% set financeSections = ['wallet', 'withdrawals', 'banks'] %}
 
@@ -34,7 +34,7 @@
         <nav class="px-desktop-nav" aria-label="Điều hướng chính">
           {% for item in navItems %}
             {% set isActive = (item.section == appSection) or (item.section == 'wallet' and appSection in financeSections) %}
-            <a href="{{ item.href }}"{% if isActive %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a>
+            <a href="{{ item.href }}"{% if isActive %} class="active" aria-current="page"{% endif %}>{{ icon(item.icon) }}<span>{{ item.label }}</span></a>
           {% endfor %}
           {% if currentUser %}
           <button type="button" class="px-nav-checkin" data-checkin-open aria-label="Điểm danh mỗi ngày">

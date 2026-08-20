@@ -1,7 +1,9 @@
 // Băng chuyền sản phẩm. Nạp từ endpoint của từng băng (data-endpoint, mặc định
-// GET /app/promo-products), cuộn ngang (scroll-snap), nút ‹ ›, chấm trang, tự
-// xoay mỗi 5s, dừng khi hover/focus. HỖ TRỢ NHIỀU BĂNG trên cùng trang (mỗi
-// mục Đề xuất/Bán chạy/Độc quyền là một băng riêng). Nút mua đi qua
+// GET /app/promo-products), cuộn ngang (scroll-snap), nút ‹ ›, chấm trang.
+// Cuộn/tự xoay theo TỪNG SẢN PHẨM (không phải từng trang 4 thẻ); tới sản phẩm
+// cuối thì lặp vòng khép kín về sản phẩm đầu (nhân bản vài thẻ đầu ra cuối rồi
+// nhảy vô hình) — cả desktop lẫn mobile. Mỗi sản phẩm là MỘT chấm. Cho phép kéo
+// chuột như vuốt tay. HỖ TRỢ NHIỀU BĂNG trên cùng trang. Nút mua đi qua
 // preview → purchase → /go/:clickId (link affiliate hệ thống, subId đối soát).
 (function () {
   "use strict";
@@ -75,7 +77,6 @@
   function initCarousel(root) {
     var viewport = root.querySelector("[data-promo-viewport]");
     var track = root.querySelector("[data-promo-track]");
-    var dotsBox = root.querySelector("[data-promo-dots]");
     var prevBtn = root.querySelector("[data-promo-prev]");
     var nextBtn = root.querySelector("[data-promo-next]");
     var progressEl = root.querySelector("[data-promo-progress]");
@@ -88,6 +89,7 @@
     var AUTO_MS = 5000;
     var autoTimer = null;
     var paused = false;
+    var resumeTimer = null;
 
     function renderCard(product) {
       var card = el("article", "promo-card");
@@ -97,7 +99,10 @@
       img.alt = product.name;
       img.loading = "lazy";
       img.referrerPolicy = "no-referrer";
-      img.addEventListener("error", function () { card.remove(); syncDots(); });
+      img.addEventListener("error", function () {
+        card.remove();
+        if (!fanMode) window.setTimeout(setup, 30);
+      });
       media.appendChild(img);
       if (product.cashbackRatePercent) {
         media.appendChild(el("span", "promo-card-badge", "Hoàn +" + product.cashbackRatePercent + "%"));
@@ -124,82 +129,85 @@
       return card;
     }
 
-    function pageWidth() { return viewport.clientWidth; }
-    function pageCount() { return Math.max(1, Math.round(track.scrollWidth / pageWidth())); }
-    function currentPage() { return Math.round(viewport.scrollLeft / pageWidth()); }
-
-    function goTo(page) {
-      var pages = pageCount();
-      var target = ((page % pages) + pages) % pages;
-      viewport.scrollTo({ left: target * pageWidth(), behavior: "smooth" });
-      setActiveDot(target);
-      window.setTimeout(highlightDot, 400);
-    }
-
-    function syncDots() {
-      if (!dotsBox) return;
-      var pages = pageCount();
-      dotsBox.innerHTML = "";
-      if (pages <= 1) { dotsBox.hidden = true; return; }
-      dotsBox.hidden = false;
-      for (var i = 0; i < pages; i += 1) {
-        var dot = el("button", "promo-dot");
-        dot.type = "button";
-        dot.setAttribute("aria-label", "Trang " + (i + 1));
-        dot.dataset.page = String(i);
-        dot.addEventListener("click", function (event) { goTo(Number(event.currentTarget.dataset.page)); });
-        dotsBox.appendChild(dot);
-      }
-      highlightDot();
-    }
-
-    function setActiveDot(page) {
-      if (!dotsBox) return;
-      Array.prototype.forEach.call(dotsBox.children, function (dot, i) {
-        dot.classList.toggle("is-active", i === page);
+    // ----- Kích thước & danh sách thẻ thật (bỏ thẻ nhân bản) -----
+    function realCards() {
+      return Array.prototype.filter.call(track.children, function (c) {
+        return !c.hasAttribute("data-promo-clone");
       });
     }
-    function highlightDot() { setActiveDot(currentPage()); }
-
-    function startAuto() {
-      stopAuto();
-      autoTimer = window.setInterval(function () {
-        if (paused || document.hidden) return;
-        if (pageCount() <= 1) return;
-        goTo(currentPage() + 1);
-      }, AUTO_MS);
+    function gapPx() {
+      var cs = window.getComputedStyle(track);
+      return parseFloat(cs.columnGap || cs.gap || "14") || 14;
     }
-    function stopAuto() { if (autoTimer) window.clearInterval(autoTimer); autoTimer = null; }
+    function cardStep() {
+      var cards = realCards();
+      if (!cards.length) return viewport.clientWidth || 1;
+      return cards[0].getBoundingClientRect().width + gapPx();
+    }
+    // Quãng đường một vòng = tổng bề rộng các thẻ thật (kể cả khoảng cách trước
+    // thẻ nhân bản đầu tiên) = n × bước.
+    function loopWidth() {
+      var n = realCards().length;
+      return n ? n * cardStep() : 0;
+    }
+    // Có gì để cuộn/lặp không? (nội dung tràn khỏi khung nhìn)
+    function loopable() {
+      return loopWidth() > viewport.clientWidth + gapPx() + 2;
+    }
 
-    if (prevBtn) prevBtn.addEventListener("click", function () { goTo(currentPage() - 1); });
-    if (nextBtn) nextBtn.addEventListener("click", function () { goTo(currentPage() + 1); });
-    root.addEventListener("mouseenter", function () { paused = true; });
-    root.addEventListener("mouseleave", function () { paused = false; });
-    root.addEventListener("focusin", function () { paused = true; });
-    root.addEventListener("focusout", function () { paused = false; });
-    // Vuốt tay: tạm dừng tự xoay khi đang chạm/kéo, chạy lại sau vài giây.
-    var resumeTimer = null;
-    function pauseFor(ms) { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); resumeTimer = window.setTimeout(function () { paused = false; }, ms || 4500); }
-    viewport.addEventListener("pointerdown", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); });
-    viewport.addEventListener("touchstart", function () { paused = true; if (resumeTimer) window.clearTimeout(resumeTimer); }, { passive: true });
-    window.addEventListener("pointerup", function () { pauseFor(4500); });
+    function clearClones() {
+      Array.prototype.slice
+        .call(track.querySelectorAll("[data-promo-clone]"))
+        .forEach(function (c) { c.remove(); });
+    }
+    function buildClones() {
+      clearClones();
+      if (!loopable()) return;
+      var cards = realCards();
+      var need = Math.min(cards.length, Math.ceil(viewport.clientWidth / cardStep()) + 1);
+      for (var i = 0; i < need; i += 1) {
+        var clone = cards[i].cloneNode(true);
+        clone.setAttribute("data-promo-clone", "1");
+        clone.setAttribute("aria-hidden", "true");
+        clone.tabIndex = -1;
+        track.appendChild(clone);
+      }
+    }
 
-    // Chỉ báo dạng chấm "..." dưới sản phẩm (mỗi chấm = một trang, chấm đang
-    // xem kéo dài thành viên thuốc cam). Bấm chấm để nhảy trang.
-    function updateProgress() {
+    function currentIndex() {
+      var n = realCards().length;
+      if (!n) return 0;
+      return ((Math.round(viewport.scrollLeft / cardStep()) % n) + n) % n;
+    }
+
+    // Nhảy vô hình khi cuộn vào vùng thẻ nhân bản: trừ đúng một vòng để về đầu.
+    function normalizeLoop() {
+      if (!loopable()) return;
+      var w = loopWidth();
+      if (w <= 0) return;
+      if (viewport.scrollLeft >= w - 1) viewport.scrollLeft = viewport.scrollLeft - w;
+      else if (viewport.scrollLeft < 0) viewport.scrollLeft = viewport.scrollLeft + w;
+    }
+
+    // ----- Chấm chỉ báo: mỗi sản phẩm MỘT chấm -----
+    function buildDots() {
       if (!progressEl) return;
-      var pages = pageCount();
-      if (pages <= 1) { progressEl.innerHTML = ""; progressEl.hidden = true; return; }
+      var n = realCards().length;
+      if (n <= 1 || !loopable()) { progressEl.innerHTML = ""; progressEl.hidden = true; return; }
       progressEl.hidden = false;
-      if (progressEl.children.length !== pages) {
+      if (progressEl.children.length !== n) {
         progressEl.innerHTML = "";
-        for (var i = 0; i < pages; i += 1) {
+        for (var i = 0; i < n; i += 1) {
           var dot = document.createElement("span");
-          dot.dataset.page = String(i);
+          dot.dataset.index = String(i);
           progressEl.appendChild(dot);
         }
       }
-      var cur = currentPage();
+      syncActiveDot();
+    }
+    function syncActiveDot() {
+      if (!progressEl || !progressEl.children.length) return;
+      var cur = currentIndex();
       Array.prototype.forEach.call(progressEl.children, function (d, i) {
         d.classList.toggle("is-active", i === cur);
       });
@@ -207,67 +215,139 @@
     if (progressEl) {
       progressEl.addEventListener("click", function (e) {
         var t = e.target;
-        if (t && t.dataset && t.dataset.page != null) goTo(Number(t.dataset.page));
+        if (t && t.dataset && t.dataset.index != null) goToIndex(Number(t.dataset.index));
       });
     }
 
-    // Bề rộng một sản phẩm (thẻ + khoảng cách) để bước từng sản phẩm.
-    function cardStep() {
-      var first = track.children[0];
-      if (!first) return viewport.clientWidth;
-      var w = first.getBoundingClientRect().width;
-      var gap = parseFloat(window.getComputedStyle(track).columnGap || window.getComputedStyle(track).gap || "14") || 14;
-      return w + gap;
+    function goToIndex(i) {
+      viewport.scrollTo({ left: i * cardStep(), behavior: "smooth" });
+      window.setTimeout(function () { normalizeLoop(); syncActiveDot(); }, 430);
+      pauseFor(4500);
     }
-    function stepCard(dir) {
+    // Tiến/lùi đúng MỘT sản phẩm; tới cuối thì đi tiếp vào thẻ nhân bản rồi nhảy
+    // vô hình về đầu (cảm giác vòng tròn khép kín).
+    function stepBy(dir) {
       viewport.scrollTo({ left: viewport.scrollLeft + dir * cardStep(), behavior: "smooth" });
-      window.setTimeout(updateProgress, 320);
+      window.setTimeout(function () { normalizeLoop(); syncActiveDot(); }, 430);
     }
 
-    // Desktop: trỏ chuột vào rồi LĂN CHUỘT — mỗi nấc chuyển ĐÚNG MỘT sản phẩm.
-    // Lăn LÊN = sản phẩm trước, lăn XUỐNG = sản phẩm sau. Tới mép thì trả lại
-    // cuộn trang bình thường (không kẹt).
+    function startAuto() {
+      stopAuto();
+      autoTimer = window.setInterval(function () {
+        if (paused || document.hidden || !loopable()) return;
+        stepBy(1);
+      }, AUTO_MS);
+    }
+    function stopAuto() { if (autoTimer) window.clearInterval(autoTimer); autoTimer = null; }
+
+    function pauseFor(ms) {
+      paused = true;
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(function () { paused = false; }, ms || 4500);
+    }
+
+    if (prevBtn) prevBtn.addEventListener("click", function () { stepBy(-1); pauseFor(4500); });
+    if (nextBtn) nextBtn.addEventListener("click", function () { stepBy(1); pauseFor(4500); });
+    root.addEventListener("mouseenter", function () { paused = true; });
+    root.addEventListener("mouseleave", function () { if (!dragging) paused = false; });
+    root.addEventListener("focusin", function () { paused = true; });
+    root.addEventListener("focusout", function () { paused = false; });
+
+    // Kéo bằng chuột (desktop) giống vuốt tay trên điện thoại.
+    var dragging = false, dragStartX = 0, dragStartLeft = 0, dragMoved = false;
+    viewport.addEventListener("pointerdown", function (e) {
+      paused = true;
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      if (e.pointerType === "mouse" && loopable()) {
+        dragging = true;
+        dragMoved = false;
+        dragStartX = e.clientX;
+        dragStartLeft = viewport.scrollLeft;
+        viewport.classList.add("is-grabbing");
+      }
+    });
+    window.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - dragStartX;
+      if (Math.abs(dx) > 3) dragMoved = true;
+      viewport.scrollLeft = dragStartLeft - dx;
+      normalizeLoop();
+    });
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      viewport.classList.remove("is-grabbing");
+      var step = cardStep();
+      viewport.scrollTo({ left: Math.round(viewport.scrollLeft / step) * step, behavior: "smooth" });
+      window.setTimeout(function () { normalizeLoop(); syncActiveDot(); }, 320);
+      pauseFor(4500);
+    }
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    // Chặn click "Mua" bắn ra ngay sau khi kéo.
+    viewport.addEventListener("click", function (e) {
+      if (dragMoved) { e.preventDefault(); e.stopPropagation(); dragMoved = false; }
+    }, true);
+
+    // Vuốt cảm ứng: tạm dừng tự xoay, chạy lại sau vài giây.
+    viewport.addEventListener("touchstart", function () {
+      paused = true;
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+    }, { passive: true });
+    viewport.addEventListener("touchend", function () { pauseFor(4500); });
+
+    // Desktop: lăn chuột — mỗi nấc đúng một sản phẩm (không kẹt ở mép vì có vòng lặp).
     var wheelLock = false;
     viewport.addEventListener("wheel", function (e) {
-      var max = viewport.scrollWidth - viewport.clientWidth;
-      if (max <= 0) return;
+      if (!loopable()) return;
       var delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (!delta) return;
-      var atStart = viewport.scrollLeft <= 0;
-      var atEnd = viewport.scrollLeft >= max - 1;
-      if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return; // tới mép: cuộn trang
       e.preventDefault();
       if (wheelLock) return;
       wheelLock = true;
-      stepCard(delta > 0 ? 1 : -1);
+      stepBy(delta > 0 ? 1 : -1);
       pauseFor(3500);
-      window.setTimeout(function () { wheelLock = false; }, 280);
+      window.setTimeout(function () { wheelLock = false; }, 300);
     }, { passive: false });
 
     var scrollThrottle = null;
     viewport.addEventListener("scroll", function () {
-      updateProgress();
       if (scrollThrottle) return;
-      scrollThrottle = window.setTimeout(function () { scrollThrottle = null; highlightDot(); }, 80);
+      scrollThrottle = window.setTimeout(function () {
+        scrollThrottle = null;
+        if (!dragging) normalizeLoop();
+        syncActiveDot();
+      }, 90);
     });
+
     var resizeTimer = null;
     window.addEventListener("resize", function () {
       if (resizeTimer) return;
-      resizeTimer = window.setTimeout(function () { resizeTimer = null; syncDots(); updateProgress(); }, 150);
+      resizeTimer = window.setTimeout(function () {
+        resizeTimer = null;
+        if (fanMode) return;
+        buildClones();
+        buildDots();
+        viewport.classList.toggle("is-draggable", loopable());
+        syncActiveDot();
+      }, 180);
     });
 
+    function setup() {
+      if (fanMode) return;
+      buildClones();
+      buildDots();
+      viewport.classList.toggle("is-draggable", loopable());
+      syncActiveDot();
+      startAuto();
+    }
+
     // Băng "quan tâm chưa mua": thẻ đã render sẵn từ server. Bỏ fetch, chỉ gắn
-    // điều khiển (mũi tên/chấm/vuốt/tự xoay) để giống hệt băng "Đề xuất".
+    // điều khiển (mũi tên/chấm/vuốt/kéo/tự xoay) để giống hệt băng "Đề xuất".
     if (root.hasAttribute("data-promo-static")) {
-      Array.prototype.forEach.call(track.querySelectorAll("img"), function (img) {
-        img.addEventListener("error", function () {
-          var card = img.closest(".promo-card");
-          if (card) { card.remove(); syncDots(); updateProgress(); }
-        });
-      });
-      if (track.children.length) {
+      if (realCards().length) {
         root.hidden = false;
-        window.setTimeout(function () { syncDots(); updateProgress(); startAuto(); }, 80);
+        window.setTimeout(setup, 80);
       }
       return;
     }
@@ -281,10 +361,10 @@
         var products = (data && data.products) || [];
         if (!products.length) return;
         products.forEach(function (product) { if (product.imageUrl) track.appendChild(renderCard(product)); });
-        if (!track.children.length) return;
+        if (!realCards().length) return;
         root.hidden = false;
         if (fanMode) { while (track.children.length > 3) track.removeChild(track.lastElementChild); return; }
-        window.setTimeout(function () { syncDots(); updateProgress(); startAuto(); }, 80);
+        window.setTimeout(setup, 80);
       })
       .catch(function (error) {
         console.warn("[promo-carousel] không nạp được " + endpoint + ":", (error && error.message) || error);
