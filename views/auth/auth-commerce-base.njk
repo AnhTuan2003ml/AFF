@@ -13,31 +13,26 @@
 
 {% block body %}
   <main class="auth-shell auth-commerce" id="main-content">
-    <section class="auth-commerce-story" aria-label="Giới thiệu ShopTik">
-      <div class="auth-commerce-media" aria-hidden="true"></div>
-      <div class="auth-commerce-story-content">
+    {# Panel giới thiệu lấy VIDEO quảng cáo làm chủ thể: thương hiệu ở trên,
+       một dòng thông điệp ngắn, video lớn chiếm trung tâm, dải nền tảng dưới. #}
+    <section class="auth-commerce-story auth-vhero" aria-label="Giới thiệu ShopTik">
+      <div class="auth-vhero-inner">
         <a class="auth-commerce-brand" href="/" aria-label="ShopTik - Trang chủ">
           <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="">
           <span><b>Shop</b><strong>Tik</strong><small>CASHBACK</small></span>
         </a>
 
-        <div class="auth-commerce-message">
+        <div class="auth-vhero-copy">
           <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
-          <h1 class="auth-commerce-title">Mua sắm như thường.<br>Nhận lại tiền thật.</h1>
-          <ul class="auth-commerce-values" aria-label="Lợi ích">
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Hoàn tiền tự động</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Theo dõi ví minh bạch</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>Rút về ngân hàng</li>
-          </ul>
+          <h2>Mua sắm như thường. <em>Nhận lại tiền thật.</em></h2>
         </div>
 
-        {# Video quảng cáo thương hiệu (thay khối sản phẩm xòe quạt). Tự phát,
-           lặp, tắt tiếng để trình duyệt cho autoplay. #}
-        <div class="auth-video" aria-label="Video giới thiệu ShopTik">
+        {# Video quảng cáo — tự phát, lặp, tắt tiếng để trình duyệt cho autoplay. #}
+        <div class="auth-vhero-video" aria-label="Video giới thiệu ShopTik">
           <video src="/assets/videologo.mp4?v={{ assetVersion }}" autoplay loop muted playsinline preload="auto"></video>
         </div>
 
-        <div class="auth-commerce-trust" aria-label="Nền tảng hỗ trợ">
+        <div class="auth-vhero-trust" aria-label="Nền tảng hỗ trợ">
           <span>Shopee</span>
           <span>TikTok Shop</span>
           <span>Lazada</span>

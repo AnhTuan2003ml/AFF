@@ -517,7 +517,7 @@ label small {
 .auth-shell.auth-commerce {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(430px, .9fr);
+  grid-template-columns: minmax(0, 1.28fr) minmax(400px, .8fr);
   background: var(--lx-ivory)
 }
 
@@ -7201,9 +7201,20 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round
 }
 
-/* Video quảng cáo ở panel giới thiệu (thay khối sản phẩm xòe quạt). */
-.auth-video{margin-top:10px;width:100%;max-width:520px;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(16,6,3,.4);background:#1c0f08}
-.auth-video video{display:block;width:100%;height:auto}
+/* Panel giới thiệu lấy VIDEO làm chủ thể (trang đăng nhập/đăng ký). */
+.auth-vhero{background:radial-gradient(120% 110% at 18% 0%,#e84d15 0%,#7c3018 58%,#361a10 100%)}
+.auth-vhero .auth-commerce-media{display:none}
+.auth-vhero:after{display:none}
+.auth-vhero-inner{position:relative;z-index:1;min-height:100vh;padding:clamp(30px,4vh,54px) clamp(30px,4vw,68px);display:flex;flex-direction:column;justify-content:center;gap:clamp(20px,3vh,34px)}
+.auth-vhero .auth-commerce-brand{width:max-content;display:flex;align-items:center;gap:12px;font-size:21px}
+.auth-vhero .auth-commerce-brand img{width:46px;height:46px}
+.auth-vhero-copy .auth-commerce-kicker{display:inline-block;font-size:11px;letter-spacing:.18em;font-weight:850;color:#ffd9c9}
+.auth-vhero-copy h2{margin:12px 0 0;font-size:clamp(28px,3.2vw,44px);line-height:1.04;letter-spacing:-.04em;font-weight:800;color:#fff;max-width:620px}
+.auth-vhero-copy h2 em{font-style:normal;color:#ffd27a}
+.auth-vhero-video{width:100%;border-radius:24px;overflow:hidden;background:#160b06;box-shadow:0 34px 80px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);aspect-ratio:16/9;max-height:60vh}
+.auth-vhero-video video{display:block;width:100%;height:100%;object-fit:cover}
+.auth-vhero-trust{display:flex;flex-wrap:wrap;gap:10px}
+.auth-vhero-trust span{padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.24);font-size:12.5px;font-weight:750;color:#fff}
 
 /* Xòe quạt chữ V: 3 thẻ, thẻ giữa nâng cao, 2 thẻ bên nghiêng ±9°, không khung ngoài. */
 .auth-fan {
