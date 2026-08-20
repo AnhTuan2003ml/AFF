@@ -27,3 +27,22 @@
     });
   });
 })();
+
+// Ảnh avatar/sản phẩm lỗi → thay bằng chữ cái đầu của tên (giữ podium gọn gàng).
+(function () {
+  "use strict";
+  Array.prototype.forEach.call(
+    document.querySelectorAll(".lb2-avatar-img img"),
+    function (img) {
+      img.addEventListener("error", function () {
+        var av = img.closest(".lb2-avatar");
+        var spot = img.closest(".lb2-spot");
+        var nm = spot && spot.querySelector(".lb2-name");
+        var ch = nm ? nm.textContent.trim().charAt(0).toUpperCase() : "?";
+        if (!av) return;
+        av.classList.remove("lb2-avatar-img");
+        av.textContent = ch;
+      });
+    },
+  );
+})();

@@ -144,6 +144,7 @@
   {% if leaderboard and (leaderboard.topBuyers.length or leaderboard.topProducts.length) %}
     <section class="lb2-section" aria-label="Bảng xếp hạng ShopTik">
       <div class="lb2-card">
+        <canvas class="lb2-confetti" data-lb2-confetti aria-hidden="true"></canvas>
         <div class="lb2-hero">
           <span class="lb2-eyebrow"><span aria-hidden="true">🔥</span> SỰ KIỆN THÁNG</span>
           <h2>Bảng xếp hạng</h2>
@@ -209,4 +210,5 @@
   <script src="/assets/purchase.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/leaderboard.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/leaderboard-confetti.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
