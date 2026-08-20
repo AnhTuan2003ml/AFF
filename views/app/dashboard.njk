@@ -94,16 +94,31 @@
         <div class="promo-carousel-viewport" data-promo-viewport>
           <div class="promo-carousel-track" data-promo-track>
             {% for p in interestedProducts %}
-              <a class="promo-card pc-interest" href="/app/orders">
-                <div class="promo-card-media">
-                  {% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="pc-interest-noimg" aria-hidden="true">▣</span>{% endif %}
-                  <span class="promo-card-badge pc-interest-badge">Chưa mua</span>
-                </div>
-                <div class="promo-card-body pc-interest-body">
-                  <p class="promo-card-name">{{ p.name }}</p>
-                  <span class="pc-interest-cta">Hoàn tất mua <span aria-hidden="true">→</span></span>
-                </div>
-              </a>
+              {% if p.productUrl %}
+                {# Có link sản phẩm → "Hoàn tất mua" chạy thẳng luồng mua
+                   (preview → purchase → link affiliate), không về trang đơn. #}
+                <article class="promo-card pc-interest">
+                  <div class="promo-card-media">
+                    {% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="pc-interest-noimg" aria-hidden="true">▣</span>{% endif %}
+                    <span class="promo-card-badge pc-interest-badge">Chưa mua</span>
+                  </div>
+                  <div class="promo-card-body pc-interest-body">
+                    <p class="promo-card-name">{{ p.name }}</p>
+                    <button type="button" class="pc-interest-cta" data-instant-buy data-product-url="{{ p.productUrl }}"><b>Hoàn tất mua</b><span aria-hidden="true">→</span></button>
+                  </div>
+                </article>
+              {% else %}
+                <a class="promo-card pc-interest" href="/app/orders">
+                  <div class="promo-card-media">
+                    {% if p.imageUrl %}<img src="{{ p.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="pc-interest-noimg" aria-hidden="true">▣</span>{% endif %}
+                    <span class="promo-card-badge pc-interest-badge">Chưa mua</span>
+                  </div>
+                  <div class="promo-card-body pc-interest-body">
+                    <p class="promo-card-name">{{ p.name }}</p>
+                    <span class="pc-interest-cta"><b>Xem đơn</b><span aria-hidden="true">→</span></span>
+                  </div>
+                </a>
+              {% endif %}
             {% endfor %}
           </div>
         </div>

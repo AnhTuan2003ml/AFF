@@ -6729,8 +6729,15 @@ label small {
   align-self: start;
   font-size: 12px;
   font-weight: 800;
-  color: var(--lx-orange)
+  color: var(--lx-orange);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit
 }
+button.pc-interest-cta:hover{color:var(--lx-orange-2,#d63c1e)}
+button.pc-interest-cta:disabled{opacity:.6;cursor:default}
 
 .pc-interest-cta span {
   transition: transform .2s ease

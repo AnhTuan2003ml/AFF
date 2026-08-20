@@ -345,6 +345,16 @@
     // Băng "quan tâm chưa mua": thẻ đã render sẵn từ server. Bỏ fetch, chỉ gắn
     // điều khiển (mũi tên/chấm/vuốt/kéo/tự xoay) để giống hệt băng "Đề xuất".
     if (root.hasAttribute("data-promo-static")) {
+      // Nút "Hoàn tất mua" → chạy thẳng luồng mua (preview → purchase → link
+      // affiliate), không điều hướng về trang đơn.
+      Array.prototype.forEach.call(track.querySelectorAll("[data-instant-buy]"), function (btn) {
+        var label = btn.querySelector("b") || btn;
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          buyProduct({ productUrl: btn.dataset.productUrl }, btn, label);
+        });
+      });
       if (realCards().length) {
         root.hidden = false;
         window.setTimeout(setup, 80);
