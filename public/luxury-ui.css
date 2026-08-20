@@ -7211,13 +7211,22 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .auth-vhero-copy .auth-commerce-kicker{display:inline-block;font-size:11px;letter-spacing:.18em;font-weight:850;color:#ffd9c9}
 .auth-vhero-copy h2{margin:12px 0 0;font-size:clamp(28px,3.2vw,44px);line-height:1.04;letter-spacing:-.04em;font-weight:800;color:#fff;max-width:620px}
 .auth-vhero-copy h2 em{font-style:normal;color:#ffd27a}
-/* Băng "Đề xuất" trong panel: thẻ nhỏ gọn, ẩn nút mua (chỉ quảng cáo), chấm sáng. */
+/* Băng quảng cáo kiểu ShopDunk: thẻ trắng, ảnh nền trắng (contain), badge hoàn
+   tiền đỏ góc trên-trái, tên ở giữa, giá xanh; cuộn + chấm mỗi sản phẩm. */
 .auth-promo{width:100%;max-width:640px}
 .auth-promo[hidden]{display:none}
-.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2)}
-.auth-promo .promo-card-media{height:clamp(150px,20vh,210px)}
-.auth-promo .promo-card-body{padding:13px;grid-template-rows:minmax(38px,auto) 24px;gap:8px;color:var(--lx-ink)}
-.auth-promo .promo-card-name{font-size:13px}
+.auth-promo-title{display:flex;justify-content:center;margin-bottom:14px}
+.auth-promo-title span{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:999px;background:linear-gradient(135deg,#ff7a1a,#ff4d4d);color:#fff;font-size:13px;font-weight:850;letter-spacing:.01em;box-shadow:0 10px 22px rgba(255,77,45,.32)}
+.auth-promo-title b{font-style:normal;font-weight:400}
+.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2);background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:16px;box-shadow:0 10px 26px rgba(16,6,3,.28)}
+.auth-promo .promo-card-media{height:clamp(140px,18vh,196px);background:#fff;padding:14px}
+.auth-promo .promo-card-media img{object-fit:contain}
+.auth-promo .promo-card:hover .promo-card-media img{transform:none}
+.auth-promo .promo-card-badge{left:10px;top:10px;right:auto;bottom:auto;background:#e53935;color:#fff;box-shadow:0 6px 14px rgba(229,57,53,.32)}
+.auth-promo .promo-card-body{padding:6px 12px 14px;grid-template-rows:minmax(36px,auto) 24px;gap:6px;color:var(--lx-ink);text-align:center}
+.auth-promo .promo-card-name{font-size:13px;text-align:center;justify-self:center}
+.auth-promo .promo-card-price{justify-content:center;gap:8px}
+.auth-promo .promo-card-price strong{color:#0a66c2}
 .auth-promo .promo-card-buy{display:none}
 .auth-promo .promo-carousel-dots{margin-top:14px}
 .auth-promo .promo-carousel-dots span{background:rgba(255,255,255,.45)}
