@@ -31,12 +31,11 @@
           </ul>
         </div>
 
-        {# 3 thẻ sản phẩm xòe quạt hình chữ V (data-promo-fan → promo-carousel.js
-           chỉ giữ 3 thẻ, CSS .auth-fan nghiêng thẻ). Không khung ngoài. Nạp từ
-           /app/promo-products. #}
-        <section class="promo-carousel auth-promo auth-fan" data-promo-carousel data-promo-fan data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
-          <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
-        </section>
+        {# Video quảng cáo thương hiệu (thay khối sản phẩm xòe quạt). Tự phát,
+           lặp, tắt tiếng để trình duyệt cho autoplay. #}
+        <div class="auth-video" aria-label="Video giới thiệu ShopTik">
+          <video src="/assets/videologo.mp4?v={{ assetVersion }}" autoplay loop muted playsinline preload="auto"></video>
+        </div>
 
         <div class="auth-commerce-trust" aria-label="Nền tảng hỗ trợ">
           <span>Shopee</span>
@@ -82,6 +81,4 @@
   </main>
 
   {% include "partials/public-footer.njk" %}
-
-  <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

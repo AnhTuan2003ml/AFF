@@ -7201,6 +7201,10 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round
 }
 
+/* Video quảng cáo ở panel giới thiệu (thay khối sản phẩm xòe quạt). */
+.auth-video{margin-top:10px;width:100%;max-width:520px;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(16,6,3,.4);background:#1c0f08}
+.auth-video video{display:block;width:100%;height:auto}
+
 /* Xòe quạt chữ V: 3 thẻ, thẻ giữa nâng cao, 2 thẻ bên nghiêng ±9°, không khung ngoài. */
 .auth-fan {
   max-width: none;
