@@ -40,6 +40,7 @@ import {
   listNotifications,
 } from "./services/mission.js";
 import { getWalletBalances } from "./services/ledger.js";
+import { hasVerifiedBank } from "./services/app-dashboard.js";
 import { countUnreadSupportReplies } from "./services/support-chat.js";
 
 const projectRoot = process.cwd();
@@ -244,12 +245,16 @@ app.addHook("preHandler", async (request, reply) => {
   let headerBalances: Awaited<ReturnType<typeof getWalletBalances>> | null =
     null;
   let unreadSupportCount = 0;
+  // Mặc định coi như đã có ngân hàng để KHÔNG nhắc nhầm trên các request không
+  // truy vấn (POST); chỉ GET mới kiểm tra thật để hiện nhắc trong chuông.
+  let headerHasVerifiedBank = true;
   if (request.currentUser && request.url.startsWith("/app")) {
     [
       unreadNotificationCount,
       recentNotifications,
       headerBalances,
       unreadSupportCount,
+      headerHasVerifiedBank,
     ] = await Promise.all([
       getUnreadNotificationCount(db, request.currentUser.id),
       listNotifications(db, request.currentUser.id, 8),
@@ -259,6 +264,9 @@ app.addHook("preHandler", async (request, reply) => {
       request.method === "GET"
         ? countUnreadSupportReplies(db, request.currentUser.id)
         : Promise.resolve(0),
+      request.method === "GET"
+        ? hasVerifiedBank(db, request.currentUser.id)
+        : Promise.resolve(true),
     ]);
   }
 
@@ -279,6 +287,7 @@ app.addHook("preHandler", async (request, reply) => {
     unreadNotificationCount,
     recentNotifications,
     unreadSupportCount,
+    headerHasVerifiedBank,
   });
 });
 

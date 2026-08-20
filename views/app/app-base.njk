@@ -64,6 +64,20 @@
             </button>
             <div class="notification-dropdown" data-notification-panel>
               <div class="notification-dropdown-head"><b>Thông báo</b></div>
+              <div class="notification-actions">
+                <button type="button" class="notification-action" data-checkin-open>
+                  <span class="notification-action-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg></span>
+                  <span class="notification-action-copy"><b>Điểm danh mỗi ngày</b><small>Điểm danh nhận thưởng · giữ chuỗi liên tiếp</small></span>
+                  <span class="notification-action-go" aria-hidden="true">→</span>
+                </button>
+                {% if not headerHasVerifiedBank %}
+                <a class="notification-action" href="/app/banks">
+                  <span class="notification-action-ico">{{ icon('bank') }}</span>
+                  <span class="notification-action-copy"><b>Hoàn tất để nhận tiền</b><small>Thêm & xác minh ngân hàng để rút tiền hoàn</small></span>
+                  <span class="notification-action-go" aria-hidden="true">→</span>
+                </a>
+                {% endif %}
+              </div>
               {% if unreadSupportCount %}
                 <a class="notification-support-item" href="/app/support" data-support-notice>
                   <b>Đội ngũ chăm sóc đã phản hồi</b>

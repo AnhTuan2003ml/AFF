@@ -12,10 +12,11 @@
         <span class="lb2-avatar">{% if item %}{{ item.name | first | upper }}{% else %}?{% endif %}</span>
       {% endif %}
       <span class="lb2-name">{% if item %}{{ item.name }}{% else %}Chưa có{% endif %}</span>
+      <span class="lb2-count">{% if item %}<b>{{ item.count }}</b> đơn{% else %}—{% endif %}</span>
     </div>
     <div class="lb2-block lb2-block-{{ rank }}">
-      <img class="lb2-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="30">
-      <span class="lb2-metric"><b>{% if item %}{{ item.count }}{% else %}—{% endif %}</b><small>đơn</small></span>
+      <img class="lb2-medal" src="/assets/images/medal-{{ rank }}.png?v={{ assetVersion }}" alt="Hạng {{ rank }}" width="34">
+      <span class="lb2-block-rank">TOP {{ rank }}</span>
     </div>
   </div>
 {% endmacro %}

@@ -82,8 +82,8 @@
     var progressEl = root.querySelector("[data-promo-progress]");
     if (!viewport || !track) return;
     var endpoint = root.getAttribute("data-endpoint") || "/app/promo-products";
-    // Chế độ "xòe quạt" (trang đăng nhập): chỉ 3 thẻ đầu, xếp hình chữ V bằng
-    // CSS, không cuộn/tự xoay.
+    // Chế độ "xòe quạt" (trang đăng nhập): 5 thẻ đầu, xếp hình quạt bằng CSS,
+    // không cuộn/tự xoay.
     var fanMode = root.hasAttribute("data-promo-fan");
 
     var AUTO_MS = 5000;
@@ -363,7 +363,7 @@
         products.forEach(function (product) { if (product.imageUrl) track.appendChild(renderCard(product)); });
         if (!realCards().length) return;
         root.hidden = false;
-        if (fanMode) { while (track.children.length > 3) track.removeChild(track.lastElementChild); return; }
+        if (fanMode) { while (track.children.length > 5) track.removeChild(track.lastElementChild); return; }
         window.setTimeout(setup, 80);
       })
       .catch(function (error) {

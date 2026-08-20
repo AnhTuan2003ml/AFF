@@ -84,6 +84,13 @@
     root.setAttribute("inert", "");
     root.hidden = true;
     body.classList.remove("is-entry-promo-open");
+
+    // Sau khi đóng quảng cáo: tự mở popup điểm danh. Quảng cáo chỉ hiện một lần
+    // mỗi ngày (skipKey) nên việc này cũng chỉ xảy ra một lần khi vào trang.
+    window.setTimeout(() => {
+      const checkinTrigger = document.querySelector("[data-checkin-open]");
+      if (checkinTrigger instanceof HTMLElement) checkinTrigger.click();
+    }, 320);
   };
 
   closeButton.addEventListener("click", close);

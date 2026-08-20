@@ -243,7 +243,7 @@ async function getInterestedProducts(
     }));
 }
 
-async function hasVerifiedBank(
+export async function hasVerifiedBank(
   db: Database,
   userId: string,
 ): Promise<boolean> {
