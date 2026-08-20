@@ -37,10 +37,10 @@ export async function getPlatformLeaderboard(
   db: Database,
 ): Promise<PlatformLeaderboard> {
   const [buyers, products] = await Promise.all([
-    query<{ id: string; full_name: string; avatar_url: string | null; n: string }>(
+    query<{ full_name: string; avatar_url: string | null; n: string }>(
       db,
       `
-        SELECT u.id, u.full_name, u.avatar_url, count(*)::text AS n
+        SELECT u.full_name, u.avatar_url, count(*)::text AS n
         FROM orders o JOIN users u ON u.id = o.user_id
         WHERE o.status = 'APPROVED'
           AND o.created_at >= date_trunc('month', now())
@@ -77,52 +77,6 @@ export async function getPlatformLeaderboard(
     imageUrl: r.product_image_url,
     count: Number(r.n),
   }));
-
-  // Chưa đủ 3 hạng thật → lấp bằng thành viên / sản phẩm THẬT lấy ngẫu nhiên từ
-  // DB (không bịa dữ liệu). Đơn trong tháng của họ là 0 nên hạng vẫn giảm dần.
-  if (topBuyers.length < 3) {
-    const usedIds = new Set(buyers.rows.map((r) => r.id));
-    const fill = await query<{ id: string; full_name: string; avatar_url: string | null }>(
-      db,
-      `
-        SELECT id, full_name, avatar_url
-        FROM users
-        WHERE full_name IS NOT NULL AND full_name <> ''
-        ORDER BY random()
-        LIMIT 8
-      `,
-    );
-    for (const r of fill.rows) {
-      if (topBuyers.length >= 3) break;
-      if (usedIds.has(r.id)) continue;
-      usedIds.add(r.id);
-      topBuyers.push({
-        name: maskName(r.full_name),
-        count: 0,
-        avatarUrl: r.avatar_url && r.avatar_url.length > 0 ? r.avatar_url : null,
-      });
-    }
-  }
-  if (topProducts.length < 3) {
-    const usedNames = new Set(topProducts.map((p) => p.name));
-    const fill = await query<{ product_name: string | null; product_image_url: string | null }>(
-      db,
-      `
-        SELECT product_name, product_image_url
-        FROM affiliate_links
-        WHERE product_name IS NOT NULL AND product_name <> ''
-        ORDER BY random()
-        LIMIT 16
-      `,
-    );
-    for (const r of fill.rows) {
-      if (topProducts.length >= 3) break;
-      const name = r.product_name ?? "Sản phẩm";
-      if (usedNames.has(name)) continue;
-      usedNames.add(name);
-      topProducts.push({ name, imageUrl: r.product_image_url, count: 0 });
-    }
-  }
 
   return {
     topBuyers,
