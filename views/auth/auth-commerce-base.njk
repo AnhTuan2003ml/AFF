@@ -29,19 +29,14 @@
           <p>Dán link sản phẩm bất kỳ — ShopTik tự tính và trả lại tiền hoàn vào ví.</p>
         </div>
 
-        <div class="axs-show" data-axs data-endpoint="/app/promo-products?list=best">
+        <div class="axs-fanwrap">
           <span class="axs-show-tag"><b aria-hidden="true">🔥</b> Đang hoàn tiền</span>
-          <article class="axs-card">
-            <div class="axs-card-media">
-              <span class="axs-card-badge" data-axs-cashback hidden></span>
-              <img data-axs-img alt="" referrerpolicy="no-referrer">
-            </div>
-            <div class="axs-card-info">
-              <p class="axs-card-name" data-axs-name></p>
-              <div class="axs-card-price"><strong data-axs-price></strong><span data-axs-cb hidden></span></div>
-            </div>
-          </article>
-          <div class="axs-dots" data-axs-dots aria-label="Chọn sản phẩm"></div>
+          <div class="axf" data-axf data-endpoint="/app/promo-products?list=best" aria-label="Sản phẩm nổi bật đang hoàn tiền">
+            <button type="button" class="axf-nav axf-prev" data-axf-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <div class="axf-stage" data-axf-stage></div>
+            <button type="button" class="axf-nav axf-next" data-axf-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+          <div class="axf-dots" data-axf-dots aria-label="Chọn sản phẩm"></div>
         </div>
 
         <div class="axs-trust" aria-label="Nền tảng hỗ trợ">
@@ -89,5 +84,5 @@
 
   {% include "partials/public-footer.njk" %}
 
-  <script src="/assets/auth-showcase.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/auth-fan.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

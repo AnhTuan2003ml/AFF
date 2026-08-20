@@ -7215,23 +7215,29 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .axs-kicker{display:inline-block;font-size:11px;letter-spacing:.2em;font-weight:850;color:#ffd9c9}
 .axs-copy h1{margin:12px 0 0;font-size:clamp(30px,3.1vw,46px);line-height:1.02;letter-spacing:-.045em;font-weight:850;color:#fff;max-width:520px}
 .axs-copy p{margin:14px 0 0;max-width:430px;font-size:14px;line-height:1.55;color:rgba(255,255,255,.82)}
-.axs-show{width:min(400px,100%)}
-.axs-show-tag{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);font-size:11.5px;font-weight:800;letter-spacing:.02em}
+.axs-fanwrap{width:100%;max-width:520px}
+.axs-show-tag{display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);font-size:11.5px;font-weight:800;letter-spacing:.02em}
 .axs-show-tag b{font-weight:400}
-.axs-card{border-radius:24px;overflow:hidden;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);box-shadow:0 34px 74px rgba(0,0,0,.42);backdrop-filter:blur(10px)}
-.axs-card-media{position:relative;aspect-ratio:4/3;background:#fff}
-.axs-card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:22px;box-sizing:border-box;display:block}
-.axs-card-badge{position:absolute;left:14px;top:14px;z-index:2;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#ff7a1a,#ff4d4d);color:#fff;font-size:12px;font-weight:850;box-shadow:0 8px 18px rgba(255,77,45,.4)}
-.axs-card-badge[hidden]{display:none}
-.axs-card-info{padding:15px 18px 17px}
-.axs-card-name{margin:0;font-size:15px;font-weight:700;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:41px}
-.axs-card-price{display:flex;align-items:baseline;gap:10px;margin-top:8px;flex-wrap:wrap}
-.axs-card-price strong{font-size:22px;letter-spacing:-.02em;color:#fff}
-.axs-card-price span{color:#9df0b0;font-weight:800;font-size:13px}
-.axs-card-price span[hidden]{display:none}
-.axs-dots{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.axs-dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s ease}
-.axs-dot.is-active{background:#fff}
+/* Xòe quạt (coverflow): thẻ giữa nổi, 2 bên nghiêng dần — JS đặt transform. */
+.axf{position:relative;width:100%;height:clamp(288px,38vh,352px);touch-action:pan-y}
+.axf-stage{position:absolute;inset:0}
+.axf-slot{position:absolute;top:50%;left:50%;width:clamp(140px,13.5vw,176px);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s ease;will-change:transform}
+.axf-card{border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 22px 48px rgba(0,0,0,.42);transition:transform .3s ease;cursor:pointer}
+.axf-slot:hover{z-index:250!important}
+.axf-slot:hover .axf-card{transform:translateY(-10px) scale(1.05)}
+.axf-card-media{position:relative;aspect-ratio:3/4;background:#fff}
+.axf-card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:13px;box-sizing:border-box;display:block}
+.axf-badge{position:absolute;left:8px;top:8px;padding:5px 9px;border-radius:999px;background:linear-gradient(135deg,#ff7a1a,#ff4d4d);color:#fff;font-size:10.5px;font-weight:850;box-shadow:0 6px 14px rgba(255,77,45,.4)}
+.axf-body{padding:9px 11px 12px}
+.axf-name{margin:0;font-size:12px;font-weight:700;line-height:1.3;color:var(--lx-ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:31px}
+.axf-price{margin:5px 0 0;font-size:13px;font-weight:850;color:var(--lx-orange)}
+.axf-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:300;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.34);color:#fff;cursor:pointer;backdrop-filter:blur(6px)}
+.axf-nav:hover{background:rgba(255,255,255,.3)}
+.axf-nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.axf-prev{left:-6px}.axf-next{right:-6px}
+.axf-dots{display:flex;justify-content:center;gap:7px;margin-top:14px;flex-wrap:wrap}
+.axf-dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s ease}
+.axf-dot.is-active{background:#fff}
 .axs-trust{display:flex;flex-wrap:wrap;gap:10px}
 .axs-trust span{padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:12.5px;font-weight:750;color:#fff}
 
