@@ -7201,39 +7201,39 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round
 }
 
-/* Panel giới thiệu: băng quảng cáo sản phẩm giống mục "Đề xuất" (cuộn + chấm). */
-.auth-vhero{background:radial-gradient(120% 110% at 18% 0%,#e84d15 0%,#7c3018 58%,#361a10 100%)}
-.auth-vhero .auth-commerce-media{display:none}
-.auth-vhero:after{display:none}
-.auth-vhero-inner{position:relative;z-index:1;min-height:100vh;padding:clamp(30px,4vh,54px) clamp(30px,4vw,68px);display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.6vh,30px)}
-.auth-vhero .auth-commerce-brand{width:max-content;display:flex;align-items:center;gap:12px;font-size:21px}
-.auth-vhero .auth-commerce-brand img{width:46px;height:46px}
-.auth-vhero-copy .auth-commerce-kicker{display:inline-block;font-size:11px;letter-spacing:.18em;font-weight:850;color:#ffd9c9}
-.auth-vhero-copy h2{margin:12px 0 0;font-size:clamp(28px,3.2vw,44px);line-height:1.04;letter-spacing:-.04em;font-weight:800;color:#fff;max-width:620px}
-.auth-vhero-copy h2 em{font-style:normal;color:#ffd27a}
-/* Băng quảng cáo kiểu ShopDunk: thẻ trắng, ảnh nền trắng (contain), badge hoàn
-   tiền đỏ góc trên-trái, tên ở giữa, giá xanh; cuộn + chấm mỗi sản phẩm. */
-.auth-promo{width:100%;max-width:640px}
-.auth-promo[hidden]{display:none}
-.auth-promo-title{display:flex;justify-content:center;margin-bottom:14px}
-.auth-promo-title span{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:999px;background:linear-gradient(135deg,#ff7a1a,#ff4d4d);color:#fff;font-size:13px;font-weight:850;letter-spacing:.01em;box-shadow:0 10px 22px rgba(255,77,45,.32)}
-.auth-promo-title b{font-style:normal;font-weight:400}
-.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2);background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:16px;box-shadow:0 10px 26px rgba(16,6,3,.28)}
-.auth-promo .promo-card-media{height:clamp(140px,18vh,196px);background:#fff;padding:14px}
-.auth-promo .promo-card-media img{object-fit:contain}
-.auth-promo .promo-card:hover .promo-card-media img{transform:none}
-.auth-promo .promo-card-badge{left:10px;top:10px;right:auto;bottom:auto;background:#e53935;color:#fff;box-shadow:0 6px 14px rgba(229,57,53,.32)}
-.auth-promo .promo-card-body{padding:6px 12px 14px;grid-template-rows:minmax(36px,auto) 24px;gap:6px;color:var(--lx-ink);text-align:center}
-.auth-promo .promo-card-name{font-size:13px;text-align:center;justify-self:center}
-.auth-promo .promo-card-price{justify-content:center;gap:8px}
-.auth-promo .promo-card-price strong{color:#0a66c2}
-.auth-promo .promo-card-buy{display:none}
-.auth-promo .promo-carousel-dots{margin-top:14px}
-.auth-promo .promo-carousel-dots span{background:rgba(255,255,255,.45)}
-.auth-promo .promo-carousel-dots span.is-active{background:#fff}
-@media(max-width:1180px){.auth-promo .promo-card{flex:0 0 calc((100% - 16px)/2)}}
-.auth-vhero-trust{display:flex;flex-wrap:wrap;gap:10px}
-.auth-vhero-trust span{padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.24);font-size:12.5px;font-weight:750;color:#fff}
+/* ===== Panel giới thiệu đăng nhập/đăng ký — thiết kế lại: showcase 1 sản phẩm
+   nổi bật tự đổi. Một hệ thống dọc mạch lạc: thương hiệu → khẩu hiệu → thẻ sản
+   phẩm lớn (có chấm) → dải sàn. ===== */
+.axs-hero{background:radial-gradient(130% 120% at 12% -8%,#ff6a2b 0%,#c9430f 44%,#5a2612 100%);color:#fff;overflow:hidden}
+.axs-hero:after{display:none}
+.axs-hero .auth-commerce-media{display:none}
+.axs-inner{position:relative;z-index:1;min-height:100vh;box-sizing:border-box;padding:clamp(30px,4.4vh,56px) clamp(32px,4.6vw,72px);display:flex;flex-direction:column;justify-content:center;gap:clamp(20px,3vh,32px);width:min(640px,100%);margin:0 auto}
+.axs-brand{display:flex;align-items:center;gap:11px;width:max-content;font-size:22px;letter-spacing:-.03em}
+.axs-brand img{width:44px;height:44px;object-fit:contain}
+.axs-brand-word b{font-weight:800}.axs-brand-word strong{font-weight:900}
+.axs-brand small{align-self:center;font-size:9px;letter-spacing:.18em;font-weight:850;color:#ffd9c9}
+.axs-kicker{display:inline-block;font-size:11px;letter-spacing:.2em;font-weight:850;color:#ffd9c9}
+.axs-copy h1{margin:12px 0 0;font-size:clamp(30px,3.1vw,46px);line-height:1.02;letter-spacing:-.045em;font-weight:850;color:#fff;max-width:520px}
+.axs-copy p{margin:14px 0 0;max-width:430px;font-size:14px;line-height:1.55;color:rgba(255,255,255,.82)}
+.axs-show{width:min(400px,100%)}
+.axs-show-tag{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);font-size:11.5px;font-weight:800;letter-spacing:.02em}
+.axs-show-tag b{font-weight:400}
+.axs-card{border-radius:24px;overflow:hidden;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);box-shadow:0 34px 74px rgba(0,0,0,.42);backdrop-filter:blur(10px)}
+.axs-card-media{position:relative;aspect-ratio:4/3;background:#fff}
+.axs-card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:22px;box-sizing:border-box;display:block}
+.axs-card-badge{position:absolute;left:14px;top:14px;z-index:2;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#ff7a1a,#ff4d4d);color:#fff;font-size:12px;font-weight:850;box-shadow:0 8px 18px rgba(255,77,45,.4)}
+.axs-card-badge[hidden]{display:none}
+.axs-card-info{padding:15px 18px 17px}
+.axs-card-name{margin:0;font-size:15px;font-weight:700;line-height:1.35;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:41px}
+.axs-card-price{display:flex;align-items:baseline;gap:10px;margin-top:8px;flex-wrap:wrap}
+.axs-card-price strong{font-size:22px;letter-spacing:-.02em;color:#fff}
+.axs-card-price span{color:#9df0b0;font-weight:800;font-size:13px}
+.axs-card-price span[hidden]{display:none}
+.axs-dots{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.axs-dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s ease}
+.axs-dot.is-active{background:#fff}
+.axs-trust{display:flex;flex-wrap:wrap;gap:10px}
+.axs-trust span{padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:12.5px;font-weight:750;color:#fff}
 
 /* Khẩu hiệu: mỗi câu không vỡ giữa từ → desktop đủ rộng thì 1 dòng, màn hẹp
    thì ngắt ĐÚNG giữa hai câu (mỗi câu 1 dòng). */
@@ -7242,7 +7242,6 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .px-home-hero-copy h1{font-size:clamp(34px,3.4vw,52px)}
 .px-landing-copy{max-width:900px}
 .px-landing-copy h1{font-size:clamp(34px,3.4vw,52px)}
-.auth-vhero-copy h2{max-width:780px}
 @media(max-width:820px){
   .px-home-hero-copy h1,.px-landing-copy h1{font-size:33px}
 }

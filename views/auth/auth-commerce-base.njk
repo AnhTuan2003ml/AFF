@@ -13,31 +13,38 @@
 
 {% block body %}
   <main class="auth-shell auth-commerce" id="main-content">
-    {# Panel giới thiệu: băng quảng cáo sản phẩm giống mục "Đề xuất" — thẻ cuộn
-       ngang, chấm cho mỗi sản phẩm, tự lướt vòng tròn, kéo/vuốt được. #}
-    <section class="auth-commerce-story auth-vhero" aria-label="Giới thiệu ShopTik">
-      <div class="auth-vhero-inner">
-        <a class="auth-commerce-brand" href="/" aria-label="ShopTik - Trang chủ">
+    {# Panel giới thiệu (thiết kế lại, hệ thống dọc mạch lạc): thương hiệu →
+       khẩu hiệu → MỘT thẻ sản phẩm nổi bật lớn (tự đổi, có chấm) → dải sàn. #}
+    <section class="auth-commerce-story axs-hero" aria-label="Giới thiệu ShopTik">
+      <div class="axs-inner">
+        <a class="axs-brand" href="/" aria-label="ShopTik - Trang chủ">
           <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="">
-          <span><b>Shop</b><strong>Tik</strong><small>CASHBACK</small></span>
+          <span class="axs-brand-word"><b>Shop</b><strong>Tik</strong></span>
+          <small>CASHBACK</small>
         </a>
 
-        <div class="auth-vhero-copy">
-          <span class="auth-commerce-kicker">HOÀN TIỀN ĐA SÀN</span>
-          <h2><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part"><em>Hoàn tiền tối ưu.</em></span></h2>
+        <div class="axs-copy">
+          <span class="axs-kicker">HOÀN TIỀN ĐA SÀN</span>
+          <h1><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part">Hoàn tiền tối ưu.</span></h1>
+          <p>Dán link sản phẩm bất kỳ — ShopTik tự tính và trả lại tiền hoàn vào ví.</p>
         </div>
 
-        <section class="promo-carousel auth-promo" data-promo-carousel data-endpoint="/app/promo-products?list=best" hidden aria-label="Sản phẩm nổi bật đang hoàn tiền">
-          <div class="auth-promo-title"><span><b aria-hidden="true">🔥</b> Sản phẩm nổi bật</span></div>
-          <div class="promo-carousel-stage">
-            <button type="button" class="promo-carousel-arrow promo-arrow-prev" data-promo-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-            <div class="promo-carousel-viewport" data-promo-viewport><div class="promo-carousel-track" data-promo-track></div></div>
-            <button type="button" class="promo-carousel-arrow promo-arrow-next" data-promo-next aria-label="Sản phẩm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-          </div>
-          <div class="promo-carousel-dots" data-promo-progress></div>
-        </section>
+        <div class="axs-show" data-axs data-endpoint="/app/promo-products?list=best">
+          <span class="axs-show-tag"><b aria-hidden="true">🔥</b> Đang hoàn tiền</span>
+          <article class="axs-card">
+            <div class="axs-card-media">
+              <span class="axs-card-badge" data-axs-cashback hidden></span>
+              <img data-axs-img alt="" referrerpolicy="no-referrer">
+            </div>
+            <div class="axs-card-info">
+              <p class="axs-card-name" data-axs-name></p>
+              <div class="axs-card-price"><strong data-axs-price></strong><span data-axs-cb hidden></span></div>
+            </div>
+          </article>
+          <div class="axs-dots" data-axs-dots aria-label="Chọn sản phẩm"></div>
+        </div>
 
-        <div class="auth-vhero-trust" aria-label="Nền tảng hỗ trợ">
+        <div class="axs-trust" aria-label="Nền tảng hỗ trợ">
           <span>Shopee</span>
           <span>TikTok Shop</span>
           <span>Lazada</span>
@@ -82,5 +89,5 @@
 
   {% include "partials/public-footer.njk" %}
 
-  <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/auth-showcase.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
