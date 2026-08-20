@@ -199,8 +199,17 @@ Muốn thấy nó xanh:
 1. Ở repo gốc chạy `npm run dev`
 2. Điện thoại và máy tính chung một mạng Wi-Fi
 3. IP LAN trong `mobile/.env` và `mobile/eas.json` phải đúng — hiện là
-   `192.168.1.68`. Router đổi IP thì kiểm tra lại bằng `ipconfig` và sửa hai
+   `192.168.1.179`. Router đổi IP thì kiểm tra lại bằng `ipconfig` và sửa hai
    file đó, rồi build lại.
+4. Cổng 3000 phải mở trên tường lửa Windows, VÀ mạng Wi-Fi phải được xếp loại
+   Private — rule tạo cho hồ sơ Private mà mạng đang là Public thì rule không
+   có tác dụng nào cả:
+
+   ```powershell
+   New-NetFirewallRule -DisplayName "ShopTik dev 3000" -Direction Inbound `
+     -Action Allow -Protocol TCP -LocalPort 3000 -Profile Private
+   Set-NetConnectionProfile -Name "<ten Wi-Fi>" -NetworkCategory Private
+   ```
 
 ---
 
@@ -214,6 +223,7 @@ Muốn thấy nó xanh:
 | Tải được file nhưng bấm cài không lên | File là `.aab` chứ không phải `.apk` | Kiểm tra hồ sơ `preview` trong `eas.json` còn dòng `"buildType": "apk"` không |
 | Android chặn không cho cài | Chưa bật nguồn không xác định | Cấp quyền cho đúng ứng dụng đang mở file, không phải cho file |
 | App mở lên nhưng báo mất kết nối | Backend chưa chạy, khác Wi-Fi, hoặc IP LAN đã đổi | Xem mục **Xong khi** ở trên |
+| Trình duyệt trên điện thoại vào được `/-/ready` nhưng app vẫn báo mất kết nối, và log backend KHÔNG thấy request nào từ app | Android 9+ cấm HTTP không mã hoá khi app không khai báo `usesCleartextTraffic`. Request bị chặn ngay trong máy, không rời khỏi app. Trình duyệt không chịu luật này nên rất dễ chẩn đoán nhầm thành lỗi mạng | Đã xử lý sẵn ở `mobile/app.config.js`: bật cho hồ sơ test, giữ tắt cho `production` (bản đó dùng HTTPS). Kiểm tra bằng cách giải nén APK xem `AndroidManifest.xml` có `usesCleartextTraffic` chưa |
 | Build xếp hàng rất lâu | Gói EAS miễn phí | Bình thường. Gần ngày nộp store, lúc build lại liên tục, mới cần tính nâng gói |
 
 ---
