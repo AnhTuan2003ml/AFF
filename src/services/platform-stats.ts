@@ -3,6 +3,7 @@ import { query, type Database } from "../db.js";
 export interface TopBuyer {
   name: string;
   count: number;
+  avatarUrl: string | null;
 }
 export interface TopProduct {
   name: string;
@@ -21,14 +22,14 @@ export interface PlatformLeaderboard {
 /** Dữ liệu minh họa cho podium khi nền tảng chưa đủ 3 mục thật — để giao diện
  *  không trống. Số đơn giảm dần rõ để phân biệt hạng. */
 const SAMPLE_BUYERS: TopBuyer[] = [
-  { name: "T. M. Hà", count: 128 },
-  { name: "N. V. Nam", count: 94 },
-  { name: "L. Q. Anh", count: 67 },
+  { name: "T. M. Hà", count: 128, avatarUrl: "/assets/images/lb-avatar-1.svg" },
+  { name: "N. V. Nam", count: 94, avatarUrl: "/assets/images/lb-avatar-2.svg" },
+  { name: "L. Q. Anh", count: 67, avatarUrl: "/assets/images/lb-avatar-3.svg" },
 ];
 const SAMPLE_PRODUCTS: TopProduct[] = [
-  { name: "Combo dưỡng da 5 món chính hãng", imageUrl: null, count: 156 },
-  { name: "Tai nghe Bluetooth chống ồn", imageUrl: null, count: 112 },
-  { name: "Nồi chiên không dầu 5L", imageUrl: null, count: 83 },
+  { name: "Combo dưỡng da 5 món chính hãng", imageUrl: "/assets/images/lb-product-1.svg", count: 156 },
+  { name: "Tai nghe Bluetooth chống ồn", imageUrl: "/assets/images/lb-product-2.svg", count: 112 },
+  { name: "Nồi chiên không dầu 5L", imageUrl: "/assets/images/lb-product-3.svg", count: 83 },
 ];
 
 /** Che bớt tên người mua để bảo vệ riêng tư: giữ tên gọi (từ cuối), viết tắt
@@ -51,14 +52,14 @@ export async function getPlatformLeaderboard(
   db: Database,
 ): Promise<PlatformLeaderboard> {
   const [buyers, products] = await Promise.all([
-    query<{ full_name: string; n: string }>(
+    query<{ full_name: string; avatar_url: string | null; n: string }>(
       db,
       `
-        SELECT u.full_name, count(*)::text AS n
+        SELECT u.full_name, u.avatar_url, count(*)::text AS n
         FROM orders o JOIN users u ON u.id = o.user_id
         WHERE o.status = 'APPROVED'
           AND o.created_at >= date_trunc('month', now())
-        GROUP BY u.id, u.full_name
+        GROUP BY u.id, u.full_name, u.avatar_url
         ORDER BY count(*) DESC, u.full_name
         LIMIT 3
       `,
@@ -89,6 +90,7 @@ export async function getPlatformLeaderboard(
       : buyers.rows.map((r) => ({
           name: maskName(r.full_name),
           count: Number(r.n),
+          avatarUrl: r.avatar_url && r.avatar_url.length > 0 ? r.avatar_url : null,
         })),
     topProducts: useSampleProducts
       ? SAMPLE_PRODUCTS

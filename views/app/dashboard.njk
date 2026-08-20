@@ -7,7 +7,9 @@
     <div class="lb2-spot-top">
       {% if rank == 1 %}<span class="lb2-crown" aria-hidden="true">👑</span>{% endif %}
       {% if kind == 'product' %}
-        <span class="lb2-avatar lb2-avatar-img">{% if item and item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}</span>
+        <span class="lb2-avatar lb2-avatar-img">{% if item and item.imageUrl %}<img src="{{ item.imageUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="lb2-avatar-fallback" aria-hidden="true">▣</span>{% endif %}</span>
+      {% elif item and item.avatarUrl %}
+        <span class="lb2-avatar lb2-avatar-img"><img src="{{ item.avatarUrl }}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>
       {% else %}
         <span class="lb2-avatar">{% if item %}{{ item.name | first | upper }}{% else %}?{% endif %}</span>
       {% endif %}
