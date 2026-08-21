@@ -106,6 +106,9 @@ def main() -> None:
         "brand-logo-monochrome.png": fit_center(mono, 1024, 600),
         # Icon chính (iOS/cửa hàng/legacy): đặc, nền trắng, logo 78%.
         "app-icon.png": fit_center(logo, 1024, 800, (255, 255, 255, 255)),
+        # Màn hình chờ (expo-splash-screen, app.json `image`): logo đầy đủ trên nền
+        # trong suốt — màu nền do app.json `backgroundColor` tô.
+        "splash-icon.png": fit_center(logo, 1024, 940),
         # Icon nhỏ trên thanh trạng thái: trắng trên nền trong suốt, 96px (xxxhdpi).
         "notification-icon.png": fit_center(mono, 96, 84),
         # Ảnh lớn của mọi thông báo: linh vật CamiO, 384px = 96dp @xxxhdpi.
