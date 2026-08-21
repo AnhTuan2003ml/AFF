@@ -10,6 +10,10 @@ import type { AuthUser } from './auth';
 export interface WalletBalances {
   available: number;
   pending: number;
+  /** Đang giữ cho lệnh rút đang xử lý. */
+  held: number;
+  /** Tổng đã chuyển về ngân hàng. */
+  paid: number;
 }
 
 export interface Me {

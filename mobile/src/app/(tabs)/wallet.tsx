@@ -64,32 +64,49 @@ export default function WalletScreen() {
           }
           ListHeaderComponent={
             <View style={{ gap: spacing.md }}>
-              <Text style={styles.h1}>Ví hoàn tiền</Text>
-
-              <View style={styles.balanceMain}>
-                <Text style={styles.balanceMainLabel}>Khả dụng — rút được ngay</Text>
-                <Text style={styles.balanceMainValue}>{vnd(data?.balances.available)}</Text>
+              <View style={styles.hero}>
+                <Text style={styles.heroLabel}>Có thể rút</Text>
+                <Text style={styles.heroValue}>{vnd(data?.balances.available)}</Text>
+                <Text style={styles.heroNote}>
+                  Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.
+                </Text>
+                <Pressable
+                  onPress={() => router.push('/withdraw')}
+                  style={({ pressed }) => [
+                    styles.heroBtn,
+                    pressed && { opacity: 0.85 },
+                  ]}>
+                  <Text style={styles.heroBtnText}>Rút tiền  →</Text>
+                </Pressable>
               </View>
 
-              <View style={styles.balancePending}>
-                <Ionicons name="time-outline" size={18} color={colors.warning} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.balancePendingLabel}>Đang chờ về ví</Text>
-                  <Text style={styles.balancePendingValue}>{vnd(data?.balances.pending)}</Text>
+              {/* Dòng tiền hoàn: Đang chờ → Có thể rút → Đã nhận (như web). */}
+              <View style={styles.flow}>
+                <View style={[styles.step, styles.stepWait]}>
+                  <Text style={styles.stepLabel}>Đang chờ đối soát</Text>
+                  <Text style={styles.stepValue}>{vnd(data?.balances.pending)}</Text>
+                  <Text style={styles.stepNote}>Đơn chưa được sàn duyệt</Text>
+                </View>
+                <View style={[styles.step, styles.stepReady]}>
+                  <Text style={styles.stepLabel}>Có thể rút</Text>
+                  <Text style={styles.stepValue}>{vnd(data?.balances.available)}</Text>
+                  <Text style={styles.stepNote}>
+                    {(data?.balances.held ?? 0) > 0
+                      ? `Đang xử lý: ${vnd(data?.balances.held)}`
+                      : 'Sẵn sàng tạo lệnh rút'}
+                  </Text>
+                </View>
+                <View style={[styles.step, styles.stepPaid]}>
+                  <Text style={styles.stepLabel}>Đã nhận</Text>
+                  <Text style={styles.stepValue}>{vnd(data?.balances.paid)}</Text>
+                  <Text style={styles.stepNote}>Đã chuyển về ngân hàng</Text>
                 </View>
               </View>
 
-              <Pressable
-                onPress={() => router.push('/withdraw')}
-                style={({ pressed }) => [
-                  styles.withdrawBtn,
-                  pressed && { backgroundColor: colors.brandStrong },
-                ]}>
-                <Ionicons name="arrow-up-circle-outline" size={19} color={colors.onBrand} />
-                <Text style={styles.withdrawText}>Rút tiền về ngân hàng</Text>
-              </Pressable>
-
-              <Text style={styles.h2}>Lịch sử biến động</Text>
+              <View>
+                <Text style={styles.eyebrow}>NHẬT KÝ</Text>
+                <Text style={styles.h2}>Lịch sử biến động</Text>
+              </View>
             </View>
           }
           ListEmptyComponent={
@@ -133,7 +150,37 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { padding: spacing.md, paddingBottom: spacing.xl, gap: 10 },
   h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },
-  h2: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 4 },
+  h2: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 2 },
+  eyebrow: { fontSize: 10.5, fontWeight: '900', color: colors.brand, letterSpacing: 1.2 },
+
+  hero: {
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.brand,
+  },
+  heroLabel: { fontSize: 12.5, color: 'rgba(255,255,255,0.88)', fontWeight: '700' },
+  heroValue: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1.4, marginTop: 4 },
+  heroNote: { fontSize: 11.5, color: 'rgba(255,255,255,0.82)', marginTop: 6, lineHeight: 16 },
+  heroBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 14,
+    paddingHorizontal: 18,
+    height: 42,
+    borderRadius: radius.sm,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroBtnText: { color: colors.brand, fontWeight: '900', fontSize: 14 },
+
+  flow: { flexDirection: 'row', gap: 8 },
+  step: { flex: 1, padding: 10, borderRadius: radius.md, gap: 2 },
+  stepWait: { backgroundColor: colors.warningSoft },
+  stepReady: { backgroundColor: colors.brandSoft },
+  stepPaid: { backgroundColor: colors.successSoft },
+  stepLabel: { fontSize: 10.5, fontWeight: '800', color: colors.inkSoft },
+  stepValue: { fontSize: 14, fontWeight: '900', color: colors.text, marginTop: 2 },
+  stepNote: { fontSize: 9.5, color: colors.muted, lineHeight: 13, marginTop: 1 },
 
   balanceMain: {
     padding: spacing.lg,

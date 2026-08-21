@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -34,14 +37,34 @@ function nhan(o: Order): { chu: string; mau: string; nen: string } {
   }
 }
 
+const TABS = [
+  { key: 'ALL', nhan: 'Tất cả' },
+  { key: 'PENDING', nhan: 'Đang chờ' },
+  { key: 'APPROVED', nhan: 'Đã duyệt' },
+  { key: 'PAID', nhan: 'Đã về ví' },
+] as const;
+
+type TabKey = (typeof TABS)[number]['key'];
+
+function khopTab(o: Order, tab: TabKey): boolean {
+  if (tab === 'ALL') return true;
+  if (tab === 'APPROVED') return o.status === 'APPROVED';
+  if (tab === 'PAID') return o.status === 'PAID';
+  // Đang chờ: mọi trạng thái chưa duyệt/chưa về ví/chưa hủy.
+  return !['APPROVED', 'PAID', 'CANCELLED'].includes(o.status);
+}
+
 export default function OrdersScreen() {
   const { user } = useSession();
+  const [tab, setTab] = useState<TabKey>('ALL');
 
   const { data, isPending, isRefetching, refetch } = useQuery({
     queryKey: ['orders'],
     queryFn: layDonHang,
     enabled: !!user,
   });
+
+  const loc = (data ?? []).filter((o) => khopTab(o, tab));
 
   if (!user) {
     return (
@@ -61,7 +84,7 @@ export default function OrdersScreen() {
         </View>
       ) : (
         <FlatList
-          data={data ?? []}
+          data={loc}
           keyExtractor={(o) => o.id}
           contentContainerStyle={styles.list}
           refreshControl={
@@ -71,7 +94,31 @@ export default function OrdersScreen() {
               tintColor={colors.brand}
             />
           }
-          ListHeaderComponent={<Text style={styles.h1}>Đơn hàng</Text>}
+          ListHeaderComponent={
+            <View style={styles.head}>
+              <Text style={styles.h1}>Đơn hàng</Text>
+              <Text style={styles.sub}>
+                {loc.length} đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik
+                Affiliate
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabs}>
+                {TABS.map((t) => {
+                  const on = t.key === tab;
+                  return (
+                    <Pressable
+                      key={t.key}
+                      onPress={() => setTab(t.key)}
+                      style={[styles.tab, on && styles.tabOn]}>
+                      <Text style={[styles.tabText, on && styles.tabTextOn]}>{t.nhan}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>Chưa có đơn nào</Text>
@@ -139,7 +186,21 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
-  h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1, marginBottom: 4 },
+  head: { marginBottom: 4 },
+  h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },
+  sub: { fontSize: 12.5, color: colors.muted, marginTop: 4, lineHeight: 18 },
+  tabs: { gap: 8, paddingVertical: 12 },
+  tab: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  tabOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  tabText: { fontSize: 13, fontWeight: '800', color: colors.text },
+  tabTextOn: { color: colors.onBrand },
 
   card: {
     padding: spacing.md,
