@@ -54,7 +54,10 @@ export default function WalletScreen() {
       ) : (
         <FlatList
           data={data?.history ?? []}
-          keyExtractor={(r) => r.id}
+          // Một giao dịch ledger có thể có nhiều vế thuộc cùng người dùng (vd
+          // đảo khoản: DEBIT + CREDIT), nên t.id không duy nhất giữa các dòng —
+          // ghép thêm chỉ số để FlatList không cảnh báo trùng key.
+          keyExtractor={(r, i) => `${r.id}-${r.direction}-${i}`}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />

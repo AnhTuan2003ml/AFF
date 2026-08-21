@@ -40,7 +40,13 @@ const NO_CSRF = { csrf: false } as const;
 
 function tokenResponse(
   tokens: MobileTokenPair,
-  user: { id: string; email: string; fullName: string; role: string },
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+    avatarUrl: string;
+  },
 ) {
   return {
     tokenType: tokens.tokenType,
@@ -55,15 +61,22 @@ function tokenResponse(
 async function loadPublicUser(
   db: ApiDeps["db"],
   userId: string,
-): Promise<{ id: string; email: string; fullName: string; role: string }> {
+): Promise<{
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  avatarUrl: string;
+}> {
   const result = await query<{
     id: string;
     email: string;
     full_name: string;
     role: string;
+    avatar_url: string;
   }>(
     db,
-    "SELECT id, email, full_name, role FROM users WHERE id = $1 LIMIT 1",
+    "SELECT id, email, full_name, role, avatar_url FROM users WHERE id = $1 LIMIT 1",
     [userId],
   );
   const row = result.rows[0];
@@ -75,6 +88,7 @@ async function loadPublicUser(
     email: row.email,
     fullName: row.full_name,
     role: row.role,
+    avatarUrl: row.avatar_url,
   };
 }
 
@@ -229,6 +243,7 @@ export async function registerAuthApiRoutes(
           email: user.email,
           fullName: user.fullName,
           role: user.role,
+          avatarUrl: user.avatarUrl,
         }),
       );
     },

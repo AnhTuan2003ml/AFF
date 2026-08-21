@@ -12,6 +12,8 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: string;
+  /** URL ảnh đại diện (thường là ảnh Google). Trống = dùng chữ cái đầu. */
+  avatarUrl: string;
 }
 
 interface TokenResponse {

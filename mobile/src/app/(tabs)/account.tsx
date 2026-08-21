@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -43,11 +44,19 @@ export default function AccountScreen() {
         <Text style={styles.h1}>Tài khoản</Text>
 
         <View style={styles.profile}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(user.fullName || user.email || '?').charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          {user.avatarUrl ? (
+            <Image
+              source={{ uri: user.avatarUrl }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(user.fullName || user.email || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>{user.fullName || 'Chưa đặt tên'}</Text>
             <Text style={styles.email}>{user.email}</Text>
