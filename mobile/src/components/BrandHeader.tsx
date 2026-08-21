@@ -66,9 +66,9 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
         </View>
       ) : (
         <Pressable
-          onPress={onRegister ?? (() => router.push('/register'))}
+          onPress={onRegister ?? (() => router.push('/login'))}
           style={({ pressed }) => [styles.cta, pressed && { backgroundColor: colors.brandStrong }]}>
-          <Text style={styles.ctaText}>Đăng ký</Text>
+          <Text style={styles.ctaText}>Đăng nhập</Text>
         </Pressable>
       )}
 
