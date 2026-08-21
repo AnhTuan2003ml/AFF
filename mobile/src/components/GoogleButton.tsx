@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text } from 'react-native';
 
+import { GoogleG } from '@/components/GoogleG';
 import { useSession } from '@/hooks/useSession';
 import { colors, radius } from '@/theme/tokens';
 
@@ -62,7 +62,7 @@ function GoogleButtonView({
         <ActivityIndicator color={colors.text} />
       ) : (
         <>
-          <Ionicons name="logo-google" size={18} color="#ea4335" />
+          <GoogleG size={18} />
           <Text style={styles.text}>Tiếp tục với Google</Text>
         </>
       )}
