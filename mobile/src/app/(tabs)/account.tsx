@@ -2,18 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { layLenhRut } from '@/api/account';
 import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
+import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export default function AccountScreen() {
   const { user, dangXuat } = useSession();
+  const [hoiXuat, setHoiXuat] = useState(false);
 
   const { data: lenhRut } = useQuery({
     queryKey: ['withdrawals'],
@@ -31,10 +34,7 @@ export default function AccountScreen() {
   }
 
   function hoiDangXuat() {
-    Alert.alert('Đăng xuất?', 'Bạn sẽ cần đăng nhập lại để vào tài khoản.', [
-      { text: 'Ở lại', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: () => void dangXuat() },
-    ]);
+    setHoiXuat(true);
   }
 
   return (
@@ -133,6 +133,33 @@ export default function AccountScreen() {
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </Pressable>
       </ScrollView>
+
+      <Modal
+        visible={hoiXuat}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setHoiXuat(false)}>
+        <Pressable style={styles.scrim} onPress={() => setHoiXuat(false)}>
+          <Pressable style={styles.confirm} onPress={(e) => e.stopPropagation()}>
+            <Mascot mood="ngacnhien" size={64} />
+            <Text style={styles.confirmTitle}>Đăng xuất?</Text>
+            <Text style={styles.confirmSub}>
+              Bạn sẽ cần đăng nhập lại để vào tài khoản.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.confirmDanger, pressed && { opacity: 0.9 }]}
+              onPress={() => {
+                setHoiXuat(false);
+                void dangXuat();
+              }}>
+              <Text style={styles.confirmDangerText}>Đăng xuất</Text>
+            </Pressable>
+            <Pressable style={styles.confirmGhost} onPress={() => setHoiXuat(false)}>
+              <Text style={styles.confirmGhostText}>Ở lại</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -226,4 +253,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   logoutText: { color: colors.danger, fontWeight: '800', fontSize: 14.5 },
+
+  scrim: {
+    flex: 1,
+    backgroundColor: 'rgba(40,22,14,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  confirm: {
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    gap: 6,
+  },
+  confirmTitle: { fontSize: 19, fontWeight: '900', color: colors.text, marginTop: 6 },
+  confirmSub: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19, marginBottom: 10 },
+  confirmDanger: {
+    width: '100%',
+    height: 48,
+    borderRadius: radius.sm,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmDangerText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  confirmGhost: { width: '100%', height: 44, alignItems: 'center', justifyContent: 'center' },
+  confirmGhostText: { color: colors.muted, fontWeight: '800', fontSize: 14 },
 });

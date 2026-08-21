@@ -1,9 +1,8 @@
-import * as WebBrowser from 'expo-web-browser';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { apiBaseUrl } from '@/api/client';
 import { Mascot, type CamioMood } from '@/components/Mascot';
 import { colors, radius, shadow } from '@/theme/tokens';
 
@@ -63,7 +62,7 @@ export function MascotFab() {
               style={({ pressed }) => [styles.primary, pressed && { opacity: 0.9 }]}
               onPress={() => {
                 setMo(false);
-                void WebBrowser.openBrowserAsync(`${apiBaseUrl}/app/support`);
+                router.push('/support');
               }}>
               <Text style={styles.primaryText}>Nhắn đội hỗ trợ</Text>
             </Pressable>

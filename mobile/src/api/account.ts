@@ -94,3 +94,23 @@ export async function layLenhRut(): Promise<Withdrawal[]> {
   const r = await apiFetch<{ data: Withdrawal[] }>('/api/v1/me/withdrawals');
   return r.data ?? [];
 }
+
+export interface SupportMessage {
+  id: string;
+  authorRole: 'USER' | 'AGENT';
+  body: string;
+  createdAt: string;
+}
+
+/** Chat hỗ trợ — đồng bộ đúng thread Slack/DB như web. */
+export async function layHoTro(): Promise<SupportMessage[]> {
+  const r = await apiFetch<{ data: SupportMessage[] }>('/api/v1/support');
+  return r.data ?? [];
+}
+
+export function guiHoTro(body: string): Promise<SupportMessage> {
+  return apiFetch<SupportMessage>('/api/v1/support', {
+    method: 'POST',
+    body: { body },
+  });
+}

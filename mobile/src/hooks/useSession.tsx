@@ -27,6 +27,9 @@ interface SessionValue {
   dangNhapGoogle: () => Promise<void>;
   dangXuat: () => Promise<void>;
   lamMoiHoSo: () => Promise<void>;
+  /** Tên để linh vật chào ngay sau khi đăng nhập; null khi không có. */
+  chaoMung: string | null;
+  xoaChaoMung: () => void;
 }
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -34,6 +37,7 @@ const SessionContext = createContext<SessionValue | null>(null);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dangKhoiPhuc, setDangKhoiPhuc] = useState(true);
+  const [chaoMung, setChaoMung] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -67,12 +71,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       user,
       dangKhoiPhuc,
       async dangNhap(email, password, ghiNho = true) {
-        setUser(await authApi.login(email, password, ghiNho));
+        const u = await authApi.login(email, password, ghiNho);
+        setUser(u);
+        setChaoMung(u.fullName || 'bạn');
       },
       async dangNhapGoogle() {
         await authApi.loginWithGoogleWeb();
         const me = await layMe();
         setUser(me.user);
+        setChaoMung(me.user.fullName || 'bạn');
       },
       async dangXuat() {
         await authApi.logout();
@@ -85,8 +92,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const me = await layMe();
         setUser(me.user);
       },
+      chaoMung,
+      xoaChaoMung: () => setChaoMung(null),
     }),
-    [user, dangKhoiPhuc, queryClient],
+    [user, dangKhoiPhuc, chaoMung, queryClient],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

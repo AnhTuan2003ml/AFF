@@ -5,7 +5,10 @@ import { query } from "../../db.js";
 import { parseInput } from "../../lib/validation.js";
 import { getBusinessConfig } from "../../services/business-config.js";
 import { getWalletBalances } from "../../services/ledger.js";
-import { sendSupportChatMessage } from "../../services/support-chat.js";
+import {
+  listSupportChatMessages,
+  sendSupportChatMessage,
+} from "../../services/support-chat.js";
 import type { ApiDeps } from "./deps.js";
 
 export async function registerAccountApiRoutes(
@@ -106,6 +109,28 @@ export async function registerAccountApiRoutes(
       return { data: withdrawals.rows };
     },
   );
+
+  // Chat hỗ trợ cho app: đọc và gửi tin, đồng bộ đúng thread Slack/DB như web.
+  app.get("/support", { preHandler: requireApiUser }, async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const data = await listSupportChatMessages(deps.db, request.currentUser!.id);
+    return { data };
+  });
+
+  app.post("/support", { preHandler: requireApiUser }, async (request, reply) => {
+    const input = parseInput(
+      z.object({ body: z.string().trim().min(1).max(2000) }),
+      request.body,
+    );
+    const message = await sendSupportChatMessage(deps.db, deps.config, {
+      userId: request.currentUser!.id,
+      userEmail: request.currentUser!.email,
+      userFullName: request.currentUser!.fullName,
+      body: input.body,
+      logger: request.log,
+    });
+    return reply.code(201).send(message);
+  });
 
   // "Chưa ghi nhận đơn" đi chung đường ống chat hỗ trợ: lưu hội thoại của
   // người dùng và đổ vào thread Slack — không còn hệ ticket riêng.
