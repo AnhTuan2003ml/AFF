@@ -5,7 +5,7 @@
     "owner": "anhtuan2003mltb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/brand-logo.png",
     "scheme": "shoptik",
     "userInterfaceStyle": "light",
     "ios": {
@@ -19,10 +19,8 @@
     "android": {
       "package": "vn.shoptik.app",
       "adaptiveIcon": {
-        "backgroundColor": "#fbf8f4",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/images/brand-logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
