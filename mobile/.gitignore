@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Khóa Firebase (FCM) cho thông báo đẩy — tải từ Firebase Console, không commit
+google-services.json
+GoogleService-Info.plist

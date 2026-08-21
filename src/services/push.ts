@@ -6,7 +6,10 @@ import { query, type Database, type Transaction } from "../db.js";
  * `push_tokens`; mỗi lần tạo notification trong DB sẽ bắn kèm một push.
  *
  * Lưu ý: push tới thiết bị chỉ hoạt động trên BẢN BUILD thật (dev/production),
- * KHÔNG chạy trong Expo Go từ SDK 53+.
+ * KHÔNG chạy trong Expo Go từ SDK 53+. Trên Android bản build còn phải nhúng
+ * `google-services.json` (FCM) và EAS phải có khóa FCM V1 — thiếu thì app không
+ * lấy được token, bảng `push_tokens` trống và người dùng chỉ thấy thông báo khi
+ * mở app. Xem docs/09-huong-dan-build-android.md.
  */
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
@@ -43,9 +46,18 @@ export interface PushMessage {
   data?: Record<string, unknown>;
 }
 
+/** Một "ticket" Expo trả về cho từng message gửi đi (cùng thứ tự với mảng gửi). */
+interface ExpoPushTicket {
+  status: "ok" | "error";
+  id?: string;
+  message?: string;
+  details?: { error?: string };
+}
+
 /**
  * Gửi push tới TẤT CẢ thiết bị của một người dùng. Fire-and-forget: lỗi mạng
- * hay token hỏng không được làm hỏng luồng nghiệp vụ gọi nó.
+ * hay token hỏng không được làm hỏng luồng nghiệp vụ gọi nó. Token mà Expo báo
+ * `DeviceNotRegistered` (app đã gỡ / token cũ) thì xóa luôn để lần sau khỏi gửi.
  */
 export async function sendPushToUser(
   db: Database | Transaction,
@@ -59,16 +71,20 @@ export async function sendPushToUser(
   );
   if (rows.rows.length === 0) return;
 
-  const messages = rows.rows.map((r) => ({
-    to: r.token,
+  const tokens = rows.rows.map((r) => r.token);
+  const messages = tokens.map((token) => ({
+    to: token,
     title: msg.title,
     body: msg.body,
     sound: "default",
+    // Trùng kênh HIGH mà app tạo (mobile/src/lib/push.ts) để Android hiện nổi.
+    channelId: "default",
+    priority: "high",
     data: msg.data ?? {},
   }));
 
   try {
-    await fetch(EXPO_PUSH_URL, {
+    const response = await fetch(EXPO_PUSH_URL, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -78,7 +94,28 @@ export async function sendPushToUser(
       body: JSON.stringify(messages),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
-  } catch {
-    // Bỏ qua: push là phụ, không được chặn nghiệp vụ chính.
+    if (!response.ok) {
+      console.warn(`Expo Push trả HTTP ${response.status} khi gửi cho user ${userId}`);
+      return;
+    }
+    const payload = (await response.json().catch(() => null)) as
+      | { data?: ExpoPushTicket[] }
+      | null;
+    const tickets = payload?.data ?? [];
+    const deadTokens: string[] = [];
+    tickets.forEach((ticket, i) => {
+      if (ticket.status !== "error") return;
+      const token = tokens[i];
+      console.warn(
+        `Expo Push từ chối token của user ${userId}: ${ticket.details?.error ?? "?"} — ${ticket.message ?? ""}`,
+      );
+      if (token && ticket.details?.error === "DeviceNotRegistered") deadTokens.push(token);
+    });
+    if (deadTokens.length > 0) {
+      await query(db, `DELETE FROM push_tokens WHERE token = ANY($1::text[])`, [deadTokens]);
+    }
+  } catch (error) {
+    // Bỏ qua: push là phụ, không được chặn nghiệp vụ chính — chỉ ghi log để soi.
+    console.warn(`Không gửi được push cho user ${userId}`, error);
   }
 }

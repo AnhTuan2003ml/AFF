@@ -322,6 +322,55 @@ APK.
 
 ---
 
+## 9b. Thông báo đẩy ngoài app (FCM) — bắt buộc nếu muốn báo khi app đang đóng
+
+Thông báo trong app (`/api/v1/notifications`) chỉ hiện khi mở app. Để điện thoại
+báo trên thanh trạng thái như các app khác, server bắn qua Expo Push Service →
+Firebase Cloud Messaging (FCM) → thiết bị. Trên Android chuỗi này cần **hai**
+khóa, thiếu một là im lặng không báo lỗi:
+
+1. **`google-services.json` nhúng trong APK** — thiếu thì ngay lúc khởi động
+   logcat ghi `FirebaseApp: Default FirebaseApp failed to initialize`,
+   `getExpoPushTokenAsync` ném lỗi, app KHÔNG gọi `POST /api/v1/push/register`,
+   bảng `push_tokens` không có dòng nào của người dùng → server không có chỗ để
+   gửi. Đây là dấu hiệu "vào app mới thấy thông báo".
+2. **Khóa FCM V1 (service account) trên EAS** — Expo dùng khóa này để gọi FCM
+   thay bạn. Thiếu thì Expo nhận message nhưng receipt trả
+   `InvalidCredentials`/`MismatchSenderId`.
+
+Các bước (làm một lần cho dự án):
+
+```text
+1. https://console.firebase.google.com → Add project (hoặc dùng project Google
+   Cloud sẵn có của app) → Add app → Android → package name: vn.shoptik.app
+   → tải google-services.json → đặt ở mobile/google-services.json
+   (đã nằm trong .gitignore, KHÔNG commit; app.config.js tự nhận khi có file).
+   Build trên EAS lấy mã từ git nên phải upload file làm secret:
+     npx eas-cli@latest env:create --scope project --name GOOGLE_SERVICES_JSON        --type file --value ./google-services.json --visibility secret        --environment production   (lặp lại cho preview/development)
+2. Firebase Console → Project settings → Service accounts → Generate new private
+   key → tải file JSON.
+   npx eas-cli@latest credentials  → Android → (hồ sơ build) →
+   Google Service Account → Manage your Google Service Account Key for
+   Push Notifications (FCM V1) → Upload file vừa tải.
+3. Build lại APK (mục 6), cài, đăng nhập. Kiểm tra:
+     adb logcat -d | grep FirebaseApp         # không còn "failed to initialize"
+     psql: SELECT * FROM push_tokens;         # có ExponentPushToken[...] của user
+4. Thử đẩy: tạo một thông báo cho user (ví dụ duyệt nhiệm vụ ở backoffice, hoặc
+   gọi createNotification) rồi xem thanh thông báo. Kiểm tra bằng adb:
+     adb shell dumpsys notification --noredact | grep -A3 "pkg=vn.shoptik.app"
+   Hoặc gửi thẳng tới Expo để loại trừ server (để JSON trong file UTF-8, đừng gõ
+   tiếng Việt inline trên shell Windows — sẽ lỗi mã hoá ký tự):
+     curl -s -X POST https://exp.host/--/api/v2/push/send        -H "content-type: application/json" --data-binary @push.json
+   rồi tra receipt: POST https://exp.host/--/api/v2/push/getReceipts {"ids":[...]}.
+```
+
+Cái bẫy: token `ExponentPushToken[...]` lấy trong **Expo Go** trỏ về app Expo Go
+(`host.exp.exponent`), không phải `vn.shoptik.app`. Nếu `push_tokens` có token
+nhưng thông báo chỉ hiện dưới tên Expo Go, đó là token cũ — đăng nhập lại trên
+APK thật (đã nhúng FCM) để ghi đè.
+
+---
+
 ## 10. Bảng tra lỗi nhanh
 
 | Hiện tượng | Nguyên nhân | Xử lý |
@@ -336,6 +385,7 @@ APK.
 | App mất kết nối, trình duyệt cũng không vào được | tường lửa / hồ sơ mạng | mục 4 |
 | Sửa mã rồi build mà không thấy đổi | EAS lấy bản đã commit | mục 6 |
 | Build xếp hàng rất lâu | gói EAS miễn phí | bình thường, 15–30 phút |
+| Vào app mới thấy thông báo, ngoài app im lặng | APK thiếu `google-services.json` / EAS thiếu khóa FCM V1 | mục 9b |
 
 ---
 

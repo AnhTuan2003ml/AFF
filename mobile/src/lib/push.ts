@@ -52,8 +52,12 @@ export async function dangKyThongBao(): Promise<void> {
       Constants.easConfig?.projectId;
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     if (token) await dangKyPush(token);
-  } catch {
-    // Không đăng ký được (Expo Go / lỗi quyền) — bỏ qua, không chặn app.
+  } catch (error) {
+    // Không đăng ký được — bỏ qua, không chặn app. Nguyên nhân hay gặp trên
+    // Android: bản build thiếu google-services.json (FCM) → "Default FirebaseApp
+    // is not initialized"; khi đó server không có token và KHÔNG thể đẩy thông
+    // báo ra ngoài app. Chỉ cảnh báo ở bản dev để còn thấy mà sửa.
+    if (__DEV__) console.warn('[push] Không đăng ký được thông báo đẩy:', error);
   }
 }
 
