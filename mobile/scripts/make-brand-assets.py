@@ -17,14 +17,12 @@ import struct
 import wave
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent / "assets" / "images"
 SOUNDS = Path(__file__).resolve().parent.parent / "assets" / "sounds"
 LOGO = ROOT / "brand-logo.png"
 MASCOT = ROOT / "mascot" / "camio-vuive.png"
-BRAND_SOFT = (255, 240, 234, 255)  # nền nhạt tông cam thương hiệu
-BRAND_LINE = (255, 205, 186, 255)
 
 
 def logo_trimmed() -> Image.Image:
@@ -60,15 +58,10 @@ def silhouette(src: Image.Image) -> Image.Image:
 
 
 def mascot_badge(size: int) -> Image.Image:
-    """Linh vật trên đĩa tròn màu nền thương hiệu — ảnh lớn của thông báo."""
-    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(out)
-    d.ellipse((0, 0, size - 1, size - 1), fill=BRAND_SOFT, outline=BRAND_LINE, width=max(2, size // 96))
+    """Linh vật CamiO nền trong suốt (không đĩa tròn) — ảnh lớn của thông báo."""
     m = Image.open(MASCOT).convert("RGBA")
     m = m.crop(m.getbbox())
-    badge = fit_center(m, size, round(size * 0.78))
-    out.alpha_composite(badge)
-    return out
+    return fit_center(m, size, round(size * 0.92))
 
 
 def chime(path: Path, rate: int = 44100) -> None:

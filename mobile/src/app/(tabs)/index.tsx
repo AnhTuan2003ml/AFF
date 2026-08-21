@@ -24,7 +24,6 @@ import { BrandHeader } from '@/components/BrandHeader';
 import { HomeHero } from '@/components/HomeHero';
 import { Mascot, type CamioMood } from '@/components/Mascot';
 import {
-  AppFooter,
   BankAlert,
   CheckinEntry,
   PlatformShowcase,
@@ -225,7 +224,6 @@ export default function HomeScreen() {
         <ProductStrip tieuDe="Bán chạy" list="best" />
         <ProductStrip tieuDe="Ưu đãi độc quyền" list="exclusive" />
 
-        <AppFooter />
       </ScrollView>
     </View>
   );

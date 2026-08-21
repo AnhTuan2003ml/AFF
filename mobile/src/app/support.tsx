@@ -597,14 +597,7 @@ const styles = StyleSheet.create({
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   msgLeft: { justifyContent: 'flex-start' },
   msgRight: { justifyContent: 'flex-end' },
-  agent: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  agent: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   bubble: { maxWidth: '82%', paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.md },
   bubbleAgent: {
     backgroundColor: colors.paper,

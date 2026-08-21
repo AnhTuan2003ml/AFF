@@ -126,14 +126,7 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   itemUnread: { backgroundColor: colors.brandSoft, borderColor: colors.brandLine },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  avatar: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   avatarImg: { width: 32, height: 34 },
   dot: {
     position: 'absolute',

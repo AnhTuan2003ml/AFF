@@ -1004,9 +1004,6 @@ label small {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  padding: 3px;
-  border-radius: 50%;
-  background: var(--lx-orange-soft);
   object-fit: contain
 }
 
@@ -5329,7 +5326,6 @@ label small {
   justify-content: center;
   width: 36px;
   line-height: 0;
-  background: radial-gradient(circle at 50% 44%, rgba(255, 255, 255, .92) 52%, rgba(255, 255, 255, 0) 72%);
 }
 
 .st-support-fab .st-fab-mascot .blob-mascot {
