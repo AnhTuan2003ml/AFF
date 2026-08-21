@@ -649,7 +649,10 @@
   .backoffice-shell table[data-cards] tr,
   .backoffice-shell table[data-cards] td {
     display: block !important;
-    width: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .backoffice-shell table[data-cards] thead {
@@ -657,11 +660,12 @@
   }
 
   .backoffice-shell table[data-cards] tbody tr {
-    margin-bottom: 10px;
-    padding: 6px 14px;
+    margin-bottom: 12px;
+    padding: 8px 14px;
     border: 1px solid var(--line) !important;
     border-radius: var(--bo-radius-s);
     background: var(--surface) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   }
 
   .backoffice-shell table[data-cards] tbody tr:hover td {
@@ -673,7 +677,7 @@
     align-items: flex-start !important;
     justify-content: space-between !important;
     gap: 12px;
-    padding: 9px 0 !important;
+    padding: 10px 0 !important;
     border-bottom: 1px solid var(--line) !important;
     text-align: right;
   }
@@ -693,6 +697,7 @@
     text-align: left;
     text-transform: uppercase;
     padding-top: 2px;
+    word-break: break-word;
   }
 
   .backoffice-shell table[data-cards] td .cell-body {
@@ -701,14 +706,16 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 3px;
+    gap: 4px;
     text-align: right;
   }
 
-  .backoffice-shell table[data-cards] td .cell-body > strong {
+  .backoffice-shell table[data-cards] td .cell-body > strong,
+  .backoffice-shell table[data-cards] td .cell-body > b {
     font-size: 13.5px;
     color: var(--text);
     word-break: break-word;
+    display: block;
   }
 
   .backoffice-shell table[data-cards] td .cell-body > small {
@@ -724,7 +731,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 5px;
+    gap: 6px;
+    width: 100%;
   }
 
   /* Ô không có nhãn (cột chọn, cột thao tác) chiếm trọn bề ngang thay vì

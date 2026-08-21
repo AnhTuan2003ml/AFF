@@ -21,3 +21,5 @@ secrets/shopee-report*.json
 *.zip
 __pycache__/
 *.pyc
+docker-compose.override.yml
+docker-compose.override.*.yml
