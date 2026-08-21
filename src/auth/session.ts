@@ -72,6 +72,10 @@ export async function registerSessionHooks(
     // Bearer được ưu tiên: nếu app đã gửi token thì cookie (nếu có) không
     // liên quan, và ngược lại web không bao giờ gửi header này.
     const bearerToken = readBearerToken(request);
+    // Có header Bearer là request của app, KHÔNG mang quyền cookie ngầm → miễn
+    // CSRF ngay cả khi token hết hạn. Nhờ vậy endpoint đổi trạng thái trả 401
+    // (để app tự refresh token) thay vì bị CSRF chặn bằng 403.
+    if (bearerToken) request.authScheme = "bearer";
     const rawToken = bearerToken ?? request.cookies[SESSION_COOKIE];
     if (!rawToken) return;
 

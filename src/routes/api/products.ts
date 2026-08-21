@@ -30,7 +30,9 @@ export async function registerProductApiRoutes(
   app.post(
     "/products/preview",
     {
-      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      // Xem trước là công khai (khách chưa đăng nhập vẫn dùng) và KHÔNG ghi DB —
+      // chỉ cache tạm trong RAM — nên miễn CSRF để app/khách gọi thẳng được.
+      config: { csrf: false, rateLimit: { max: 30, timeWindow: "1 minute" } },
     },
     async (request, reply) => {
       const input = parseInput(

@@ -38,12 +38,16 @@ export interface PreviewResult {
   previewId: string;
 }
 
-/** Không cần đăng nhập — khách xem trước tiền hoàn được. */
+/**
+ * Xem trước tiền hoàn. Khách vẫn dùng được (không có token thì gửi ẩn danh),
+ * nhưng khi ĐÃ đăng nhập PHẢI gửi token: preview được lưu tạm theo user.id, còn
+ * bước purchase cũng đọc theo user.id — không gửi token thì hai bước lệch nhau
+ * và purchase báo "hết hạn".
+ */
 export function traCuu(productUrl: string) {
   return apiFetch<PreviewResult>('/api/v1/products/preview', {
     method: 'POST',
     body: { productUrl },
-    auth: false,
   });
 }
 

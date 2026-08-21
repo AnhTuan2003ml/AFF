@@ -5819,14 +5819,19 @@ label small {
 }
 
 @media(max-width:820px) {
+  /* Mobile: chỉ hiện MỘT nút và là "Đăng nhập" (nổi bật cam), giống app. */
   .px-guest-login {
-    display: none
-  }
-
-  .px-guest-register {
+    display: inline-flex;
+    background: linear-gradient(135deg, var(--lx-orange), var(--lx-orange-2));
+    color: #fff;
+    border: 0;
     height: 38px;
     padding: 0 13px;
     font-size: 12px
+  }
+
+  .px-guest-register {
+    display: none
   }
 }
 
