@@ -69,8 +69,8 @@
   --sidebar-bg: #ffffff;
   --surface: #ffffff;
   --surface-muted: var(--mb-slate-100);
-  --surface-hover: var(--mb-blue-50);
-  --surface-hover-strong: var(--mb-blue-100);
+  --surface-hover: #fff4ef;
+  --surface-hover-strong: #ffe6dc;
 
   --line: var(--mb-slate-200);
   --line-strong: var(--mb-slate-300);
@@ -79,23 +79,23 @@
   --ink-soft: var(--mb-slate-700);
   --muted: var(--mb-slate-500);
 
-  /* Xanh navy MB — màu nhận diện, dùng cho điều hướng, tiêu đề, nút chính. */
-  --brand: var(--mb-navy-800);
-  --brand-strong: var(--mb-navy-850);
-  --brand-hover: #001f70;
-  --brand-active: var(--mb-navy-900);
-  --brand-from: var(--mb-navy-800);
-  --brand-to: var(--mb-navy-600);
-  --brand-shadow: rgba(0, 45, 156, .22);
-  --brand-shadow-hover: rgba(0, 45, 156, .32);
-  --brand-soft: var(--mb-blue-50);
-  --brand-line: var(--mb-blue-200);
+  /* Cam ShopTik — màu nhận diện, dùng cho điều hướng, tiêu đề, nút chính. */
+  --brand: #ee4d2d;
+  --brand-strong: #d63c1e;
+  --brand-hover: #d94526;
+  --brand-active: #c2371a;
+  --brand-from: #ee4d2d;
+  --brand-to: #ff7a45;
+  --brand-shadow: rgba(238, 77, 45, .24);
+  --brand-shadow-hover: rgba(238, 77, 45, .34);
+  --brand-soft: #fff4ef;
+  --brand-line: #ffd3c4;
   --on-brand: #ffffff;
 
-  /* Nhấn phụ: xanh dương sáng, dùng cho chip/highlight trên nền trắng. */
-  --accent: #0069e0;
-  --accent-strong: var(--mb-navy-700);
-  --accent-soft: var(--mb-blue-50);
+  /* Nhấn phụ: cam đậm, dùng cho chip/highlight trên nền trắng. */
+  --accent: #e0480f;
+  --accent-strong: #b8371d;
+  --accent-soft: #fff4ef;
 
   /* Xanh lá = tiền và hành động kích hoạt hoàn tiền (Mua ngay, rút tiền). */
   --cta: var(--mb-green-600);
@@ -121,18 +121,18 @@
 
   --topbar-bg: rgba(255, 255, 255, .94);
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, .05), 0 1px 2px rgba(15, 23, 42, .03);
-  --shadow-md: 0 12px 36px -10px rgba(0, 45, 156, .14), 0 4px 12px -6px rgba(15, 23, 42, .06);
-  --shadow-lg: 0 22px 48px -14px rgba(0, 45, 156, .20), 0 8px 18px -10px rgba(15, 23, 42, .08);
+  --shadow-md: 0 12px 36px -10px rgba(120, 60, 20, .16), 0 4px 12px -6px rgba(15, 23, 42, .06);
+  --shadow-lg: 0 22px 48px -14px rgba(120, 60, 20, .22), 0 8px 18px -10px rgba(15, 23, 42, .08);
 
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --sidebar-width: 256px;
 
-  /* Dải hero = dải gradient nhận diện MB (đậm sang sáng). */
-  --hero-from: var(--mb-navy-850);
-  --hero-mid: var(--mb-navy-800);
-  --hero-to: #004bb5;
+  /* Dải hero = dải gradient nhận diện ShopTik (đậm sang sáng). */
+  --hero-from: #b8371d;
+  --hero-mid: #ee4d2d;
+  --hero-to: #ff8a4f;
 
   --font-display: "Plus Jakarta Sans", "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-body: "Plus Jakarta Sans", "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -165,13 +165,13 @@
   --on-jade: #ffffff;
   --on-coral: #ffffff;
   --on-jade-soft: rgba(255, 255, 255, .78);
-  --shadow-color: rgba(0, 45, 156, .10);
+  --shadow-color: rgba(120, 60, 20, .10);
   --scrim-soft: rgba(15, 23, 42, .08);
-  --chart-buyer: var(--mb-navy-800);
+  --chart-buyer: #ee4d2d;
   --chart-sharer: var(--mb-amber-500);
   --chart-platform: #0ea5e9;
   --chart-grid: var(--line);
-  --chart-area-fill: rgba(0, 45, 156, .10);
+  --chart-area-fill: rgba(238, 77, 45, .12);
 }
 
 /* ---------------------------------------------------------------- *
@@ -194,21 +194,21 @@
   --ink-soft: #c4d3ea;
   --muted: #8fa3c0;
 
-  --brand: #5b93f6;
-  --brand-strong: #9dc0ff;
-  --brand-hover: #74a5ff;
-  --brand-active: #4b83e8;
-  --brand-from: #2f6fe4;
-  --brand-to: #5b93f6;
-  --brand-shadow: rgba(47, 111, 228, .26);
-  --brand-shadow-hover: rgba(91, 147, 246, .36);
-  --brand-soft: rgba(91, 147, 246, .14);
-  --brand-line: rgba(91, 147, 246, .30);
-  --on-brand: #06122a;
+  --brand: #ff8a5f;
+  --brand-strong: #ffb499;
+  --brand-hover: #ff9d78;
+  --brand-active: #f5713f;
+  --brand-from: #e0480f;
+  --brand-to: #ff8a5f;
+  --brand-shadow: rgba(238, 77, 45, .28);
+  --brand-shadow-hover: rgba(255, 138, 95, .38);
+  --brand-soft: rgba(255, 138, 95, .14);
+  --brand-line: rgba(255, 138, 95, .30);
+  --on-brand: #2a0f04;
 
-  --accent: #57b6ff;
-  --accent-strong: #9ad3ff;
-  --accent-soft: rgba(87, 182, 255, .12);
+  --accent: #ff9d78;
+  --accent-strong: #ffc2ab;
+  --accent-soft: rgba(255, 138, 95, .12);
 
   --cta: #17b483;
   --cta-hover: #34d19c;
@@ -234,23 +234,23 @@
   --shadow-md: 0 18px 42px rgba(0, 0, 0, .42);
   --shadow-lg: 0 24px 50px rgba(0, 0, 0, .48);
 
-  --hero-from: #001238;
-  --hero-mid: #00246f;
-  --hero-to: #0b57d0;
+  --hero-from: #3a1206;
+  --hero-mid: #7a2f16;
+  --hero-to: #e0480f;
 
   --coral-dark: var(--accent-strong);
-  --mint: rgba(91, 147, 246, .16);
-  --mint-soft: rgba(91, 147, 246, .09);
+  --mint: rgba(255, 138, 95, .16);
+  --mint-soft: rgba(255, 138, 95, .09);
   --ink: #eaf1ff;
-  --mint-fixed: rgba(91, 147, 246, .16);
+  --mint-fixed: rgba(255, 138, 95, .16);
   --gold: var(--mb-amber-400);
   --shadow-color: rgba(0, 0, 0, .38);
   --scrim-soft: rgba(224, 234, 255, .10);
   --chart-buyer: var(--brand);
   --chart-sharer: var(--mb-amber-400);
-  --chart-platform: #57b6ff;
+  --chart-platform: #ff9d78;
   --chart-grid: var(--line);
-  --chart-area-fill: rgba(91, 147, 246, .16);
+  --chart-area-fill: rgba(255, 138, 95, .16);
 }
 
 /*
@@ -260,18 +260,19 @@
  * Khai báo một lần tại đây để app và quản trị luôn dùng đúng một tông màu.
  */
 :root {
-  --chrome-accent-from: var(--mb-navy-600);
-  --chrome-accent-to: var(--mb-navy-800);
+  --chrome-accent-from: #ff7a45;
+  --chrome-accent-to: #ee4d2d;
   --chrome-accent: linear-gradient(135deg, var(--chrome-accent-from), var(--chrome-accent-to));
-  --chrome-accent-shadow: 0 10px 24px rgba(0, 45, 156, .34);
-  --chrome-accent-shadow-lg: 0 16px 36px rgba(0, 45, 156, .40);
-  --water-tint: 96, 165, 250;
+  --chrome-accent-shadow: 0 10px 24px rgba(238, 77, 45, .34);
+  --chrome-accent-shadow-lg: 0 16px 36px rgba(238, 77, 45, .40);
+  --water-tint: 255, 138, 95;
   /* Nền khối chrome tối (header mobile, topnav quản trị, thanh dưới mobile) —
      cố định, KHÔNG dùng --dv-ink vì biến đó đổi ngược màu theo theme sáng/
-     tối của trang (từng khiến thanh menu ghim hoá trắng khi bật dark mode). */
-  --chrome-bg: #00133f;
-  /* Dải gradient header MB: đậm bên trái, sáng dần sang phải. */
-  --chrome-gradient: linear-gradient(135deg, #001859 0%, #002b99 52%, #004bb5 100%);
+     tối của trang (từng khiến thanh menu ghim hoá trắng khi bật dark mode).
+     Nâu espresso ấm để hợp với nhấn cam ShopTik. */
+  --chrome-bg: #241611;
+  /* Dải gradient header: nâu đậm bên trái, ấm dần sang phải. */
+  --chrome-gradient: linear-gradient(135deg, #1d110b 0%, #3a2013 52%, #5c2f19 100%);
 }
 
 /*

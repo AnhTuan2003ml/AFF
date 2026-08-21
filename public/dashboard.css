@@ -1752,3 +1752,7 @@
 @media (max-width: 640px) {
   .backoffice-shell .order-detail-tiles { grid-template-columns: 1fr; }
 }
+
+/* Bảng đối soát dễ quét: hover sáng hàng */
+.backoffice-shell .order-review-table tbody tr:hover td { background: var(--admin-hover); }
+.backoffice-shell .order-review-table tbody tr { transition: background .12s ease; }

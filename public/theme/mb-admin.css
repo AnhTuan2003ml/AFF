@@ -59,15 +59,15 @@
   --admin-sidebar: #ffffff;
   --admin-surface: #ffffff;
   --admin-surface-soft: var(--mb-slate-100);
-  --admin-hover: var(--mb-blue-50);
+  --admin-hover: #fff4ef;
   --admin-border: var(--mb-slate-200);
   --admin-border-strong: var(--mb-slate-300);
   --admin-text: var(--mb-slate-900);
   --admin-text-soft: var(--mb-slate-700);
   --admin-muted: var(--mb-slate-500);
-  --admin-brand: var(--mb-navy-800);
-  --admin-brand-strong: var(--mb-navy-850);
-  --admin-brand-soft: var(--mb-blue-50);
+  --admin-brand: #ee4d2d;
+  --admin-brand-strong: #d63c1e;
+  --admin-brand-soft: #fff4ef;
   --admin-success: #047857;
   --admin-success-bg: var(--mb-green-50);
   --admin-success-border: #a7f3d0;
@@ -94,9 +94,9 @@
   --admin-text: #eaf1ff;
   --admin-text-soft: #c4d3ea;
   --admin-muted: #8fa3c0;
-  --admin-brand: #5b93f6;
-  --admin-brand-strong: #9dc0ff;
-  --admin-brand-soft: rgba(91, 147, 246, .14);
+  --admin-brand: #ff8a5f;
+  --admin-brand-strong: #ffb499;
+  --admin-brand-soft: rgba(255, 138, 95, .14);
   --admin-success: #49d39b;
   --admin-success-bg: rgba(52, 195, 143, .10);
   --admin-success-border: rgba(52, 195, 143, .26);
@@ -1148,3 +1148,23 @@
   color: var(--muted);
   font-weight: 500;
 }
+
+/* ===== Sidebar tối nâu ấm — đồng bộ nhấn cam ShopTik, luôn tối ===== */
+.backoffice-shell .st-sidebar { background: #241611; border-right: 1px solid rgba(255,255,255,.06); }
+.backoffice-shell .st-sidebar .st-sidebar-head { border-bottom-color: rgba(255,255,255,.1); }
+.backoffice-shell .st-sidebar .st-brand span { color: #fff; }
+.backoffice-shell .st-sidebar .st-brand small { color: rgba(255,255,255,.72); background: rgba(255,255,255,.13); }
+.backoffice-shell .st-nav-group { color: rgba(255,255,255,.42); }
+.backoffice-shell .st-nav a { color: rgba(255,255,255,.82); }
+.backoffice-shell .st-nav a svg { color: rgba(255,255,255,.7); }
+.backoffice-shell .st-nav a:hover { color: #fff; background: rgba(255,255,255,.08); }
+.backoffice-shell .st-nav a.active { color: #fff; background: var(--brand); }
+.backoffice-shell .st-nav a.active svg { color: #fff; }
+.backoffice-shell .bo-side-foot { background: #241611; border-top: 1px solid rgba(255,255,255,.09); }
+.backoffice-shell .bo-side-foot-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
+.backoffice-shell .bo-side-foot-card b { color: #fff; }
+.backoffice-shell .bo-side-foot-card small { color: rgba(255,255,255,.6); }
+.backoffice-shell .bo-side-foot-card i { background: var(--brand); color: #fff; }
+.backoffice-shell .bo-side-foot-link { color: rgba(255,255,255,.75); }
+.backoffice-shell .bo-side-foot-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+.backoffice-shell .bo-side-foot-link svg { color: rgba(255,255,255,.7); }
