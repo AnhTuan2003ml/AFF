@@ -185,10 +185,15 @@ export function ProductStrip({
   });
 
   const [active, setActive] = useState(0);
-  const [pages, setPages] = useState(1);
+  const [vpW, setVpW] = useState(0);
+  const [contentW, setContentW] = useState(0);
 
   const sp = data?.data ?? [];
   if (sp.length === 0) return null;
+
+  // Tính số "trang" từ bề rộng khung nhìn và tổng nội dung — không phụ thuộc
+  // việc đã cuộn hay chưa, nên chấm hiện ngay từ đầu.
+  const pages = vpW > 0 && contentW > 0 ? Math.max(1, Math.round(contentW / vpW)) : 1;
 
   return (
     <View style={ss.strip}>
@@ -198,11 +203,11 @@ export function ProductStrip({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={ss.stripRow}
         scrollEventThrottle={16}
+        onLayout={(e) => setVpW(e.nativeEvent.layout.width)}
+        onContentSizeChange={(w) => setContentW(w)}
         onScroll={(e) => {
-          const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-          const w = layoutMeasurement.width || 1;
-          setPages(Math.max(1, Math.round(contentSize.width / w)));
-          setActive(Math.round(contentOffset.x / w));
+          const { contentOffset, layoutMeasurement } = e.nativeEvent;
+          setActive(Math.round(contentOffset.x / (layoutMeasurement.width || 1)));
         }}>
         {sp.slice(0, 12).map((p) => (
           <TheSP key={p.item_id} p={p} />

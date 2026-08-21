@@ -30,7 +30,7 @@ export default function TabsLayout() {
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
       }}>
       <Tabs.Screen
         name="index"
