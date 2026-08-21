@@ -51,9 +51,17 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
           </Pressable>
 
           <Pressable style={styles.avatar} onPress={() => setMoMenu(true)}>
-            <Text style={styles.avatarText}>
-              {(user.fullName || user.email || '?').charAt(0).toUpperCase()}
-            </Text>
+            {user.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {(user.fullName || user.email || '?').charAt(0).toUpperCase()}
+              </Text>
+            )}
           </Pressable>
         </View>
       ) : (
