@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MascotFab } from '@/components/MascotFab';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -18,6 +20,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -87,5 +90,7 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+      <MascotFab />
+    </View>
   );
 }
