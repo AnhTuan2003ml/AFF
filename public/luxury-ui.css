@@ -980,8 +980,26 @@ label small {
 }
 
 .notification-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px;
   border-bottom: 1px solid var(--lx-line)
+}
+
+.notification-mascot {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--lx-orange-soft);
+  object-fit: contain
+}
+
+.notification-copy {
+  flex: 1;
+  min-width: 0
 }
 
 .notification-list p {

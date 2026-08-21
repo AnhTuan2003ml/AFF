@@ -87,10 +87,18 @@
               {% if recentNotifications and recentNotifications.length %}
                 <ul class="notification-list">
                   {% for item in recentNotifications %}
+                    {# Linh vật CamiO đi kèm MỌI thông báo; biểu cảm theo loại (khớp blob-notify.js). #}
+                    {% set mood = 'vuive' %}
+                    {% if item.type and ('APPROVED' in item.type or 'CASHBACK' in item.type) %}{% set mood = 'haohung' %}
+                    {% elif item.type and ('REJECTED' in item.type or 'CANCEL' in item.type) %}{% set mood = 'ngacnhien' %}
+                    {% elif item.type and 'CLAIM' in item.type %}{% set mood = 'baocao' %}{% endif %}
                     <li class="{{ 'unread' if not item.isRead }}">
-                      <b>{{ item.title }}</b>
-                      {% if item.body %}<p>{{ item.body }}</p>{% endif %}
-                      <time>{{ item.createdAt | datetime }}</time>
+                      <img class="notification-mascot" src="/assets/images/mascot/camio-{{ mood }}.png" alt="" width="40" height="40" loading="lazy">
+                      <span class="notification-copy">
+                        <b>{{ item.title }}</b>
+                        {% if item.body %}<p>{{ item.body }}</p>{% endif %}
+                        <time>{{ item.createdAt | datetime }}</time>
+                      </span>
                     </li>
                   {% endfor %}
                 </ul>

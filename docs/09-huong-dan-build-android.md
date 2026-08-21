@@ -364,6 +364,18 @@ Các bước (làm một lần cho dự án):
    rồi tra receipt: POST https://exp.host/--/api/v2/push/getReceipts {"ids":[...]}.
 ```
 
+Hình ảnh của thông báo (Android): icon nhỏ trên thanh trạng thái là bản đơn sắc
+của logo (`assets/images/notification-icon.png`, plugin `expo-notifications`
+tự sinh các mật độ); ảnh lớn bên phải MỌI thông báo là linh vật CamiO
+(`notification-large-icon.png`, gắn qua `plugins/withNotificationLargeIcon.js`
+→ meta-data `expo.modules.notifications.large_notification_icon`). Icon app
+dùng `app-icon.png` (iOS, nền trắng) + `brand-logo-adaptive.png` (Android, logo
+co về 58% khung để lọt vùng an toàn — để logo tràn khung sẽ bị phóng to, cắt
+mất quai túi). Cả bộ sinh từ một nguồn bằng `npm run brand-assets`
+(cần `pip install pillow`); sửa logo/linh vật thì chạy lại, đừng sửa tay.
+iOS không có large icon — muốn ảnh kèm thông báo phải làm Notification Service
+Extension, chưa làm.
+
 Cái bẫy: token `ExponentPushToken[...]` lấy trong **Expo Go** trỏ về app Expo Go
 (`host.exp.exponent`), không phải `vn.shoptik.app`. Nếu `push_tokens` có token
 nhưng thông báo chỉ hiện dưới tên Expo Go, đó là token cũ — đăng nhập lại trên

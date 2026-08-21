@@ -39,6 +39,14 @@
     } catch (e) { return ""; }
   }
 
+  function moodFor(type) {
+    var t = String(type || "");
+    if (t.indexOf("APPROVED") >= 0 || t.indexOf("CASHBACK") >= 0) return "haohung";
+    if (t.indexOf("REJECTED") >= 0 || t.indexOf("CANCEL") >= 0) return "ngacnhien";
+    if (t.indexOf("CLAIM") >= 0) return "baocao";
+    return "vuive";
+  }
+
   // Vẽ lại nội dung dropdown chuông từ dữ liệu mới → không cần tải lại trang.
   function renderDropdown(support, items) {
     if (!panel) return;
@@ -59,9 +67,17 @@
       items.forEach(function (it) {
         var li = document.createElement("li");
         if (!it.isRead) li.className = "unread";
-        var t = document.createElement("b"); t.textContent = it.title; li.appendChild(t);
-        if (it.body) { var p = document.createElement("p"); p.textContent = it.body; li.appendChild(p); }
-        var tm = document.createElement("time"); tm.textContent = fmtTime(it.createdAt); li.appendChild(tm);
+        // Linh vật CamiO đi kèm MỌI thông báo; biểu cảm theo loại (khớp app-base.njk).
+        var img = document.createElement("img");
+        img.className = "notification-mascot";
+        img.src = "/assets/images/mascot/camio-" + moodFor(it.type) + ".png";
+        img.alt = ""; img.width = 40; img.height = 40; img.loading = "lazy";
+        li.appendChild(img);
+        var copy = document.createElement("span"); copy.className = "notification-copy";
+        var t = document.createElement("b"); t.textContent = it.title; copy.appendChild(t);
+        if (it.body) { var p = document.createElement("p"); p.textContent = it.body; copy.appendChild(p); }
+        var tm = document.createElement("time"); tm.textContent = fmtTime(it.createdAt); copy.appendChild(tm);
+        li.appendChild(copy);
         ul.appendChild(li);
       });
       frag.appendChild(ul);

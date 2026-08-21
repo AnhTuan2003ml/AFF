@@ -52,7 +52,8 @@
     "build:android": "npx eas-cli@latest build --profile preview --platform android",
     "build:ios": "npx eas-cli@latest build --profile preview --platform ios",
     "build:store": "npx eas-cli@latest build --profile production --platform all",
-    "submit:store": "npx eas-cli@latest submit --profile production --platform all --latest"
+    "submit:store": "npx eas-cli@latest submit --profile production --platform all --latest",
+    "brand-assets": "python scripts/make-brand-assets.py"
   },
   "private": true
 }

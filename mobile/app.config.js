@@ -44,9 +44,24 @@ module.exports = ({ config }) => {
     plugins: [
       ...(config.plugins ?? []),
       ["expo-build-properties", { android: { usesCleartextTraffic: choPhepHttp } }],
+      // Icon nhỏ trên thanh trạng thái phải là hình ĐƠN SẮC trắng trên nền trong
+      // suốt (Android tự tô màu `color`); đưa logo màu vào đây sẽ thành khối
+      // vuông xám bị phóng to. File sinh bởi scripts/make-brand-assets.py.
       // Kênh mặc định cho thông báo FCM tới khi app đang đóng; trùng id `default`
       // mà src/lib/push.ts tạo (importance HIGH) để thông báo nổi lên thanh trạng thái.
-      ["expo-notifications", { color: "#ee4d2d", defaultChannel: "default" }],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/notification-icon.png",
+          color: "#ee4d2d",
+          defaultChannel: "default",
+        },
+      ],
+      // Linh vật CamiO làm ảnh lớn cho MỌI thông báo (push lẫn cục bộ) trên Android.
+      [
+        "./plugins/withNotificationLargeIcon",
+        { image: "./assets/images/notification-large-icon.png" },
+      ],
     ],
   };
 };

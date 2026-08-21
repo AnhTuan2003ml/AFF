@@ -10,7 +10,7 @@ import { colors, radius, shadow } from '@/theme/tokens';
  * Web dùng WAAPI; ở đây dùng Animated built-in (native driver).
  */
 
-const CAMIO = {
+export const CAMIO = {
   vuive: require('../../assets/images/mascot/camio-vuive.png'),
   haohung: require('../../assets/images/mascot/camio-haohung.png'),
   thichthu: require('../../assets/images/mascot/camio-thichthu.png'),

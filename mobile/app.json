@@ -5,7 +5,7 @@
     "owner": "anhtuan2003mltb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/brand-logo.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "shoptik",
     "userInterfaceStyle": "light",
     "ios": {
@@ -20,7 +20,8 @@
       "package": "vn.shoptik.app",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/brand-logo.png"
+        "foregroundImage": "./assets/images/brand-logo-adaptive.png",
+        "monochromeImage": "./assets/images/brand-logo-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },

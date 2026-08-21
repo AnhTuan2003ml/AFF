@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
@@ -7,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { danhDauDaDoc, layThongBao, type NotificationItem } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
+import { CAMIO, type CamioMood } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
 import { ngayGio } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -71,10 +73,19 @@ export default function NotificationsScreen() {
   );
 }
 
+/** Biểu cảm linh vật theo loại thông báo — khớp web (blob-notify.js). */
+function moodCua(type: string): CamioMood {
+  if (type.includes('APPROVED') || type.includes('CASHBACK')) return 'haohung';
+  if (type.includes('REJECTED') || type.includes('CANCEL')) return 'ngacnhien';
+  if (type.includes('CLAIM')) return 'baocao';
+  return 'vuive';
+}
+
 function Dong({ n }: { n: NotificationItem }) {
   return (
     <View style={[styles.item, !n.isRead && styles.itemUnread]}>
-      <View style={styles.dotWrap}>
+      <View style={styles.avatar}>
+        <Image source={CAMIO[moodCua(n.type)]} style={styles.avatarImg} contentFit="contain" />
         {!n.isRead && <View style={styles.dot} />}
       </View>
       <View style={{ flex: 1 }}>
@@ -112,8 +123,26 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   itemUnread: { backgroundColor: colors.brandSoft, borderColor: colors.brandLine },
-  dotWrap: { width: 10, alignItems: 'center', paddingTop: 5 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.brandSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImg: { width: 32, height: 34 },
+  dot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.brand,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
   title: { fontSize: 14, fontWeight: '800', color: colors.text },
   body: { fontSize: 12.5, color: colors.inkSoft, marginTop: 3, lineHeight: 18 },
   time: { fontSize: 11, color: colors.muted, marginTop: 4 },
