@@ -97,9 +97,11 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.inlineActions}>
-        <Checkbox checked={ghiNho} onToggle={() => setGhiNho((v) => !v)}>
-          Ghi nhớ đăng nhập
-        </Checkbox>
+        <View style={styles.rememberWrap}>
+          <Checkbox checked={ghiNho} onToggle={() => setGhiNho((v) => !v)}>
+            Ghi nhớ đăng nhập
+          </Checkbox>
+        </View>
         <Pressable onPress={() => router.push('/forgot-password')} hitSlop={8}>
           <Text style={styles.linkStrong}>Quên mật khẩu?</Text>
         </Pressable>
@@ -170,11 +172,11 @@ const styles = StyleSheet.create({
   inlineActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 12,
     marginTop: 2,
     marginBottom: 18,
   },
+  rememberWrap: { flex: 1 },
   linkStrong: { color: colors.brand, fontSize: 13.5, fontWeight: '800' },
 
   primaryBtn: {
