@@ -1,16 +1,26 @@
 # Chỉ dùng khi phát triển trên host (`npm run dev`).
-# Mở Postgres/Redis ra 127.0.0.1 để tiến trình tsx ngoài Docker kết nối được
-# theo DATABASE_URL / REDIS_URL trong .env. Docker Compose tự nạp file này.
+# Mở Postgres/Redis để tiến trình tsx ngoài Docker kết nối được theo
+# DATABASE_URL / REDIS_URL trong .env. Docker Compose tự nạp file này.
 #
 # Cổng lệch chuẩn (15432/16379) là cố ý: máy này còn chạy AI_BC và SocAI, hai
 # dự án đó đã giữ 5432/6379 và 5433/6380. Dùng cổng riêng thì AFF không phải
 # tranh cổng với chúng nữa. Trong mạng nội bộ compose các service vẫn gọi nhau
 # bằng `postgres:5432` / `redis:6379` như cũ.
+#
+# ============================================================================
+# ⚠️ TẠM THỜI (2026-08-22): đang MỞ DB/Redis ra toàn mạng (0.0.0.0) để 3-4 dev
+# máy khác cùng chạy backend + sửa giao diện web trên DATA THẬT.
+# ĐỂ REVERT khi xong: đổi "0.0.0.0" -> "127.0.0.1" ở 2 dòng dưới, chạy lại
+#   docker compose up -d postgres redis
+# rồi gỡ 2 rule firewall:
+#   netsh advfirewall firewall delete rule name="AFF dev Postgres 15432"
+#   netsh advfirewall firewall delete rule name="AFF dev Redis 16379"
+# ============================================================================
 services:
   postgres:
     ports:
-      - "127.0.0.1:15432:5432"
+      - "0.0.0.0:15432:5432"
 
   redis:
     ports:
-      - "127.0.0.1:16379:6379"
+      - "0.0.0.0:16379:6379"
