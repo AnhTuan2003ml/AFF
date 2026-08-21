@@ -8,6 +8,7 @@ import {
   claimMissionReward,
   getUserMissionOverview,
 } from "../../services/mission.js";
+import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
@@ -126,6 +127,14 @@ export async function registerFeatureApiRoutes(
         earnedVnd: Number(r.earned_vnd),
       })),
     };
+  });
+
+  /* --------------------------- Bảng xếp hạng -------------------------- */
+
+  // Công khai như web: bảng xếp hạng hiện cả khi chưa đăng nhập.
+  app.get("/leaderboard", async (_request, reply) => {
+    reply.header("cache-control", "public, max-age=60");
+    return getPlatformLeaderboard(deps.db);
   });
 
   /* ------------------------------ Khám phá ---------------------------- */

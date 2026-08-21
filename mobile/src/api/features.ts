@@ -107,3 +107,26 @@ export function layKhamPha(list: 'best' | 'recommend' | 'exclusive' = 'best', pa
     data: DiscoverProduct[];
   }>(`/api/v1/discover?list=${list}&page=${page}`, { auth: false });
 }
+
+/* ---------------------------- Bảng xếp hạng --------------------------- */
+
+export interface TopBuyer {
+  name: string;
+  count: number;
+  avatarUrl: string | null;
+}
+export interface TopProduct {
+  name: string;
+  imageUrl: string | null;
+  count: number;
+}
+export interface Leaderboard {
+  topBuyers: TopBuyer[];
+  topProducts: TopProduct[];
+  monthLabel: string;
+}
+
+/** Công khai — hiện cả khi chưa đăng nhập, giống web. */
+export function layBangXepHang() {
+  return apiFetch<Leaderboard>('/api/v1/leaderboard', { auth: false });
+}

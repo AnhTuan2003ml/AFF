@@ -27,6 +27,7 @@ import {
   ProductStrip,
   WalletPanel,
 } from '@/components/home-blocks';
+import { Leaderboard } from '@/components/Leaderboard';
 import { PreviewCard } from '@/components/PreviewCard';
 import { useSession } from '@/hooks/useSession';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
@@ -174,6 +175,8 @@ export default function HomeScreen() {
             <BankAlert />
           </>
         )}
+
+        <Leaderboard />
 
         <ProductStrip tieuDe="Đề xuất" list="recommend" />
         <ProductStrip tieuDe="Bán chạy" list="best" />
