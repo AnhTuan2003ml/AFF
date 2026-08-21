@@ -31,8 +31,8 @@ services:
     restart: "no"
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://aff_user:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD_bat_buoc}@postgres:5432/aff_cashback
-      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD_bat_buoc}@redis:6379/0
+      DATABASE_URL: ${DATABASE_URL:-postgresql://aff_user:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD_bat_buoc}@postgres:5432/aff_cashback}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD:?REDIS_PASSWORD_bat_buoc}@redis:6379/0}
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,15 +48,16 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://aff_user:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD_bat_buoc}@postgres:5432/aff_cashback
-      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD_bat_buoc}@redis:6379/0
+      DATABASE_URL: ${DATABASE_URL:-postgresql://aff_user:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD_bat_buoc}@postgres:5432/aff_cashback}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD:?REDIS_PASSWORD_bat_buoc}@redis:6379/0}
+      HOST: "0.0.0.0"
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3002}:3000"
     healthcheck:
       test:
         [

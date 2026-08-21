@@ -1,6 +1,6 @@
 # ShopTik Mobile
 
-App React Native (Expo SDK 57) cho người dùng ShopTik — Android và iOS từ một
+App React Native (Expo SDK 54 — bản cao nhất Expo Go trên store còn mở được) cho người dùng ShopTik — Android và iOS từ một
 codebase. Đứng **cạnh** web Nunjucks chứ không thay thế: cả hai dùng chung
 backend Fastify và chung PostgreSQL ở thư mục gốc repo.
 

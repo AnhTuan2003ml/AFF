@@ -12,6 +12,27 @@ export async function requireUser(
   }
 }
 
+/**
+ * Các trang trong /app mà KHÁCH (chưa đăng nhập) vẫn xem được — chỉ GET/HEAD:
+ * trang chủ + băng sản phẩm chung, Khám phá (kèm danh mục sống phân trang) và
+ * trang Hỗ trợ (xem mẫu yêu cầu; bấm gửi thì vẫn phải đăng nhập). Mọi đường dẫn
+ * khác trong /app và mọi POST đều bắt đăng nhập. Một danh sách duy nhất để
+ * preHandler của /app và test cùng đọc.
+ */
+export const GUEST_APP_PATHS: ReadonlySet<string> = new Set([
+  "/app",
+  "/app/promo-products",
+  "/app/discover",
+  "/app/discover/offer-products",
+  "/app/support",
+]);
+
+export function isGuestAppPath(method: string, url: string): boolean {
+  if (method !== "GET" && method !== "HEAD") return false;
+  const path = (url.split("?")[0] ?? "").replace(/\/+$/, "");
+  return GUEST_APP_PATHS.has(path);
+}
+
 export async function requireApiUser(request: FastifyRequest): Promise<void> {
   if (!request.currentUser) {
     throw new AppError(

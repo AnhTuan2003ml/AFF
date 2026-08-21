@@ -89,7 +89,7 @@ export default function HomeScreen() {
        * được hoàn tiền.
        *
        * Dùng openBrowserAsync chứ không phải openAuthSessionAsync: quy kết ở
-       * đây đi bằng Sub ID trong URL, không phụ thuộc cookie. Tài liệu SDK 57
+       * đây đi bằng Sub ID trong URL, không phụ thuộc cookie. Tài liệu expo-web-browser
        * ghi rõ trên iOS openBrowserAsync KHÔNG dùng chung cookie với Safari hệ
        * thống — với luồng này thì không sao, nhưng nếu sau này sàn nào đó đổi
        * sang quy kết bằng cookie thì phải xem lại chỗ này.

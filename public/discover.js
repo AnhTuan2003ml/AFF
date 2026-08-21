@@ -117,9 +117,11 @@
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(
+      const error = new Error(
         payload?.error?.message || "Hệ thống đang bận. Vui lòng thử lại.",
       );
+      error.status = response.status;
+      throw error;
     }
     return payload;
   };
@@ -165,6 +167,15 @@
         showToast("Đã tạo link mua hoàn tiền và mở sản phẩm trên sàn.");
       } catch (error) {
         if (purchaseWindow) purchaseWindow.close();
+        // Khách (trang Khám phá mở cho người chưa đăng nhập) bấm Mua → sang
+        // đăng nhập, xong quay lại đúng trang đang xem.
+        if (error && error.status === 401) {
+          window.location.assign(
+            "/dang-nhap?next=" +
+              encodeURIComponent(window.location.pathname + window.location.search),
+          );
+          return;
+        }
         showToast(
           error instanceof Error
             ? error.message

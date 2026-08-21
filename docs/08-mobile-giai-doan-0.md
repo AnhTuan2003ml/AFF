@@ -16,7 +16,7 @@ một commit.
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| Expo SDK 57 + React Native 0.86 + expo-router + TypeScript | Xong |
+| Expo SDK 54 + React Native 0.81 + expo-router + TypeScript (hạ từ SDK 57 để chạy được trên Expo Go) | Xong |
 | `app.json` — tên ShopTik, gói `vn.shoptik.app`, scheme `shoptik`, `projectId` | Xong |
 | `eas.json` — ba hồ sơ, `preview` đã có `buildType: "apk"` | Xong |
 | `expo-secure-store` — cất token trong Keychain/Keystore | Xong |

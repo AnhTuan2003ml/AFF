@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { AppConfig } from "../config.js";
 import { randomToken, safeStringEqual } from "../lib/crypto.js";
 import { AppError, respondWithAppError } from "../lib/errors.js";
@@ -15,13 +15,28 @@ export function normalizedOrigin(value: string): string | null {
   }
 }
 
+/**
+ * Origin của chính request đang xử lý — "địa chỉ mà trình duyệt đã gõ để tới
+ * được server này". Dựng từ scheme + Host; khi TRUST_PROXY bật, Fastify tự
+ * lấy X-Forwarded-Proto / X-Forwarded-Host mà reverse proxy (Cloudflare,
+ * nginx) đặt vào, nên sau proxy vẫn ra đúng https://ten-mien.
+ */
+export function requestOwnOrigin(request: FastifyRequest): string | null {
+  if (!request.host) return null;
+  return normalizedOrigin(`${request.protocol}://${request.host}`);
+}
+
 export function isAllowedOrigin(
   requestOrigin: string,
-  configuredOrigin: string,
+  allowedOrigins: string | readonly (string | null)[],
 ): boolean {
   const received = normalizedOrigin(requestOrigin);
-  const allowed = normalizedOrigin(configuredOrigin);
-  return Boolean(received && allowed && received === allowed);
+  if (!received) return false;
+  const candidates =
+    typeof allowedOrigins === "string" ? [allowedOrigins] : allowedOrigins;
+  return candidates.some(
+    (candidate) => candidate !== null && normalizedOrigin(candidate) === received,
+  );
 }
 
 function getReplyLocals(reply: FastifyReply): Record<string, unknown> {
@@ -88,12 +103,28 @@ export async function registerCsrfProtection(
       return;
     }
 
+    /*
+     * Origin hợp lệ khi trùng APP_ORIGIN HOẶC trùng chính địa chỉ mà request
+     * này đi tới (scheme + Host). Vế thứ hai là phép kiểm tra Origin-so-với-
+     * đích chuẩn của OWASP: trang của kẻ tấn công không thể ép trình duyệt
+     * nạn nhân đổi header Host của yêu cầu gửi tới server thật, còn nếu hắn
+     * trỏ tên miền riêng vào IP của ta thì trình duyệt cũng không đính cookie
+     * phiên của ta vào tên miền đó — nên không mở thêm lỗ hổng nào, và token
+     * CSRF bên dưới vẫn phải khớp như cũ.
+     *
+     * Vì sao cần: cùng một server được mở bằng nhiều địa chỉ — dev server
+     * localhost:3000, bản Docker localhost:3002, IP LAN cho điện thoại, IP
+     * Tailscale cho dev từ xa. Chỉ khớp cứng APP_ORIGIN thì mọi địa chỉ khác
+     * đều bị 403 "Địa chỉ truy cập đã thay đổi" dù người dùng không làm gì sai.
+     */
     const origin = request.headers.origin;
-    if (origin && !isAllowedOrigin(origin, config.APP_ORIGIN)) {
+    const ownOrigin = requestOwnOrigin(request);
+    if (origin && !isAllowedOrigin(origin, [config.APP_ORIGIN, ownOrigin])) {
       request.log.warn(
         {
           receivedOrigin: normalizedOrigin(origin) ?? "invalid",
           allowedOrigin: normalizedOrigin(config.APP_ORIGIN) ?? "invalid",
+          requestOrigin: ownOrigin ?? "invalid",
         },
         "Từ chối yêu cầu do Origin không khớp",
       );

@@ -28,22 +28,25 @@ async function run(): Promise<void> {
     `);
 
     for (const filename of files) {
-      const sql = await readFile(path.join(migrationsDir, filename), "utf8");
-      const checksum = createHash("sha256").update(sql).digest("hex");
+      const rawSql = await readFile(path.join(migrationsDir, filename), "utf8");
+      const normalizedSql = rawSql.replace(/\r\n/g, "\n");
+      const checksum = createHash("sha256").update(normalizedSql).digest("hex");
+      const rawChecksum = createHash("sha256").update(rawSql).digest("hex");
       const existing = await client.query<{ checksum: string }>(
         "SELECT checksum FROM schema_migrations WHERE filename = $1",
         [filename],
       );
 
       if (existing.rowCount) {
-        if (existing.rows[0]?.checksum !== checksum) {
+        const storedChecksum = existing.rows[0]?.checksum;
+        if (storedChecksum !== checksum && storedChecksum !== rawChecksum) {
           throw new Error(`Migration ${filename} đã bị thay đổi sau khi chạy.`);
         }
         console.info(`Bỏ qua ${filename} (đã chạy).`);
         continue;
       }
 
-      await client.query(sql);
+      await client.query(normalizedSql);
       await client.query(
         "INSERT INTO schema_migrations (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING",
         [filename, checksum],
