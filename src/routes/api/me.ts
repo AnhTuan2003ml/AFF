@@ -1,7 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireApiUser } from "../../auth/guards.js";
-import { revokeAllUserSessions } from "../../auth/session.js";
+import {
+  listUserSessions,
+  revokeAllUserSessions,
+} from "../../auth/session.js";
 import { query } from "../../db.js";
 import { AppError } from "../../lib/errors.js";
 import { parseInput } from "../../lib/validation.js";
@@ -222,6 +225,16 @@ export async function registerMeApiRoutes(
 
   // Đăng xuất mọi thiết bị, kể cả thiết bị đang gọi — nên sau lệnh này app
   // phải đưa người dùng về màn hình đăng nhập.
+  app.get("/me/sessions", { preHandler: requireApiUser }, async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const data = await listUserSessions(
+      deps.db,
+      request.currentUser!.id,
+      request.sessionToken ?? null,
+    );
+    return { data };
+  });
+
   app.post(
     "/me/sessions/revoke-all",
     { preHandler: requireApiUser },

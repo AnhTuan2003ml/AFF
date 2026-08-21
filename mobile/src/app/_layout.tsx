@@ -59,6 +59,7 @@ export default function RootLayout() {
             <Stack.Screen name="referrals" options={{ presentation: 'modal' }} />
             <Stack.Screen name="support" options={{ presentation: 'modal' }} />
             <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
           </Stack>
         </ThemeProvider>
       </SessionProvider>

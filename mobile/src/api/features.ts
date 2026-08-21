@@ -143,3 +143,32 @@ export interface InterestedProduct {
 export function layQuanTam() {
   return apiFetch<{ data: InterestedProduct[] }>('/api/v1/interested');
 }
+
+/* ----------------------------- Thông báo ---------------------------- */
+
+export interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export function layThongBao() {
+  return apiFetch<{ unread: number; items: NotificationItem[] }>(
+    '/api/v1/notifications',
+  );
+}
+
+export async function danhDauDaDoc(): Promise<void> {
+  await apiFetch<unknown>('/api/v1/notifications/mark-read', { method: 'POST' });
+}
+
+/** Đăng ký token đẩy của thiết bị để nhận thông báo ngoài app. */
+export async function dangKyPush(token: string): Promise<void> {
+  await apiFetch<unknown>('/api/v1/push/register', {
+    method: 'POST',
+    body: { token },
+  });
+}

@@ -84,3 +84,25 @@ export function xoaTaiKhoan(forfeitBalance: boolean) {
     body: { forfeitBalance },
   });
 }
+
+export interface PhienDangNhap {
+  id: string;
+  client: string;
+  created_at: string;
+  last_seen_at: string;
+  is_current: boolean;
+}
+
+/** Danh sách thiết bị/phiên đang đăng nhập. */
+export async function layPhien(): Promise<PhienDangNhap[]> {
+  const r = await apiFetch<{ data: PhienDangNhap[] }>('/api/v1/me/sessions');
+  return r.data ?? [];
+}
+
+/** Báo một đơn "chưa ghi nhận" — đổ vào chat hỗ trợ như web. */
+export function baoChuaGhiNhan(orderId: string, description: string) {
+  return apiFetch<{ id: string; status: string }>(
+    '/api/v1/support/missing-order',
+    { method: 'POST', body: { orderId, description } },
+  );
+}

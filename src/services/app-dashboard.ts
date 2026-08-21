@@ -224,12 +224,13 @@ export async function getInterestedProducts(
   }>(
     db,
     `
-      SELECT DISTINCT ON (COALESCE(product_id, id::text))
+      SELECT DISTINCT ON (COALESCE(NULLIF(l.normalized_url, ''), l.product_name, l.id::text))
         product_name, product_image_url, normalized_url, created_at
       FROM affiliate_links l
       WHERE l.user_id = $1 AND l.campaign = 'instantbuy'
         AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.affiliate_link_id = l.id)
-      ORDER BY COALESCE(product_id, id::text), created_at DESC
+      ORDER BY COALESCE(NULLIF(l.normalized_url, ''), l.product_name, l.id::text),
+        created_at DESC
       LIMIT $2
     `,
     [userId, limit],

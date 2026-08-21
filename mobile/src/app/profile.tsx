@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { dangXuatMoiThietBi, doiTen, xoaTaiKhoan } from '@/api/bank';
+import { dangXuatMoiThietBi, doiTen, layPhien, xoaTaiKhoan } from '@/api/bank';
+import { ngayGio } from '@/lib/format';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Field } from '@/components/form';
 import { FormScreen } from '@/components/FormScreen';
@@ -19,6 +21,11 @@ export default function ProfileScreen() {
   const [ten, setTen] = useState(user?.fullName ?? '');
   const [dangLuu, setDangLuu] = useState(false);
   const [dangXL, setDangXL] = useState(false);
+  const { data: phien } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: layPhien,
+    enabled: !!user,
+  });
 
   if (!user) {
     return (
@@ -125,6 +132,24 @@ export default function ProfileScreen() {
         )}
       </Pressable>
 
+      <Text style={styles.section}>Phiên đăng nhập</Text>
+      {(phien ?? []).map((p) => (
+        <View key={p.id} style={styles.phienRow}>
+          <Ionicons
+            name={p.client === 'mobile' ? 'phone-portrait-outline' : 'desktop-outline'}
+            size={18}
+            color={colors.brand}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.phienTitle}>
+              {p.client === 'mobile' ? 'Ứng dụng di động' : 'Trình duyệt web'}
+              {p.is_current ? ' · phiên hiện tại' : ''}
+            </Text>
+            <Text style={styles.phienTime}>Hoạt động: {ngayGio(p.last_seen_at)}</Text>
+          </View>
+        </View>
+      ))}
+
       <Text style={styles.section}>Bảo mật</Text>
       <Pressable onPress={hoiDangXuatAll} style={styles.row}>
         <Ionicons name="log-out-outline" size={19} color={colors.text} />
@@ -170,4 +195,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   rowText: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
+
+  phienRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    marginBottom: 8,
+  },
+  phienTitle: { fontSize: 13.5, fontWeight: '800', color: colors.text },
+  phienTime: { fontSize: 11.5, color: colors.muted, marginTop: 2 },
 });

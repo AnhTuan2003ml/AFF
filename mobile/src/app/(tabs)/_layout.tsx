@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MascotFab } from '@/components/MascotFab';
+import { PushRegistrar } from '@/components/PushRegistrar';
 import { WelcomeToast } from '@/components/WelcomeToast';
 import { colors } from '@/theme/tokens';
 
@@ -93,6 +94,7 @@ export default function TabsLayout() {
     </Tabs>
       <MascotFab />
       <WelcomeToast />
+      <PushRegistrar />
     </View>
   );
 }

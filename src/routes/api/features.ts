@@ -6,10 +6,14 @@ import { parseInput } from "../../lib/validation.js";
 import { getCheckinState, recordDailyCheckin } from "../../services/checkin.js";
 import {
   claimMissionReward,
+  getUnreadNotificationCount,
   getUserMissionOverview,
+  listNotifications,
+  markAllNotificationsRead,
 } from "../../services/mission.js";
 import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
+import { registerPushToken } from "../../services/push.js";
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
@@ -137,6 +141,37 @@ export async function registerFeatureApiRoutes(
     reply.header("cache-control", "private, no-store");
     const data = await getInterestedProducts(deps.db, request.currentUser!.id);
     return { data };
+  });
+
+  /* ---------------------------- Thông báo ----------------------------- */
+
+  app.get("/notifications", { preHandler: requireApiUser }, async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const uid = request.currentUser!.id;
+    const [unread, items] = await Promise.all([
+      getUnreadNotificationCount(deps.db, uid),
+      listNotifications(deps.db, uid, 40),
+    ]);
+    return { unread, items };
+  });
+
+  app.post(
+    "/notifications/mark-read",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      await markAllNotificationsRead(deps.db, request.currentUser!.id);
+      return reply.code(204).send();
+    },
+  );
+
+  // Đăng ký token đẩy của thiết bị để nhận thông báo ngoài app.
+  app.post("/push/register", { preHandler: requireApiUser }, async (request, reply) => {
+    const input = parseInput(
+      z.object({ token: z.string().trim().min(10).max(255) }),
+      request.body,
+    );
+    await registerPushToken(deps.db, request.currentUser!.id, input.token);
+    return reply.code(204).send();
   });
 
   /* --------------------------- Bảng xếp hạng -------------------------- */

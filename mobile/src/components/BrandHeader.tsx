@@ -8,6 +8,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layMe } from '@/api/account';
+import { layThongBao } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
@@ -28,6 +29,13 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
   const [moMenu, setMoMenu] = useState(false);
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
+  const { data: tb } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: layThongBao,
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+  const chuaDoc = tb?.unread ?? 0;
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -42,8 +50,16 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
 
       {user ? (
         <View style={styles.right}>
-          <Pressable style={styles.iconBtn} hitSlop={6}>
-            <Ionicons name="notifications-outline" size={20} color={colors.inkSoft} />
+          <Pressable
+            style={styles.iconBtn}
+            hitSlop={6}
+            onPress={() => router.push('/notifications')}>
+            <Ionicons name="notifications-outline" size={22} color={colors.inkSoft} />
+            {chuaDoc > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{chuaDoc > 9 ? '9+' : chuaDoc}</Text>
+              </View>
+            )}
           </Pressable>
 
           <Pressable style={styles.walletChip} onPress={() => router.push('/(tabs)/wallet')}>
@@ -184,6 +200,19 @@ const styles = StyleSheet.create({
 
   right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    position: 'absolute',
+    top: 3,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    borderRadius: 8,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { color: '#fff', fontSize: 9.5, fontWeight: '900' },
   walletChip: {
     paddingHorizontal: 11,
     paddingVertical: 6,

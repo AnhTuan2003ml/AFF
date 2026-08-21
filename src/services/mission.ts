@@ -5,6 +5,7 @@ import { AppError } from "../lib/errors.js";
 import { formatVnd } from "../lib/format.js";
 import { writeAuditLog } from "./audit.js";
 import { creditFixedReward } from "./ledger.js";
+import { sendPushToUser } from "./push.js";
 
 export type MissionType = "REFERRAL_MILESTONE" | "PURCHASE_MILESTONE";
 export type MissionClaimStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -269,6 +270,12 @@ export async function createNotification(
     `INSERT INTO notifications (user_id, type, title, body) VALUES ($1, $2, $3, $4)`,
     [params.userId, params.type, params.title, params.body ?? ""],
   );
+  // Bắn push ra thiết bị (fire-and-forget) để báo ngoài app như các app khác.
+  void sendPushToUser(db, params.userId, {
+    title: params.title,
+    body: params.body ?? "",
+    data: { type: params.type },
+  });
 }
 
 export async function getUnreadNotificationCount(

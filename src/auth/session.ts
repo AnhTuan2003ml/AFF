@@ -193,3 +193,31 @@ export async function revokeAllUserSessions(
     [userId],
   );
 }
+
+export interface UserSessionRow {
+  id: string;
+  client: string;
+  created_at: Date;
+  last_seen_at: Date;
+  is_current: boolean;
+}
+
+/** Danh sách phiên đang hoạt động của người dùng (không lộ token/hash). */
+export async function listUserSessions(
+  db: Database,
+  userId: string,
+  currentToken: string | null,
+): Promise<UserSessionRow[]> {
+  const result = await query<UserSessionRow>(
+    db,
+    `
+      SELECT id, client, created_at, last_seen_at,
+        (token_hash = $2) AS is_current
+      FROM sessions
+      WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+      ORDER BY last_seen_at DESC
+    `,
+    [userId, currentToken ? sha256(currentToken) : ""],
+  );
+  return result.rows;
+}

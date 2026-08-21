@@ -1,8 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -13,6 +15,7 @@ import {
 } from 'react-native';
 
 import { layDonHang, type Order } from '@/api/account';
+import { baoChuaGhiNhan } from '@/api/bank';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
@@ -59,6 +62,30 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
+
+function baoDon(o: Order) {
+  Alert.alert(
+    'Báo đơn chưa ghi nhận?',
+    'Gửi yêu cầu để đội hỗ trợ kiểm tra đơn này. Phản hồi sẽ hiện ở mục Hỗ trợ.',
+    [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Gửi',
+        onPress: async () => {
+          try {
+            await baoChuaGhiNhan(
+              o.platform_order_id ?? o.id,
+              'Đơn này tôi đã mua nhưng chưa thấy ghi nhận/hoàn tiền đúng. Nhờ đội hỗ trợ kiểm tra giúp.',
+            );
+            Alert.alert('Đã gửi', 'Đội hỗ trợ sẽ kiểm tra và phản hồi ở mục Hỗ trợ.');
+          } catch (e) {
+            Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại sau.');
+          }
+        },
+      },
+    ],
+  );
+}
 
 function khopTab(o: Order, tab: TabKey): boolean {
   if (tab === 'ALL') return true;
@@ -187,6 +214,11 @@ export default function OrdersScreen() {
                 {item.status === 'CANCELLED' && item.cancel_reason ? (
                   <Text style={styles.reason}>Lý do hủy: {item.cancel_reason}</Text>
                 ) : null}
+
+                <Pressable onPress={() => baoDon(item)} hitSlop={6} style={styles.bao}>
+                  <Ionicons name="alert-circle-outline" size={15} color={colors.muted} />
+                  <Text style={styles.baoText}>Báo chưa ghi nhận</Text>
+                </Pressable>
               </View>
             );
           }}
@@ -249,6 +281,14 @@ const styles = StyleSheet.create({
   amountLabel: { fontSize: 11, color: colors.muted },
   amountValue: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 2 },
   reason: { fontSize: 12, color: colors.danger },
+  bao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    paddingTop: 4,
+  },
+  baoText: { fontSize: 12, fontWeight: '700', color: colors.muted },
 
   empty: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
