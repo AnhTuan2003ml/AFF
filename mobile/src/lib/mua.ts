@@ -14,5 +14,9 @@ import { taoLinkMua, traCuu } from '@/api/products';
 export async function moLinkMua(productUrl: string): Promise<void> {
   const kq = await traCuu(productUrl);
   const { buyUrl } = await taoLinkMua(kq.previewId);
-  await WebBrowser.openBrowserAsync(`${apiBaseUrl}${buyUrl}`);
+  // buyUrl đã là URL tuyệt đối (${APP_ORIGIN}/go/:clickId) — chỉ prepend khi
+  // lỡ là đường dẫn tương đối, tránh nối đôi domain.
+  await WebBrowser.openBrowserAsync(
+    buyUrl.startsWith('http') ? buyUrl : `${apiBaseUrl}${buyUrl}`,
+  );
 }

@@ -60,7 +60,9 @@ function Card({ p }: { p: InterestedProduct }) {
     try {
       const kq = await traCuu(p.productUrl);
       const { buyUrl } = await taoLinkMua(kq.previewId);
-      await WebBrowser.openBrowserAsync(`${apiBaseUrl}${buyUrl}`);
+      await WebBrowser.openBrowserAsync(
+        buyUrl.startsWith('http') ? buyUrl : `${apiBaseUrl}${buyUrl}`,
+      );
     } catch (e) {
       Alert.alert(
         'Chưa mua được',

@@ -80,6 +80,7 @@ export default function HomeScreen() {
     setDangMua(true);
     try {
       const { buyUrl } = await taoLinkMua(ketQua.previewId);
+      const target = buyUrl.startsWith('http') ? buyUrl : `${apiBaseUrl}${buyUrl}`;
       /*
        * BẮT BUỘC mở bằng trình duyệt hệ thống (Chrome Custom Tabs / Safari View
        * Controller), TUYỆT ĐỐI không WebView nhúng. Chỉ trình duyệt hệ thống mới
@@ -93,7 +94,7 @@ export default function HomeScreen() {
        * thống — với luồng này thì không sao, nhưng nếu sau này sàn nào đó đổi
        * sang quy kết bằng cookie thì phải xem lại chỗ này.
        */
-      await WebBrowser.openBrowserAsync(`${apiBaseUrl}${buyUrl}`);
+      await WebBrowser.openBrowserAsync(target);
     } catch (e) {
       Alert.alert(
         'Chưa tạo được link mua',
