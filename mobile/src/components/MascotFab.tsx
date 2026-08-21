@@ -18,7 +18,6 @@ const CYCLE: CamioMood[] = ['haohung', 'vuive', 'thichthu', 'baocao', 'haohung',
 export function MascotFab() {
   const insets = useSafeAreaInsets();
   const [i, setI] = useState(0);
-  const [noi, setNoi] = useState<string | null>(null);
   const [mo, setMo] = useState(false);
 
   useEffect(() => {
@@ -26,22 +25,16 @@ export function MascotFab() {
     return () => clearInterval(t);
   }, []);
 
-  function bam() {
-    setNoi('Cần giúp gì không?');
-    setMo(true);
-    setTimeout(() => setNoi(null), 2200);
-  }
-
   return (
     <>
       <Pressable
-        onPress={bam}
+        onPress={() => setMo(true)}
         style={({ pressed }) => [
           styles.fab,
           { bottom: insets.bottom + 62 + 14 },
           pressed && { opacity: 0.9 },
         ]}>
-        <Mascot mood={CYCLE[i]} size={38} noi={noi} />
+        <Mascot mood={CYCLE[i]} size={38} />
         <Text style={styles.label}>Hỗ trợ</Text>
       </Pressable>
 
