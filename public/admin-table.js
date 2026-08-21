@@ -57,6 +57,14 @@
           if (!cell.hasAttribute("data-label")) {
             cell.setAttribute("data-label", labels[col] || "");
           }
+          if (!cell.querySelector(":scope > .cell-body") && !cell.classList.contains("select-col") && !cell.hasAttribute("colspan")) {
+            var wrapper = document.createElement("div");
+            wrapper.className = "cell-body";
+            while (cell.firstChild) {
+              wrapper.appendChild(cell.firstChild);
+            }
+            cell.appendChild(wrapper);
+          }
           col += cell.colSpan || 1;
           labelled += 1;
         }

@@ -18,10 +18,19 @@
         </div>
       </header>
 
-      <form class="stack-form support-request-form" data-support-form
-        data-endpoint="/app/support/requests" data-csrf="{{ csrfToken }}" novalidate>
+      {% if guest %}
+        {# Khách: xem được mẫu yêu cầu nhưng phải đăng nhập mới gửi — đội CSKH
+           cần biết tài khoản/đơn hàng để đối soát, và phản hồi về đúng hộp thư. #}
+        <div class="px-alert support-guest-alert" role="status">
+          <span class="mb-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+          <div class="mb-alert-copy"><b>Đăng nhập để gửi yêu cầu hỗ trợ</b><small>Đội CSKH cần biết tài khoản và đơn hàng của bạn để đối soát; phản hồi về đúng hộp thư và thông báo trong ứng dụng.</small></div>
+          <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">Đăng nhập</a>
+        </div>
+      {% endif %}
+      <form class="stack-form support-request-form"{% if not guest %} data-support-form{% endif %}
+        data-endpoint="/app/support/requests" data-csrf="{{ csrfToken }}" novalidate{% if guest %} aria-disabled="true"{% endif %}>
         <label for="support-topic-input">Vấn đề cần hỗ trợ
-          <select id="support-topic-input" data-topic-select required>
+          <select id="support-topic-input" data-topic-select required{% if guest %} disabled{% endif %}>
             <option value="" selected disabled>Chọn vấn đề…</option>
             {% for topic in supportTopics %}
               <option value="{{ topic.value }}"
@@ -54,13 +63,13 @@
 
         <label for="support-description-input">Mô tả chi tiết
           <textarea id="support-description-input" data-description rows="4" maxlength="2000"
-            placeholder="Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)"></textarea>
+            placeholder="Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)"{% if guest %} disabled{% endif %}></textarea>
           <small class="field-error" id="support-description-input-error" hidden></small>
         </label>
 
         <label for="support-email-input">Email nhận phản hồi
           <input id="support-email-input" data-notify-email type="email" maxlength="254"
-            autocomplete="email" value="{{ notifyEmail }}">
+            autocomplete="email" value="{{ notifyEmail }}"{% if guest %} disabled{% endif %}>
           <small>Phản hồi của đội hỗ trợ cũng được gửi về email này.</small>
           <small class="field-error" id="support-email-input-error" hidden></small>
         </label>
@@ -70,7 +79,11 @@
         </p>
         <p class="field-error" data-support-error hidden role="alert"></p>
 
-        <button class="button button-primary" type="submit" data-support-submit>Gửi yêu cầu</button>
+        {% if guest %}
+          <a class="button button-primary" href="/dang-nhap?next=%2Fapp%2Fsupport">Đăng nhập để gửi yêu cầu</a>
+        {% else %}
+          <button class="button button-primary" type="submit" data-support-submit>Gửi yêu cầu</button>
+        {% endif %}
       </form>
     </section>
 
@@ -125,6 +138,8 @@
 {% endblock %}
 
 {% block page_scripts %}
+  {% if not guest %}
   <script src="/assets/support-request.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/support-reply.js?v={{ assetVersion }}" defer></script>
+  {% endif %}
 {% endblock %}

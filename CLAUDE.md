@@ -77,7 +77,7 @@ Frontend của luồng này: `views/app/dashboard.njk` + `public/purchase.js` +
   phải một khung admin khác.
 - `public/` — static, phục vụ tại `/assets/*`. Không CDN (CSP `self`).
 - `migrations/` — SQL thuần, chạy bằng `npm run db:migrate`.
-- `mobile/` — app React Native (Expo SDK 57, expo-router). Project riêng, có
+- `mobile/` — app React Native (Expo SDK 54, expo-router). Project riêng, có
   `package.json`/`tsconfig` riêng; `npm run typecheck` và `npm test` ở gốc KHÔNG
   chạm tới nó. Màu lấy từ `mobile/src/theme/tokens.ts` — bản dịch của
   `public/theme/tokens.css`, đổi màu thì sửa file CSS trước rồi đồng bộ sang.

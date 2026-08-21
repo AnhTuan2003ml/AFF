@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireUser } from "../auth/guards.js";
+import { isGuestAppPath, requireUser } from "../auth/guards.js";
 import { revokeCurrentSession, revokeAllUserSessions } from "../auth/session.js";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
@@ -99,13 +99,11 @@ export async function registerAppRoutes(
   app: FastifyInstance,
   deps: AppRouteDeps,
 ): Promise<void> {
-  // Trang chủ /app xem được cho KHÁCH (dán link kiểm tra hoàn tiền); mọi route
-  // khác trong /app vẫn bắt đăng nhập.
+  // KHÁCH (chưa đăng nhập) xem được trang chủ (dán link kiểm tra hoàn tiền),
+  // Khám phá và Hỗ trợ — danh sách ở GUEST_APP_PATHS (auth/guards.ts); mọi
+  // route khác trong /app và mọi POST vẫn bắt đăng nhập.
   app.addHook("preHandler", async (request, reply) => {
-    const path = (request.url.split("?")[0] ?? "").replace(/\/+$/, "");
-    // Trang chủ + băng sản phẩm đề xuất (dữ liệu chung) mở cho khách.
-    const guestGet = new Set(["/app", "/app/promo-products"]);
-    if (request.method === "GET" && guestGet.has(path)) return;
+    if (isGuestAppPath(request.method, request.url)) return;
     return requireUser(request, reply);
   });
 
@@ -765,7 +763,10 @@ export async function registerAppRoutes(
           LIMIT 80
         `,
       ),
-      getWalletBalances(deps.db, userId(request)),
+      // Khách xem Khám phá không có ví — bỏ qua, template không cần số dư.
+      request.currentUser
+        ? getWalletBalances(deps.db, request.currentUser.id)
+        : null,
       query<{
         shop_name: string;
         product_count: string;
@@ -1140,6 +1141,25 @@ export async function registerAppRoutes(
   // và chat trực tiếp. Cả hai cùng đổ vào một hội thoại, ánh xạ thread Slack
   // CSKH; nhân viên trả lời trong thread và câu trả lời hiện lại ở trang này.
   app.get("/support", async (request, reply) => {
+    // Khách xem được trang Hỗ trợ (mẫu yêu cầu, cách liên hệ) nhưng không có
+    // hội thoại/đơn hàng; form khóa và mời đăng nhập — các POST bên dưới vẫn
+    // bắt đăng nhập qua preHandler chung.
+    if (!request.currentUser) {
+      return reply.view("app/support.njk", {
+        pageTitle: "Hỗ trợ",
+        appSection: "support",
+        guest: true,
+        messages: [],
+        latestRequest: null,
+        latestReply: null,
+        chatOnline: isSlackSupportEnabled(deps.config),
+        supportTopics: SUPPORT_TOPICS,
+        orderOptions: [],
+        notifyEmail: "",
+        preselectOrderKey: "",
+        prefillMessage: "",
+      });
+    }
     const uid = userId(request);
     const businessConfig = await getBusinessConfig(deps.db, deps.config);
     const [messages, orderHistory, conversationRow, latestExchange] =
