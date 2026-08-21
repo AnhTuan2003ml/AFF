@@ -1,13 +1,12 @@
-import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 
 import { useSession } from '@/hooks/useSession';
-import { dangKyThongBao } from '@/lib/push';
+import { dangKyThongBao, nghePushTap } from '@/lib/push';
 
 /**
  * Mount một lần: đăng ký nhận push khi đã đăng nhập, và mở màn Thông báo khi
- * người dùng chạm vào một thông báo đẩy.
+ * người dùng chạm vào một thông báo đẩy. Trong Expo Go, lib/push tự bỏ qua.
  */
 export function PushRegistrar() {
   const { user } = useSession();
@@ -17,10 +16,11 @@ export function PushRegistrar() {
   }, [user]);
 
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      router.push('/notifications');
+    let cleanup = () => {};
+    void nghePushTap(() => router.push('/notifications')).then((c) => {
+      cleanup = c;
     });
-    return () => sub.remove();
+    return () => cleanup();
   }, []);
 
   return null;

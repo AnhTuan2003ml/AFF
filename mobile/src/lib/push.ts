@@ -1,28 +1,38 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { dangKyPush } from '@/api/features';
 
 /**
- * Nhận thông báo ngoài app qua Expo Push. Khi đang mở app vẫn hiện banner.
+ * Nhận thông báo ngoài app qua Expo Push.
  *
- * Lưu ý: lấy Expo push token chỉ hoạt động trên BẢN BUILD thật (dev/production);
- * trong Expo Go (SDK 53+) sẽ ném lỗi — ta nuốt lỗi để không làm phiền người dùng.
+ * QUAN TRỌNG: chỉ cần `import 'expo-notifications'` ở cấp module là nó tự chạy
+ * side-effect đăng ký device push token và NÉM LỖI trong Expo Go (SDK 53+ đã bỏ
+ * remote push). Vì vậy tuyệt đối KHÔNG import tĩnh — chỉ dynamic import khi đang
+ * ở BẢN BUILD thật. Trong Expo Go thì bỏ qua hoàn toàn, app không crash.
  */
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+
+function laExpoGo(): boolean {
+  return (
+    Constants.appOwnership === 'expo' ||
+    Constants.executionEnvironment === 'storeClient'
+  );
+}
 
 export async function dangKyThongBao(): Promise<void> {
+  if (laExpoGo() || !Device.isDevice) return;
   try {
-    if (!Device.isDevice) return;
+    const Notifications = await import('expo-notifications');
+
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
@@ -43,6 +53,18 @@ export async function dangKyThongBao(): Promise<void> {
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     if (token) await dangKyPush(token);
   } catch {
-    // Expo Go không hỗ trợ push từ xa — bản build thật mới chạy.
+    // Không đăng ký được (Expo Go / lỗi quyền) — bỏ qua, không chặn app.
+  }
+}
+
+/** Lắng nghe người dùng chạm vào thông báo đẩy để mở màn tương ứng. */
+export async function nghePushTap(onTap: () => void): Promise<() => void> {
+  if (laExpoGo()) return () => {};
+  try {
+    const Notifications = await import('expo-notifications');
+    const sub = Notifications.addNotificationResponseReceivedListener(() => onTap());
+    return () => sub.remove();
+  } catch {
+    return () => {};
   }
 }
