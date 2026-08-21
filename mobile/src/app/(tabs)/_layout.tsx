@@ -69,6 +69,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="checkin"
+        options={{
+          title: 'Điểm danh',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
           title: 'Tài khoản',

@@ -16,7 +16,15 @@ const SAN = [
   { ma: 'SHOPEE', ten: 'Shopee', mo: 'Dán link Shopee, ShopTik tự nhận diện và kiểm tra hoàn tiền.' },
   { ma: 'TIKTOK', ten: 'TikTok Shop', mo: 'Từ video đến giỏ hàng — link được xử lý tự động trong cùng một luồng.' },
   { ma: 'LAZADA', ten: 'Lazada', mo: 'Tra cứu sản phẩm và khoản hoàn dự kiến mà không cần đổi chế độ.' },
-];
+] as const;
+
+// Logo thật của từng sàn (cùng ảnh web dùng). require phải là chuỗi tĩnh nên
+// khai theo bản đồ, không nối chuỗi động.
+const LOGO_SAN = {
+  SHOPEE: require('../../assets/images/platform-shopee.webp'),
+  TIKTOK: require('../../assets/images/platform-tiktok.webp'),
+  LAZADA: require('../../assets/images/platform-lazada.webp'),
+} as const;
 
 /**
  * Dải quảng bá ba sàn — bản dựng lại của `.lux-platform-showcase`.
@@ -41,7 +49,7 @@ export function PlatformShowcase() {
   return (
     <View style={ss.showcase}>
       <View style={ss.showcaseLogo}>
-        <Text style={ss.showcaseLogoText}>{s.ten.charAt(0)}</Text>
+        <Image source={LOGO_SAN[s.ma]} style={ss.showcaseLogoImg} contentFit="contain" />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={ss.showcaseTag}>✓ ĐÃ HỖ TRỢ</Text>
@@ -176,17 +184,37 @@ export function ProductStrip({
     queryFn: () => layKhamPha(list, 1),
   });
 
+  const [active, setActive] = useState(0);
+  const [pages, setPages] = useState(1);
+
   const sp = data?.data ?? [];
   if (sp.length === 0) return null;
 
   return (
     <View style={ss.strip}>
       <Text style={ss.stripTitle}>{tieuDe}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ss.stripRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={ss.stripRow}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+          const w = layoutMeasurement.width || 1;
+          setPages(Math.max(1, Math.round(contentSize.width / w)));
+          setActive(Math.round(contentOffset.x / w));
+        }}>
         {sp.slice(0, 12).map((p) => (
           <TheSP key={p.item_id} p={p} />
         ))}
       </ScrollView>
+      {pages > 1 && (
+        <View style={ss.stripDots}>
+          {Array.from({ length: pages }).map((_, k) => (
+            <View key={k} style={[ss.dot, k === active && ss.dotActive]} />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -263,6 +291,7 @@ const ss = StyleSheet.create({
     justifyContent: 'center',
   },
   showcaseLogoText: { fontSize: 20, fontWeight: '900', color: colors.brand },
+  showcaseLogoImg: { width: 30, height: 30 },
   showcaseTag: { fontSize: 10.5, fontWeight: '900', color: colors.success, letterSpacing: 0.6 },
   showcaseName: { fontSize: 19, fontWeight: '900', color: colors.brand, marginTop: 2 },
   showcaseDesc: { fontSize: 11.5, color: colors.inkSoft, marginTop: 3, lineHeight: 16 },
@@ -393,6 +422,7 @@ const ss = StyleSheet.create({
     marginBottom: 10,
   },
   stripRow: { paddingHorizontal: spacing.md, gap: 10 },
+  stripDots: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 12 },
   spCard: {
     width: 138,
     borderRadius: radius.md,
