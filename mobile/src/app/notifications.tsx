@@ -80,7 +80,7 @@ export default function NotificationsScreen() {
 function moodCua(type: string): CamioMood {
   if (type.includes('APPROVED') || type.includes('CASHBACK')) return 'haohung';
   if (type.includes('REJECTED') || type.includes('CANCEL')) return 'ngacnhien';
-  if (type.includes('CLAIM')) return 'baocao';
+  if (type.includes('CLAIM') || type.includes('SUPPORT')) return 'baocao';
   return 'vuive';
 }
 

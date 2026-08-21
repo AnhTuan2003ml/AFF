@@ -93,7 +93,7 @@
                     {% set mood = 'vuive' %}
                     {% if item.type and ('APPROVED' in item.type or 'CASHBACK' in item.type) %}{% set mood = 'haohung' %}
                     {% elif item.type and ('REJECTED' in item.type or 'CANCEL' in item.type) %}{% set mood = 'ngacnhien' %}
-                    {% elif item.type and 'CLAIM' in item.type %}{% set mood = 'baocao' %}{% endif %}
+                    {% elif item.type and ('CLAIM' in item.type or 'SUPPORT' in item.type) %}{% set mood = 'baocao' %}{% endif %}
                     <li class="{{ 'unread' if not item.isRead }}">
                       <img class="notification-mascot" src="/assets/images/mascot/camio-{{ mood }}.png" alt="" width="40" height="40" loading="lazy">
                       <span class="notification-copy">

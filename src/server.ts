@@ -37,6 +37,7 @@ import { EmailService } from "./services/email.js";
 import {
   ensureMissionDefinitionsSeeded,
   getUnreadNotificationCount,
+  WEB_BELL_EXCLUDED_TYPES,
   listNotifications,
 } from "./services/mission.js";
 import { getWalletBalances } from "./services/ledger.js";
@@ -256,7 +257,9 @@ app.addHook("preHandler", async (request, reply) => {
       unreadSupportCount,
       headerHasVerifiedBank,
     ] = await Promise.all([
-      getUnreadNotificationCount(db, request.currentUser.id),
+      getUnreadNotificationCount(db, request.currentUser.id, {
+        excludeTypes: WEB_BELL_EXCLUDED_TYPES,
+      }),
       listNotifications(db, request.currentUser.id, 8),
       request.method === "GET"
         ? getWalletBalances(db, request.currentUser.id)

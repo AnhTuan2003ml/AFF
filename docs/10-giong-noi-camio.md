@@ -177,3 +177,4 @@ quên dán link thôi 👀 · Shopping vui, nhận hoàn còn vui hơn.
 | Nhiệm vụ được duyệt | `camioVoice.missionApproved` | "🎉 Nhiệm vụ xong, thưởng về!" |
 | Nhiệm vụ bị từ chối | `camioVoice.missionRejected` | "Hmm… nhiệm vụ chưa được duyệt 🥲" |
 | Lệnh rút được duyệt | `camioVoice.withdrawalApproved` | "Lệnh rút đã duyệt! 🫡" |
+| CSKH trả lời (Slack → app) | `camioVoice.supportReply` | "Đội hỗ trợ vừa nhắn bạn 📩" / trích đoạn trả lời |

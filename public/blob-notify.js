@@ -49,7 +49,7 @@
     var t = String(type || "");
     if (t.indexOf("APPROVED") >= 0 || t.indexOf("CASHBACK") >= 0) return "haohung";
     if (t.indexOf("REJECTED") >= 0 || t.indexOf("CANCEL") >= 0) return "ngacnhien";
-    if (t.indexOf("CLAIM") >= 0) return "baocao";
+    if (t.indexOf("CLAIM") >= 0 || t.indexOf("SUPPORT") >= 0) return "baocao";
     return "vuive";
   }
 

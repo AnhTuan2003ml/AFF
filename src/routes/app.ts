@@ -62,6 +62,7 @@ import { isSlackSupportEnabled } from "../services/slack.js";
 import {
   claimMissionReward,
   getUnreadNotificationCount,
+  WEB_BELL_EXCLUDED_TYPES,
   getUserMissionOverview,
   listNotifications,
   markAllNotificationsRead,
@@ -1324,7 +1325,9 @@ export async function registerAppRoutes(
   app.get("/notifications/state", async (request, reply) => {
     const uid = userId(request);
     const [notif, support, items, supportPreview] = await Promise.all([
-      getUnreadNotificationCount(deps.db, uid),
+      getUnreadNotificationCount(deps.db, uid, {
+        excludeTypes: WEB_BELL_EXCLUDED_TYPES,
+      }),
       countUnreadSupportReplies(deps.db, uid),
       listNotifications(deps.db, uid, 8),
       getLatestUnreadSupportReply(deps.db, uid),

@@ -17,7 +17,10 @@ export function PushRegistrar() {
 
   useEffect(() => {
     let cleanup = () => {};
-    void nghePushTap(() => router.push('/notifications')).then((c) => {
+    // Phản hồi CSKH → mở thẳng màn Hỗ trợ; còn lại → danh sách Thông báo.
+    void nghePushTap((data) =>
+      router.push(data.type === 'SUPPORT_REPLY' ? '/support' : '/notifications'),
+    ).then((c) => {
       cleanup = c;
     });
     return () => cleanup();

@@ -31,7 +31,6 @@ export function InterestCarousel() {
     <View style={s.section}>
       <View style={s.head}>
         <View style={{ flex: 1 }}>
-          <Text style={s.eyebrow}>CHƯA HOÀN TẤT</Text>
           <Text style={s.title}>Sản phẩm bạn quan tâm</Text>
           <Text style={s.sub}>
             {sp.length} sản phẩm đã xem chưa mua — hoàn tất để nhận hoàn tiền.
@@ -109,7 +108,6 @@ const s = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: 10,
   },
-  eyebrow: { fontSize: 10.5, fontWeight: '900', color: colors.brand, letterSpacing: 1.2 },
   title: { fontSize: 19, fontWeight: '900', color: colors.text, letterSpacing: -0.6, marginTop: 3 },
   sub: { fontSize: 11.5, color: colors.muted, marginTop: 3, lineHeight: 16 },
   more: { fontSize: 13, fontWeight: '800', color: colors.brand, marginTop: 3 },

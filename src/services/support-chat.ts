@@ -8,6 +8,8 @@ import {
   postSupportMessage,
   type SlackLogger,
 } from "./slack.js";
+import { camioVoice } from "./camio-voice.js";
+import { createNotification } from "./mission.js";
 import { maybeAutoReply } from "./support-autoreply.js";
 
 // Mỗi người dùng có một hội thoại ánh xạ 1-1 với một thread Slack. Slack lỗi
@@ -408,22 +410,23 @@ export async function receiveSlackReply(
   // Tin gõ thẳng ra kênh (ngoài thread) không thuộc khách nào.
   if (!event.thread_ts || event.thread_ts === event.ts) return "UNMATCHED";
 
-  const conversation = await query<{ id: string }>(
+  const conversation = await query<{ id: string; user_id: string }>(
     db,
     `
-      SELECT id FROM support_conversations
+      SELECT id, user_id FROM support_conversations
       WHERE slack_channel_id = $1 AND slack_thread_ts = $2
     `,
     [event.channel, event.thread_ts],
   );
   let conversationId = conversation.rows[0]?.id ?? null;
+  let conversationUserId = conversation.rows[0]?.user_id ?? null;
   if (!conversationId) {
     // CSKH có thể trả lời dưới một tin của khách bị văng ra ngoài kênh
     // (thread gốc từng bị xóa): tra ngược ts tin đã gửi để tìm hội thoại.
-    const byMessage = await query<{ id: string }>(
+    const byMessage = await query<{ id: string; user_id: string }>(
       db,
       `
-        SELECT c.id
+        SELECT c.id, c.user_id
         FROM support_chat_messages m
         JOIN support_conversations c ON c.id = m.conversation_id
         WHERE m.slack_ts = $1
@@ -433,6 +436,7 @@ export async function receiveSlackReply(
       [event.thread_ts, event.channel],
     );
     conversationId = byMessage.rows[0]?.id ?? null;
+    conversationUserId = byMessage.rows[0]?.user_id ?? null;
   }
   if (!conversationId) return "UNMATCHED";
 
@@ -454,6 +458,16 @@ export async function receiveSlackReply(
     `UPDATE support_conversations SET updated_at = now() WHERE id = $1`,
     [conversationId],
   );
+  // Báo cho khách như mọi thông báo khác: vào danh sách Thông báo + đẩy ra
+  // ngoài app (push). Web không đếm loại này vào chuông vì đã có bộ đếm phản
+  // hồi CSKH riêng (WEB_BELL_EXCLUDED_TYPES).
+  if (conversationUserId) {
+    await createNotification(db, {
+      userId: conversationUserId,
+      type: "SUPPORT_REPLY",
+      ...camioVoice.supportReply({ preview: body }),
+    });
+  }
   return "STORED";
 }
 

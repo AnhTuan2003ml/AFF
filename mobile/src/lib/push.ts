@@ -78,12 +78,17 @@ export async function dangKyThongBao(): Promise<void> {
   }
 }
 
-/** Lắng nghe người dùng chạm vào thông báo đẩy để mở màn tương ứng. */
-export async function nghePushTap(onTap: () => void): Promise<() => void> {
+/** Lắng nghe người dùng chạm vào thông báo đẩy để mở màn tương ứng (nhận `data` của push). */
+export async function nghePushTap(
+  onTap: (data: Record<string, unknown>) => void,
+): Promise<() => void> {
   if (laExpoGo()) return () => {};
   try {
     const Notifications = await import('expo-notifications');
-    const sub = Notifications.addNotificationResponseReceivedListener(() => onTap());
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      onTap((data && typeof data === 'object' ? data : {}) as Record<string, unknown>);
+    });
     return () => sub.remove();
   } catch {
     return () => {};

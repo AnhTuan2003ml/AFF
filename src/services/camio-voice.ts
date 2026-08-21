@@ -93,6 +93,16 @@ export const camioVoice = {
     };
   },
 
+  /** Đội CSKH vừa trả lời yêu cầu hỗ trợ (qua Slack). */
+  supportReply(p: { preview: string }): CamioNotice {
+    const preview = p.preview.trim().replace(/\s+/g, " ");
+    const short = preview.length > 120 ? `${preview.slice(0, 119)}…` : preview;
+    return {
+      title: pick(["Đội hỗ trợ vừa nhắn bạn 📩", "Có phản hồi từ đội hỗ trợ rồi!", "Camio báo: CSKH đã trả lời 🧡"]),
+      body: short || "Bấm để đọc phản hồi nha 🧡",
+    };
+  },
+
   withdrawalApproved(p: { amount: string }): CamioNotice {
     return {
       title: pick(["Lệnh rút đã duyệt! 🫡", "Tiền đang về ngân hàng 🏦"]),

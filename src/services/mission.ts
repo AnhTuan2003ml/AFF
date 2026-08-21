@@ -282,14 +282,23 @@ export async function createNotification(
 export async function getUnreadNotificationCount(
   db: Database,
   userId: string,
+  options: {
+    /** Loại KHÔNG tính — web bỏ `SUPPORT_REPLY` vì chuông đã đếm phản hồi CSKH riêng. */
+    excludeTypes?: readonly string[];
+  } = {},
 ): Promise<number> {
+  const exclude = options.excludeTypes ?? [];
   const result = await query<{ count: string }>(
     db,
-    `SELECT count(*)::text FROM notifications WHERE user_id = $1 AND NOT is_read`,
-    [userId],
+    `SELECT count(*)::text FROM notifications
+     WHERE user_id = $1 AND NOT is_read AND NOT (type = ANY($2::text[]))`,
+    [userId, exclude],
   );
   return Number(result.rows[0]!.count);
 }
+
+/** Loại thông báo web không đếm vào chuông (đã có bộ đếm phản hồi CSKH riêng). */
+export const WEB_BELL_EXCLUDED_TYPES = ["SUPPORT_REPLY"] as const;
 
 export interface NotificationItem {
   id: string;
