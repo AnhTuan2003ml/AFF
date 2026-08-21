@@ -14,7 +14,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.1.179:3000"
+        "EXPO_PUBLIC_API_URL": "https://shoptikvn.com"
       }
     },
 
@@ -27,7 +27,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.1.179:3000"
+        "EXPO_PUBLIC_API_URL": "https://shoptikvn.com"
       }
     },
 
@@ -38,7 +38,7 @@
       },
       "ios": {},
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://shoptik.vn"
+        "EXPO_PUBLIC_API_URL": "https://shoptikvn.com"
       }
     }
   },

@@ -1730,3 +1730,25 @@
     grid-column: auto;
   }
 }
+
+/* ===== Đối soát: bảng gọn + popup chi tiết từng đơn ===== */
+.backoffice-shell .detail-col { text-align: right; white-space: nowrap; }
+.backoffice-shell .status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.backoffice-shell .order-detail-dialog { width: min(94vw, 760px); }
+.backoffice-shell .order-detail-head { align-items: flex-start; }
+.backoffice-shell .order-detail-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.backoffice-shell .order-detail-body { display: grid; gap: 18px; margin-top: 8px; }
+.backoffice-shell .order-detail-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.backoffice-shell .odt-tile { padding: 13px 15px; border: 1px solid var(--admin-border); border-radius: 14px; background: var(--admin-surface-soft); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.backoffice-shell .odt-tile span { font-size: 10.5px; color: var(--admin-muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 800; }
+.backoffice-shell .odt-tile b { font-size: 16px; letter-spacing: -.01em; word-break: break-word; }
+.backoffice-shell .odt-tile small { font-size: 12px; color: var(--admin-muted); word-break: break-word; }
+.backoffice-shell .odt-tile.is-cashback b { color: var(--admin-success); }
+.backoffice-shell .order-detail-section h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: -.01em; }
+.backoffice-shell .order-detail-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; padding-top: 16px; border-top: 1px solid var(--admin-border); }
+.backoffice-shell .order-detail-reject { display: flex; gap: 8px; flex: 1 1 260px; min-width: 0; }
+.backoffice-shell .order-detail-reject input { flex: 1; min-width: 0; }
+.backoffice-shell .order-detail-updated { margin: 0; }
+@media (max-width: 640px) {
+  .backoffice-shell .order-detail-tiles { grid-template-columns: 1fr; }
+}

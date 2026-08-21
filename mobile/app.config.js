@@ -7,7 +7,7 @@
  * app chỉ báo "Chưa kết nối được máy chủ". Trình duyệt không chịu luật này nên
  * mở cùng địa chỉ vẫn vào được, rất dễ tưởng nhầm là lỗi mạng.
  *
- * Chỉ mở HTTP cho bản test. Bản `production` trỏ https://shoptik.vn nên giữ
+ * Chỉ mở HTTP cho bản test. Bản `production` trỏ https://shoptikvn.com nên giữ
  * nguyên mặc định an toàn của Android — không hạ bảo mật của bản phát hành chỉ
  * vì tiện cho lúc dev.
  */
