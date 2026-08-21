@@ -1,4 +1,7 @@
-import { apiFetch } from './client';
+import { makeRedirectUri } from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+
+import { ApiError, apiBaseUrl, apiFetch } from './client';
 import { clearTokens, saveTokens } from './storage';
 
 /**
@@ -53,17 +56,37 @@ export async function login(
 }
 
 /**
- * Đăng nhập bằng Google: app đã lấy id_token qua expo-auth-session, gửi lên
- * backend đổi lấy cặp token của hệ thống. Luôn ghi nhớ vì đây là đăng nhập chủ
- * động một chạm.
+ * Đăng nhập bằng Google — DÙNG LẠI đúng luồng Google của máy chủ web.
+ *
+ * Mở `/auth/google?flow=mobile` trong trình duyệt hệ thống; máy chủ chạy trọn
+ * luồng OAuth (đúng Web Client ID của web), rồi thay vì đặt cookie web, nó cấp
+ * cặp Bearer token và chuyển hướng về deep-link của app kèm token ở fragment.
+ * Nhờ vậy KHÔNG cần Android/iOS Client ID và chạy được cả trong Expo Go.
  */
-export async function loginWithGoogle(idToken: string): Promise<AuthUser> {
-  const response = await apiFetch<TokenResponse>('/api/v1/auth/token/google', {
-    method: 'POST',
-    body: { idToken },
-    auth: false,
-  });
-  return keepTokens(response, true);
+export async function loginWithGoogleWeb(): Promise<void> {
+  const redirectUri = makeRedirectUri({ scheme: 'shoptik' });
+  const startUrl =
+    `${apiBaseUrl}/auth/google?flow=mobile&redirect_uri=` +
+    encodeURIComponent(redirectUri);
+  const result = await WebBrowser.openAuthSessionAsync(startUrl, redirectUri);
+  if (result.type !== 'success' || !result.url) {
+    throw new ApiError('GOOGLE_CANCELLED', 'Đã hủy đăng nhập Google.', 0);
+  }
+  // Token nằm ở fragment (#...) để không lọt vào log máy chủ.
+  const hash = result.url.split('#')[1] ?? '';
+  const params = new URLSearchParams(hash);
+  const err = params.get('error');
+  if (err) throw new ApiError('GOOGLE_FAILED', err, 0);
+  const accessToken = params.get('accessToken');
+  const refreshToken = params.get('refreshToken');
+  if (!accessToken || !refreshToken) {
+    throw new ApiError(
+      'GOOGLE_FAILED',
+      'Không nhận được phiên đăng nhập từ Google.',
+      0,
+    );
+  }
+  await saveTokens({ accessToken, refreshToken }, true);
 }
 
 /** Bước 1 của đăng ký — backend gửi mã OTP 6 số về email. */

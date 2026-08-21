@@ -26,6 +26,7 @@ import {
   googleOAuthEnabled,
 } from "../services/google-auth.js";
 import { issueOtp } from "../services/otp.js";
+import { issueMobileTokens } from "../services/mobile-token.js";
 import { safeNextPath } from "../auth/guards.js";
 
 interface AuthRouteDeps {
@@ -68,6 +69,21 @@ const PENDING_EMAIL_COOKIE = "aff_pending_email";
 const RESET_EMAIL_COOKIE = "aff_reset_email";
 const OAUTH_STATE_COOKIE = "aff_oauth_state";
 const OAUTH_NEXT_COOKIE = "aff_oauth_next";
+// App di động đăng nhập Google bằng cách mở luồng web này trong trình duyệt rồi
+// nhận token qua deep-link. Lưu deep-link đích (đã kiểm scheme) để callback biết
+// phải trả token về app thay vì đặt cookie web.
+const OAUTH_MOBILE_REDIRECT_COOKIE = "aff_oauth_mredir";
+
+/**
+ * Chỉ cho phép deep-link về đúng app (scheme của Expo Go và của bản build), tránh
+ * bị lừa chuyển token sang địa chỉ lạ.
+ */
+function safeMobileRedirect(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  if (!/^(exp|shoptik|vn\.shoptik\.app):\/\//.test(value)) return null;
+  if (value.length > 512) return null;
+  return value;
+}
 
 function signedEmailCookie(
   reply: FastifyReply,
@@ -387,12 +403,24 @@ export async function registerAuthRoutes(
       // đối chiếu lại ở callback.
       const state = randomToken(24);
       signedEmailCookie(reply, deps.config, OAUTH_STATE_COOKIE, state);
-      const next = safeNextPath(
-        (request.query as Record<string, unknown>).next,
-        "",
-      );
+      const q = request.query as Record<string, unknown>;
+      const next = safeNextPath(q.next, "");
       if (next) {
         signedEmailCookie(reply, deps.config, OAUTH_NEXT_COOKIE, next);
+      }
+      // Luồng app di động: mở trong trình duyệt, kết thúc trả token về deep-link.
+      if (q.flow === "mobile") {
+        const redirect = safeMobileRedirect(q.redirect_uri);
+        if (!redirect) {
+          setFlash(reply, deps.config, "error", "Liên kết đăng nhập không hợp lệ.");
+          return reply.redirect("/dang-nhap");
+        }
+        signedEmailCookie(
+          reply,
+          deps.config,
+          OAUTH_MOBILE_REDIRECT_COOKIE,
+          redirect,
+        );
       }
       return reply.redirect(buildGoogleAuthUrl(deps.config, state));
     },
@@ -405,28 +433,32 @@ export async function registerAuthRoutes(
       const query = request.query as Record<string, unknown>;
       const stateCookie = readSignedCookie(request, OAUTH_STATE_COOKIE);
       const nextCookie = readSignedCookie(request, OAUTH_NEXT_COOKIE);
+      const mobileRedirect = safeMobileRedirect(
+        readSignedCookie(request, OAUTH_MOBILE_REDIRECT_COOKIE),
+      );
       reply.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
       reply.clearCookie(OAUTH_NEXT_COOKIE, { path: "/" });
+      reply.clearCookie(OAUTH_MOBILE_REDIRECT_COOKIE, { path: "/" });
+
+      // App di động: kết thúc bằng deep-link, KHÔNG dùng flash/cookie web.
+      // Token đặt ở fragment (#...) để không lọt vào log máy chủ.
+      const failMobile = (message: string) =>
+        reply.redirect(
+          `${mobileRedirect}#${new URLSearchParams({ error: message }).toString()}`,
+        );
 
       if (query.error) {
-        setFlash(
-          reply,
-          deps.config,
-          "error",
-          "Bạn đã hủy đăng nhập bằng Google.",
-        );
+        if (mobileRedirect) return failMobile("Bạn đã hủy đăng nhập bằng Google.");
+        setFlash(reply, deps.config, "error", "Bạn đã hủy đăng nhập bằng Google.");
         return reply.redirect("/dang-nhap");
       }
 
       const code = String(query.code ?? "");
       const state = String(query.state ?? "");
       if (!code || !state || !stateCookie || state !== stateCookie) {
-        setFlash(
-          reply,
-          deps.config,
-          "error",
-          "Phiên đăng nhập Google đã hết hạn. Hãy thử lại.",
-        );
+        const msg = "Phiên đăng nhập Google đã hết hạn. Hãy thử lại.";
+        if (mobileRedirect) return failMobile(msg);
+        setFlash(reply, deps.config, "error", msg);
         return reply.redirect("/dang-nhap");
       }
 
@@ -439,6 +471,21 @@ export async function registerAuthRoutes(
           request,
           profile,
         );
+        if (mobileRedirect) {
+          const tokens = await issueMobileTokens(
+            deps.db,
+            deps.config,
+            request,
+            userId,
+          );
+          const frag = new URLSearchParams({
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: String(tokens.expiresIn),
+            refreshExpiresAt: new Date(tokens.refreshExpiresAt).toISOString(),
+          }).toString();
+          return reply.redirect(`${mobileRedirect}#${frag}`);
+        }
         await createSession(deps.db, deps.config, request, reply, userId);
         setWelcome(reply, deps.config);
         return reply.redirect(safeNextPath(nextCookie, "/app"));
@@ -447,6 +494,7 @@ export async function registerAuthRoutes(
           error instanceof AppError
             ? error.message
             : "Đăng nhập Google thất bại. Hãy thử lại.";
+        if (mobileRedirect) return failMobile(message);
         setFlash(reply, deps.config, "error", message);
         return reply.redirect("/dang-nhap");
       }
