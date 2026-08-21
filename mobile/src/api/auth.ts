@@ -52,6 +52,20 @@ export async function login(
   return keepTokens(response, remember);
 }
 
+/**
+ * Đăng nhập bằng Google: app đã lấy id_token qua expo-auth-session, gửi lên
+ * backend đổi lấy cặp token của hệ thống. Luôn ghi nhớ vì đây là đăng nhập chủ
+ * động một chạm.
+ */
+export async function loginWithGoogle(idToken: string): Promise<AuthUser> {
+  const response = await apiFetch<TokenResponse>('/api/v1/auth/token/google', {
+    method: 'POST',
+    body: { idToken },
+    auth: false,
+  });
+  return keepTokens(response, true);
+}
+
 /** Bước 1 của đăng ký — backend gửi mã OTP 6 số về email. */
 export async function register(input: {
   fullName: string;

@@ -123,6 +123,11 @@ const configSchema = z.object({
   // Trống = tự suy ra APP_ORIGIN + "/auth/google/callback". Phải trùng đúng
   // "Authorized redirect URIs" đã khai trong Google Cloud Console.
   GOOGLE_OAUTH_REDIRECT_URI: httpsUrlOrEmpty,
+  // App di động đăng nhập Google bằng id_token (không qua redirect web). Liệt kê
+  // các OAuth Client ID được phép làm "aud" của id_token, ngăn cách bằng dấu
+  // phẩy — gồm Web/Android/iOS client ID mà app expo-auth-session sử dụng.
+  // Trống = tắt đăng nhập Google trên app.
+  GOOGLE_OAUTH_MOBILE_CLIENT_IDS: z.string().trim().default(""),
   // Slack CSKH: thiếu token hoặc kênh là tắt tích hợp, app vẫn chạy bình thường.
   SLACK_BOT_TOKEN: z.string().trim().default(""),
   SLACK_SUPPORT_CHANNEL: z.string().trim().default(""),

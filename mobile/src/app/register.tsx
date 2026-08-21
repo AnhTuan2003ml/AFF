@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { register, verifyEmail } from '@/api/auth';
 import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
 import { FormScreen } from '@/components/FormScreen';
+import { GoogleButton, googleConfigured } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
 import { colors } from '@/theme/tokens';
 
@@ -166,6 +167,16 @@ export default function RegisterScreen() {
           matKhau.length < 10
         }
       />
+      {googleConfigured && (
+        <>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>hoặc</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          <GoogleButton onError={setLoi} />
+        </>
+      )}
     </FormScreen>
   );
 }
@@ -174,4 +185,7 @@ const styles = StyleSheet.create({
   link: { alignSelf: 'center', marginTop: 16, padding: 6 },
   linkText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   policyRow: { marginTop: 2, marginBottom: 18 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 16 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
+  dividerText: { fontSize: 12, color: colors.muted, fontWeight: '700' },
 });

@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Checkbox } from '@/components/form';
+import { GoogleButton, googleConfigured } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -141,6 +142,17 @@ export default function LoginScreen() {
             )}
           </Pressable>
 
+          {googleConfigured && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>hoặc</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              <GoogleButton onError={setLoi} />
+            </>
+          )}
+
           <View style={styles.links}>
             <Pressable onPress={() => router.push('/forgot-password')} hitSlop={8}>
               <Text style={styles.linkStrong}>Quên mật khẩu?</Text>
@@ -207,6 +219,10 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 14, color: colors.text, padding: 0 },
 
   rememberRow: { marginBottom: 18, marginTop: 2 },
+
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 16 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
+  dividerText: { fontSize: 12, color: colors.muted, fontWeight: '700' },
 
   primaryBtn: {
     height: 52,

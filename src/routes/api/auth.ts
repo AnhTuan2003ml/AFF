@@ -22,6 +22,10 @@ import {
   rotateMobileTokens,
   type MobileTokenPair,
 } from "../../services/mobile-token.js";
+import {
+  findOrCreateGoogleUser,
+  verifyGoogleIdToken,
+} from "../../services/google-auth.js";
 import type { ApiDeps } from "./deps.js";
 
 const email = z.string().trim().email().max(254);
@@ -265,6 +269,35 @@ export async function registerAuthApiRoutes(
         request,
         input.email,
         input.code,
+      );
+      const tokens = await issueMobileTokens(
+        deps.db,
+        deps.config,
+        request,
+        userId,
+      );
+      const user = await loadPublicUser(deps.db, userId);
+      return reply.send(tokenResponse(tokens, user));
+    },
+  );
+
+  // Đăng nhập bằng Google trên app: app lấy id_token qua expo-auth-session rồi
+  // gửi lên đây. Không cookie, không CSRF như các nhánh token khác.
+  app.post(
+    "/auth/token/google",
+    { config: { ...NO_CSRF, rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const input = parseInput(
+        z.object({ idToken: z.string().trim().min(20).max(4096) }),
+        request.body,
+      );
+      const profile = await verifyGoogleIdToken(deps.config, input.idToken);
+      const { userId } = await findOrCreateGoogleUser(
+        deps.db,
+        deps.emailService,
+        deps.config,
+        request,
+        profile,
       );
       const tokens = await issueMobileTokens(
         deps.db,

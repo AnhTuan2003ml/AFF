@@ -24,6 +24,7 @@ interface SessionValue {
     password: string,
     ghiNho?: boolean,
   ) => Promise<void>;
+  dangNhapGoogle: (idToken: string) => Promise<void>;
   dangXuat: () => Promise<void>;
   lamMoiHoSo: () => Promise<void>;
 }
@@ -67,6 +68,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       dangKhoiPhuc,
       async dangNhap(email, password, ghiNho = true) {
         setUser(await authApi.login(email, password, ghiNho));
+      },
+      async dangNhapGoogle(idToken) {
+        setUser(await authApi.loginWithGoogle(idToken));
       },
       async dangXuat() {
         await authApi.logout();

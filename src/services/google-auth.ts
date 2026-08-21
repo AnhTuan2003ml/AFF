@@ -15,6 +15,7 @@ const GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_ENDPOINT =
   "https://openidconnect.googleapis.com/v1/userinfo";
+const GOOGLE_TOKENINFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
 const REQUEST_TIMEOUT_MS = 8000;
 
 const PROVIDER = "GOOGLE";
@@ -129,6 +130,89 @@ export async function fetchGoogleProfile(
     sub: info.sub,
     email: info.email,
     // userinfo trả boolean; token id trả chuỗi "true" — chấp nhận cả hai.
+    emailVerified: info.email_verified === true || info.email_verified === "true",
+    name: (info.name ?? info.given_name ?? "").trim(),
+    avatarUrl: (info.picture ?? "").trim().slice(0, 500),
+  };
+}
+
+/**
+ * Các OAuth Client ID được chấp nhận làm `aud` của id_token gửi từ app.
+ * Gồm danh sách mobile khai trong ENV cộng thêm Web Client ID (expo-auth-session
+ * thường phát id_token với aud = Web Client ID). Lọc rỗng và trùng lặp.
+ */
+export function googleAllowedAudiences(config: AppConfig): string[] {
+  const list = config.GOOGLE_OAUTH_MOBILE_CLIENT_IDS.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (config.GOOGLE_OAUTH_CLIENT_ID) {
+    list.push(config.GOOGLE_OAUTH_CLIENT_ID);
+  }
+  return [...new Set(list)];
+}
+
+/** Có ít nhất một audience hợp lệ thì app mới được phép đăng nhập Google. */
+export function googleMobileEnabled(config: AppConfig): boolean {
+  return googleAllowedAudiences(config).length > 0;
+}
+
+/**
+ * Xác minh id_token do app lấy được từ Google (luồng expo-auth-session), trả về
+ * hồ sơ đã xác thực. Dùng endpoint tokeninfo của Google: nó tự kiểm chữ ký và
+ * hạn dùng, ta chỉ cần chốt lại `aud` đúng client của mình để chặn token phát
+ * cho ứng dụng khác.
+ */
+export async function verifyGoogleIdToken(
+  config: AppConfig,
+  idToken: string,
+): Promise<GoogleProfile> {
+  const allowed = googleAllowedAudiences(config);
+  if (allowed.length === 0) {
+    throw new AppError(
+      "GOOGLE_DISABLED",
+      "Đăng nhập bằng Google chưa được bật.",
+      503,
+    );
+  }
+
+  const url = `${GOOGLE_TOKENINFO_ENDPOINT}?id_token=${encodeURIComponent(idToken)}`;
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new AppError(
+      "GOOGLE_TOKEN_ERROR",
+      "Không xác minh được đăng nhập Google. Hãy thử lại.",
+      401,
+    );
+  }
+  const info = (await response.json()) as {
+    aud?: string;
+    sub?: string;
+    email?: string;
+    email_verified?: boolean | string;
+    name?: string;
+    given_name?: string;
+    picture?: string;
+  };
+
+  if (!info.aud || !allowed.includes(info.aud)) {
+    throw new AppError(
+      "GOOGLE_AUDIENCE_MISMATCH",
+      "Token Google không dành cho ứng dụng này.",
+      401,
+    );
+  }
+  if (!info.sub || !info.email) {
+    throw new AppError(
+      "GOOGLE_PROFILE_INCOMPLETE",
+      "Tài khoản Google không chia sẻ đủ thông tin để đăng nhập.",
+      400,
+    );
+  }
+  return {
+    sub: info.sub,
+    email: info.email,
     emailVerified: info.email_verified === true || info.email_verified === "true",
     name: (info.name ?? info.given_name ?? "").trim(),
     avatarUrl: (info.picture ?? "").trim().slice(0, 500),
