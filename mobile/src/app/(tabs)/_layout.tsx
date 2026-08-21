@@ -36,8 +36,8 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Trang chủ',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="search-outline" size={26} color={color} />
           ),
         }}
       />
@@ -45,8 +45,8 @@ export default function TabsLayout() {
         name="discover"
         options={{
           title: 'Khám phá',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="compass-outline" size={26} color={color} />
           ),
         }}
       />
@@ -54,8 +54,8 @@ export default function TabsLayout() {
         name="orders"
         options={{
           title: 'Đơn hàng',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="receipt-outline" size={26} color={color} />
           ),
         }}
       />
@@ -63,8 +63,8 @@ export default function TabsLayout() {
         name="wallet"
         options={{
           title: 'Ví',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="wallet-outline" size={26} color={color} />
           ),
         }}
       />
@@ -72,8 +72,8 @@ export default function TabsLayout() {
         name="checkin"
         options={{
           title: 'Điểm danh',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar-outline" size={26} color={color} />
           ),
         }}
       />
@@ -81,8 +81,8 @@ export default function TabsLayout() {
         name="account"
         options={{
           title: 'Tài khoản',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person-circle-outline" size={26} color={color} />
           ),
         }}
       />

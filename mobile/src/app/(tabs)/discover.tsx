@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -35,10 +35,25 @@ type TabKey = (typeof TABS)[number]['key'];
 
 export default function DiscoverScreen() {
   const [list, setList] = useState<TabKey>('best');
+  const [page, setPage] = useState(1);
+  const listRef = useRef<FlatList<DiscoverProduct>>(null);
+
   const { data, isPending, isRefetching, refetch } = useQuery({
-    queryKey: ['discover', list],
-    queryFn: () => layKhamPha(list, 1),
+    queryKey: ['discover', list, page],
+    queryFn: () => layKhamPha(list, page),
   });
+  const soTrang = Math.max(1, data?.knownPages ?? 1);
+
+  function chonTab(k: TabKey) {
+    if (k === list) return;
+    setList(k);
+    setPage(1);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }
+  function doiTrang(p: number) {
+    setPage(p);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }
 
   return (
     <View style={styles.screen}>
@@ -49,6 +64,7 @@ export default function DiscoverScreen() {
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={data?.data ?? []}
           keyExtractor={(p) => p.item_id}
           numColumns={2}
@@ -74,7 +90,7 @@ export default function DiscoverScreen() {
                   return (
                     <Pressable
                       key={t.key}
-                      onPress={() => setList(t.key)}
+                      onPress={() => chonTab(t.key)}
                       style={[styles.tab, on && styles.tabOn]}>
                       <Text style={[styles.tabText, on && styles.tabTextOn]}>{t.nhan}</Text>
                     </Pressable>
@@ -94,6 +110,29 @@ export default function DiscoverScreen() {
             </View>
           }
           renderItem={({ item }) => <TheSanPham p={item} />}
+          ListFooterComponent={
+            (data?.data.length ?? 0) > 0 ? (
+              <View style={styles.pager}>
+                <Pressable
+                  disabled={page <= 1}
+                  onPress={() => doiTrang(page - 1)}
+                  style={[styles.pagerBtn, page <= 1 && styles.pagerOff]}>
+                  <Ionicons name="chevron-back" size={18} color={page <= 1 ? colors.muted : colors.brand} />
+                  <Text style={[styles.pagerText, page <= 1 && { color: colors.muted }]}>Trước</Text>
+                </Pressable>
+                <Text style={styles.pagerInfo}>
+                  Trang {page} / {soTrang}
+                </Text>
+                <Pressable
+                  disabled={page >= soTrang}
+                  onPress={() => doiTrang(page + 1)}
+                  style={[styles.pagerBtn, page >= soTrang && styles.pagerOff]}>
+                  <Text style={[styles.pagerText, page >= soTrang && { color: colors.muted }]}>Sau</Text>
+                  <Ionicons name="chevron-forward" size={18} color={page >= soTrang ? colors.muted : colors.brand} />
+                </Pressable>
+              </View>
+            ) : null
+          }
         />
       )}
     </View>
@@ -196,6 +235,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.successSoft,
   },
   cashText: { fontSize: 10.5, fontWeight: '800', color: colors.success },
+
+  pager: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+    paddingVertical: 20,
+  },
+  pagerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  pagerOff: { opacity: 0.5 },
+  pagerText: { fontSize: 13.5, fontWeight: '800', color: colors.brand },
+  pagerInfo: { fontSize: 13, fontWeight: '700', color: colors.text },
 
   empty: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
