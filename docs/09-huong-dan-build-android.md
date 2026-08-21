@@ -221,6 +221,16 @@ lần sau tái dùng đúng keystore đó, nên bản mới cài đè lên bản
 Xong sẽ có link. Mở link **trên điện thoại**, tải về, cài — Android sẽ hỏi cho
 phép cài từ nguồn không xác định.
 
+### Build xong cài thẳng lên máy (một lệnh)
+
+```powershell
+npm run build:install          # = scriptsuild-and-install.ps1
+.\scriptsuild-and-install.ps1 -NoVcs     # gói cả thay đổi chưa commit
+```
+
+Script tự: kiểm tra `adb devices` → `eas build --profile preview --json` →
+tải APK về `mobileuild-output\` → `adb install -r` → mở app.
+
 ### Lệnh hữu ích
 
 ```powershell

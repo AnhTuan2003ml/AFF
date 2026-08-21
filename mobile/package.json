@@ -53,7 +53,8 @@
     "build:ios": "npx eas-cli@latest build --profile preview --platform ios",
     "build:store": "npx eas-cli@latest build --profile production --platform all",
     "submit:store": "npx eas-cli@latest submit --profile production --platform all --latest",
-    "brand-assets": "python scripts/make-brand-assets.py"
+    "brand-assets": "python scripts/make-brand-assets.py",
+    "build:install": "powershell -ExecutionPolicy Bypass -File scripts/build-and-install.ps1"
   },
   "private": true
 }

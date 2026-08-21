@@ -45,3 +45,6 @@ example
 # Khóa Firebase (FCM) cho thông báo đẩy — tải từ Firebase Console, không commit
 google-services.json
 GoogleService-Info.plist
+
+# APK tải về bởi scripts/build-and-install.ps1
+build-output/
