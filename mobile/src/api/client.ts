@@ -75,15 +75,20 @@ function refreshOnce(): Promise<string | null> {
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
-  // Backend trả lỗi theo dạng { error: { code, message, requestId } } và
-  // message đã là tiếng Việt dành cho người dùng — hiện thẳng lên được.
+  // Backend (AppError) trả lỗi PHẲNG: { statusCode, code, error, message } với
+  // message đã là tiếng Việt cho người dùng. Vẫn chấp nhận dạng lồng cũ
+  // { error: { code, message } } để không vỡ nếu có endpoint trả kiểu đó.
   try {
     const body = (await response.json()) as {
-      error?: { code?: string; message?: string };
+      code?: string;
+      message?: string;
+      error?: { code?: string; message?: string } | string;
     };
+    const nested =
+      typeof body.error === 'object' && body.error ? body.error : undefined;
     return new ApiError(
-      body.error?.code ?? 'UNKNOWN',
-      body.error?.message ?? 'Có lỗi xảy ra. Vui lòng thử lại.',
+      nested?.code ?? body.code ?? 'UNKNOWN',
+      nested?.message ?? body.message ?? 'Có lỗi xảy ra. Vui lòng thử lại.',
       response.status,
     );
   } catch {
