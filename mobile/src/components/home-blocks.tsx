@@ -3,11 +3,13 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
 import { layKhamPha, type DiscoverProduct } from '@/api/features';
+import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
+import { moLinkMua } from '@/lib/mua';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /* ==================== Dải quảng bá 3 sàn ==================== */
@@ -246,13 +248,38 @@ export function ProductStrip({
 }
 
 function TheSP({ p }: { p: DiscoverProduct }) {
+  const { user } = useSession();
+  const [dang, setDang] = useState(false);
   const gia = p.price_vnd ? Number(p.price_vnd) : null;
   const hoan =
     gia !== null && p.commission_rate_bps
       ? Math.floor((gia * p.commission_rate_bps) / 10000)
       : null;
+
+  async function mua() {
+    if (dang) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setDang(true);
+    try {
+      await moLinkMua(p.product_url);
+    } catch (e) {
+      Alert.alert(
+        'Chưa mở được',
+        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+      );
+    } finally {
+      setDang(false);
+    }
+  }
+
   return (
-    <View style={ss.spCard}>
+    <Pressable
+      style={({ pressed }) => [ss.spCard, pressed && { opacity: 0.85 }]}
+      onPress={mua}
+      disabled={dang}>
       {p.image_url ? (
         <Image source={{ uri: p.image_url }} style={ss.spImg} contentFit="cover" />
       ) : (
@@ -265,9 +292,11 @@ function TheSP({ p }: { p: DiscoverProduct }) {
           {p.name}
         </Text>
         <Text style={ss.spPrice}>{gia !== null ? vnd(gia) : 'Đang cập nhật'}</Text>
-        {hoan !== null && <Text style={ss.spCash}>Hoàn tới {vnd(hoan)}</Text>}
+        {hoan !== null && (
+          <Text style={ss.spCash}>{dang ? 'Đang mở…' : `Hoàn tới ${vnd(hoan)}`}</Text>
+        )}
       </View>
-    </View>
+    </Pressable>
   );
 }
 

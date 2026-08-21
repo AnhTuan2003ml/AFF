@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -16,7 +17,9 @@ import {
 
 import { layKhamPha, type DiscoverProduct } from '@/api/features';
 import { BrandHeader } from '@/components/BrandHeader';
+import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
+import { moLinkMua } from '@/lib/mua';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -152,6 +155,8 @@ export default function DiscoverScreen() {
 }
 
 function TheSanPham({ p }: { p: DiscoverProduct }) {
+  const { user } = useSession();
+  const [dang, setDang] = useState(false);
   const gia = p.price_vnd ? Number(p.price_vnd) : null;
   const hoaHong =
     gia !== null && p.commission_rate_bps
@@ -160,10 +165,30 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
   // Badge % giống web: bps → %, làm tròn.
   const phanTram = p.commission_rate_bps ? Math.round(p.commission_rate_bps / 100) : null;
 
+  async function mua() {
+    if (dang) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setDang(true);
+    try {
+      await moLinkMua(p.product_url);
+    } catch (e) {
+      Alert.alert(
+        'Chưa mở được',
+        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+      );
+    } finally {
+      setDang(false);
+    }
+  }
+
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
-      onPress={() => router.push('/(tabs)')}>
+      onPress={mua}
+      disabled={dang}>
       <View style={styles.mediaWrap}>
         {p.image_url ? (
           <Image source={{ uri: p.image_url }} style={styles.img} contentFit="cover" />
