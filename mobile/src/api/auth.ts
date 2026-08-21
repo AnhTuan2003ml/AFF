@@ -23,24 +23,31 @@ interface TokenResponse {
   user: AuthUser;
 }
 
-async function keepTokens(response: TokenResponse): Promise<AuthUser> {
-  await saveTokens({
-    accessToken: response.accessToken,
-    refreshToken: response.refreshToken,
-  });
+async function keepTokens(
+  response: TokenResponse,
+  remember = true,
+): Promise<AuthUser> {
+  await saveTokens(
+    {
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    },
+    remember,
+  );
   return response.user;
 }
 
 export async function login(
   email: string,
   password: string,
+  remember = true,
 ): Promise<AuthUser> {
   const response = await apiFetch<TokenResponse>('/api/v1/auth/token', {
     method: 'POST',
     body: { email, password },
     auth: false,
   });
-  return keepTokens(response);
+  return keepTokens(response, remember);
 }
 
 /** Bước 1 của đăng ký — backend gửi mã OTP 6 số về email. */
@@ -50,10 +57,11 @@ export async function register(input: {
   password: string;
   passwordConfirm: string;
   referralCode?: string;
+  acceptPolicies: boolean;
 }): Promise<void> {
   await apiFetch('/api/v1/auth/register', {
     method: 'POST',
-    body: { ...input, acceptPolicies: true },
+    body: input,
     auth: false,
   });
 }

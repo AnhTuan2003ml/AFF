@@ -68,6 +68,30 @@ export function PrimaryButton({
   );
 }
 
+export function Checkbox({
+  checked,
+  onToggle,
+  children,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      hitSlop={6}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      style={styles.check}>
+      <View style={[styles.box, checked && styles.boxOn]}>
+        {checked ? <Ionicons name="checkmark" size={14} color={colors.onBrand} /> : null}
+      </View>
+      <Text style={styles.checkLabel}>{children}</Text>
+    </Pressable>
+  );
+}
+
 export function ErrorBox({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -102,6 +126,19 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 14, color: colors.text, padding: 0 },
   hint: { fontSize: 11.5, color: colors.muted, marginTop: 6 },
+
+  check: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  box: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  checkLabel: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.text },
 
   btn: {
     height: 52,

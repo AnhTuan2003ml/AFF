@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Checkbox } from '@/components/form';
 import { useSession } from '@/hooks/useSession';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -30,6 +31,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
   const [hienMatKhau, setHienMatKhau] = useState(false);
+  const [ghiNho, setGhiNho] = useState(true);
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
 
@@ -40,7 +42,7 @@ export default function LoginScreen() {
     setLoi(null);
     setDangGui(true);
     try {
-      await dangNhap(email.trim(), matKhau);
+      await dangNhap(email.trim(), matKhau, ghiNho);
       router.back();
     } catch (e) {
       // Thông báo từ backend đã là tiếng Việt (AppError), hiện thẳng cho người
@@ -116,6 +118,12 @@ export default function LoginScreen() {
                 color={colors.muted}
               />
             </Pressable>
+          </View>
+
+          <View style={styles.rememberRow}>
+            <Checkbox checked={ghiNho} onToggle={() => setGhiNho((v) => !v)}>
+              Ghi nhớ đăng nhập
+            </Checkbox>
           </View>
 
           <Pressable
@@ -197,6 +205,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: { flex: 1, fontSize: 14, color: colors.text, padding: 0 },
+
+  rememberRow: { marginBottom: 18, marginTop: 2 },
 
   primaryBtn: {
     height: 52,

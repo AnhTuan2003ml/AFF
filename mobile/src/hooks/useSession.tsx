@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { AuthUser } from '@/api/auth';
 import * as authApi from '@/api/auth';
 import { layMe } from '@/api/account';
-import { readTokens } from '@/api/storage';
+import { clearTokens, readRemember, readTokens } from '@/api/storage';
 
 /**
  * Trạng thái đăng nhập dùng chung cho cả app.
@@ -19,7 +19,11 @@ interface SessionValue {
   user: AuthUser | null;
   /** true trong lúc khôi phục phiên lúc mở app — chưa biết đăng nhập hay chưa. */
   dangKhoiPhuc: boolean;
-  dangNhap: (email: string, password: string) => Promise<void>;
+  dangNhap: (
+    email: string,
+    password: string,
+    ghiNho?: boolean,
+  ) => Promise<void>;
   dangXuat: () => Promise<void>;
   lamMoiHoSo: () => Promise<void>;
 }
@@ -37,6 +41,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       try {
         // Không có token thì khỏi gọi mạng — mở app lần đầu là trường hợp này.
         if (!(await readTokens())) return;
+        // Người dùng không chọn "Ghi nhớ đăng nhập": xóa token khi mở lại app,
+        // buộc đăng nhập lại — đúng ý nghĩa cờ ghi nhớ của web.
+        if (!(await readRemember())) {
+          await clearTokens();
+          return;
+        }
         const me = await layMe();
         if (!huy) setUser(me.user);
       } catch {
@@ -55,8 +65,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       dangKhoiPhuc,
-      async dangNhap(email, password) {
-        setUser(await authApi.login(email, password));
+      async dangNhap(email, password, ghiNho = true) {
+        setUser(await authApi.login(email, password, ghiNho));
       },
       async dangXuat() {
         await authApi.logout();

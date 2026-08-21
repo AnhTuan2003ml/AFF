@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { register, verifyEmail } from '@/api/auth';
-import { ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
+import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
 import { colors } from '@/theme/tokens';
@@ -24,6 +24,7 @@ export default function RegisterScreen() {
   const [matKhau, setMatKhau] = useState('');
   const [nhapLai, setNhapLai] = useState('');
   const [gioiThieu, setGioiThieu] = useState('');
+  const [dongY, setDongY] = useState(false);
   const [ma, setMa] = useState('');
 
   const [dangGui, setDangGui] = useState(false);
@@ -36,6 +37,10 @@ export default function RegisterScreen() {
       setLoi('Hai lần nhập mật khẩu chưa khớp nhau.');
       return;
     }
+    if (!dongY) {
+      setLoi('Bạn cần đồng ý với các chính sách để tạo tài khoản.');
+      return;
+    }
     setDangGui(true);
     try {
       await register({
@@ -44,6 +49,7 @@ export default function RegisterScreen() {
         password: matKhau,
         passwordConfirm: nhapLai,
         referralCode: gioiThieu.trim() || undefined,
+        acceptPolicies: dongY,
       });
       setTin(`Đã gửi mã 6 số tới ${email.trim()}. Mã có hiệu lực 10 phút.`);
       setBuoc(2);
@@ -143,16 +149,23 @@ export default function RegisterScreen() {
         onChangeText={setGioiThieu}
         placeholder="Nếu có"
       />
+      <View style={styles.policyRow}>
+        <Checkbox checked={dongY} onToggle={() => setDongY((v) => !v)}>
+          Tôi đồng ý với Điều khoản, Chính sách quyền riêng tư và Chính sách
+          người dùng của ShopTik.
+        </Checkbox>
+      </View>
       <PrimaryButton
         label="Gửi mã OTP  →"
         onPress={guiBuoc1}
         loading={dangGui}
-        disabled={hoTen.trim().length < 2 || email.trim().length < 5 || matKhau.length < 10}
+        disabled={
+          !dongY ||
+          hoTen.trim().length < 2 ||
+          email.trim().length < 5 ||
+          matKhau.length < 10
+        }
       />
-      <Text style={styles.policy}>
-        Tạo tài khoản nghĩa là bạn đồng ý với Điều khoản, Chính sách quyền riêng
-        tư và Chính sách người dùng của ShopTik.
-      </Text>
     </FormScreen>
   );
 }
@@ -160,5 +173,5 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   link: { alignSelf: 'center', marginTop: 16, padding: 6 },
   linkText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
-  policy: { fontSize: 11.5, color: colors.muted, lineHeight: 17, marginTop: 14 },
+  policyRow: { marginTop: 2, marginBottom: 18 },
 });
