@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "shoptik",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "vn.shoptik.app",
       "supportsTablet": false,
@@ -18,7 +18,7 @@
     "android": {
       "package": "vn.shoptik.app",
       "adaptiveIcon": {
-        "backgroundColor": "#002D9C",
+        "backgroundColor": "#fbf8f4",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -34,7 +34,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#002D9C",
+          "backgroundColor": "#fbf8f4",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160
         }

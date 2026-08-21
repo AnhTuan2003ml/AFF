@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "../../auth/guards.js";
 import { query } from "../../db.js";
 import { parseInput } from "../../lib/validation.js";
+import { getBusinessConfig } from "../../services/business-config.js";
 import { getWalletBalances } from "../../services/ledger.js";
 import { sendSupportChatMessage } from "../../services/support-chat.js";
 import type { ApiDeps } from "./deps.js";
@@ -12,10 +13,25 @@ export async function registerAccountApiRoutes(
   deps: ApiDeps,
 ): Promise<void> {
   app.get("/me", { preHandler: requireApiUser }, async (request) => {
-    const balances = await getWalletBalances(deps.db, request.currentUser!.id);
+    const userId = request.currentUser!.id;
+    const [balances, businessConfig, daMua] = await Promise.all([
+      getWalletBalances(deps.db, userId),
+      getBusinessConfig(deps.db, deps.config),
+      query<{ n: string }>(
+        deps.db,
+        `SELECT count(*)::text AS n FROM orders
+          WHERE user_id = $1 AND status IN ('APPROVED', 'PAID')`,
+        [userId],
+      ),
+    ]);
     return {
       user: request.currentUser,
       balances,
+      // Hai số này trang chủ web hiện ngay trên hero và thẻ ví; app cần chúng
+      // để dựng lại đúng, nếu không phải gọi thêm một vòng API nữa.
+      cashbackPercent: businessConfig.buyerCashbackPercent,
+      purchasedProducts: Number(daMua.rows[0]?.n ?? 0),
+      minWithdrawalVnd: deps.config.MIN_WITHDRAWAL_VND,
     };
   });
 

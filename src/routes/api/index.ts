@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { registerAccountApiRoutes } from "./account.js";
 import { registerAuthApiRoutes } from "./auth.js";
+import { registerFeatureApiRoutes } from "./features.js";
 import type { ApiDeps } from "./deps.js";
 import { registerHarvestApiRoutes } from "./harvest.js";
 import { registerMeApiRoutes } from "./me.js";
@@ -19,4 +20,5 @@ export async function registerApiRoutes(
   await registerAccountApiRoutes(app, deps);
   await registerMeApiRoutes(app, deps);
   await registerHarvestApiRoutes(app, deps);
+  await registerFeatureApiRoutes(app, deps);
 }

@@ -1,0 +1,92 @@
+import { apiFetch } from './client';
+import type { AuthUser } from './auth';
+
+/**
+ * Dữ liệu tài khoản, ví và đơn hàng — ánh xạ 1-1 với nhánh /api/v1/me/* ở
+ * backend (src/routes/api/account.ts và me.ts). Tên trường giữ nguyên dạng
+ * snake_case như SQL trả về; đổi tên ở đây chỉ tạo thêm một lớp dịch phải nhớ.
+ */
+
+export interface WalletBalances {
+  available: number;
+  pending: number;
+}
+
+export interface Me {
+  user: AuthUser;
+  balances: WalletBalances;
+  /** Phần trăm hoa hồng chia lại cho người mua — web hiện "Hoàn tới X%". */
+  cashbackPercent?: number;
+  /** Số đơn đã được duyệt/đã trả, dùng cho dòng "Đã mua qua ShopTik". */
+  purchasedProducts?: number;
+  minWithdrawalVnd?: number;
+}
+
+export type OrderStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'CANCELLED'
+  | 'PAID'
+  | string;
+
+export interface Order {
+  id: string;
+  platform: string;
+  platform_order_id: string | null;
+  status: OrderStatus;
+  order_amount_vnd: number | null;
+  commission_vnd: number | null;
+  cashback_vnd: number | null;
+  purchased_at: string | null;
+  approved_at: string | null;
+  created_at: string;
+  completed_at: string | null;
+  cancel_reason: string | null;
+  cashback_available_at: string | null;
+  cashback_released_at: string | null;
+  product_name: string | null;
+  product_image_url: string | null;
+  product_price_vnd: number | null;
+  product_original_price_vnd: number | null;
+}
+
+export interface LedgerRow {
+  id: string;
+  type: string;
+  description: string | null;
+  code: string;
+  direction: 'DEBIT' | 'CREDIT';
+  amount_vnd: number;
+  created_at: string;
+}
+
+export interface Withdrawal {
+  id: string;
+  amount_vnd: number;
+  bank_code: string | null;
+  bank_last4: string | null;
+  status: string;
+  rejection_reason: string | null;
+  requested_at: string;
+  paid_at: string | null;
+}
+
+export function layMe() {
+  return apiFetch<Me>('/api/v1/me');
+}
+
+export async function layDonHang(): Promise<Order[]> {
+  const r = await apiFetch<{ data: Order[] }>('/api/v1/me/orders');
+  return r.data ?? [];
+}
+
+export function layVi() {
+  return apiFetch<{ balances: WalletBalances; history: LedgerRow[] }>(
+    '/api/v1/me/wallet',
+  );
+}
+
+export async function layLenhRut(): Promise<Withdrawal[]> {
+  const r = await apiFetch<{ data: Withdrawal[] }>('/api/v1/me/withdrawals');
+  return r.data ?? [];
+}
