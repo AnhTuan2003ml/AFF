@@ -55,7 +55,7 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
 
       <View style={styles.copy}>
         <Text style={styles.eyebrow}>SHOP · TRACK · CASHBACK</Text>
-        <Text style={styles.title}>Mua sắm.{'\n'}Hoàn tiền.{'\n'}Rõ ràng.</Text>
+        <Text style={styles.title}>Mua sắm thông minh.{'\n'}Hoàn tiền tối ưu.</Text>
 
         <View style={styles.actions}>
           <Pressable
@@ -103,10 +103,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 38,
-    lineHeight: 42,
+    fontSize: 30,
+    lineHeight: 34,
     fontWeight: '900',
-    letterSpacing: -1.6,
+    letterSpacing: -1.2,
   },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },
   btnLight: {
