@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
@@ -22,6 +23,8 @@ export function GoogleButton({ onError }: { onError?: (message: string) => void 
     setDangChay(true);
     try {
       await dangNhapGoogle();
+      // Đăng nhập xong: đóng các tờ giấy Đăng nhập/Đăng ký, về lại tab.
+      if (router.canDismiss()) router.dismissAll();
     } catch (e) {
       // Người dùng tự đóng trình duyệt thì im lặng, còn lại mới báo lỗi.
       const msg =
