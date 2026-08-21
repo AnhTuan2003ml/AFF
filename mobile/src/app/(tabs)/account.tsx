@@ -66,9 +66,15 @@ export default function AccountScreen() {
         <Text style={styles.h2}>Thao tác</Text>
         <View style={styles.card}>
           <MenuRow
+            icon="person-outline"
+            label="Thông tin cá nhân"
+            onPress={() => router.push('/profile')}
+          />
+          <MenuRow
             icon="card-outline"
             label="Tài khoản ngân hàng"
             onPress={() => router.push('/bank')}
+            divider
           />
           <MenuRow
             icon="arrow-up-circle-outline"

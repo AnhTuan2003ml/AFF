@@ -9,6 +9,7 @@ import {
   type TopBuyer,
   type TopProduct,
 } from '@/api/features';
+import { Confetti } from '@/components/Confetti';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -82,6 +83,7 @@ export function Leaderboard() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={s.card}>
+        <Confetti />
         <Text style={s.eyebrow}>🔥  SỰ KIỆN THÁNG</Text>
         <Text style={s.title}>Bảng xếp hạng</Text>
         <Text style={s.period}>{data.monthLabel}</Text>

@@ -68,3 +68,19 @@ export function xacNhanRut(intentId: string, code: string) {
 export function doiTen(fullName: string) {
   return apiFetch<unknown>('/api/v1/me', { method: 'PATCH', body: { fullName } });
 }
+
+/** Đăng xuất trên MỌI thiết bị (thu hồi tất cả phiên). */
+export async function dangXuatMoiThietBi(): Promise<void> {
+  await apiFetch<unknown>('/api/v1/me/sessions/revoke-all', { method: 'POST' });
+}
+
+/**
+ * Xóa tài khoản (xóa mềm). `forfeitBalance=false` mà còn số dư/lệnh rút sẽ bị
+ * backend chặn — khi đó hỏi lại rồi gọi với `true` để bỏ lại số dư.
+ */
+export function xoaTaiKhoan(forfeitBalance: boolean) {
+  return apiFetch<{ status: string; forfeitedVnd: number }>('/api/v1/me', {
+    method: 'DELETE',
+    body: { forfeitBalance },
+  });
+}
