@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { register, verifyEmail } from '@/api/auth';
+import { AuthCard } from '@/components/AuthCard';
 import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
-import { FormScreen } from '@/components/FormScreen';
 import { GoogleButton, googleConfigured } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
 import { colors } from '@/theme/tokens';
@@ -78,7 +78,7 @@ export default function RegisterScreen() {
 
   if (buoc === 2) {
     return (
-      <FormScreen
+      <AuthCard
         title="Nhập mã OTP"
         subtitle="Bước 2/2 — mở email và nhập mã 6 số vừa nhận.">
         <ErrorBox message={loi} />
@@ -101,12 +101,12 @@ export default function RegisterScreen() {
         <Pressable onPress={() => setBuoc(1)} style={styles.link} hitSlop={8}>
           <Text style={styles.linkText}>Nhập sai email? Quay lại bước 1</Text>
         </Pressable>
-      </FormScreen>
+      </AuthCard>
     );
   }
 
   return (
-    <FormScreen
+    <AuthCard
       title="Tạo tài khoản"
       subtitle="Bước 1/2 — nhập email đang hoạt động để nhận mã OTP">
       <ErrorBox message={loi} />
@@ -152,8 +152,9 @@ export default function RegisterScreen() {
       />
       <View style={styles.policyRow}>
         <Checkbox checked={dongY} onToggle={() => setDongY((v) => !v)}>
-          Tôi đồng ý với Điều khoản, Chính sách quyền riêng tư và Chính sách
-          người dùng của ShopTik.
+          Tôi đồng ý với <Text style={styles.policyLink}>Điều khoản</Text>,{' '}
+          <Text style={styles.policyLink}>Chính sách quyền riêng tư</Text> và{' '}
+          <Text style={styles.policyLink}>Chính sách người dùng</Text>.
         </Checkbox>
       </View>
       <PrimaryButton
@@ -177,7 +178,7 @@ export default function RegisterScreen() {
           <GoogleButton onError={setLoi} />
         </>
       )}
-    </FormScreen>
+    </AuthCard>
   );
 }
 
@@ -185,6 +186,7 @@ const styles = StyleSheet.create({
   link: { alignSelf: 'center', marginTop: 16, padding: 6 },
   linkText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   policyRow: { marginTop: 2, marginBottom: 18 },
+  policyLink: { color: colors.brand, fontWeight: '800' },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 16 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
   dividerText: { fontSize: 12, color: colors.muted, fontWeight: '700' },
