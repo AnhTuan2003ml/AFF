@@ -2,6 +2,7 @@
   "expo": {
     "name": "ShopTik",
     "slug": "shoptik",
+    "owner": "anhtuan2003mltb",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -47,8 +48,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "25612d71-daf1-428d-afb6-8f2551167bbe"
-      }
+        "projectId": "f7b17097-96a2-46c4-81f1-02ef6663a22d"
+      },
+      "router": {}
     }
   }
 }
