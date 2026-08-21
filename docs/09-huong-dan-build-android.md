@@ -224,12 +224,12 @@ phép cài từ nguồn không xác định.
 ### Build xong cài thẳng lên máy (một lệnh)
 
 ```powershell
-npm run build:install          # = scriptsuild-and-install.ps1
-.\scriptsuild-and-install.ps1 -NoVcs     # gói cả thay đổi chưa commit
+npm run build:install                     # = scripts\build-and-install.ps1
+.\scripts\build-and-install.ps1 -NoVcs    # gói cả thay đổi chưa commit
 ```
 
 Script tự: kiểm tra `adb devices` → `eas build --profile preview --json` →
-tải APK về `mobileuild-output\` → `adb install -r` → mở app.
+tải APK về `mobile\build-output\` → `adb install -r` → mở app.
 
 ### Lệnh hữu ích
 
