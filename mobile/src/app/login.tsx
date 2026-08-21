@@ -12,7 +12,7 @@ import {
 
 import { AuthCard } from '@/components/AuthCard';
 import { Checkbox } from '@/components/form';
-import { GoogleButton, googleConfigured } from '@/components/GoogleButton';
+import { GoogleButton } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
 import { colors, radius } from '@/theme/tokens';
 
@@ -122,16 +122,12 @@ export default function LoginScreen() {
         )}
       </Pressable>
 
-      {googleConfigured && (
-        <>
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>hoặc</Text>
-            <View style={styles.dividerLine} />
-          </View>
-          <GoogleButton onError={setLoi} />
-        </>
-      )}
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>hoặc</Text>
+        <View style={styles.dividerLine} />
+      </View>
+      <GoogleButton onError={setLoi} />
 
       <Text style={styles.switch}>
         Chưa có tài khoản?{' '}

@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { register, verifyEmail } from '@/api/auth';
 import { AuthCard } from '@/components/AuthCard';
 import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
-import { GoogleButton, googleConfigured } from '@/components/GoogleButton';
+import { GoogleButton } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
 import { colors } from '@/theme/tokens';
 
@@ -168,16 +168,12 @@ export default function RegisterScreen() {
           matKhau.length < 10
         }
       />
-      {googleConfigured && (
-        <>
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>hoặc</Text>
-            <View style={styles.dividerLine} />
-          </View>
-          <GoogleButton onError={setLoi} />
-        </>
-      )}
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>hoặc</Text>
+        <View style={styles.dividerLine} />
+      </View>
+      <GoogleButton onError={setLoi} />
     </AuthCard>
   );
 }

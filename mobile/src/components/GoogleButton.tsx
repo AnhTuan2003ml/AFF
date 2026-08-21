@@ -2,20 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text } from 'react-native';
 
 import { useSession } from '@/hooks/useSession';
 import { colors, radius } from '@/theme/tokens';
 
 /*
- * Đăng nhập bằng Google trên app.
+ * Nút "Tiếp tục với Google" trên app.
  *
  * Web dùng luồng redirect + cookie; app KHÔNG dùng lại được vì xác thực bằng
  * Bearer token. Ở đây lấy id_token qua expo-auth-session rồi gửi lên
  * /api/v1/auth/token/google để đổi lấy cặp token của hệ thống.
  *
- * Client ID lấy từ biến EXPO_PUBLIC_* (Expo tự nạp từ .env). Chưa cấu hình cái
- * nào thì nút tự ẩn — đúng cách web ẩn nút khi Google chưa bật.
+ * QUAN TRỌNG: expo-auth-session yêu cầu client id ĐÚNG NỀN TẢNG đang chạy —
+ * Android bắt buộc androidClientId, iOS bắt buộc iosClientId; thiếu là hook
+ * useIdTokenAuthRequest ném invariant làm sập cả màn hình. Web Client ID KHÔNG
+ * thay thế được trên thiết bị. Vì vậy: nút LUÔN hiển thị (giống web), nhưng chỉ
+ * mount phần gọi hook khi có client id đúng nền tảng; nếu chưa cấu hình thì bấm
+ * vào báo rõ, không crash.
  */
 
 WebBrowser.maybeCompleteAuthSession();
@@ -24,14 +28,61 @@ const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
-export const googleConfigured = Boolean(
-  WEB_CLIENT_ID || ANDROID_CLIENT_ID || IOS_CLIENT_ID,
-);
+const platformClientId =
+  Platform.OS === 'android'
+    ? ANDROID_CLIENT_ID
+    : Platform.OS === 'ios'
+      ? IOS_CLIENT_ID
+      : WEB_CLIENT_ID;
 
-export function GoogleButton(props: { onError?: (message: string) => void }) {
-  // Chưa cấu hình thì không mount phần dùng hook — tránh gọi hook vô nghĩa.
-  if (!googleConfigured) return null;
-  return <GoogleButtonInner {...props} />;
+/** Đã cấu hình client id đúng nền tảng thì luồng Google mới chạy thật được. */
+export const googleReady = Boolean(platformClientId);
+
+/** Nút hiển thị dùng chung, tách khỏi hook để nhánh chưa cấu hình cũng vẽ được. */
+function GoogleButtonView({
+  onPress,
+  loading,
+  disabled,
+}: {
+  onPress: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
+  const tat = disabled || loading;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={tat}
+      style={({ pressed }) => [
+        styles.btn,
+        tat && { opacity: 0.6 },
+        pressed && !tat && { backgroundColor: colors.surfaceMuted },
+      ]}>
+      {loading ? (
+        <ActivityIndicator color={colors.text} />
+      ) : (
+        <>
+          <Ionicons name="logo-google" size={18} color="#ea4335" />
+          <Text style={styles.text}>Tiếp tục với Google</Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+export function GoogleButton({ onError }: { onError?: (message: string) => void }) {
+  if (googleReady) return <GoogleButtonInner onError={onError} />;
+  // Chưa cấu hình client id cho nền tảng này: vẫn hiện nút như web, nhưng báo rõ
+  // khi bấm thay vì gọi hook (sẽ crash).
+  return (
+    <GoogleButtonView
+      onPress={() =>
+        onError?.(
+          'Đăng nhập Google chưa sẵn sàng trên bản này — cần cấu hình Google Client ID cho Android/iOS.',
+        )
+      }
+    />
+  );
 }
 
 function GoogleButtonInner({ onError }: { onError?: (message: string) => void }) {
@@ -62,34 +113,20 @@ function GoogleButtonInner({ onError }: { onError?: (message: string) => void })
         )
         .finally(() => setDangChay(false));
     } else {
-      // error / cancel / dismiss / locked — dừng trạng thái chạy.
       setDangChay(false);
     }
-    // Chỉ chạy lại khi có phản hồi mới.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response]);
 
   return (
-    <Pressable
+    <GoogleButtonView
+      loading={dangChay}
+      disabled={!request}
       onPress={() => {
         setDangChay(true);
         void promptAsync();
       }}
-      disabled={!request || dangChay}
-      style={({ pressed }) => [
-        styles.btn,
-        (!request || dangChay) && { opacity: 0.6 },
-        pressed && request && !dangChay && { backgroundColor: colors.surfaceMuted },
-      ]}>
-      {dangChay ? (
-        <ActivityIndicator color={colors.text} />
-      ) : (
-        <>
-          <Ionicons name="logo-google" size={18} color="#ea4335" />
-          <Text style={styles.text}>Tiếp tục với Google</Text>
-        </>
-      )}
-    </Pressable>
+    />
   );
 }
 
