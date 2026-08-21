@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -33,10 +33,22 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+const LIST_KEYS: TabKey[] = ['recommend', 'best', 'exclusive'];
+
 export default function DiscoverScreen() {
+  const params = useLocalSearchParams<{ list?: string }>();
   const [list, setList] = useState<TabKey>('best');
   const [page, setPage] = useState(1);
   const listRef = useRef<FlatList<DiscoverProduct>>(null);
+
+  // "Xem thêm" ở Trang chủ điều hướng kèm ?list=... → chọn đúng hạng mục.
+  useEffect(() => {
+    const l = params.list;
+    if (l && LIST_KEYS.includes(l as TabKey)) {
+      setList(l as TabKey);
+      setPage(1);
+    }
+  }, [params.list]);
 
   const { data, isPending, isRefetching, refetch } = useQuery({
     queryKey: ['discover', list, page],

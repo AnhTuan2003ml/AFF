@@ -130,3 +130,16 @@ export interface Leaderboard {
 export function layBangXepHang() {
   return apiFetch<Leaderboard>('/api/v1/leaderboard', { auth: false });
 }
+
+/* -------------------- Sản phẩm bạn quan tâm -------------------------- */
+
+export interface InterestedProduct {
+  name: string;
+  imageUrl: string | null;
+  productUrl: string | null;
+}
+
+/** Sản phẩm đã bấm Mua ngay nhưng chưa thành đơn — của riêng người dùng. */
+export function layQuanTam() {
+  return apiFetch<{ data: InterestedProduct[] }>('/api/v1/interested');
+}

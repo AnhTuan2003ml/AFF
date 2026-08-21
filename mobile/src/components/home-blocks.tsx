@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
 import { layKhamPha, type DiscoverProduct } from '@/api/features';
@@ -179,44 +179,65 @@ export function ProductStrip({
   tieuDe: string;
   list: 'best' | 'recommend' | 'exclusive';
 }) {
-  const { data } = useQuery({
-    queryKey: ['discover', list],
-    queryFn: () => layKhamPha(list, 1),
+  // Nạp DẦN tất cả sản phẩm theo trang (20/trang) khi người dùng lướt tới cuối,
+  // hết trang thì chạm cuối sẽ VÒNG LẠI đầu — như web yêu cầu.
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['strip', list],
+    queryFn: ({ pageParam }) => layKhamPha(list, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.knownPages ? last.page + 1 : undefined),
   });
 
+  const listRef = useRef<FlatList<DiscoverProduct>>(null);
   const [active, setActive] = useState(0);
   const [vpW, setVpW] = useState(0);
   const [contentW, setContentW] = useState(0);
 
-  const sp = data?.data ?? [];
+  const sp = data?.pages.flatMap((p) => p.data) ?? [];
   if (sp.length === 0) return null;
 
-  // Tính số "trang" từ bề rộng khung nhìn và tổng nội dung — không phụ thuộc
-  // việc đã cuộn hay chưa, nên chấm hiện ngay từ đầu.
-  const pages = vpW > 0 && contentW > 0 ? Math.max(1, Math.round(contentW / vpW)) : 1;
+  const trang = vpW > 0 && contentW > 0 ? Math.max(1, Math.round(contentW / vpW)) : 1;
+  const soDot = Math.min(trang, 8); // không để hàng chấm dài vô hạn khi tải nhiều
+  const dotActive = trang <= 1 ? 0 : Math.round((active / (trang - 1)) * (soDot - 1));
 
   return (
     <View style={ss.strip}>
-      <Text style={ss.stripTitle}>{tieuDe}</Text>
-      <ScrollView
+      <View style={ss.stripHead}>
+        <Text style={ss.stripTitle}>{tieuDe}</Text>
+        <Pressable
+          onPress={() => router.push({ pathname: '/(tabs)/discover', params: { list } })}
+          hitSlop={8}>
+          <Text style={ss.stripMore}>Xem thêm ›</Text>
+        </Pressable>
+      </View>
+      <FlatList
+        ref={listRef}
         horizontal
+        data={sp}
+        keyExtractor={(p, i) => `${p.item_id}-${i}`}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={ss.stripRow}
-        scrollEventThrottle={16}
+        renderItem={({ item }) => <TheSP p={item} />}
         onLayout={(e) => setVpW(e.nativeEvent.layout.width)}
         onContentSizeChange={(w) => setContentW(w)}
+        scrollEventThrottle={16}
         onScroll={(e) => {
           const { contentOffset, layoutMeasurement } = e.nativeEvent;
           setActive(Math.round(contentOffset.x / (layoutMeasurement.width || 1)));
-        }}>
-        {sp.slice(0, 12).map((p) => (
-          <TheSP key={p.item_id} p={p} />
-        ))}
-      </ScrollView>
-      {pages > 1 && (
+        }}
+        onEndReachedThreshold={0.5}
+        onEndReached={() => {
+          if (hasNextPage) {
+            if (!isFetchingNextPage) void fetchNextPage();
+          } else {
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }
+        }}
+      />
+      {soDot > 1 && (
         <View style={ss.stripDots}>
-          {Array.from({ length: pages }).map((_, k) => (
-            <View key={k} style={[ss.dot, k === active && ss.dotActive]} />
+          {Array.from({ length: soDot }).map((_, k) => (
+            <View key={k} style={[ss.dot, k === dotActive && ss.dotActive]} />
           ))}
         </View>
       )}
@@ -288,15 +309,15 @@ const ss = StyleSheet.create({
     backgroundColor: colors.brandSoft,
   },
   showcaseLogo: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
+    width: 58,
+    height: 58,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  showcaseLogoText: { fontSize: 20, fontWeight: '900', color: colors.brand },
-  showcaseLogoImg: { width: 30, height: 30 },
+  showcaseLogoText: { fontSize: 24, fontWeight: '900', color: colors.brand },
+  showcaseLogoImg: { width: 42, height: 42 },
   showcaseTag: { fontSize: 10.5, fontWeight: '900', color: colors.success, letterSpacing: 0.6 },
   showcaseName: { fontSize: 19, fontWeight: '900', color: colors.brand, marginTop: 2 },
   showcaseDesc: { fontSize: 11.5, color: colors.inkSoft, marginTop: 3, lineHeight: 16 },
@@ -418,14 +439,15 @@ const ss = StyleSheet.create({
   alertDesc: { fontSize: 11.5, color: colors.muted, marginTop: 2, lineHeight: 16 },
 
   strip: { marginBottom: spacing.lg },
-  stripTitle: {
-    fontSize: 19,
-    fontWeight: '900',
-    color: colors.text,
-    letterSpacing: -0.6,
+  stripHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginHorizontal: spacing.md,
     marginBottom: 10,
   },
+  stripTitle: { fontSize: 19, fontWeight: '900', color: colors.text, letterSpacing: -0.6 },
+  stripMore: { fontSize: 13, fontWeight: '800', color: colors.brand },
   stripRow: { paddingHorizontal: spacing.md, gap: 10 },
   stripDots: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 12 },
   spCard: {

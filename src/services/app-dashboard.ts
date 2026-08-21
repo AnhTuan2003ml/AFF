@@ -211,7 +211,7 @@ export interface InterestedProduct {
 
 /** Danh sách sản phẩm quan tâm chưa mua (instantbuy chưa thành đơn), gộp theo
  *  sản phẩm, mới nhất trước — để hiển thị ảnh thay vì chỉ đếm số. */
-async function getInterestedProducts(
+export async function getInterestedProducts(
   db: Database,
   userId: string,
   limit = 10,

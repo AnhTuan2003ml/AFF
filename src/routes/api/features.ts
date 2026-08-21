@@ -9,6 +9,7 @@ import {
   getUserMissionOverview,
 } from "../../services/mission.js";
 import { getPlatformLeaderboard } from "../../services/platform-stats.js";
+import { getInterestedProducts } from "../../services/app-dashboard.js";
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
@@ -127,6 +128,15 @@ export async function registerFeatureApiRoutes(
         earnedVnd: Number(r.earned_vnd),
       })),
     };
+  });
+
+  /* --------------------- Sản phẩm bạn quan tâm ------------------------ */
+
+  // Sản phẩm đã bấm Mua ngay nhưng chưa thành đơn (instantbuy), của riêng user.
+  app.get("/interested", { preHandler: requireApiUser }, async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const data = await getInterestedProducts(deps.db, request.currentUser!.id);
+    return { data };
   });
 
   /* --------------------------- Bảng xếp hạng -------------------------- */

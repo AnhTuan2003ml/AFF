@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ import {
   ProductStrip,
   WalletPanel,
 } from '@/components/home-blocks';
+import { InterestCarousel } from '@/components/InterestCarousel';
 import { Leaderboard } from '@/components/Leaderboard';
 import { PreviewCard } from '@/components/PreviewCard';
 import { useSession } from '@/hooks/useSession';
@@ -45,8 +47,8 @@ export default function HomeScreen() {
   const [ketQua, setKetQua] = useState<{ product: ProductPreview; previewId: string } | null>(null);
   const [loi, setLoi] = useState<string | null>(null);
 
-  async function tra() {
-    const url = link.trim();
+  async function tra(nguon?: string) {
+    const url = (nguon ?? link).trim();
     if (url.length < 10 || dangTra) return;
     setLoi(null);
     setKetQua(null);
@@ -58,6 +60,15 @@ export default function HomeScreen() {
     } finally {
       setDangTra(false);
     }
+  }
+
+  // Dán từ bộ nhớ tạm KHÔNG focus ô nhập nên không bật bàn phím; dán xong tự tra
+  // cứu luôn (giống web: dán link là tự động tra cứu).
+  async function dan() {
+    const t = (await Clipboard.getStringAsync()).trim();
+    if (!t) return;
+    setLink(t);
+    void tra(t);
   }
 
   async function mua() {
@@ -124,18 +135,23 @@ export default function HomeScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               inputMode="url"
-              onSubmitEditing={tra}
+              onSubmitEditing={() => tra()}
               returnKeyType="search"
             />
             {link.length > 0 && (
-              <Pressable onPress={() => setLink('')} hitSlop={10}>
+              <Pressable onPress={() => setLink('')} hitSlop={8}>
                 <Ionicons name="close-circle" size={18} color={colors.muted} />
               </Pressable>
             )}
+            {/* Nút Dán: đọc bộ nhớ tạm mà KHÔNG focus ô → không bật bàn phím. */}
+            <Pressable onPress={dan} hitSlop={8} style={styles.pasteBtn}>
+              <Ionicons name="clipboard-outline" size={16} color={colors.brand} />
+              <Text style={styles.pasteText}>Dán</Text>
+            </Pressable>
           </View>
 
           <Pressable
-            onPress={tra}
+            onPress={() => tra()}
             disabled={dangTra}
             style={({ pressed }) => [
               styles.primaryBtn,
@@ -172,6 +188,7 @@ export default function HomeScreen() {
         {user && (
           <>
             <CheckinEntry />
+            <InterestCarousel />
             <BankAlert />
           </>
         )}
@@ -275,6 +292,16 @@ const styles = StyleSheet.create({
     height: 50,
   },
   input: { flex: 1, fontSize: 14, color: colors.text, padding: 0 },
+  pasteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brandSoft,
+  },
+  pasteText: { fontSize: 12.5, fontWeight: '800', color: colors.brand },
 
   primaryBtn: {
     marginTop: 12,
