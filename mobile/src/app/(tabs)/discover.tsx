@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -18,17 +20,24 @@ import { vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
- * Khám phá — sản phẩm Shopee đang hoàn tiền, lấy từ kho `shopee_offer_products`
- * mà tiến trình nền thu thập theo lịch (services/discover-harvest.ts).
- *
- * Kho rỗng là chuyện bình thường ở máy dev: dữ liệu chỉ có sau khi admin bật
- * lịch thu thập ở /backoffice/sync. Nên màn hình phải nói rõ điều đó thay vì
- * hiện danh sách trắng khiến người xem tưởng app hỏng.
+ * Khám phá — dựng lại `px-discover` của web ở khổ điện thoại: hero (eyebrow +
+ * tiêu đề), hàng tab lọc danh mục, rồi lưới sản phẩm 2 cột có badge hoàn %.
+ * Sản phẩm lấy từ kho harvest theo từng list (recommend/best/exclusive).
  */
+
+const TABS = [
+  { key: 'recommend', nhan: 'Đề xuất' },
+  { key: 'best', nhan: 'Bán chạy' },
+  { key: 'exclusive', nhan: 'Độc quyền' },
+] as const;
+
+type TabKey = (typeof TABS)[number]['key'];
+
 export default function DiscoverScreen() {
+  const [list, setList] = useState<TabKey>('best');
   const { data, isPending, isRefetching, refetch } = useQuery({
-    queryKey: ['discover'],
-    queryFn: () => layKhamPha('best', 1),
+    queryKey: ['discover', list],
+    queryFn: () => layKhamPha(list, 1),
   });
 
   return (
@@ -49,9 +58,29 @@ export default function DiscoverScreen() {
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />
           }
           ListHeaderComponent={
-            <View>
-              <Text style={styles.h1}>Khám phá</Text>
-              <Text style={styles.sub}>Sản phẩm bán chạy đang có hoàn tiền</Text>
+            <View style={styles.head}>
+              <Text style={styles.eyebrow}>SHOPPING DISCOVERY</Text>
+              <Text style={styles.h1}>Sản phẩm đáng để khám phá.</Text>
+              <Text style={styles.sub}>
+                Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.
+              </Text>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabs}>
+                {TABS.map((t) => {
+                  const on = t.key === list;
+                  return (
+                    <Pressable
+                      key={t.key}
+                      onPress={() => setList(t.key)}
+                      style={[styles.tab, on && styles.tabOn]}>
+                      <Text style={[styles.tabText, on && styles.tabTextOn]}>{t.nhan}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
             </View>
           }
           ListEmptyComponent={
@@ -73,24 +102,31 @@ export default function DiscoverScreen() {
 
 function TheSanPham({ p }: { p: DiscoverProduct }) {
   const gia = p.price_vnd ? Number(p.price_vnd) : null;
-  // Hoa hồng lưu theo bps (1/10000) — giống cách backend tính, không đổi sang %
-  // ở tầng hiển thị để tránh sai số làm tròn hai lần.
   const hoaHong =
     gia !== null && p.commission_rate_bps
       ? Math.floor((gia * p.commission_rate_bps) / 10000)
       : null;
+  // Badge % giống web: bps → %, làm tròn.
+  const phanTram = p.commission_rate_bps ? Math.round(p.commission_rate_bps / 100) : null;
 
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
       onPress={() => router.push('/(tabs)')}>
-      {p.image_url ? (
-        <Image source={{ uri: p.image_url }} style={styles.img} contentFit="cover" />
-      ) : (
-        <View style={[styles.img, styles.imgEmpty]}>
-          <Ionicons name="image-outline" size={22} color={colors.muted} />
-        </View>
-      )}
+      <View style={styles.mediaWrap}>
+        {p.image_url ? (
+          <Image source={{ uri: p.image_url }} style={styles.img} contentFit="cover" />
+        ) : (
+          <View style={[styles.img, styles.imgEmpty]}>
+            <Ionicons name="image-outline" size={22} color={colors.muted} />
+          </View>
+        )}
+        {phanTram !== null && phanTram > 0 && (
+          <View style={styles.cashBadge}>
+            <Text style={styles.cashBadgeText}>+{phanTram}%</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={2}>
           {p.name}
@@ -110,8 +146,23 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
-  h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },
-  sub: { fontSize: 13, color: colors.muted, marginTop: 2, marginBottom: 4 },
+
+  head: { marginBottom: spacing.sm },
+  eyebrow: { fontSize: 10.5, fontWeight: '900', color: colors.brand, letterSpacing: 1.4 },
+  h1: { fontSize: 27, fontWeight: '900', color: colors.text, letterSpacing: -1, marginTop: 6 },
+  sub: { fontSize: 13, color: colors.muted, marginTop: 6, lineHeight: 19 },
+  tabs: { gap: 8, paddingVertical: 14 },
+  tab: {
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  tabOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  tabText: { fontSize: 13, fontWeight: '800', color: colors.text },
+  tabTextOn: { color: colors.onBrand },
 
   card: {
     flex: 1,
@@ -121,8 +172,19 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     overflow: 'hidden',
   },
+  mediaWrap: { position: 'relative' },
   img: { width: '100%', aspectRatio: 1, backgroundColor: colors.surfaceMuted },
   imgEmpty: { alignItems: 'center', justifyContent: 'center' },
+  cashBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand,
+  },
+  cashBadgeText: { fontSize: 10.5, fontWeight: '900', color: colors.onBrand },
   body: { padding: 10, gap: 4 },
   name: { fontSize: 12.5, fontWeight: '700', color: colors.text, lineHeight: 17 },
   price: { fontSize: 14, fontWeight: '900', color: colors.brand },

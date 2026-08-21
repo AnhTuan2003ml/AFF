@@ -165,9 +165,9 @@ export default function HomeScreen() {
           />
         )}
 
-        <PlatformShowcase />
-
         {me ? <WalletPanel me={me} /> : <ViCard />}
+
+        <PlatformShowcase />
 
         {user && (
           <>
