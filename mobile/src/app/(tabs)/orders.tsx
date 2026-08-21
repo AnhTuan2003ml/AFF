@@ -25,15 +25,29 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * COMPLETED→APPROVED, CANCEL→CANCELLED, còn lại→PENDING.
  */
 function nhan(o: Order): { chu: string; mau: string; nen: string } {
+  const cho = { mau: colors.warning, nen: colors.warningSoft };
+  const xong = { mau: colors.success, nen: colors.successSoft };
+  const huy = { mau: colors.danger, nen: colors.dangerSoft };
   switch (o.status) {
+    case 'AWAITING':
+      return { chu: 'Chờ sàn xác nhận', ...cho };
+    case 'PENDING':
+      return { chu: 'Đang duyệt', ...cho };
     case 'APPROVED':
-      return { chu: 'Đã duyệt', mau: colors.success, nen: colors.successSoft };
+      return o.cashback_released_at
+        ? { chu: 'Đã về ví', ...xong }
+        : { chu: 'Hoàn thành, chờ về ví', ...xong };
     case 'PAID':
-      return { chu: 'Đã về ví', mau: colors.success, nen: colors.successSoft };
+      return { chu: 'Đã về ví', ...xong };
     case 'CANCELLED':
-      return { chu: 'Đã hủy', mau: colors.danger, nen: colors.dangerSoft };
+      return { chu: 'Đã hủy', ...huy };
+    case 'UNTRACKED':
+      return { chu: 'Không ghi nhận', ...huy };
+    case 'INVALID':
+    case 'REVERSED':
+      return { chu: 'Không hợp lệ', ...huy };
     default:
-      return { chu: 'Chờ sàn xác nhận', mau: colors.warning, nen: colors.warningSoft };
+      return { chu: 'Chờ sàn xác nhận', ...cho };
   }
 }
 
@@ -49,9 +63,9 @@ type TabKey = (typeof TABS)[number]['key'];
 function khopTab(o: Order, tab: TabKey): boolean {
   if (tab === 'ALL') return true;
   if (tab === 'APPROVED') return o.status === 'APPROVED';
-  if (tab === 'PAID') return o.status === 'PAID';
-  // Đang chờ: mọi trạng thái chưa duyệt/chưa về ví/chưa hủy.
-  return !['APPROVED', 'PAID', 'CANCELLED'].includes(o.status);
+  if (tab === 'PAID') return o.status === 'PAID' || !!o.cashback_released_at;
+  // Đang chờ: lượt bấm mua chờ sàn + đơn đang duyệt.
+  return ['AWAITING', 'PENDING'].includes(o.status);
 }
 
 export default function OrdersScreen() {

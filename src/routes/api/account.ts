@@ -5,6 +5,7 @@ import { query } from "../../db.js";
 import { parseInput } from "../../lib/validation.js";
 import { getBusinessConfig } from "../../services/business-config.js";
 import { getWalletBalances } from "../../services/ledger.js";
+import { listOrderHistory } from "../../services/order-history.js";
 import {
   listSupportChatMessages,
   sendSupportChatMessage,
@@ -39,38 +40,42 @@ export async function registerAccountApiRoutes(
   });
 
   app.get("/me/orders", { preHandler: requireApiUser }, async (request) => {
-    const orders = await query(
-      deps.db,
-      `
-        SELECT o.id, o.platform, o.platform_order_id, o.status,
-          o.order_amount_vnd, o.commission_vnd, o.cashback_vnd,
-          o.purchased_at, o.approved_at, o.created_at, o.completed_at,
-          o.cancel_reason, o.cashback_available_at, o.cashback_released_at,
-          COALESCE(oi.item_name, l.product_name) AS product_name,
-          COALESCE(oi.item_image_url, l.product_image_url) AS product_image_url,
-          COALESCE(oi.amount_vnd, l.product_price_vnd) AS product_price_vnd,
-          CASE
-            WHEN oi.source = 'REPORT' THEN NULL
-            WHEN l.product_original_price_vnd > l.product_price_vnd
-            THEN l.product_original_price_vnd
-            ELSE NULL
-          END AS product_original_price_vnd
-        FROM orders o
-        LEFT JOIN affiliate_links l ON l.id = o.affiliate_link_id
-        LEFT JOIN LATERAL (
-          SELECT item_name, item_image_url, amount_vnd, source
-          FROM order_items
-          WHERE order_id = o.id
-          ORDER BY CASE source WHEN 'REPORT' THEN 0 ELSE 1 END, id
-          LIMIT 1
-        ) oi ON true
-        WHERE o.user_id = $1
-        ORDER BY COALESCE(o.purchased_at, o.created_at) DESC
-        LIMIT 100
-      `,
-      [request.currentUser!.id],
-    );
-    return { data: orders.rows };
+    // Dùng CHUNG listOrderHistory với web: gộp đơn thật + lượt bấm Mua ngay
+    // (instantbuy) CHƯA có đơn khớp — hiện ngay dưới dạng "Chờ sàn xác nhận".
+    // Trước đây app chỉ query bảng orders nên lượt click-mua chưa thành đơn
+    // không hiện → tưởng hệ thống "chưa ghi lại".
+    const businessConfig = await getBusinessConfig(deps.db, deps.config);
+    const rows = await listOrderHistory(deps.db, {
+      userId: request.currentUser!.id,
+      status: "ALL",
+      released: "ALL",
+      searchTerm: "",
+      attributionDays: businessConfig.affiliateAttributionDays,
+      limit: 100,
+    });
+    const num = (s: string | null): number | null =>
+      s == null ? null : Number(s) || null;
+    const data = rows.map((r) => ({
+      id: r.id,
+      platform: r.platform,
+      platform_order_id: r.platform_order_id,
+      status: r.status,
+      order_amount_vnd: num(r.order_amount_vnd),
+      commission_vnd: num(r.commission_vnd),
+      cashback_vnd: num(r.cashback_vnd),
+      purchased_at: r.purchased_at,
+      approved_at: null,
+      created_at: r.created_at,
+      completed_at: r.completed_at,
+      cancel_reason: r.cancel_reason,
+      cashback_available_at: r.estimated_payout_at,
+      cashback_released_at: r.cashback_released_at,
+      product_name: r.product_name,
+      product_image_url: r.product_image_url,
+      product_price_vnd: num(r.product_price_vnd),
+      product_original_price_vnd: num(r.product_original_price_vnd),
+    }));
+    return { data };
   });
 
   app.get("/me/wallet", { preHandler: requireApiUser }, async (request) => {
