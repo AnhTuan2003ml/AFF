@@ -3,7 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,9 +17,12 @@ import {
 
 import { layMe } from '@/api/account';
 import { apiBaseUrl } from '@/api/client';
+import { camio, camioAt, camioSeed } from '@/lib/camio-voice';
+import { vnd } from '@/lib/format';
 import { taoLinkMua, traCuu, type ProductPreview } from '@/api/products';
 import { BrandHeader } from '@/components/BrandHeader';
 import { HomeHero } from '@/components/HomeHero';
+import { Mascot, type CamioMood } from '@/components/Mascot';
 import {
   AppFooter,
   BankAlert,
@@ -46,6 +49,28 @@ export default function HomeScreen() {
   const [dangMua, setDangMua] = useState(false);
   const [ketQua, setKetQua] = useState<{ product: ProductPreview; previewId: string } | null>(null);
   const [loi, setLoi] = useState<string | null>(null);
+  // Câu thoại Camio đổi theo trạng thái; seed cố định để không đổi câu mỗi lần render.
+  const seed = useRef(camioSeed()).current;
+  const camioMood: CamioMood = loi
+    ? 'ngacnhien'
+    : dangTra
+      ? 'baocao'
+      : ketQua
+        ? ketQua.product.dataVerified && (ketQua.product.buyerCashbackVnd ?? 0) > 0
+          ? 'haohung'
+          : 'ngacnhien'
+        : 'vuive';
+  const dongCamio = loi
+    ? loi
+    : dangTra
+      ? camioAt('checking', seed)
+      : ketQua
+        ? !ketQua.product.dataVerified || ketQua.product.buyerCashbackVnd === null
+          ? camioAt('pendingAmount', seed)
+          : ketQua.product.buyerCashbackVnd > 0
+            ? camioAt('foundAmount', seed, { amount: vnd(ketQua.product.buyerCashbackVnd) })
+            : camioAt('noCashback', seed)
+        : camioAt('noLink', seed);
 
   async function tra(nguon?: string) {
     const url = (nguon ?? link).trim();
@@ -56,7 +81,7 @@ export default function HomeScreen() {
     try {
       setKetQua(await traCuu(url));
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Không tra cứu được link này.');
+      setLoi(e instanceof Error && e.message ? e.message : camio('badLink'));
     } finally {
       setDangTra(false);
     }
@@ -97,8 +122,8 @@ export default function HomeScreen() {
       await WebBrowser.openBrowserAsync(target);
     } catch (e) {
       Alert.alert(
-        'Chưa tạo được link mua',
-        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+        camio('error'),
+        e instanceof Error && e.message ? e.message : 'Thử lại giúp Camio nhé!',
       );
     } finally {
       setDangMua(false);
@@ -118,9 +143,9 @@ export default function HomeScreen() {
               <Ionicons name="search" size={18} color={colors.brand} />
             </View>
             <View style={styles.cardHeadCopy}>
-              <Text style={styles.cardTitle}>Dán link mua sắm để nhận hoàn tiền</Text>
+              <Text style={styles.cardTitle}>Khoan mua! Để Camio kiểm tra đã.</Text>
               <Text style={styles.cardSub}>
-                Tự nhận diện Shopee, TikTok Shop, Lazada và tính tiền hoàn dự kiến
+                Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn
               </Text>
             </View>
           </View>
@@ -166,11 +191,11 @@ export default function HomeScreen() {
             )}
           </Pressable>
 
-          {loi ? <Text style={styles.err}>{loi}</Text> : (
-            <Text style={styles.hint}>
-              Dán link là tự động tra cứu — hỗ trợ Shopee, TikTok Shop và Lazada.
-            </Text>
-          )}
+          {/* Camio nói theo trạng thái: chưa dán → đang soi → có/không hoàn → lỗi. */}
+          <View style={styles.camioRow}>
+            <Mascot mood={camioMood} size={30} />
+            <Text style={[styles.camioText, loi ? styles.err : styles.hint]}>{dongCamio}</Text>
+          </View>
         </View>
 
         {ketQua && (
@@ -321,6 +346,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: { color: colors.onBrand, fontWeight: '800', fontSize: 14 },
+  camioRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  camioText: { flex: 1, marginTop: 0 },
   hint: { fontSize: 11.5, color: colors.muted, marginTop: 10 },
   err: { fontSize: 12.5, color: colors.danger, marginTop: 10, fontWeight: '600' },
 

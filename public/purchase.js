@@ -37,6 +37,14 @@
 
   const emptyState = $("[data-product-empty]");
   const loading = $("[data-product-loading]");
+  // Câu thoại Camio đổi theo trạng thái luồng (nguồn: public/camio-voice.js).
+  const camioLine = $("[data-camio-line]");
+  const camioSay = (group, fallback, vars) => {
+    const v = window.CamioVoice;
+    const text = (v && v.pick(group, vars)) || fallback;
+    if (camioLine instanceof HTMLElement && text) camioLine.textContent = text;
+    return text;
+  };
   const errorBox = $("[data-product-error]");
   const errorTitle = $("[data-product-error-title]");
   const errorMessage = $("[data-product-error-message]");
@@ -130,8 +138,8 @@
       // liệu luôn ưu tiên thông báo tiếng Việt cụ thể từ server.
       const fallback =
         response.status >= 500
-          ? "Hệ thống đang bận. Vui lòng thử lại sau ít phút."
-          : "Không xử lý được yêu cầu. Hãy kiểm tra lại link sản phẩm.";
+          ? camioSay("error", "Hệ thống đang hơi bận, chờ Camio một chút nha.")
+          : camioSay("badLink", "Camio chưa đọc được link này, kiểm tra lại nhé!");
       const error = new Error(payload?.error?.message || fallback);
       error.code = payload?.error?.code;
       error.status = response.status;
@@ -200,6 +208,8 @@
       }
     }
     if (view !== "result") currentProduct = null;
+    if (view === "empty") camioSay("noLink", "Dán link vào đây, Camio kiểm tra cho!");
+    if (view === "loading") camioSay("checking", "Camio đang soi link…");
   };
 
   const setBusy = (busy) => {
@@ -295,11 +305,18 @@
 
   const showError = (message, title, kind = "server") => {
     lastErrorKind = kind;
-    if (errorTitle) errorTitle.textContent = title || "Chưa tìm được sản phẩm";
+    if (errorTitle) {
+      errorTitle.textContent =
+        title ||
+        (kind === "data"
+          ? camioSay("badLink", "Camio chưa đọc được link này 🤔")
+          : camioSay("error", "Camio vừa vấp một chút…"));
+    }
     if (errorMessage) {
       errorMessage.textContent =
-        message || "Hãy kiểm tra lại link sản phẩm rồi thử lại.";
+        message || "Copy lại link sản phẩm rồi đưa Camio nhé!";
     }
+    camioSay(kind === "data" ? "badLink" : "error", "");
     if (retryButton) {
       retryButton.textContent = kind === "data" ? "Sửa link" : "Thử lại";
     }
@@ -422,6 +439,15 @@
             ? "Tiền hoàn đang cập nhật."
             : "Cộng vào ví sau khi sàn duyệt.";
     }
+    if (!verified || product.buyerCashbackVnd === null) {
+      camioSay("pendingAmount", "Có hoàn đó, nhưng sàn chưa báo số. Camio cập nhật sau nhé 👀");
+    } else if (product.buyerCashbackVnd > 0) {
+      camioSay("foundAmount", "🎉 Bạn có thể nhận khoảng {amount}.", {
+        amount: formatVnd(product.buyerCashbackVnd),
+      });
+    } else {
+      camioSay("noCashback", "Hmm… link này chưa có hoàn tiền rồi 🥲");
+    }
     if (sourceNote) {
       sourceNote.textContent = !verified
         ? `ShopTik chưa lấy được dữ liệu từ ${label} nên CHƯA xác minh được sản phẩm này có tồn tại. Nếu bạn chắc link đúng, có thể mở trên sàn để kiểm tra — tiền hoàn (nếu mua) vẫn đối soát theo đơn thực tế.`
@@ -494,8 +520,8 @@
         showError(
           error instanceof Error
             ? error.message
-            : "Không lấy được thông tin sản phẩm.",
-          isDataError ? "Link chưa dùng được" : "Chưa tìm được sản phẩm",
+            : "Camio chưa lấy được thông tin sản phẩm.",
+          isDataError ? "🤔 Camio chưa đọc được link này" : "😵 Camio vừa vấp một chút…",
           isDataError ? "data" : "server",
         );
       }
@@ -516,8 +542,8 @@
     previewId = null;
     if (!value) {
       showError(
-        "Hãy dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada.",
-        "Chưa có link",
+        "Dán link sản phẩm từ Shopee, TikTok Shop hoặc Lazada, Camio kiểm tra cho!",
+        "Link đâu rồi? 👀",
         "data",
       );
       urlInput.focus();
@@ -526,8 +552,8 @@
     const detected = detectClientPlatform(value);
     if (detected.error === "INVALID") {
       showError(
-        "Link chưa đúng định dạng. Hãy dán link đầy đủ bắt đầu bằng https:// từ Shopee, TikTok Shop hoặc Lazada.",
-        "Link chưa dùng được",
+        "Hình như link bị thiếu rồi — dán link đầy đủ bắt đầu bằng https:// từ Shopee, TikTok Shop hoặc Lazada nhé!",
+        "🤔 Camio chưa đọc được link này",
         "data",
       );
       urlInput.focus();
@@ -535,8 +561,8 @@
     }
     if (detected.error === "UNSUPPORTED") {
       showError(
-        "ShopTik chỉ nhận link Shopee, TikTok Shop hoặc Lazada Việt Nam.",
-        "Sàn chưa được hỗ trợ",
+        "Camio mới săn hoàn được trên Shopee, TikTok Shop và Lazada Việt Nam thôi. Thử link sàn khác nhé!",
+        "Sàn này Camio chưa săn được 🥲",
         "data",
       );
       urlInput.focus();
@@ -586,7 +612,8 @@
       const payload = await postJson("/api/v1/products/purchase", {
         previewId,
       });
-      if (!payload?.buyUrl) throw new Error("Chưa tạo được link mua.");
+      if (!payload?.buyUrl) throw new Error("Camio chưa tạo được link mua. Thử lại nhé!");
+      camioSay("linkReady", "✅ Xong! Giờ bạn có thể đi mua rồi.");
       if (pending) {
         pending.location = payload.buyUrl;
       } else {
@@ -601,7 +628,7 @@
       }
       if (error?.code === "PREVIEW_EXPIRED") previewId = null;
       showError(
-        error instanceof Error ? error.message : "Chưa tạo được link mua.",
+        error instanceof Error ? error.message : "Camio chưa tạo được link mua. Thử lại nhé!",
       );
     } finally {
       el.buy.disabled = false;
@@ -665,7 +692,7 @@
         const text = (await navigator.clipboard.readText()).trim();
         if (!text) {
           // Clipboard trống: giữ nguyên trang, KHÔNG dùng lại link cũ.
-          showPasteHint("Bộ nhớ tạm chưa có đường link.");
+          showPasteHint("Bộ nhớ tạm chưa có link nào, copy link rồi thử lại nha 👀");
           return;
         }
         if (urlInput instanceof HTMLInputElement) {

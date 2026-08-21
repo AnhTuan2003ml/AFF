@@ -9,7 +9,15 @@ import { listOrderHistory } from "../../services/order-history.js";
 import {
   listSupportChatMessages,
   sendSupportChatMessage,
+  getLatestSupportExchange,
+  markSupportRead,
 } from "../../services/support-chat.js";
+import { isSlackSupportEnabled } from "../../services/slack.js";
+import {
+  SUPPORT_TOPICS,
+  listSupportOrderOptions,
+  submitSupportRequest,
+} from "../../services/support-request.js";
 import type { ApiDeps } from "./deps.js";
 
 export async function registerAccountApiRoutes(
@@ -135,6 +143,60 @@ export async function registerAccountApiRoutes(
       logger: request.log,
     });
     return reply.code(201).send(message);
+  });
+
+  // Form hỗ trợ theo mẫu cho app — giống hệt trang /app/support của web:
+  // dữ liệu để dựng form (loại vấn đề, đơn để chọn, email nhận phản hồi) và
+  // yêu cầu + phản hồi mới nhất để hiện ô "Phản hồi".
+  app.get("/support/form", { preHandler: requireApiUser }, async (request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    const uid = request.currentUser!.id;
+    const [orderOptions, conversationRow, latest] = await Promise.all([
+      listSupportOrderOptions(deps.db, deps.config, uid),
+      query<{ notify_email: string }>(
+        deps.db,
+        `SELECT notify_email FROM support_conversations WHERE user_id = $1`,
+        [uid],
+      ),
+      getLatestSupportExchange(deps.db, uid),
+    ]);
+    // Mở form = đã xem mọi phản hồi CSKH tới lúc này (như web).
+    await markSupportRead(deps.db, uid);
+    return {
+      topics: SUPPORT_TOPICS,
+      orderOptions,
+      notifyEmail: conversationRow.rows[0]?.notify_email || request.currentUser!.email,
+      latestRequest: latest.request,
+      latestReply: latest.reply,
+      chatOnline: isSlackSupportEnabled(deps.config),
+    };
+  });
+
+  // Gửi yêu cầu theo mẫu — cùng validate + cùng thread Slack/DB với web
+  // (POST /app/support/requests).
+  app.post("/support/requests", { preHandler: requireApiUser }, async (request, reply) => {
+    const input = parseInput(
+      z.object({
+        topic: z.string().trim().min(1).max(50),
+        orderKey: z.string().trim().max(120).optional(),
+        orderCode: z.string().trim().max(100).optional(),
+        description: z.string().trim().min(1).max(3000),
+        notifyEmail: z.string().trim().max(254).optional(),
+      }),
+      request.body,
+    );
+    const message = await submitSupportRequest(deps.db, deps.config, {
+      userId: request.currentUser!.id,
+      userEmail: request.currentUser!.email,
+      userFullName: request.currentUser!.fullName,
+      topic: input.topic,
+      ...(input.orderKey ? { orderKey: input.orderKey } : {}),
+      ...(input.orderCode ? { orderCode: input.orderCode } : {}),
+      description: input.description,
+      ...(input.notifyEmail !== undefined ? { notifyEmail: input.notifyEmail } : {}),
+      logger: request.log,
+    });
+    return reply.code(201).send({ message });
   });
 
   // "Chưa ghi nhận đơn" đi chung đường ống chat hỗ trợ: lưu hội thoại của

@@ -30,6 +30,7 @@ import {
   formatVnd,
 } from "../lib/format.js";
 import { selectedValue } from "./admin-console-shared.js";
+import { camioVoice } from "../services/camio-voice.js";
 import {
   approveMissionClaim,
   createMissionDefinition,
@@ -339,8 +340,9 @@ export async function registerBackofficeRoutes(
           await createNotification(deps.db, {
             userId: approved.user_id,
             type: "WITHDRAWAL_APPROVED",
-            title: "Yêu cầu rút tiền đã được duyệt",
-            body: `Lệnh rút ${Number(approved.amount_vnd).toLocaleString("vi-VN")}₫ đã được duyệt và đang chuyển sang đối tác chi hộ.`,
+            ...camioVoice.withdrawalApproved({
+              amount: `${Number(approved.amount_vnd).toLocaleString("vi-VN")}₫`,
+            }),
           });
         }
         await writeAuditLog(deps.db, deps.config, request, {

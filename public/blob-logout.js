@@ -17,6 +17,12 @@
   host.appendChild(mascot.el);
 
   var pendingForm = null;
+  // Giọng Camio: lấy câu từ public/camio-voice.js (một nguồn thoại), có dự phòng.
+  function V(group, fallback, vars) {
+    var v = window.CamioVoice;
+    return (v && v.pick(group, vars)) || fallback;
+  }
+
   var pendingSubmitter = null;
   var lastFocus = null;
 
@@ -75,7 +81,7 @@
           title: "Đăng xuất?",
           copy: "Bạn sẽ cần đăng nhập lại để vào tài khoản.",
           okLabel: "Đăng xuất",
-          say: "Ở lại nhé?",
+          say: V("logoutStay", "Ở lại nhé?"),
         };
       });
     }
@@ -91,7 +97,7 @@
           title: form.getAttribute("data-confirm-title") || "Bạn chắc chứ?",
           copy: form.getAttribute("data-blob-confirm") || "",
           okLabel: form.getAttribute("data-confirm-label") || "Đồng ý",
-          say: "Cân nhắc nhé!",
+          say: V("confirmThink", "Cân nhắc nhé!"),
         };
       });
     }
@@ -123,8 +129,8 @@
   scrim.addEventListener("click", function (e) { if (e.target === scrim) close(); });
 
   // Linh vật phản ứng theo nút đang trỏ / focus.
-  function reactStay() { mascot.setMood("happy"); mascot.setGaze(-12, 4); mascot.say("Ở lại nhé!", 0); }
-  function reactOk() { mascot.setMood("sad"); mascot.setGaze(14, 6); mascot.say("Chắc chưa?", 0); }
+  function reactStay() { mascot.setMood("happy"); mascot.setGaze(-12, 4); mascot.say(V("logoutStay", "Ở lại nhé!"), 0); }
+  function reactOk() { mascot.setMood("sad"); mascot.setGaze(14, 6); mascot.say(V("logoutOk", "Chắc chưa?"), 0); }
   function reactIdle() { mascot.setMood("hmm"); mascot.setGaze(0, -6); mascot.say("", 1); }
   if (stayBtn) {
     stayBtn.addEventListener("mouseenter", reactStay);

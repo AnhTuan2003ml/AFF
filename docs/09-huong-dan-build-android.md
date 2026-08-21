@@ -376,6 +376,16 @@ mất quai túi). Cả bộ sinh từ một nguồn bằng `npm run brand-assets
 iOS không có large icon — muốn ảnh kèm thông báo phải làm Notification Service
 Extension, chưa làm.
 
+Âm thanh/rung: app tạo kênh Android `shoptik-alerts` (`mobile/src/lib/push.ts`,
+hằng `CHANNEL_ID`) importance MAX, chuông riêng `assets/sounds/shoptik_notify.wav`
+(sinh bởi `npm run brand-assets`, nhúng vào `res/raw` qua plugin
+`expo-notifications` → `sounds`), rung + đèn màu thương hiệu, hiện cả trên màn
+khoá. Server (`src/services/push.ts`) gửi `channelId: "shoptik-alerts"` và
+`sound: "shoptik_notify.wav"`; `app.config.js` đặt `defaultChannel` cùng id cho
+FCM lúc app đóng. Cái bẫy: Android KHÔNG cho sửa âm thanh/rung của kênh đã tạo
+trên máy — muốn đổi thì đổi `CHANNEL_ID` ở CẢ BA chỗ trên (kênh cũ app tự xoá).
+Tên file âm thanh chỉ được chữ thường/số/gạch dưới (luật tên resource Android).
+
 Cái bẫy: token `ExponentPushToken[...]` lấy trong **Expo Go** trỏ về app Expo Go
 (`host.exp.exponent`), không phải `vn.shoptik.app`. Nếu `push_tokens` có token
 nhưng thông báo chỉ hiện dưới tên Expo Go, đó là token cũ — đăng nhập lại trên

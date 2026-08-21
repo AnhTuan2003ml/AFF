@@ -4,6 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Mascot, type CamioMood } from '@/components/Mascot';
+import { CAMIO_VOICE } from '@/lib/camio-voice';
 import { colors, radius, shadow } from '@/theme/tokens';
 
 /**
@@ -35,7 +36,7 @@ export function MascotFab() {
           pressed && { opacity: 0.9 },
         ]}>
         <Mascot mood={CYCLE[i]} size={38} />
-        <Text style={styles.label}>Hỗ trợ</Text>
+        <Text style={styles.label}>Camio</Text>
       </Pressable>
 
       <Modal visible={mo} transparent animationType="fade" onRequestClose={() => setMo(false)}>
@@ -44,10 +45,8 @@ export function MascotFab() {
             <View style={styles.sheetHead}>
               <Mascot mood="haohung" size={56} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.sheetTitle}>Trợ lý ShopTik</Text>
-                <Text style={styles.sheetSub}>
-                  Cần giúp gì không? Đội CSKH luôn sẵn sàng hỗ trợ bạn.
-                </Text>
+                <Text style={styles.sheetTitle}>Camio – trợ lý hoàn tiền</Text>
+                <Text style={styles.sheetSub}>{CAMIO_VOICE.supportIntro[0]}</Text>
               </View>
             </View>
 

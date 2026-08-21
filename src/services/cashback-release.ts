@@ -1,12 +1,15 @@
 import { query, type Database } from "../db.js";
+import { camioVoice } from "./camio-voice.js";
 import {
   moveSplitPendingToAvailable,
   type CommissionAllocation,
 } from "./ledger.js";
+import { createNotification } from "./mission.js";
 
 interface DueOrderRow {
   id: string;
   user_id: string;
+  platform_order_id: string | null;
   cashback_revision: number;
   sharer_user_id: string | null;
   user_amount_vnd: string | null;
@@ -34,7 +37,7 @@ export async function releaseDueCashback(
   const due = await query<DueOrderRow>(
     db,
     `
-      SELECT o.id, o.user_id, o.cashback_revision, ce.sharer_user_id,
+      SELECT o.id, o.user_id, o.platform_order_id, o.cashback_revision, ce.sharer_user_id,
         ce.user_amount_vnd::text, ce.referral_amount_vnd::text,
         ce.platform_amount_vnd::text
       FROM orders o
@@ -89,6 +92,17 @@ export async function releaseDueCashback(
     );
     released += 1;
     amountVnd += allocation.buyerVnd + allocation.sharerVnd;
+    // Tiền đã RÚT ĐƯỢC → Camio báo tin vui (thông báo trong app + push).
+    if (allocation.buyerVnd > 0) {
+      await createNotification(db, {
+        userId: row.user_id,
+        type: "CASHBACK_RELEASED",
+        ...camioVoice.cashbackReleased({
+          amount: `${allocation.buyerVnd.toLocaleString("vi-VN")}₫`,
+          orderCode: row.platform_order_id ?? undefined,
+        }),
+      });
+    }
   }
 
   return { released, amountVnd };

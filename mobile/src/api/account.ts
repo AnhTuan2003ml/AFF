@@ -108,6 +108,55 @@ export async function layHoTro(): Promise<SupportMessage[]> {
   return r.data ?? [];
 }
 
+/* ---------- Form hỗ trợ theo mẫu (giống trang /app/support của web) ---------- */
+
+export interface SupportTopic {
+  value: string;
+  label: string;
+  orderMode: 'list' | 'code' | 'none';
+  orderRequired: boolean;
+}
+
+export interface SupportOrderOption {
+  key: string;
+  label: string;
+}
+
+export interface SupportExchangeMessage {
+  body: string;
+  createdAt: string;
+}
+
+export interface SupportFormData {
+  topics: SupportTopic[];
+  orderOptions: SupportOrderOption[];
+  notifyEmail: string;
+  latestRequest: SupportExchangeMessage | null;
+  latestReply: SupportExchangeMessage | null;
+  chatOnline: boolean;
+}
+
+/** Dữ liệu dựng form + yêu cầu/phản hồi mới nhất. Mở form = đã xem phản hồi. */
+export function laySupportForm(): Promise<SupportFormData> {
+  return apiFetch<SupportFormData>('/api/v1/support/form');
+}
+
+export interface SupportRequestInput {
+  topic: string;
+  orderKey?: string;
+  orderCode?: string;
+  description: string;
+  notifyEmail?: string;
+}
+
+/** Gửi yêu cầu theo mẫu — cùng pipeline Slack/DB với web. */
+export function guiYeuCauHoTro(input: SupportRequestInput): Promise<{ message: SupportMessage }> {
+  return apiFetch<{ message: SupportMessage }>('/api/v1/support/requests', {
+    method: 'POST',
+    body: input,
+  });
+}
+
 export function guiHoTro(body: string): Promise<SupportMessage> {
   return apiFetch<SupportMessage>('/api/v1/support', {
     method: 'POST',

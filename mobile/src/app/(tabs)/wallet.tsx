@@ -17,6 +17,9 @@ import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
 import { ngayGio, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
+import { camio } from '@/lib/camio-voice';
+
+const EMPTY_WALLET = camio('emptyWallet');
 
 /**
  * Ví — hai số dư và sổ bút toán.
@@ -110,7 +113,7 @@ export default function WalletScreen() {
             </View>
           }
           ListEmptyComponent={
-            <Text style={styles.empty}>Chưa có biến động nào trong ví.</Text>
+            <Text style={styles.empty}>{EMPTY_WALLET}</Text>
           }
           renderItem={({ item }) => <DongSo row={item} />}
         />

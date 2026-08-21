@@ -44,6 +44,9 @@ export async function postSupportMessage(
   options: {
     threadTs?: string;
     channel?: string;
+    /** Đăng trong thread NHƯNG cũng hiện ra ngoài kênh — cho yêu cầu theo mẫu
+     *  để đội CSKH không bỏ sót khi thread đã cũ. */
+    replyBroadcast?: boolean | undefined;
     logger?: SlackLogger | undefined;
   } = {},
 ): Promise<SlackPostResult> {
@@ -65,6 +68,7 @@ export async function postSupportMessage(
         channel: options.channel || config.SLACK_SUPPORT_CHANNEL,
         text,
         ...(options.threadTs ? { thread_ts: options.threadTs } : {}),
+        ...(options.threadTs && options.replyBroadcast ? { reply_broadcast: true } : {}),
         unfurl_links: false,
         unfurl_media: false,
       }),

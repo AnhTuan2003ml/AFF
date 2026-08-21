@@ -54,7 +54,11 @@ module.exports = ({ config }) => {
         {
           icon: "./assets/images/notification-icon.png",
           color: "#ee4d2d",
-          defaultChannel: "default",
+          // Phải trùng CHANNEL_ID trong src/lib/push.ts: đây là kênh Android dùng
+          // khi FCM tới lúc app đang đóng.
+          defaultChannel: "shoptik-alerts",
+          // Chuông riêng, nhúng vào res/raw (Android) và bundle (iOS).
+          sounds: ["./assets/sounds/shoptik_notify.wav"],
         },
       ],
       // Linh vật CamiO làm ảnh lớn cho MỌI thông báo (push lẫn cục bộ) trên Android.
