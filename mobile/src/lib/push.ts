@@ -20,6 +20,9 @@ function laExpoGo(): boolean {
   );
 }
 
+/** Id kênh thông báo Android — đổi id khi đổi âm thanh/rung (xem ghi chú bên dưới). */
+export const CHANNEL_ID = 'shoptik-alerts';
+
 export async function dangKyThongBao(): Promise<void> {
   if (laExpoGo() || !Device.isDevice) return;
   try {
@@ -35,10 +38,24 @@ export async function dangKyThongBao(): Promise<void> {
     });
 
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
+      // Kênh "gây chú ý": chuông riêng (assets/sounds/shoptik_notify.wav, nhúng
+      // qua plugin expo-notifications), rung, đèn màu thương hiệu, nổi heads-up.
+      // Android KHÔNG cho đổi âm thanh của kênh đã tạo → mỗi lần đổi cấu hình
+      // phải đổi CHANNEL_ID (server push.ts và app.config.js defaultChannel
+      // phải dùng cùng id). Kênh `default` cũ bị xoá để không hiện 2 kênh.
+      await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
         name: 'Thông báo ShopTik',
-        importance: Notifications.AndroidImportance.HIGH,
+        description: 'Đơn hàng, tiền hoàn, nhiệm vụ và rút tiền',
+        importance: Notifications.AndroidImportance.MAX,
+        sound: 'shoptik_notify.wav',
+        vibrationPattern: [0, 260, 140, 260, 140, 420],
+        enableVibrate: true,
+        enableLights: true,
+        lightColor: '#ee4d2d',
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        showBadge: true,
       });
+      await Notifications.deleteNotificationChannelAsync('default').catch(() => {});
     }
 
     let status = (await Notifications.getPermissionsAsync()).status;

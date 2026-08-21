@@ -20,7 +20,13 @@
   var host = document.querySelector("[data-fab-mascot]");
   if (!host) return;
 
-  var mascot = window.BlobMascot.create({ mood: "happy", label: "Trợ lý ShopTik" });
+  // Giọng Camio: lấy câu từ public/camio-voice.js (một nguồn thoại), có dự phòng.
+  function V(group, fallback, vars) {
+    var v = window.CamioVoice;
+    return (v && v.pick(group, vars)) || fallback;
+  }
+
+  var mascot = window.BlobMascot.create({ mood: "happy", label: "Camio – trợ lý hoàn tiền" });
   host.appendChild(mascot.el);
 
   // Vòng biểu cảm dễ thương cho một trợ lý CSKH.
@@ -47,7 +53,7 @@
     fab.addEventListener("mouseenter", function () {
       mascot.setMood("happy");
       mascot.setGaze(0, -4);
-      mascot.say("Cần giúp gì không?", 1800);
+      mascot.say(V("fabHover", "Cần giúp gì không?"), 1800);
     });
     fab.addEventListener("mouseleave", function () {
       mascot.setMood(CYCLE[i].mood);

@@ -21,6 +21,10 @@ import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
+import { camio } from '@/lib/camio-voice';
+
+// Một câu cho cả phiên — không đổi câu mỗi lần render.
+const EMPTY_ORDERS = camio('emptyOrders');
 
 /**
  * Nhãn trạng thái đơn — dùng đúng bộ chữ của web để người dùng không phải học
@@ -162,10 +166,10 @@ export default function OrdersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Chưa có đơn nào</Text>
+              <Text style={styles.emptyTitle}>{EMPTY_ORDERS}</Text>
               <Text style={styles.emptyNote}>
-                Dán link ở Trang chủ và bấm Mua ngay — đơn sẽ hiện ở đây ngay khi
-                bạn bấm, trước cả lúc sàn xác nhận.
+                Dán link ở Trang chủ và bấm Mua ngay — đơn hiện ở đây ngay khi bạn
+                bấm, trước cả lúc sàn xác nhận. Đi săn hoàn thôi 🧡
               </Text>
             </View>
           }

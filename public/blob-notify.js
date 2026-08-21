@@ -39,6 +39,12 @@
     } catch (e) { return ""; }
   }
 
+  // Giọng Camio: lấy câu từ public/camio-voice.js (một nguồn thoại), có dự phòng.
+  function V(group, fallback, vars) {
+    var v = window.CamioVoice;
+    return (v && v.pick(group, vars)) || fallback;
+  }
+
   function moodFor(type) {
     var t = String(type || "");
     if (t.indexOf("APPROVED") >= 0 || t.indexOf("CASHBACK") >= 0) return "haohung";
@@ -58,8 +64,8 @@
       var a = document.createElement("a");
       a.className = "notification-support-item";
       a.href = "/app/support";
-      var sb = document.createElement("b"); sb.textContent = "Đội ngũ chăm sóc đã phản hồi";
-      var sp = document.createElement("p"); sp.textContent = support + " tin nhắn mới từ hỗ trợ. Bấm để mở.";
+      var sb = document.createElement("b"); sb.textContent = V("supportReply", "Đội hỗ trợ vừa nhắn bạn 📩");
+      var sp = document.createElement("p"); sp.textContent = support + " tin nhắn mới đang chờ bạn. Bấm để đọc nha 🧡";
       a.appendChild(sb); a.appendChild(sp); frag.appendChild(a);
     }
     if (items && items.length) {
@@ -84,7 +90,7 @@
     } else if (support === 0) {
       var empty = document.createElement("p");
       empty.className = "notification-empty";
-      empty.textContent = "Bạn chưa có thông báo mới.";
+      empty.textContent = V("emptyNotif", "Bạn chưa có thông báo mới.");
       frag.appendChild(empty);
     }
     panel.appendChild(frag);
@@ -197,8 +203,8 @@
   function showSupport(count, preview) {
     var text = (preview && String(preview).trim())
       ? (String(preview).length > 140 ? String(preview).slice(0, 140) + "…" : String(preview))
-      : (count > 1 ? count + " phản hồi mới đang chờ bạn." : "Bạn có phản hồi mới từ đội hỗ trợ.");
-    show("CSKH vừa phản hồi", text, goSupport);
+      : (count > 1 ? count + " tin nhắn mới đang chờ bạn." : "Có phản hồi từ đội hỗ trợ rồi! Bấm để đọc nha 🧡");
+    show(V("supportReply", "Đội hỗ trợ vừa nhắn bạn 📩"), text, goSupport);
     // Phản hồi CSKH → linh vật ra GIỮA màn hình cho nổi bật.
     toast.classList.add("is-center");
   }
@@ -217,7 +223,7 @@
       try { seen = window.sessionStorage.getItem("blob-notify-seen") === "1"; } catch (e) {}
       if (!seen) {
         window.setTimeout(function () {
-          show("Bạn có thông báo mới", "Nhấn để xem chi tiết từ ShopTik.", function () { bell.click(); });
+          show(V("newNotif", "Bạn có thông báo mới"), V("newNotifBody", "Nhấn để xem chi tiết."), function () { bell.click(); });
           try { window.sessionStorage.setItem("blob-notify-seen", "1"); } catch (e) {}
         }, 1400);
       }
@@ -249,8 +255,8 @@
         if (notif > notifNow) {
           var newest = items[0] || null;
           show(
-            newest ? newest.title : "Bạn có thông báo mới",
-            newest ? newest.body : "Nhấn để xem chi tiết.",
+            newest ? newest.title : V("newNotif", "Bạn có thông báo mới"),
+            newest ? newest.body : V("newNotifBody", "Nhấn để xem chi tiết."),
             function () { if (bell) bell.click(); }
           );
         }

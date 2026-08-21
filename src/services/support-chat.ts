@@ -260,6 +260,8 @@ export async function sendSupportChatMessage(
     userEmail: string;
     userFullName?: string;
     body: string;
+    /** true = tin cũng hiện ra ngoài kênh Slack (yêu cầu theo mẫu). */
+    broadcast?: boolean;
     logger?: SlackLogger;
   },
 ): Promise<SupportChatMessage> {
@@ -297,6 +299,7 @@ export async function sendSupportChatMessage(
       const posted = await postSupportMessage(config, text, {
         channel: thread.channel,
         threadTs: thread.threadTs,
+        replyBroadcast: input.broadcast,
         logger: input.logger,
       });
       let deliveredTs = posted.ok && !posted.threadBroken ? posted.ts : "";
@@ -331,6 +334,7 @@ export async function sendSupportChatMessage(
           const reposted = await postSupportMessage(config, text, {
             channel: rebuilt.channel,
             threadTs: rebuilt.threadTs,
+            replyBroadcast: input.broadcast,
             logger: input.logger,
           });
           if (reposted.ok && !reposted.threadBroken) deliveredTs = reposted.ts;

@@ -12,11 +12,15 @@ lệch — sửa nguồn rồi chạy lại `npm run brand-assets` là cả bộ
 
 Cần Pillow:  pip install pillow
 """
+import math
+import struct
+import wave
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent / "assets" / "images"
+SOUNDS = Path(__file__).resolve().parent.parent / "assets" / "sounds"
 LOGO = ROOT / "brand-logo.png"
 MASCOT = ROOT / "mascot" / "camio-vuive.png"
 BRAND_SOFT = (255, 240, 234, 255)  # nền nhạt tông cam thương hiệu
@@ -67,7 +71,39 @@ def mascot_badge(size: int) -> Image.Image:
     return out
 
 
+def chime(path: Path, rate: int = 44100) -> None:
+    """Chuông báo "ting-ting" hai nốt sáng, có bồi âm và ngân tắt dần — đủ nổi
+    giữa tiếng mặc định của máy nhưng không chói. Tự sinh để khỏi lo bản quyền
+    và để đổi nốt/độ dài chỉ cần sửa vài số ở đây."""
+    notes = [(1318.5, 0.00), (1760.0, 0.18)]  # E6 rồi A6, nốt sau vào trễ 180ms
+    length = 1.1
+    n = int(rate * length)
+    samples = []
+    for i in range(n):
+        t = i / rate
+        v = 0.0
+        for freq, start in notes:
+            dt = t - start
+            if dt < 0:
+                continue
+            env = math.exp(-dt * 4.2) * min(1.0, dt / 0.004)
+            v += env * (
+                math.sin(2 * math.pi * freq * dt)
+                + 0.35 * math.sin(2 * math.pi * freq * 2 * dt)
+                + 0.12 * math.sin(2 * math.pi * freq * 3 * dt)
+            )
+        samples.append(max(-1.0, min(1.0, v * 0.55)))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", int(x * 32767)) for x in samples))
+
+
 def main() -> None:
+    chime(SOUNDS / "shoptik_notify.wav")
+    print(f"{'sounds/shoptik_notify.wav':34} 1.1s")
     logo = logo_trimmed()
     mono = silhouette(logo)
     outputs = {

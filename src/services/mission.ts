@@ -5,6 +5,7 @@ import { AppError } from "../lib/errors.js";
 import { formatVnd } from "../lib/format.js";
 import { writeAuditLog } from "./audit.js";
 import { creditFixedReward } from "./ledger.js";
+import { camioVoice } from "./camio-voice.js";
 import { sendPushToUser } from "./push.js";
 
 export type MissionType = "REFERRAL_MILESTONE" | "PURCHASE_MILESTONE";
@@ -512,8 +513,10 @@ export async function claimMissionReward(
   await createNotification(db, {
     userId,
     type: "MISSION_CLAIM_SENT",
-    title: `Đã gửi yêu cầu nhận thưởng: ${definition.title}`,
-    body: `ShopTik sẽ kiểm tra và duyệt trong thời gian sớm nhất — thưởng ${formatVnd(definition.rewardAmountVnd)}.`,
+    ...camioVoice.missionClaimSent({
+      title: definition.title,
+      amount: formatVnd(definition.rewardAmountVnd),
+    }),
   });
 }
 
@@ -638,8 +641,10 @@ export async function approveMissionClaim(
     await createNotification(client, {
       userId: claim.user_id,
       type: "MISSION_APPROVED",
-      title: `Nhiệm vụ "${claim.mission_title}" đã được duyệt`,
-      body: `Bạn vừa nhận ${formatVnd(rewardAmountVnd)} vào ví.`,
+      ...camioVoice.missionApproved({
+        title: claim.mission_title,
+        amount: formatVnd(rewardAmountVnd),
+      }),
     });
     return true;
   });
@@ -685,8 +690,7 @@ export async function rejectMissionClaim(
   await createNotification(db, {
     userId: claim.user_id,
     type: "MISSION_REJECTED",
-    title: `Nhiệm vụ "${claim.mission_title}" không được duyệt`,
-    body: "Vui lòng liên hệ hỗ trợ nếu bạn cho rằng đây là nhầm lẫn.",
+    ...camioVoice.missionRejected({ title: claim.mission_title }),
   });
 
   await writeAuditLog(db, config, request, {

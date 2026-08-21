@@ -157,7 +157,8 @@
       }
     }
 
-    var POKES = ["Ơ!", "Nhột đấy!", "Hí hí", "Thôi nào~", "Ối!"];
+    var POKES = (window.CamioVoice && window.CamioVoice.groups.pokes) ||
+      ["Ơ!", "Nhột đấy!", "Hí hí", "Thôi nào~", "Ối!"];
     var pokeCount = 0;
     function poke() {
       if (wrap.animate) {

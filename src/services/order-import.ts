@@ -12,6 +12,7 @@ import {
   type CommissionAllocation,
 } from "./ledger.js";
 import { maybeRewardReferral } from "./referral-reward.js";
+import { camioVoice } from "./camio-voice.js";
 import { createNotification } from "./mission.js";
 import {
   PRODUCT_PLATFORMS,
@@ -1164,8 +1165,11 @@ export async function importOrderRow(
       await createNotification(db, {
         userId: owner.userId,
         type: "ORDER_APPROVED",
-        title: "Đơn hàng đã được xác nhận",
-        body: `Đơn ${platformOrderId} trên ${platform} đã được xác nhận. Tiền hoàn ${split.buyerVnd.toLocaleString("vi-VN")}₫ đã ghi nhận vào ví.`,
+        ...camioVoice.orderApproved({
+          orderCode: platformOrderId,
+          platform,
+          amount: `${split.buyerVnd.toLocaleString("vi-VN")}₫`,
+        }),
       });
     }
     return { orderId, status: row.status };

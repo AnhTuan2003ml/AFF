@@ -1987,3 +1987,29 @@ a.stat-card:focus-visible {
     font-size: .58rem;
   }
 }
+
+/* Camio đi kèm lời thoại của luồng dán link (camio-voice.js đổi text theo trạng thái). */
+/* Độ ưu tiên cao hơn `.buy-form-hint{display:block}` ở luxury-ui/dv13 (nạp sau). */
+.buy-form span.camio-line,
+.camio-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.buy-form span.camio-line::before,
+.camio-line::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 22px;
+  height: 24px;
+  background: url("/assets/images/mascot/camio-vuive.png") center / contain no-repeat;
+}
+
+.buy-error > .buy-error-mascot {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 43px;
+  object-fit: contain;
+}

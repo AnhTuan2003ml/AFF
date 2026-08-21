@@ -71,7 +71,9 @@ Nhánh token — dành cho app di động. **Không** đặt cookie, **không** 
 | `GET /me/orders` | Lịch sử đơn (gồm bản ghi "Chờ sàn xác nhận") |
 | `GET /me/wallet` | Số dư 4 ví |
 | `GET /me/withdrawals` | Lịch sử rút tiền |
-| `POST /support/missing-order` | Khiếu nại đơn hàng chưa được ghi nhận (tạo ticket) |
+| `GET /support/form` | Dữ liệu dựng form hỗ trợ cho app (loại vấn đề, đơn để chọn, email nhận phản hồi, yêu cầu/phản hồi mới nhất); mở = đánh dấu đã xem phản hồi |
+| `POST /support/requests` | Gửi yêu cầu hỗ trợ theo mẫu — cùng `submitSupportRequest` với web, đổ vào thread Slack kèm `reply_broadcast` |
+| `POST /support/missing-order` | Khiếu nại đơn hàng chưa được ghi nhận (đi chung hội thoại hỗ trợ) |
 
 ### Ví và tài khoản (`api/me.ts`)
 

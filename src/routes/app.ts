@@ -43,6 +43,7 @@ import {
   SUPPORT_TOPICS,
   platformDisplayName,
   submitSupportRequest,
+  toSupportOrderOption,
 } from "../services/support-request.js";
 import {
   BEST_SELLER_LIST_TYPE,
@@ -1159,26 +1160,7 @@ export async function registerAppRoutes(
       ),
       getLatestSupportExchange(deps.db, uid),
     ]);
-    const dateFormat = new Intl.DateTimeFormat("vi-VN", {
-      timeZone: "Asia/Ho_Chi_Minh",
-      dateStyle: "short",
-    });
-    const orderOptions = orderHistory.map((row) => ({
-      key: `${row.record_kind}:${row.id}`,
-      label: [
-        platformDisplayName(row.platform),
-        row.platform_order_id
-          ? `#${row.platform_order_id}`
-          : `mua ngày ${dateFormat.format(new Date(row.purchased_at ?? row.created_at))}`,
-        row.product_name
-          ? row.product_name.length > 48
-            ? `${row.product_name.slice(0, 47)}…`
-            : row.product_name
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    }));
+    const orderOptions = orderHistory.map(toSupportOrderOption);
 
     // Đi từ trang Đơn hàng sang: chọn sẵn đơn đó trong form theo mẫu; nếu
     // không khớp được bản ghi nào thì lùi về điền sẵn tin nhắn chat như cũ.

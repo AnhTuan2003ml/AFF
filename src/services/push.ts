@@ -13,6 +13,8 @@ import { query, type Database, type Transaction } from "../db.js";
  */
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+const PUSH_CHANNEL_ID = "shoptik-alerts";
+const PUSH_SOUND = "shoptik_notify.wav";
 const REQUEST_TIMEOUT_MS = 8000;
 
 /** Lưu token đẩy của một thiết bị; token trùng thì gán lại cho user hiện tại. */
@@ -76,9 +78,12 @@ export async function sendPushToUser(
     to: token,
     title: msg.title,
     body: msg.body,
-    sound: "default",
-    // Trùng kênh HIGH mà app tạo (mobile/src/lib/push.ts) để Android hiện nổi.
-    channelId: "default",
+    // iOS: tên file chuông riêng đã bundle qua plugin expo-notifications.
+    // Android bỏ qua trường này — âm thanh/rung lấy theo kênh bên dưới.
+    sound: PUSH_SOUND,
+    // Trùng CHANNEL_ID trong mobile/src/lib/push.ts (kênh MAX: chuông riêng,
+    // rung, đèn, heads-up). Đổi kênh bên app thì đổi cả đây.
+    channelId: PUSH_CHANNEL_ID,
     priority: "high",
     data: msg.data ?? {},
   }));

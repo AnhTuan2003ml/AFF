@@ -11,8 +11,8 @@
     <div>
       <span class="mb-converter-icon" aria-hidden="true">{{ icon('discover') }}</span>
       <div>
-        <h2>Dán link mua sắm để nhận hoàn tiền</h2>
-        <p>Tự nhận diện Shopee, TikTok Shop, Lazada và tính tiền hoàn dự kiến</p>
+        <h2>Khoan mua! Để Camio kiểm tra đã.</h2>
+        <p>Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn</p>
       </div>
     </div>
     <span class="mb-pill-note">Hoàn tiền tự động</span>
@@ -42,8 +42,9 @@
       </div>
       <button type="submit" data-product-submit><span data-product-submit-text>Tra cứu</span></button>
     </div>
-    <span class="buy-form-hint" id="product-url-hint">Dán link là tự động tra cứu — hỗ trợ Shopee, TikTok Shop và Lazada.</span>
-    <small class="field-error" data-paste-hint hidden>Bộ nhớ tạm chưa có đường link.</small>
+    {# Câu thoại Camio đổi theo trạng thái (purchase.js cập nhật: chưa dán → đang soi → có/không hoàn → lỗi). #}
+    <span class="buy-form-hint camio-line" id="product-url-hint" data-camio-line>Copy link → dán vào đây → xem hoàn tiền. Dễ thôi!</span>
+    <small class="field-error" data-paste-hint hidden>Bộ nhớ tạm chưa có link nào, copy link rồi thử lại nha 👀</small>
   </form>
 
   {% include "app/dashboard/product-states.njk" %}

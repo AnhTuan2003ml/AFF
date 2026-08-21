@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { danhDauDaDoc, layThongBao, type NotificationItem } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { CAMIO, type CamioMood } from '@/components/Mascot';
+import { camio } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
 import { ngayGio } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -17,6 +18,8 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * Thông báo — dựng lại danh sách thông báo của web. Mở màn này là đánh dấu đã
  * đọc tất cả (đồng bộ số badge ở chuông).
  */
+const EMPTY_NOTIF = camio('emptyNotif');
+
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
@@ -63,7 +66,7 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="notifications-off-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyText}>Chưa có thông báo nào.</Text>
+              <Text style={styles.emptyText}>{EMPTY_NOTIF}</Text>
             </View>
           }
           renderItem={({ item }) => <Dong n={item} />}

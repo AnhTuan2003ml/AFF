@@ -98,7 +98,7 @@
           </section>
         {% else %}
           <section class="orders-history-empty">
-            {{ empty_state("Chưa có sản phẩm đã xem", "Khi bạn bấm “Mua ngay”, sản phẩm sẽ hiện ở đây để xem và mua lại.", "/app", "Tìm sản phẩm") }}
+            {{ empty_state("🛒 Chiếc giỏ này đang hơi cô đơn…", "Bấm “Mua ngay” ở trang chủ, sản phẩm sẽ nằm đây để bạn xem và mua lại.", "/app", "Có link? Đưa Camio!") }}
           </section>
         {% endif %}
         <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
@@ -180,7 +180,7 @@
       </div>
     {% else %}
       <section class="orders-history-empty">
-        {{ empty_state("Không tìm thấy đơn hàng nào", "Hãy thử đổi bộ lọc hoặc tìm sản phẩm mới để ghi nhận đơn hoàn tiền.", "/app", "Tìm sản phẩm") }}
+        {{ empty_state("Camio chưa thấy đơn nào 👀", "Đổi bộ lọc thử, hoặc dán một chiếc link và bắt đầu thôi 🧡", "/app", "Đi săn hoàn thôi") }}
       </section>
     {% endif %}
   </section>

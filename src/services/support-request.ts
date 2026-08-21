@@ -2,6 +2,8 @@ import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import type { SlackLogger } from "./slack.js";
+import { getBusinessConfig } from "./business-config.js";
+import { listOrderHistory } from "./order-history.js";
 import {
   sendSupportChatMessage,
   type SupportChatMessage,
@@ -258,6 +260,8 @@ export async function submitSupportRequest(
     userEmail: input.userEmail,
     ...(input.userFullName ? { userFullName: input.userFullName } : {}),
     body,
+    // Yêu cầu theo mẫu hiện cả ra ngoài kênh Slack để không bị chìm trong thread cũ.
+    broadcast: true,
     ...(input.logger ? { logger: input.logger } : {}),
   });
 
@@ -273,4 +277,62 @@ export async function submitSupportRequest(
   );
 
   return message;
+}
+
+/** Một dòng trong ô "Đơn hàng liên quan" của form hỗ trợ (web + app dùng chung). */
+export interface SupportOrderOption {
+  /** `ORDER:<id>` hoặc `INTENT:<id>` — khớp `orderKey` khi gửi. */
+  key: string;
+  label: string;
+}
+
+const ORDER_OPTION_DATE = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  dateStyle: "short",
+});
+
+/** Nhãn ngắn cho một bản ghi lịch sử đơn: "Shopee · #MÃ · Tên sản phẩm…". */
+export function toSupportOrderOption(row: {
+  record_kind: string;
+  id: string;
+  platform: string;
+  platform_order_id: string | null;
+  product_name: string | null;
+  purchased_at: Date | string | null;
+  created_at: Date | string;
+}): SupportOrderOption {
+  return {
+    key: `${row.record_kind}:${row.id}`,
+    label: [
+      platformDisplayName(row.platform),
+      row.platform_order_id
+        ? `#${row.platform_order_id}`
+        : `mua ngày ${ORDER_OPTION_DATE.format(new Date(row.purchased_at ?? row.created_at))}`,
+      row.product_name
+        ? row.product_name.length > 48
+          ? `${row.product_name.slice(0, 47)}…`
+          : row.product_name
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  };
+}
+
+/** Danh sách đơn (50 gần nhất) để người dùng chọn trong form hỗ trợ. */
+export async function listSupportOrderOptions(
+  db: Database,
+  config: AppConfig,
+  userId: string,
+): Promise<SupportOrderOption[]> {
+  const businessConfig = await getBusinessConfig(db, config);
+  const history = await listOrderHistory(db, {
+    userId,
+    status: "ALL",
+    released: "ALL",
+    searchTerm: "",
+    attributionDays: businessConfig.affiliateAttributionDays,
+    limit: 50,
+  });
+  return history.map(toSupportOrderOption);
 }

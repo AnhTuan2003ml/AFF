@@ -10,6 +10,7 @@ import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Mascot } from '@/components/Mascot';
+import { CAMIO_VOICE } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -149,9 +150,7 @@ export default function AccountScreen() {
           <Pressable style={styles.confirm} onPress={(e) => e.stopPropagation()}>
             <Mascot mood="ngacnhien" size={64} />
             <Text style={styles.confirmTitle}>Đăng xuất?</Text>
-            <Text style={styles.confirmSub}>
-              Bạn sẽ cần đăng nhập lại để vào tài khoản.
-            </Text>
+            <Text style={styles.confirmSub}>{CAMIO_VOICE.logoutStay[0]}</Text>
             <Pressable
               style={({ pressed }) => [styles.confirmDanger, pressed && { opacity: 0.9 }]}
               onPress={() => {

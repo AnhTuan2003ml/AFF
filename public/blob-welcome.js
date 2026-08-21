@@ -14,6 +14,12 @@
     var trigger = document.querySelector("[data-camio-welcome]");
     if (!trigger || !window.BlobMascot) return;
 
+  // Giọng Camio: lấy câu từ public/camio-voice.js (một nguồn thoại), có dự phòng.
+  function V(group, fallback, vars) {
+    var v = window.CamioVoice;
+    return (v && v.pick(group, vars)) || fallback;
+  }
+
     var name = (trigger.getAttribute("data-welcome-name") || "").trim();
 
     var host = document.createElement("div");
@@ -22,7 +28,7 @@
     var bubble = document.createElement("div");
     bubble.className = "camio-welcome-bubble";
     var b = document.createElement("b");
-    b.textContent = "Chào mừng bạn quay lại!";
+    b.textContent = V("welcome", "Chào mừng bạn quay lại!");
     bubble.appendChild(b);
     if (name) {
       var s = document.createElement("span");
