@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Build APK (EAS, hồ sơ preview) rồi cài thẳng lên điện thoại đang cắm adb.
 
