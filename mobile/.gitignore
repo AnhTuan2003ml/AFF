@@ -48,3 +48,7 @@ GoogleService-Info.plist
 
 # APK tải về bởi scripts/build-and-install.ps1
 build-output/
+
+# Khóa service account Firebase (FCM V1) — upload lên EAS bằng `eas credentials`, KHÔNG commit
+*-firebase-adminsdk-*.json
+firebase-adminsdk*.json
