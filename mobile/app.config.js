@@ -41,6 +41,26 @@ module.exports = ({ config }) => {
       ...config.android,
       ...(coFcm ? { googleServicesFile } : {}),
     },
+    // iOS — TÁCH RIÊNG, không đụng phần Android ở trên.
+    // Song song với usesCleartextTraffic của Android: iOS chặn HTTP không mã hóa
+    // qua App Transport Security. Bản test (development/preview) trỏ IP LAN
+    // http://...:3000 nên phải nới ATS; bản production trỏ https://shoptikvn.com
+    // giữ nguyên mặc định an toàn. Push iOS đi qua APNs (khóa do EAS giữ,
+    // `eas credentials` → iOS), KHÔNG cần google-services; chuông riêng
+    // shoptik_notify.wav được plugin expo-notifications bundle vào cả iOS.
+    // iOS không có "large icon" nên thông báo không kèm ảnh linh vật
+    // (muốn có phải làm Notification Service Extension — chưa làm).
+    ios: {
+      ...config.ios,
+      ...(choPhepHttp
+        ? {
+            infoPlist: {
+              ...(config.ios?.infoPlist ?? {}),
+              NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
+            },
+          }
+        : {}),
+    },
     plugins: [
       ...(config.plugins ?? []),
       ["expo-build-properties", { android: { usesCleartextTraffic: choPhepHttp } }],

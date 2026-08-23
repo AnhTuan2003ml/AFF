@@ -52,3 +52,7 @@ build-output/
 # Khóa service account Firebase (FCM V1) — upload lên EAS bằng `eas credentials`, KHÔNG commit
 *-firebase-adminsdk-*.json
 firebase-adminsdk*.json
+
+# OAuth client Google (plist/json tải từ Google Cloud) — luồng đăng nhập hiện đi qua server, app không cần
+client_*.apps.googleusercontent.com.*
+client_secret_*.json

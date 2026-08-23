@@ -449,17 +449,60 @@ npm run submit:store     # đẩy lên CH Play / App Store Connect
 
 ---
 
-## 12. Về iOS
+## 12. Build iOS để chạy trên iPhone
 
-Cùng một mã nguồn ra được cả hai nền tảng, nhưng nhánh iOS đòi tài khoản Apple
-Developer (99 USD/năm) ngay từ khâu kiểm thử, và bản `preview` ad-hoc còn phải
-đăng ký sẵn UDID của từng iPhone định cài.
+Cùng mã nguồn, build trên cloud của EAS (KHÔNG cần máy Mac). Khác biệt đã tách
+riêng trong `app.config.js` (khối `ios:` — nới App Transport Security cho bản
+test HTTP, song song `usesCleartextTraffic` của Android; production giữ mặc
+định an toàn). Cần tài khoản Apple Developer (99 USD/năm) từ khâu kiểm thử.
 
-Chưa có tài khoản thì vẫn test được trên iPhone thật **miễn phí** bằng Expo Go
-(mục 9). Cách này hết hiệu lực khi dự án thêm share extension và thông báo đẩy —
-lúc đó bắt buộc phải có development build.
+Chưa có tài khoản: vẫn xem UI được bằng Expo Go (mục 9) — nhưng KHÔNG có push,
+icon, splash, kênh chuông riêng.
 
----
+### Cài thử ad-hoc lên iPhone
+
+```powershell
+# 1. Đăng ký iPhone định cài (mở link trên máy → cài profile lấy UDID)
+npx eas-cli@latest device:create
+
+# 2. Build (lần đầu đăng nhập Apple ID; EAS tự tạo certificate, provisioning
+#    profile và KHÓA APNs cho push — cứ chọn Yes)
+npm run build:ios          # = eas build --profile preview --platform ios
+
+# 3. Xong có link expo.dev — mở TRÊN iPhone, bấm Install.
+```
+
+Máy chưa đăng ký UDID thì không cài được bản ad-hoc — làm lại bước 1 rồi build
+lại. Không cài qua cáp từ Windows được.
+
+### Phát rộng — TestFlight
+
+Tạo app trên App Store Connect (bundle id `vn.shoptik.app`), điền `appleId` /
+`ascAppId` / `appleTeamId` trong `eas.json` (mục submit), rồi:
+
+```powershell
+npx eas-cli@latest build --profile production --platform ios
+npx eas-cli@latest submit --platform ios --latest
+```
+
+### Những gì ĐÃ chạy sẵn trên iOS (không phải sửa gì)
+
+- Đăng nhập Google: app mở luồng web của server (`/auth/google?flow=mobile`)
+  rồi nhận token qua deep-link `shoptik://` — không cần iOS Client ID hay file
+  plist của Google.
+- Push: đi qua APNs (khóa EAS tự tạo ở lần build đầu); chuông riêng
+  `shoptik_notify.wav` được plugin expo-notifications bundle vào iOS, server đã
+  gửi kèm tên file. Kênh `shoptik-alerts` chỉ là khái niệm Android — push.ts đã
+  chặn bằng Platform.OS.
+- Icon dùng `app-icon.png` (nền đặc, đúng luật iOS); splash dùng chung.
+
+### Khác biệt còn lại so với Android
+
+- Thông báo iOS KHÔNG kèm ảnh linh vật (iOS không có large icon; muốn có phải
+  làm Notification Service Extension — chưa làm).
+- `withNotificationLargeIcon`, icon đơn sắc, `google-services.json` là đồ
+  Android — plugin chỉ đăng ký mod Android nên build iOS không bị ảnh hưởng.
+- `expo prebuild -p ios` không chạy trên Windows — EAS builder (macOS) tự làm.
 
 Xem thêm: [`08-mobile-giai-doan-0.md`](08-mobile-giai-doan-0.md) cho bối cảnh và
 lộ trình, [`mobile/README.md`](../mobile/README.md) cho cấu trúc mã nguồn app.
