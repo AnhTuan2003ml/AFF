@@ -28,7 +28,7 @@ import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
 import { CAMIO_VOICE, camio } from '@/lib/camio-voice';
 import { ngayGio } from '@/lib/format';
-import { colors, radius, shadow, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
  * Hỗ trợ — FORM THEO MẪU y như trang /app/support của web (không phải chat):
@@ -457,17 +457,14 @@ const styles = StyleSheet.create({
   replyDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand },
 
   content: { padding: spacing.md, gap: 6 },
+  // Lời mở của Camio không thẻ nền — linh vật đứng trực tiếp trên trang.
   intro: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
     marginBottom: 8,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    ...shadow.card,
   },
   introTitle: { fontSize: 16, fontWeight: '900', color: colors.text },
   introSub: { fontSize: 12.5, color: colors.muted, marginTop: 3, lineHeight: 18 },

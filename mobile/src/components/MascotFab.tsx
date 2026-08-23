@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Mascot, type CamioMood } from '@/components/Mascot';
 import { CAMIO_VOICE } from '@/lib/camio-voice';
-import { colors, radius, shadow } from '@/theme/tokens';
+import { colors, radius } from '@/theme/tokens';
 
 /**
  * Nút "Hỗ trợ" nổi có LINH VẬT CamiO tự đổi biểu cảm — dựng lại `st-support-fab`
@@ -69,19 +69,15 @@ export function MascotFab() {
 }
 
 const styles = StyleSheet.create({
+  // Linh vật nổi "trần", không thẻ nền/viền/bóng.
   fab: {
     position: 'absolute',
     right: 16,
     alignItems: 'center',
     gap: 2,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 6,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    ...shadow.card,
+    paddingHorizontal: 8,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
   label: { fontSize: 11, fontWeight: '900', color: colors.brand },
 
