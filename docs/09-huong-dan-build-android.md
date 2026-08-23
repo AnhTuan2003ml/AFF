@@ -489,7 +489,10 @@ npx eas-cli@latest submit --platform ios --latest
 
 - Đăng nhập Google: app mở luồng web của server (`/auth/google?flow=mobile`)
   rồi nhận token qua deep-link `shoptik://` — không cần iOS Client ID hay file
-  plist của Google.
+  plist của Google. (Client ID iOS trong file `client_*.plist` đã được khai vào
+  `GOOGLE_OAUTH_MOBILE_CLIENT_IDS` của backend — khi nào chuyển app sang đăng
+  nhập Google native gửi `id_token` qua `POST /api/v1/auth/token/google` là
+  server chấp nhận ngay; file plist giữ ở máy, không commit.)
 - Push: đi qua APNs (khóa EAS tự tạo ở lần build đầu); chuông riêng
   `shoptik_notify.wav` được plugin expo-notifications bundle vào iOS, server đã
   gửi kèm tên file. Kênh `shoptik-alerts` chỉ là khái niệm Android — push.ts đã
