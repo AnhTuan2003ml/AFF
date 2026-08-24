@@ -436,7 +436,30 @@ export async function registerAuthRoutes(
     "/auth/google",
     { config: { rateLimit: { max: 15, timeWindow: "15 minutes" } } },
     async (request, reply) => {
-      if (request.currentUser) return reply.redirect("/app");
+      if (request.currentUser) {
+        // Safari trên iOS dùng chung cookie với sheet đăng nhập của app: nếu
+        // máy đã có phiên WEB thì luồng app đừng đẩy về /app (kẹt giao diện
+        // web trong sheet) — cấp luôn token cho app và deep-link quay về.
+        const q0 = request.query as Record<string, unknown>;
+        const mobileRedirect0 =
+          q0.flow === "mobile" ? safeMobileRedirect(q0.redirect_uri) : null;
+        if (mobileRedirect0) {
+          const tokens = await issueMobileTokens(
+            deps.db,
+            deps.config,
+            request,
+            request.currentUser.id,
+          );
+          const frag = new URLSearchParams({
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: String(tokens.expiresIn),
+            refreshExpiresAt: new Date(tokens.refreshExpiresAt).toISOString(),
+          }).toString();
+          return reply.redirect(`${mobileRedirect0}#${frag}`);
+        }
+        return reply.redirect("/app");
+      }
       if (!googleOAuthEnabled(deps.config)) {
         setFlash(
           reply,
