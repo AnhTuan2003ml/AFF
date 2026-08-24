@@ -64,7 +64,9 @@ export async function login(
  * Nhờ vậy KHÔNG cần Android/iOS Client ID và chạy được cả trong Expo Go.
  */
 export async function loginWithGoogleWeb(): Promise<void> {
-  const redirectUri = makeRedirectUri({ scheme: 'shoptik' });
+  // Có path để URL deep-link luôn hợp lệ trên iOS (shoptik://auth/google;
+  // trong Expo Go thành exp://<host>/--/auth/google).
+  const redirectUri = makeRedirectUri({ scheme: 'shoptik', path: 'auth/google' });
   const startUrl =
     `${apiBaseUrl}/auth/google?flow=mobile&redirect_uri=` +
     encodeURIComponent(redirectUri);

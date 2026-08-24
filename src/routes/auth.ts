@@ -6,6 +6,7 @@ import {
 } from "../auth/session.js";
 import type { AppConfig } from "../config.js";
 import type { Database } from "../db.js";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { maskEmail, randomToken } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
 import { setFlash, setWelcome } from "../lib/flash.js";
@@ -83,6 +84,52 @@ function safeMobileRedirect(value: unknown): string | null {
   if (!/^(exp|shoptik|vn\.shoptik\.app):\/\//.test(value)) return null;
   if (value.length > 512) return null;
   return value;
+}
+
+/*
+ * Luồng Google của APP không được phụ thuộc cookie: trên iOS, trình duyệt xác
+ * thực (ASWebAuthenticationSession + "Prevent Cross-Site Tracking" của Safari)
+ * hay chặn cookie trong chuỗi redirect → callback không thấy cookie
+ * `aff_oauth_mredir` và rơi nhầm về nhánh web thay vì deep-link về app.
+ * Giải pháp: nhét redirect của app vào chính tham số `state` gửi qua Google —
+ * ký HMAC bằng APP_SECRET, hạn 15 phút. Cookie vẫn được set song song (Android
+ * dùng tốt); callback ưu tiên cookie, thiếu thì mở state ra.
+ */
+const MOBILE_STATE_PREFIX = "m1";
+const MOBILE_STATE_TTL_MS = 15 * 60 * 1000;
+
+function signMobileState(config: AppConfig, payload: string): string {
+  return createHmac("sha256", config.APP_SECRET)
+    .update(`${MOBILE_STATE_PREFIX}.${payload}`)
+    .digest("base64url");
+}
+
+function packMobileState(config: AppConfig, redirect: string): string {
+  const payload = Buffer.from(
+    JSON.stringify({ n: randomToken(12), m: redirect, e: Date.now() + MOBILE_STATE_TTL_MS }),
+  ).toString("base64url");
+  return `${MOBILE_STATE_PREFIX}.${payload}.${signMobileState(config, payload)}`;
+}
+
+/** Trả về redirect của app nếu `state` là state mobile hợp lệ (chữ ký + hạn). */
+function unpackMobileState(config: AppConfig, state: unknown): string | null {
+  if (typeof state !== "string") return null;
+  const [prefix, payload, sig] = state.split(".");
+  if (prefix !== MOBILE_STATE_PREFIX || !payload || !sig) return null;
+  const expected = signMobileState(config, payload);
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      m?: unknown;
+      e?: unknown;
+    };
+    if (typeof data.e !== "number" || data.e < Date.now()) return null;
+    return safeMobileRedirect(data.m);
+  } catch {
+    return null;
+  }
 }
 
 function signedEmailCookie(
@@ -401,9 +448,14 @@ export async function registerAuthRoutes(
       }
       // `state` chống CSRF của chính luồng OAuth: lưu bản signed ở cookie rồi
       // đối chiếu lại ở callback.
-      const state = randomToken(24);
-      signedEmailCookie(reply, deps.config, OAUTH_STATE_COOKIE, state);
       const q = request.query as Record<string, unknown>;
+      // App: state tự chứa redirect (ký HMAC) — callback không cần cookie.
+      const mobileStateRedirect =
+        q.flow === "mobile" ? safeMobileRedirect(q.redirect_uri) : null;
+      const state = mobileStateRedirect
+        ? packMobileState(deps.config, mobileStateRedirect)
+        : randomToken(24);
+      signedEmailCookie(reply, deps.config, OAUTH_STATE_COOKIE, state);
       const next = safeNextPath(q.next, "");
       if (next) {
         signedEmailCookie(reply, deps.config, OAUTH_NEXT_COOKIE, next);
@@ -433,9 +485,11 @@ export async function registerAuthRoutes(
       const query = request.query as Record<string, unknown>;
       const stateCookie = readSignedCookie(request, OAUTH_STATE_COOKIE);
       const nextCookie = readSignedCookie(request, OAUTH_NEXT_COOKIE);
-      const mobileRedirect = safeMobileRedirect(
-        readSignedCookie(request, OAUTH_MOBILE_REDIRECT_COOKIE),
-      );
+      const queryState = String((request.query as Record<string, unknown>).state ?? "");
+      // Ưu tiên cookie (Android); iOS mất cookie thì lấy từ state đã ký.
+      const mobileRedirect =
+        safeMobileRedirect(readSignedCookie(request, OAUTH_MOBILE_REDIRECT_COOKIE)) ??
+        unpackMobileState(deps.config, queryState);
       reply.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
       reply.clearCookie(OAUTH_NEXT_COOKIE, { path: "/" });
       reply.clearCookie(OAUTH_MOBILE_REDIRECT_COOKIE, { path: "/" });
@@ -455,7 +509,12 @@ export async function registerAuthRoutes(
 
       const code = String(query.code ?? "");
       const state = String(query.state ?? "");
-      if (!code || !state || !stateCookie || state !== stateCookie) {
+      // Chống CSRF: bình thường đối chiếu cookie; riêng state mobile đã ký HMAC
+      // + có hạn thì tự nó là bằng chứng (iOS có thể không mang được cookie).
+      const stateValid = stateCookie
+        ? state === stateCookie
+        : unpackMobileState(deps.config, state) !== null;
+      if (!code || !state || !stateValid) {
         const msg = "Phiên đăng nhập Google đã hết hạn. Hãy thử lại.";
         if (mobileRedirect) return failMobile(msg);
         setFlash(reply, deps.config, "error", msg);
