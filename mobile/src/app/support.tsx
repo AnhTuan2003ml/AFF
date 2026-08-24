@@ -76,6 +76,7 @@ function SupportForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [sentAt, setSentAt] = useState<number | null>(null);
+  const [moChonVanDe, setMoChonVanDe] = useState(false);
   const [moChonDon, setMoChonDon] = useState(false);
   const [moPhanHoi, setMoPhanHoi] = useState(false);
 
@@ -170,34 +171,14 @@ function SupportForm() {
             </View>
           </View>
 
-          {/* Vấn đề cần hỗ trợ */}
+          {/* Vấn đề cần hỗ trợ — combobox mở danh sách, như ô chọn đơn hàng. */}
           <Text style={styles.label}>Vấn đề cần hỗ trợ</Text>
-          <View style={styles.topicList}>
-            {data.topics.map((t) => {
-              const chon = topic?.value === t.value;
-              return (
-                <Pressable
-                  key={t.value}
-                  onPress={() => {
-                    setTopic(t);
-                    setErrors({});
-                    setSentAt(null);
-                    if (t.orderMode !== 'list') setOrder(null);
-                    if (t.orderMode !== 'code') setOrderCode('');
-                  }}
-                  style={({ pressed }) => [
-                    styles.topic,
-                    chon && styles.topicOn,
-                    pressed && { opacity: 0.85 },
-                  ]}>
-                  <View style={[styles.radio, chon && styles.radioOn]}>
-                    {chon && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={[styles.topicText, chon && styles.topicTextOn]}>{t.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <Pressable onPress={() => setMoChonVanDe(true)} style={styles.select}>
+            <Text style={[styles.selectText, !topic && { color: colors.muted }]}>
+              {topic ? topic.label : 'Chọn vấn đề…'}
+            </Text>
+            <Ionicons name="chevron-down" size={18} color={colors.muted} />
+          </Pressable>
           {errors.topic ? <Text style={styles.fieldErr}>{errors.topic}</Text> : null}
 
           {/* Đơn hàng liên quan (chọn từ lịch sử) */}
@@ -312,6 +293,46 @@ function SupportForm() {
           </View>
         </ScrollView>
       )}
+
+      {/* Chọn vấn đề cần hỗ trợ */}
+      <Modal
+        visible={moChonVanDe}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoChonVanDe(false)}>
+        <Pressable style={styles.scrim} onPress={() => setMoChonVanDe(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Chọn vấn đề cần hỗ trợ</Text>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {(data?.topics ?? []).map((t) => (
+                <Pressable
+                  key={t.value}
+                  onPress={() => {
+                    setTopic(t);
+                    setErrors({});
+                    setSentAt(null);
+                    if (t.orderMode !== 'list') setOrder(null);
+                    if (t.orderMode !== 'code') setOrderCode('');
+                    setMoChonVanDe(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.option,
+                    topic?.value === t.value && styles.optionOn,
+                    pressed && { opacity: 0.85 },
+                  ]}>
+                  <Text style={styles.optionText}>{t.label}</Text>
+                  {topic?.value === t.value && (
+                    <Ionicons name="checkmark" size={18} color={colors.brand} />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable style={styles.ghost} onPress={() => setMoChonVanDe(false)}>
+              <Text style={styles.ghostText}>Đóng</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Chọn đơn hàng */}
       <Modal
@@ -482,32 +503,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  topicList: { gap: 8 },
-  topic: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  topicOn: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
-  topicText: { fontSize: 13.5, color: colors.text, flex: 1 },
-  topicTextOn: { fontWeight: '800' },
-  radio: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioOn: { borderColor: colors.brand },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand },
 
   select: {
     flexDirection: 'row',
