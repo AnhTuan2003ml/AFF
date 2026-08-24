@@ -8,7 +8,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layMe } from '@/api/account';
-import { layThongBao } from '@/api/features';
+import { layDiemDanh, layThongBao } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
@@ -36,6 +36,15 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
     refetchInterval: 30000,
   });
   const chuaDoc = tb?.unread ?? 0;
+  // Điểm danh nằm ngay cạnh chuông (thay cho tab riêng) — chấm nhắc khi hôm
+  // nay chưa điểm danh, khỏi mất chuỗi.
+  const { data: dd } = useQuery({
+    queryKey: ['checkin'],
+    queryFn: layDiemDanh,
+    enabled: !!user,
+    refetchInterval: 60000,
+  });
+  const chuaDiemDanh = !!dd && !dd.checkedInToday;
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -50,6 +59,15 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
 
       {user ? (
         <View style={styles.right}>
+          <Pressable
+            style={styles.iconBtn}
+            hitSlop={6}
+            accessibilityLabel="Điểm danh mỗi ngày"
+            onPress={() => router.push('/checkin')}>
+            <Ionicons name="calendar-outline" size={22} color={colors.inkSoft} />
+            {chuaDiemDanh && <View style={styles.dot} />}
+          </Pressable>
+
           <Pressable
             style={styles.iconBtn}
             hitSlop={6}
@@ -213,6 +231,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: '#fff', fontSize: 9.5, fontWeight: '900' },
+  dot: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.brand,
+  },
   walletChip: {
     paddingHorizontal: 11,
     paddingVertical: 6,

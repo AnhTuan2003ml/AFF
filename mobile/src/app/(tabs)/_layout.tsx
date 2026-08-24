@@ -73,15 +73,9 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="checkin"
-        options={{
-          title: 'Điểm danh',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar-outline" size={26} color={color} />
-          ),
-        }}
-      />
+      {/* Điểm danh đã chuyển thành icon cạnh chuông trên header (BrandHeader);
+          giữ route nhưng ẩn khỏi thanh tab. */}
+      <Tabs.Screen name="checkin" options={{ href: null }} />
       <Tabs.Screen
         name="account"
         options={{
