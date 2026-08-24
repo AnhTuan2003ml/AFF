@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layMe } from '@/api/account';
 import { layDiemDanh, layThongBao } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
+import { CheckinModal } from '@/components/CheckinModal';
 import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
@@ -27,6 +28,7 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
   const insets = useSafeAreaInsets();
   const { user, dangXuat } = useSession();
   const [moMenu, setMoMenu] = useState(false);
+  const [moDiemDanh, setMoDiemDanh] = useState(false);
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
   const { data: tb } = useQuery({
@@ -63,7 +65,7 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
             style={styles.iconBtn}
             hitSlop={6}
             accessibilityLabel="Điểm danh mỗi ngày"
-            onPress={() => router.push('/checkin')}>
+            onPress={() => setMoDiemDanh(true)}>
             <Ionicons name="calendar-outline" size={22} color={colors.inkSoft} />
             {chuaDiemDanh && <View style={styles.dot} />}
           </Pressable>
@@ -106,11 +108,15 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
         </Pressable>
       )}
 
+      {/* Popup điểm danh đè lên màn hình hiện tại, có nút ✕ (giống web). */}
+      <CheckinModal mo={moDiemDanh} dong={() => setMoDiemDanh(false)} />
+
       <MenuTaiKhoan
         mo={moMenu}
         dong={() => setMoMenu(false)}
         laQuanTri={!!user && user.role !== 'USER'}
         onDangXuat={dangXuat}
+        onDiemDanh={() => setMoDiemDanh(true)}
       />
     </View>
   );
@@ -121,11 +127,13 @@ function MenuTaiKhoan({
   dong,
   laQuanTri,
   onDangXuat,
+  onDiemDanh,
 }: {
   mo: boolean;
   dong: () => void;
   laQuanTri: boolean;
   onDangXuat: () => Promise<void>;
+  onDiemDanh: () => void;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -143,7 +151,8 @@ function MenuTaiKhoan({
           <Muc icon="person-outline" nhan="Thông tin cá nhân" onPress={() => di('/(tabs)/account')} />
           <Muc icon="card-outline" nhan="Tài khoản ngân hàng" onPress={() => di('/bank')} />
           <Muc icon="link-outline" nhan="Giới thiệu bạn bè" onPress={() => di('/referrals')} />
-          <Muc icon="calendar-outline" nhan="Điểm danh" onPress={() => di('/checkin')} />
+          {/* Điểm danh là popup — đóng menu rồi mở popup, không chuyển màn. */}
+          <Muc icon="calendar-outline" nhan="Điểm danh" onPress={() => { dong(); onDiemDanh(); }} />
           <Muc icon="flag-outline" nhan="Nhiệm vụ" onPress={() => di('/missions')} />
 
           {laQuanTri && (

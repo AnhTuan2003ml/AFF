@@ -3,6 +3,8 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+
+import { CheckinModal } from '@/components/CheckinModal';
 import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
@@ -134,9 +136,10 @@ export function WalletPanel({ me }: { me: Me }) {
 /* ==================== Điểm danh & cảnh báo ngân hàng ==================== */
 
 export function CheckinEntry() {
+  const [mo, setMo] = useState(false);
   return (
     <Pressable
-      onPress={() => router.push('/checkin')}
+      onPress={() => setMo(true)}
       style={({ pressed }) => [ss.entry, pressed && { opacity: 0.85 }]}>
       <View style={ss.entryIcon}>
         <Ionicons name="calendar-outline" size={19} color={colors.brand} />
@@ -148,6 +151,8 @@ export function CheckinEntry() {
       <View style={ss.entryBtn}>
         <Text style={ss.entryBtnText}>Điểm danh</Text>
       </View>
+      {/* Popup đè lên trang, nút ✕ để đóng — không chuyển màn. */}
+      <CheckinModal mo={mo} dong={() => setMo(false)} />
     </Pressable>
   );
 }

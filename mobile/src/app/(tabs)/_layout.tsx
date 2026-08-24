@@ -73,9 +73,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-      {/* Điểm danh đã chuyển thành icon cạnh chuông trên header (BrandHeader);
-          giữ route nhưng ẩn khỏi thanh tab. */}
-      <Tabs.Screen name="checkin" options={{ href: null }} />
+      {/* Điểm danh giờ là POPUP (CheckinModal) mở từ icon cạnh chuông và khối
+          ở Trang chủ — không còn màn/tab riêng. */}
       <Tabs.Screen
         name="account"
         options={{
