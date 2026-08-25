@@ -120,7 +120,8 @@ export async function getBusinessConfig(
     `,
     [
       appConfig.BUYER_CASHBACK_PERCENT,
-      appConfig.PLATFORM_SHARE_PERCENT,
+      // Nền tảng = phần còn lại sau người mua và 5% đối tác giới thiệu (seed).
+      Math.max(0, 100 - appConfig.BUYER_CASHBACK_PERCENT - 5),
       appConfig.SHARER_REWARD_FROM_PLATFORM_PERCENT,
       appConfig.REFERRER_REWARD_AMOUNT,
       appConfig.REFERRED_USER_BONUS_AMOUNT,

@@ -22,6 +22,10 @@ ALTER TABLE business_config
     ADD CONSTRAINT business_config_small_order_buyer_percent_check
         CHECK (small_order_buyer_percent BETWEEN 0 AND 100);
 
+-- Bất biến cũ (buyer + platform = 100) không còn đúng khi tách 5% cho đối tác
+-- giới thiệu → thay bằng ràng buộc tổng không vượt 100.
+ALTER TABLE business_config DROP CONSTRAINT business_config_check;
+
 -- Áp bộ số mới cho bản cấu hình hiện có (60/5/35, đơn nhỏ 80%).
 UPDATE business_config
 SET buyer_cashback_percent = 60,
@@ -32,6 +36,10 @@ SET buyer_cashback_percent = 60,
     platform_share_percent = 100 - 60 - 5,
     updated_at = now()
 WHERE id = true;
+
+ALTER TABLE business_config
+    ADD CONSTRAINT business_config_check
+        CHECK (buyer_cashback_percent + referrer_share_percent + platform_share_percent <= 100);
 
 -- Đối tác đặc biệt: cờ trên tài khoản NGƯỜI GIỚI THIỆU — mọi đơn của người
 -- do họ giới thiệu, họ hưởng special_partner_share_percent thay vì
