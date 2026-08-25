@@ -75,7 +75,7 @@ export async function registerAdminUserRoutes(
       deps.db,
       `
         SELECT
-          u.id, u.email, u.full_name, u.status, u.role, u.referral_code,
+          u.id, u.email, u.full_name, u.status, u.role, u.referral_code, u.is_special_partner,
           u.created_at,
           referrer.full_name AS referred_by_name,
           (SELECT count(*) FROM referrals r
@@ -258,6 +258,7 @@ export async function registerAdminUserRoutes(
             status: string;
             role: string;
             referral_code: string;
+            is_special_partner: boolean;
             referred_by_name: string | null;
             referred_by_email: string | null;
             created_at: Date;
@@ -280,7 +281,8 @@ export async function registerAdminUserRoutes(
             deps.db,
             `
               SELECT u.id, u.email, u.full_name, u.status, u.role,
-                u.referral_code, referrer.full_name AS referred_by_name,
+                u.referral_code, u.is_special_partner,
+                referrer.full_name AS referred_by_name,
                 referrer.email AS referred_by_email, u.created_at,
                 u.last_login_at, u.email_verified_at, u.deleted_at,
                 u.deletion_reason,
@@ -714,6 +716,47 @@ export async function registerAdminUserRoutes(
           deps.config,
           "success",
           "Đã cập nhật trạng thái tài khoản.",
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect(`/backoffice/accounts/${request.params.id}`);
+    },
+  );
+
+  // Bật/tắt ĐỐI TÁC ĐẶC BIỆT: đơn của người họ giới thiệu chia
+  // specialPartnerSharePercent% (thay vì referrerSharePercent%).
+  app.post<{ Params: { id: string } }>(
+    "/accounts/:id/special-partner",
+    async (request, reply) => {
+      try {
+        const batDacBiet =
+          (request.body as Record<string, unknown>).value === "1";
+        const updated = await query<{ is_special_partner: boolean }>(
+          deps.db,
+          `UPDATE users SET is_special_partner = $2
+           WHERE id = $1 AND deleted_at IS NULL
+           RETURNING is_special_partner`,
+          [request.params.id, batDacBiet],
+        );
+        if (!updated.rows[0]) {
+          throw new AppError("USER_NOT_FOUND", "Không tìm thấy người dùng.");
+        }
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: batDacBiet
+            ? "USER_SPECIAL_PARTNER_ON"
+            : "USER_SPECIAL_PARTNER_OFF",
+          targetType: "USER",
+          targetId: request.params.id,
+          after: { is_special_partner: batDacBiet },
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          batDacBiet
+            ? "Đã đặt làm đối tác đặc biệt."
+            : "Đã bỏ đối tác đặc biệt.",
         );
       } catch (error) {
         flashAdminError(reply, deps.config, error);

@@ -7,7 +7,15 @@ import { writeAuditLog } from "./audit.js";
 export interface BusinessConfig {
   buyerCashbackPercent: number;
   platformSharePercent: number;
+  /** LEGACY — không còn dùng trong tính toán (giữ để đọc dữ liệu cũ). */
   sharerRewardFromPlatformPercent: number;
+  /** % hoa hồng cho đối tác giới thiệu — TRỰC TIẾP trên hoa hồng. */
+  referrerSharePercent: number;
+  /** % cho ĐỐI TÁC ĐẶC BIỆT (users.is_special_partner) — thay cho mức thường. */
+  specialPartnerSharePercent: number;
+  /** Đơn có giá trị ≤ ngưỡng này (₫) thì người mua nhận smallOrderBuyerPercent. */
+  smallOrderThresholdVnd: number;
+  smallOrderBuyerPercent: number;
   referrerRewardAmountVnd: number;
   referredUserBonusAmountVnd: number;
   referralRewardTrigger: string;
@@ -24,6 +32,10 @@ interface BusinessConfigRow {
   buyer_cashback_percent: number;
   platform_share_percent: number;
   sharer_reward_from_platform_percent: number;
+  referrer_share_percent: number;
+  special_partner_share_percent: number;
+  small_order_threshold_vnd: string;
+  small_order_buyer_percent: number;
   referrer_reward_amount_vnd: string;
   referred_user_bonus_amount_vnd: string;
   referral_reward_trigger: string;
@@ -41,6 +53,10 @@ function mapRow(row: BusinessConfigRow): BusinessConfig {
     buyerCashbackPercent: row.buyer_cashback_percent,
     platformSharePercent: row.platform_share_percent,
     sharerRewardFromPlatformPercent: row.sharer_reward_from_platform_percent,
+    referrerSharePercent: row.referrer_share_percent,
+    specialPartnerSharePercent: row.special_partner_share_percent,
+    smallOrderThresholdVnd: Number(row.small_order_threshold_vnd),
+    smallOrderBuyerPercent: row.small_order_buyer_percent,
     referrerRewardAmountVnd: Number(row.referrer_reward_amount_vnd),
     referredUserBonusAmountVnd: Number(row.referred_user_bonus_amount_vnd),
     referralRewardTrigger: row.referral_reward_trigger,
@@ -56,7 +72,9 @@ function mapRow(row: BusinessConfigRow): BusinessConfig {
 
 const SELECT_SQL = `
   SELECT buyer_cashback_percent, platform_share_percent,
-    sharer_reward_from_platform_percent, referrer_reward_amount_vnd::text,
+    sharer_reward_from_platform_percent, referrer_share_percent,
+    special_partner_share_percent, small_order_threshold_vnd::text,
+    small_order_buyer_percent, referrer_reward_amount_vnd::text,
     referred_user_bonus_amount_vnd::text, referral_reward_trigger,
     affiliate_attribution_days, cashback_hold_days,
     min_withdraw_amount_vnd::text, enable_share_link, enable_referral_program,
@@ -84,13 +102,17 @@ export async function getBusinessConfig(
         sharer_reward_from_platform_percent, referrer_reward_amount_vnd,
         referred_user_bonus_amount_vnd, referral_reward_trigger,
         affiliate_attribution_days, cashback_hold_days,
-        min_withdraw_amount_vnd, enable_share_link, enable_referral_program
+        min_withdraw_amount_vnd, enable_share_link, enable_referral_program,
+        referrer_share_percent, special_partner_share_percent,
+        small_order_threshold_vnd, small_order_buyer_percent
       ) VALUES (
-        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 5, 10, 25000, 80
       )
       ON CONFLICT (id) DO UPDATE SET id = business_config.id
       RETURNING buyer_cashback_percent, platform_share_percent,
-        sharer_reward_from_platform_percent, referrer_reward_amount_vnd::text,
+        sharer_reward_from_platform_percent, referrer_share_percent,
+        special_partner_share_percent, small_order_threshold_vnd::text,
+        small_order_buyer_percent, referrer_reward_amount_vnd::text,
         referred_user_bonus_amount_vnd::text, referral_reward_trigger,
         affiliate_attribution_days, cashback_hold_days,
         min_withdraw_amount_vnd::text, enable_share_link,
@@ -115,7 +137,10 @@ export async function getBusinessConfig(
 
 export interface BusinessConfigPatch {
   buyerCashbackPercent: number;
-  sharerRewardFromPlatformPercent: number;
+  referrerSharePercent: number;
+  specialPartnerSharePercent: number;
+  smallOrderThresholdVnd: number;
+  smallOrderBuyerPercent: number;
   referrerRewardAmountVnd: number;
   referredUserBonusAmountVnd: number;
   affiliateAttributionDays: number;
@@ -142,13 +167,35 @@ export async function updateBusinessConfig(
       "Tỷ lệ hoàn cho người mua phải trong khoảng 0-100.",
     );
   }
+  for (const [nhan, giaTri] of [
+    ["đối tác giới thiệu", patch.referrerSharePercent],
+    ["đối tác đặc biệt", patch.specialPartnerSharePercent],
+    ["người mua với đơn nhỏ", patch.smallOrderBuyerPercent],
+  ] as const) {
+    if (giaTri < 0 || giaTri > 100) {
+      throw new AppError(
+        "INVALID_BUSINESS_CONFIG",
+        `Tỷ lệ ${nhan} phải trong khoảng 0-100.`,
+      );
+    }
+  }
+  const sharerToiDa = Math.max(
+    patch.referrerSharePercent,
+    patch.specialPartnerSharePercent,
+  );
   if (
-    patch.sharerRewardFromPlatformPercent < 0 ||
-    patch.sharerRewardFromPlatformPercent > 100
+    patch.buyerCashbackPercent + sharerToiDa > 100 ||
+    patch.smallOrderBuyerPercent + sharerToiDa > 100
   ) {
     throw new AppError(
       "INVALID_BUSINESS_CONFIG",
-      "Tỷ lệ thưởng chủ link (trên phần nền tảng) phải trong khoảng 0-100.",
+      "Tổng tỷ lệ người mua + đối tác không được vượt 100%.",
+    );
+  }
+  if (patch.smallOrderThresholdVnd < 0) {
+    throw new AppError(
+      "INVALID_BUSINESS_CONFIG",
+      "Ngưỡng đơn nhỏ không được âm.",
     );
   }
   if (patch.referrerRewardAmountVnd < 0 || patch.referredUserBonusAmountVnd < 0) {
@@ -170,7 +217,9 @@ export async function updateBusinessConfig(
     );
   }
 
-  const platformSharePercent = 100 - patch.buyerCashbackPercent;
+  // Nền tảng giữ phần còn lại sau người mua và đối tác giới thiệu (mức thường).
+  const platformSharePercent =
+    100 - patch.buyerCashbackPercent - patch.referrerSharePercent;
   const before = await getBusinessConfig(db, appConfig);
 
   const updated = await query<BusinessConfigRow>(
@@ -179,19 +228,24 @@ export async function updateBusinessConfig(
       UPDATE business_config SET
         buyer_cashback_percent = $1,
         platform_share_percent = $2,
-        sharer_reward_from_platform_percent = $3,
-        referrer_reward_amount_vnd = $4,
-        referred_user_bonus_amount_vnd = $5,
-        affiliate_attribution_days = $6,
-        cashback_hold_days = $7,
-        min_withdraw_amount_vnd = $8,
-        enable_share_link = $9,
-        enable_referral_program = $10,
-        enable_auto_cashback_approval = $11,
-        updated_by = $12
+        referrer_share_percent = $3,
+        special_partner_share_percent = $4,
+        small_order_threshold_vnd = $5,
+        small_order_buyer_percent = $6,
+        referrer_reward_amount_vnd = $7,
+        referred_user_bonus_amount_vnd = $8,
+        affiliate_attribution_days = $9,
+        cashback_hold_days = $10,
+        min_withdraw_amount_vnd = $11,
+        enable_share_link = $12,
+        enable_referral_program = $13,
+        enable_auto_cashback_approval = $14,
+        updated_by = $15
       WHERE id = true
       RETURNING buyer_cashback_percent, platform_share_percent,
-        sharer_reward_from_platform_percent, referrer_reward_amount_vnd::text,
+        sharer_reward_from_platform_percent, referrer_share_percent,
+        special_partner_share_percent, small_order_threshold_vnd::text,
+        small_order_buyer_percent, referrer_reward_amount_vnd::text,
         referred_user_bonus_amount_vnd::text, referral_reward_trigger,
         affiliate_attribution_days, cashback_hold_days,
         min_withdraw_amount_vnd::text, enable_share_link,
@@ -200,7 +254,10 @@ export async function updateBusinessConfig(
     [
       patch.buyerCashbackPercent,
       platformSharePercent,
-      patch.sharerRewardFromPlatformPercent,
+      patch.referrerSharePercent,
+      patch.specialPartnerSharePercent,
+      patch.smallOrderThresholdVnd,
+      patch.smallOrderBuyerPercent,
       patch.referrerRewardAmountVnd,
       patch.referredUserBonusAmountVnd,
       patch.affiliateAttributionDays,

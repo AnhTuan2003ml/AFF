@@ -8,7 +8,7 @@ import { getBusinessConfig } from "./business-config.js";
  * và email đăng ký. Con số lấy từ cấu hình nghiệp vụ trong DB, không viết cứng.
  * Sửa nội dung ảnh hưởng quyền lợi thì tăng USER_POLICY_VERSION.
  */
-export const USER_POLICY_VERSION = "2026.08";
+export const USER_POLICY_VERSION = "2026.08.25";
 
 export const USER_POLICY_PATH = "/chinh-sach-nguoi-dung";
 
@@ -16,6 +16,8 @@ export interface UserPolicyFacts {
   appName: string;
   appOrigin: string;
   buyerCashbackPercent: number;
+  smallOrderThresholdVnd: number;
+  smallOrderBuyerPercent: number;
   cashbackHoldDays: number;
   affiliateAttributionDays: number;
   minWithdrawAmountVnd: number;
@@ -31,6 +33,8 @@ export async function loadUserPolicyFacts(
     appName: config.APP_NAME,
     appOrigin: config.APP_ORIGIN,
     buyerCashbackPercent: business.buyerCashbackPercent,
+    smallOrderThresholdVnd: business.smallOrderThresholdVnd,
+    smallOrderBuyerPercent: business.smallOrderBuyerPercent,
     cashbackHoldDays: business.cashbackHoldDays,
     affiliateAttributionDays: business.affiliateAttributionDays,
     minWithdrawAmountVnd: business.minWithdrawAmountVnd,
@@ -133,8 +137,10 @@ export function buildUserPolicy(facts: UserPolicyFacts): UserPolicyDocument {
         "4. Tiền hoàn được tính thế nào",
         [
           `Sàn trả hoa hồng cho ${app} sau khi đơn hợp lệ. Bạn nhận ` +
-            `${facts.buyerCashbackPercent}% phần hoa hồng thực nhận của đơn đó; phần ` +
-            "còn lại dùng để vận hành nền tảng.",
+            `${facts.buyerCashbackPercent}% phần hoa hồng thực nhận của đơn đó ` +
+            `(riêng đơn có giá trị từ ${facts.smallOrderThresholdVnd.toLocaleString("vi-VN")}₫ ` +
+            `trở xuống: tới ${facts.smallOrderBuyerPercent}%); phần còn lại chia cho ` +
+            "người giới thiệu (nếu có) và vận hành nền tảng.",
           "Số tiền hiển thị trước khi mua là DỰ KIẾN, tính theo tỷ lệ hoa hồng sàn " +
             "công bố tại thời điểm xem. Số tiền cuối cùng lấy theo hoa hồng thực tế " +
             "trong báo cáo của sàn và có thể thấp hơn dự kiến khi bạn dùng thêm mã " +

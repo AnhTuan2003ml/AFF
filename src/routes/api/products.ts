@@ -9,7 +9,11 @@ import {
   PRODUCT_PLATFORMS,
 } from "../../services/affiliate.js";
 import { getBusinessConfig } from "../../services/business-config.js";
-import { lookupProductPreview } from "../../services/product-preview.js";
+import { resolveBuyerPercent } from "../../services/commission.js";
+import {
+  calculateBuyerCashback,
+  lookupProductPreview,
+} from "../../services/product-preview.js";
 import { storePreview, takePreview } from "../../services/preview-cache.js";
 import type { ApiDeps } from "./deps.js";
 
@@ -43,13 +47,26 @@ export async function registerProductApiRoutes(
         request.body,
       );
       const businessConfig = await getBusinessConfig(deps.db, deps.config);
-      const product = await lookupProductPreview(
+      let product = await lookupProductPreview(
         deps.config,
         input.productUrl,
         businessConfig.buyerCashbackPercent,
         fetch,
         input.platform,
       );
+      // Đơn nhỏ (giá ≤ ngưỡng cấu hình, mặc định 25.000₫) hoàn tới 80%: chỉ
+      // biết giá SAU khi tra cứu nên tính lại % và tiền hoàn tại đây.
+      const buyerPercent = resolveBuyerPercent(product.priceVnd, businessConfig);
+      if (buyerPercent !== product.buyerCashbackPercent) {
+        product = {
+          ...product,
+          buyerCashbackPercent: buyerPercent,
+          buyerCashbackVnd: calculateBuyerCashback(
+            product.affiliateCommissionVnd,
+            buyerPercent,
+          ),
+        };
+      }
       const previewId = storePreview(request.currentUser?.id ?? "guest", product);
       return reply.send({ product, previewId });
     },

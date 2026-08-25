@@ -24,13 +24,25 @@
         <div class="stack-form">
           <label for="config-buyer-cashback-input">Người mua nhận (%)
             <input id="config-buyer-cashback-input" type="number" name="buyerCashbackPercent" min="0" max="100" value="{{ businessConfig.buyerCashbackPercent }}" required data-required-message="Vui lòng nhập tỷ lệ." data-min-message="Tỷ lệ tối thiểu là 0%." data-max-message="Tỷ lệ tối đa là 100%.">
-            <small>Nền tảng tự giữ phần còn lại ({{ 100 - businessConfig.buyerCashbackPercent }}%).</small>
+            <small>Đơn trên ngưỡng đơn nhỏ. Nền tảng giữ phần còn lại ({{ 100 - businessConfig.buyerCashbackPercent - businessConfig.referrerSharePercent }}% khi có giới thiệu thường).</small>
             <small class="field-error" id="config-buyer-cashback-input-error" hidden></small>
           </label>
-          <label for="config-sharer-reward-input">Chủ link chia sẻ nhận, tính trên phần nền tảng (%)
-            <input id="config-sharer-reward-input" type="number" name="sharerRewardFromPlatformPercent" min="0" max="100" value="{{ businessConfig.sharerRewardFromPlatformPercent }}" required data-required-message="Vui lòng nhập tỷ lệ." data-min-message="Tỷ lệ tối thiểu là 0%." data-max-message="Tỷ lệ tối đa là 100%.">
-            <small>Ví dụ 80/20 và 20% ở đây → chủ link nhận 4% tổng hoa hồng, nền tảng còn 16%.</small>
-            <small class="field-error" id="config-sharer-reward-input-error" hidden></small>
+          <label for="config-referrer-share-input">Đối tác giới thiệu nhận (% hoa hồng)
+            <input id="config-referrer-share-input" type="number" name="referrerSharePercent" min="0" max="100" value="{{ businessConfig.referrerSharePercent }}" required data-required-message="Vui lòng nhập tỷ lệ." data-min-message="Tỷ lệ tối thiểu là 0%." data-max-message="Tỷ lệ tối đa là 100%.">
+            <small>Tính TRỰC TIẾP trên hoa hồng (chuẩn 5%) — áp cho chủ link chia sẻ và người giới thiệu.</small>
+            <small class="field-error" id="config-referrer-share-input-error" hidden></small>
+          </label>
+          <label for="config-special-share-input">Đối tác ĐẶC BIỆT nhận (% hoa hồng)
+            <input id="config-special-share-input" type="number" name="specialPartnerSharePercent" min="0" max="100" value="{{ businessConfig.specialPartnerSharePercent }}" required>
+            <small>Thay mức thường với đơn của người mà đối tác đặc biệt giới thiệu (chuẩn 10%). Gắn cờ từng người ở trang chi tiết tài khoản.</small>
+          </label>
+          <label for="config-small-threshold-input">Ngưỡng đơn nhỏ (₫)
+            <input id="config-small-threshold-input" type="number" name="smallOrderThresholdVnd" min="0" value="{{ businessConfig.smallOrderThresholdVnd }}" required>
+            <small>Đơn có giá trị từ mức này trở xuống áp tỷ lệ hoàn đơn nhỏ (chuẩn 25.000₫). Đặt 0 để tắt.</small>
+          </label>
+          <label for="config-small-buyer-input">Người mua nhận với đơn nhỏ (%)
+            <input id="config-small-buyer-input" type="number" name="smallOrderBuyerPercent" min="0" max="100" value="{{ businessConfig.smallOrderBuyerPercent }}" required>
+            <small>"Hoàn tới {{ businessConfig.smallOrderBuyerPercent }}%" cho đơn ≤ ngưỡng (chuẩn 80%).</small>
           </label>
           <label class="switch-row">
             <input type="checkbox" name="enableShareLink" {% if businessConfig.enableShareLink %}checked{% endif %}>

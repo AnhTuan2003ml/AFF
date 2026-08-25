@@ -1,7 +1,21 @@
+/**
+ * Chia hoa hồng thực nhận của một đơn theo chính sách 2026-08-25:
+ *
+ *   · Người mua nhận `buyerCashbackPercent`% (60% chuẩn; đơn ≤ ngưỡng đơn nhỏ
+ *     — 25.000₫ — thì tới `smallOrderBuyerPercent`% = 80%).
+ *   · Người chia sẻ/giới thiệu nhận `sharerSharePercent`% TRỰC TIẾP trên hoa
+ *     hồng (5% chuẩn; 10% nếu là ĐỐI TÁC ĐẶC BIỆT — quyết định ở nơi gọi).
+ *   · Nền tảng giữ phần còn lại (35% chuẩn; 30% với đối tác đặc biệt).
+ *
+ * Buyer/sharer làm tròn xuống, phần dư về nền tảng để tổng luôn khớp
+ * commissionVnd (ledger cân bằng).
+ */
+
 export interface CommissionRates {
+  /** % hoa hồng người mua nhận (đã chọn theo giá trị đơn ở nơi gọi). */
   buyerCashbackPercent: number;
-  platformSharePercent: number;
-  sharerRewardFromPlatformPercent: number;
+  /** % hoa hồng người chia sẻ/giới thiệu nhận — TRỰC TIẾP trên hoa hồng. */
+  sharerSharePercent: number;
 }
 
 export interface CommissionSplit {
@@ -13,12 +27,6 @@ export interface CommissionSplit {
   sharerPercent: number;
 }
 
-/**
- * Chia hoa hồng thực nhận của một đơn: buyer nhận buyerCashbackPercent%;
- * nếu mua qua link chia sẻ, sharer nhận sharerRewardFromPlatformPercent%
- * trích từ phần nền tảng. Buyer/sharer làm tròn xuống, phần dư về nền tảng
- * để tổng luôn khớp commissionVnd (ledger cân bằng).
- */
 export function computeCommissionSplit(
   commissionVnd: number,
   rates: CommissionRates,
@@ -34,11 +42,11 @@ export function computeCommissionSplit(
   }
 
   const buyerPercent = rates.buyerCashbackPercent;
-  const platformRawPercent = rates.platformSharePercent;
-  const sharerPercent = hasSharer
-    ? Math.floor((platformRawPercent * rates.sharerRewardFromPlatformPercent) / 100)
-    : 0;
-  const platformPercent = platformRawPercent - sharerPercent;
+  const sharerPercent = hasSharer ? rates.sharerSharePercent : 0;
+  if (buyerPercent + sharerPercent > 100) {
+    throw new Error("Tổng tỷ lệ người mua + người chia sẻ vượt quá 100%.");
+  }
+  const platformPercent = 100 - buyerPercent - sharerPercent;
 
   if (commissionVnd === 0) {
     return { buyerVnd: 0, platformVnd: 0, sharerVnd: 0, buyerPercent, platformPercent, sharerPercent };
@@ -51,4 +59,28 @@ export function computeCommissionSplit(
   const platformVnd = commissionVnd - buyerVnd - sharerVnd;
 
   return { buyerVnd, platformVnd, sharerVnd, buyerPercent, platformPercent, sharerPercent };
+}
+
+/**
+ * % người mua nhận theo GIÁ TRỊ ĐƠN: đơn ≤ ngưỡng đơn nhỏ (> 0) nhận
+ * `smallOrderBuyerPercent`; còn lại nhận `buyerCashbackPercent`. Đơn chưa rõ
+ * giá trị (null/0) dùng tỷ lệ chuẩn — không tự bịa mức cao hơn.
+ */
+export function resolveBuyerPercent(
+  orderAmountVnd: number | null,
+  config: {
+    buyerCashbackPercent: number;
+    smallOrderThresholdVnd: number;
+    smallOrderBuyerPercent: number;
+  },
+): number {
+  if (
+    orderAmountVnd !== null &&
+    orderAmountVnd > 0 &&
+    config.smallOrderThresholdVnd > 0 &&
+    orderAmountVnd <= config.smallOrderThresholdVnd
+  ) {
+    return config.smallOrderBuyerPercent;
+  }
+  return config.buyerCashbackPercent;
 }

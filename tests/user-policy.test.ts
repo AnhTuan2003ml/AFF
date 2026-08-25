@@ -11,6 +11,8 @@ function facts(overrides: Partial<UserPolicyFacts> = {}): UserPolicyFacts {
     appName: "ShopTik",
     appOrigin: "https://shoptik.example/",
     buyerCashbackPercent: 80,
+  smallOrderThresholdVnd: 25_000,
+  smallOrderBuyerPercent: 80,
     cashbackHoldDays: 15,
     affiliateAttributionDays: 30,
     minWithdrawAmountVnd: 100_000,

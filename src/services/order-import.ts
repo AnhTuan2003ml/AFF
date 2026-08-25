@@ -4,7 +4,7 @@ import { query, type Database } from "../db.js";
 import { normalizeEmail } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
 import { getBusinessConfig } from "./business-config.js";
-import { computeCommissionSplit } from "./commission.js";
+import { computeCommissionSplit, resolveBuyerPercent } from "./commission.js";
 import {
   creditSplitCashback,
   moveSplitPendingToAvailable,
@@ -613,8 +613,8 @@ async function resolveSharer(
 
 /**
  * Người giới thiệu tài khoản của người mua. B do A mời thì MỌI đơn của B,
- * A hưởng phần thưởng chia sẻ (sharerRewardFromPlatformPercent × phần nền
- * tảng) — trừ khi đơn đã có chủ link chia sẻ đích danh.
+ * A hưởng referrerSharePercent% hoa hồng (đối tác đặc biệt:
+ * specialPartnerSharePercent%) — trừ khi đơn đã có chủ link chia sẻ đích danh.
  */
 async function resolveReferralSharer(
   db: Database,
@@ -796,14 +796,29 @@ export async function importOrderRow(
       : undefined;
   const sharerUserId = explicitSharer ?? referralSharer;
 
+  // Đối tác ĐẶC BIỆT hưởng specialPartnerSharePercent thay cho mức thường.
+  let sharerLaDacBiet = false;
+  if (sharerUserId) {
+    const sharerRow = await query<{ is_special_partner: boolean }>(
+      db,
+      "SELECT is_special_partner FROM users WHERE id = $1",
+      [sharerUserId],
+    );
+    sharerLaDacBiet = sharerRow.rows[0]?.is_special_partner ?? false;
+  }
+
+  // Chính sách 2026-08-25: người mua 60% (đơn ≤ 25k: 80%), đối tác giới thiệu
+  // 5% (đặc biệt 10%) TRỰC TIẾP trên hoa hồng, nền tảng giữ phần còn lại.
   const split = computeCommissionSplit(
     commission,
     {
-      buyerCashbackPercent: businessConfig.buyerCashbackPercent,
-      platformSharePercent: businessConfig.platformSharePercent,
-      sharerRewardFromPlatformPercent: sharerUserId
-        ? businessConfig.sharerRewardFromPlatformPercent
-        : 0,
+      buyerCashbackPercent: resolveBuyerPercent(
+        orderAmount > 0 ? orderAmount : null,
+        businessConfig,
+      ),
+      sharerSharePercent: sharerLaDacBiet
+        ? businessConfig.specialPartnerSharePercent
+        : businessConfig.referrerSharePercent,
     },
     Boolean(sharerUserId),
   );

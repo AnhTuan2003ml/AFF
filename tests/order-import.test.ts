@@ -120,7 +120,7 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
     });
   });
 
-  it("B do A giới thiệu: mọi đơn của B, A nhận 20% phần nền tảng (4% hoa hồng)", async () => {
+  it("B do A giới thiệu: mọi đơn của B, A nhận 5% hoa hồng (trực tiếp)", async () => {
     const { db, close } = await createTestDb();
     cleanup = close;
     const referrerId = await seedUser(db, "a-gioithieu@example.com", "REFA1");
@@ -148,11 +148,11 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
     await fastForwardHold(db, "ORDER-REFERRED-1");
     await releaseDueCashback(db);
 
-    // B nhận 80%, A (người giới thiệu) nhận 4%, nền tảng còn 16%.
+    // B nhận 80%, A (người giới thiệu) nhận 5% trực tiếp, nền tảng còn 15%.
     const buyerBalances = await getWalletBalances(db, buyerId);
     expect(buyerBalances.available).toBe(8_000);
     const referrerBalances = await getWalletBalances(db, referrerId);
-    expect(referrerBalances.available).toBe(400);
+    expect(referrerBalances.available).toBe(500);
 
     const snapshot = await db.query<{
       sharer_user_id: string;
@@ -171,15 +171,15 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
     );
     expect(snapshot.rows[0]).toMatchObject({
       sharer_user_id: referrerId,
-      referral_amount_vnd: "400",
-      platform_amount_vnd: "1600",
+      referral_amount_vnd: "500",
+      platform_amount_vnd: "1500",
       buyer_percent: 80,
-      platform_percent: 16,
-      sharer_percent: 4,
+      platform_percent: 15,
+      sharer_percent: 5,
     });
   });
 
-  it("mua qua link chia sẻ của người khác: 80/4/16, chủ link nhận đúng 4%", async () => {
+  it("mua qua link chia sẻ của người khác: 80/5/15, chủ link nhận đúng 5%", async () => {
     const { db, close } = await createTestDb();
     cleanup = close;
     const buyerId = await seedUser(db, "buyer2@example.com", "BUYERREF2");
@@ -207,7 +207,7 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
     const buyerBalances = await getWalletBalances(db, buyerId);
     const sharerBalances = await getWalletBalances(db, sharerId);
     expect(buyerBalances.available).toBe(80_000);
-    expect(sharerBalances.available).toBe(4_000);
+    expect(sharerBalances.available).toBe(5_000);
 
     const snapshot = await db.query<{
       buyer_percent: number;
@@ -221,8 +221,8 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
        WHERE o.platform_order_id = 'ORDER-SHARED-1'`,
     );
     expect(snapshot.rows[0]?.buyer_percent).toBe(80);
-    expect(snapshot.rows[0]?.sharer_percent).toBe(4);
-    expect(snapshot.rows[0]?.platform_percent).toBe(16);
+    expect(snapshot.rows[0]?.sharer_percent).toBe(5);
+    expect(snapshot.rows[0]?.platform_percent).toBe(15);
     expect(snapshot.rows[0]?.sharer_user_id).toBe(sharerId);
   });
 

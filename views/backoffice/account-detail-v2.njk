@@ -16,6 +16,14 @@
       <div class="profile-meta">
         <span>Mã giới thiệu <code>{{ user.referral_code }}</code></span>
         <span>
+          {% if user.is_special_partner %}<b>⭐ Đối tác đặc biệt</b>{% else %}Đối tác thường{% endif %}
+          <form method="post" action="/backoffice/accounts/{{ user.id }}/special-partner" style="display:inline">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <input type="hidden" name="value" value="{{ '0' if user.is_special_partner else '1' }}">
+            <button type="submit" class="button button-ghost button-small">{{ 'Bỏ đặc biệt' if user.is_special_partner else 'Đặt làm đặc biệt' }}</button>
+          </form>
+        </span>
+        <span>
           {% if user.referred_by_name %}
             Vào qua giới thiệu của <b>{{ user.referred_by_name }}</b> ({{ user.referred_by_email }})
           {% else %}

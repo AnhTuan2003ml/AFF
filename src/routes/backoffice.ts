@@ -661,11 +661,25 @@ export async function registerBackofficeRoutes(
             .int()
             .min(0, "Tỷ lệ người mua nhận phải từ 0 đến 100.")
             .max(100, "Tỷ lệ người mua nhận phải từ 0 đến 100."),
-          sharerRewardFromPlatformPercent: z.coerce
-            .number("Tỷ lệ chủ link chia sẻ phải là số.")
+          referrerSharePercent: z.coerce
+            .number("Tỷ lệ đối tác giới thiệu phải là số.")
             .int()
-            .min(0, "Tỷ lệ chủ link chia sẻ phải từ 0 đến 100.")
-            .max(100, "Tỷ lệ chủ link chia sẻ phải từ 0 đến 100."),
+            .min(0, "Tỷ lệ đối tác giới thiệu phải từ 0 đến 100.")
+            .max(100, "Tỷ lệ đối tác giới thiệu phải từ 0 đến 100."),
+          specialPartnerSharePercent: z.coerce
+            .number("Tỷ lệ đối tác đặc biệt phải là số.")
+            .int()
+            .min(0, "Tỷ lệ đối tác đặc biệt phải từ 0 đến 100.")
+            .max(100, "Tỷ lệ đối tác đặc biệt phải từ 0 đến 100."),
+          smallOrderThresholdVnd: z.coerce
+            .number("Ngưỡng đơn nhỏ phải là số.")
+            .int()
+            .min(0, "Ngưỡng đơn nhỏ không được âm."),
+          smallOrderBuyerPercent: z.coerce
+            .number("Tỷ lệ hoàn đơn nhỏ phải là số.")
+            .int()
+            .min(0, "Tỷ lệ hoàn đơn nhỏ phải từ 0 đến 100.")
+            .max(100, "Tỷ lệ hoàn đơn nhỏ phải từ 0 đến 100."),
           referrerRewardAmountVnd: z.coerce
             .number("Số tiền thưởng người giới thiệu phải là số.")
             .int()
