@@ -12,6 +12,20 @@
   {% endif %}
 {% endmacro %}
 
+{% macro lazada_pill(status) %}
+  {% if status == 'CONNECTED' %}
+    <span class="status-badge status-positive">Đã kết nối</span>
+  {% elif status == 'TOKEN_EXPIRING' %}
+    <span class="status-badge status-pending">Sắp hết hạn</span>
+  {% elif status == 'REAUTH_REQUIRED' %}
+    <span class="status-badge status-negative">Cần authorize lại</span>
+  {% elif status == 'NOT_CONNECTED' %}
+    <span class="status-badge status-neutral">Chưa kết nối</span>
+  {% else %}
+    <span class="status-badge status-neutral">Chưa cấu hình</span>
+  {% endif %}
+{% endmacro %}
+
 {% block backoffice_content %}
   <section class="page-heading">
     <div>
@@ -19,6 +33,35 @@
       <h1>Đồng bộ sàn</h1>
       <p>Hệ thống định kỳ gọi báo cáo chuyển đổi Shopee Affiliate, đối chiếu Sub ID để gán đơn về đúng tài khoản và cập nhật trạng thái đơn trong lịch sử người dùng.</p>
     </div>
+  </section>
+
+  {# ── OAuth Lazada Open Platform: vòng đời token cho Open API (tự refresh).
+     Token không bao giờ hiển thị — chỉ trạng thái/hạn dùng. Luồng Affiliate
+     Master Link của Lazada là phần khác, không phụ thuộc mục này. #}
+  <section class="panel" aria-label="Kết nối Lazada Open Platform">
+    <header class="admin-section-heading">
+      <div>
+        <span class="admin-kicker">LAZADA OPEN PLATFORM</span>
+        <h2>OAuth Lazada {{ lazada_pill(lazadaOauth.status) }}</h2>
+      </div>
+      {% if lazadaOauth.status != 'NOT_CONFIGURED' %}
+        <a class="button button-primary" href="/backoffice/lazada/start">
+          {% if lazadaOauth.status == 'NOT_CONNECTED' %}Kết nối Lazada{% else %}Authorize lại{% endif %}
+        </a>
+      {% endif %}
+    </header>
+    {% if lazadaOauth.status == 'NOT_CONFIGURED' %}
+      <p>Đặt <code>LAZADA_OPEN_API_APP_KEY</code> và <code>LAZADA_OPEN_API_APP_SECRET</code> trong cấu hình máy chủ rồi tải lại trang.</p>
+    {% else %}
+      <div class="profile-meta">
+        <span>Callback: <code>{{ lazadaOauth.redirectUri }}</code> (khai đúng URL này trên Lazada Open Platform)</span>
+        {% if lazadaOauth.account %}<span>Tài khoản: <b>{{ lazadaOauth.account }}</b>{% if lazadaOauth.country %} · {{ lazadaOauth.country | upper }}{% endif %}</span>{% endif %}
+        {% if lazadaOauth.accessTokenExpiresAt %}<span>Access token hết hạn: {{ lazadaOauth.accessTokenExpiresAt | datetime }} (tự gia hạn khi còn dưới 30 phút)</span>{% endif %}
+        {% if lazadaOauth.refreshTokenExpiresAt %}<span>Refresh token hết hạn: {{ lazadaOauth.refreshTokenExpiresAt | datetime }}</span>{% endif %}
+        {% if lazadaOauth.lastRefreshAt %}<span>Lần tự gia hạn gần nhất: {{ lazadaOauth.lastRefreshAt | datetime }}</span>{% endif %}
+      </div>
+      <p><small>Đơn/hoa hồng Affiliate Lazada qua Open API còn chờ quyền (category Loyalty) — hiện đối soát Lazada vẫn theo luồng sẵn có.</small></p>
+    {% endif %}
   </section>
 
   <section class="order-summary-grid" aria-label="Kết quả lượt đồng bộ gần nhất">

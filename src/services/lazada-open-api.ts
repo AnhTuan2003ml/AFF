@@ -25,11 +25,42 @@ export interface LazadaProductItem {
 const BASE_URL = "https://api.lazada.vn/rest";
 const API_PATH = "/product/item/get";
 
+/*
+ * Access token ưu tiên lấy từ OAuth (DB, tự refresh — src/services/
+ * lazada-oauth.ts); ENV LAZADA_OPEN_API_ACCESS_TOKEN chỉ còn là fallback
+ * tương thích cũ. Provider được server.ts đăng ký lúc khởi động — tách qua
+ * setter để file này không import lazada-oauth (tránh vòng import, và test
+ * cũ chạy nguyên trạng khi chưa đăng ký provider).
+ */
+export type LazadaAccessTokenProvider = (
+  config: AppConfig,
+) => Promise<string | null>;
+
+let accessTokenProvider: LazadaAccessTokenProvider | null = null;
+
+export function setLazadaAccessTokenProvider(
+  provider: LazadaAccessTokenProvider | null,
+): void {
+  accessTokenProvider = provider;
+}
+
+async function resolveLazadaAccessToken(config: AppConfig): Promise<string> {
+  if (accessTokenProvider) {
+    try {
+      const token = await accessTokenProvider(config);
+      if (token) return token;
+    } catch {
+      // Provider hỏng thì rơi về ENV — không được chặn tra cứu sản phẩm.
+    }
+  }
+  return config.LAZADA_OPEN_API_ACCESS_TOKEN;
+}
+
 export function isLazadaOpenApiConfigured(config: AppConfig): boolean {
   return Boolean(
     config.LAZADA_OPEN_API_APP_KEY &&
       config.LAZADA_OPEN_API_APP_SECRET &&
-      config.LAZADA_OPEN_API_ACCESS_TOKEN,
+      (config.LAZADA_OPEN_API_ACCESS_TOKEN || accessTokenProvider),
   );
 }
 
@@ -144,9 +175,13 @@ export async function fetchLazadaProductItem(
   const requestFetcher =
     typeof skuIdOrFetcher === "function" ? skuIdOrFetcher : fetcher;
 
+  // DB OAuth token (tự refresh) → fallback ENV.
+  const accessToken = await resolveLazadaAccessToken(config);
+  if (!accessToken) return null;
+
   const params: Record<string, string> = {
     app_key: config.LAZADA_OPEN_API_APP_KEY,
-    access_token: config.LAZADA_OPEN_API_ACCESS_TOKEN,
+    access_token: accessToken,
     timestamp: String(Date.now()),
     sign_method: "sha256",
     item_id: itemId,

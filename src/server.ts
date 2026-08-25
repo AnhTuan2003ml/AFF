@@ -27,6 +27,8 @@ import {
 } from "./lib/format.js";
 import { startSyncScheduler } from "./jobs/sync-scheduler.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { getValidLazadaAccessToken } from "./services/lazada-oauth.js";
+import { setLazadaAccessTokenProvider } from "./services/lazada-open-api.js";
 import { registerPublicRoutes } from "./routes/public.js";
 import { registerAppRoutes } from "./routes/app.js";
 import { registerBackofficeRoutes } from "./routes/backoffice.js";
@@ -296,6 +298,10 @@ app.addHook("preHandler", async (request, reply) => {
 
 await registerPublicRoutes(app, { db, config });
 await registerAuthRoutes(app, { db, config, emailService });
+
+  // Lazada Open API ưu tiên token OAuth trong DB (tự refresh khi sắp hết hạn);
+  // thiếu/hỏng thì lazada-open-api tự rơi về ENV token cũ.
+  setLazadaAccessTokenProvider((cfg) => getValidLazadaAccessToken(db, cfg));
 await app.register(
   async (scoped) =>
     registerAppRoutes(scoped, { db, config, emailService }),

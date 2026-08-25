@@ -109,6 +109,10 @@ const configSchema = z.object({
   LAZADA_OPEN_API_APP_KEY: z.string().trim().default(""),
   LAZADA_OPEN_API_APP_SECRET: z.string().trim().default(""),
   LAZADA_OPEN_API_ACCESS_TOKEN: z.string().trim().default(""),
+  // Callback OAuth Lazada Open Platform. Trống = tự suy ra
+  // APP_ORIGIN + "/auth/lazada/callback" (production:
+  // https://shoptikvn.com/auth/lazada/callback — khai đúng URL này trên Lazada).
+  LAZADA_OAUTH_REDIRECT_URI: z.string().trim().default(""),
   SHOPEE_PRODUCT_LOOKUP_TIMEOUT_MS: z.coerce
     .number()
     .int()

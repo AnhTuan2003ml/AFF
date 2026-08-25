@@ -28,6 +28,10 @@ import {
 } from "../services/google-auth.js";
 import { issueOtp } from "../services/otp.js";
 import { issueMobileTokens } from "../services/mobile-token.js";
+import {
+  exchangeLazadaAuthorizationCode,
+  verifyLazadaOAuthState,
+} from "../services/lazada-oauth.js";
 import { safeNextPath } from "../auth/guards.js";
 
 interface AuthRouteDeps {
@@ -427,6 +431,58 @@ export async function registerAuthRoutes(
           pageTitle: "Đặt lại mật khẩu",
           maskedEmail: maskEmail(email),
         });
+      }
+    },
+  );
+
+  // ── OAuth Lazada Open Platform (tích hợp hệ thống, không phải đăng nhập) ──
+  // Callback cố định khai trên Lazada: {APP_ORIGIN}/auth/lazada/callback.
+  // Lazada gọi thẳng nên KHÔNG đòi đăng nhập; chống CSRF bằng `state` ký HMAC
+  // có hạn 15 phút (tạo ở /backoffice/lazada/start). Không log code/token.
+  app.get(
+    "/auth/lazada/callback",
+    { config: { rateLimit: { max: 20, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const q = request.query as Record<string, unknown>;
+      const done = (kind: "success" | "error", message: string) => {
+        setFlash(reply, deps.config, kind, message);
+        return reply.redirect("/backoffice/sync");
+      };
+      if (typeof q.error === "string" && q.error) {
+        request.log.warn({ lazadaError: q.error.slice(0, 60) }, "Lazada OAuth bị từ chối");
+        return done("error", "Lazada từ chối yêu cầu authorize. Hãy thử lại.");
+      }
+      if (!verifyLazadaOAuthState(deps.config, q.state)) {
+        return done(
+          "error",
+          "Phiên authorize Lazada không hợp lệ hoặc đã hết hạn. Hãy bấm Kết nối Lazada lại.",
+        );
+      }
+      const code = typeof q.code === "string" ? q.code.trim() : "";
+      if (!code) {
+        return done("error", "Lazada không gửi kèm authorization code. Hãy thử lại.");
+      }
+      try {
+        const status = await exchangeLazadaAuthorizationCode(
+          deps.db,
+          deps.config,
+          code,
+        );
+        return done(
+          "success",
+          `Đã kết nối Lazada${status.account ? ` (${status.account})` : ""}${status.country ? ` — ${status.country.toUpperCase()}` : ""}. Token sẽ tự gia hạn.`,
+        );
+      } catch (error) {
+        // AppError từ lazada-oauth đã được lọc sạch secret/token.
+        const message =
+          error instanceof AppError
+            ? error.message
+            : "Đổi authorization code thất bại. Hãy thử lại.";
+        request.log.error(
+          { code: error instanceof AppError ? error.code : "UNKNOWN" },
+          "Lazada OAuth: đổi code thất bại",
+        );
+        return done("error", message);
       }
     },
   );

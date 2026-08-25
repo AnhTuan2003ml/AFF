@@ -6,6 +6,12 @@ import { parseInput } from "../lib/validation.js";
 import { writeAuditLog } from "../services/audit.js";
 import { getBusinessConfig } from "../services/business-config.js";
 import {
+  buildLazadaAuthorizationUrl,
+  createLazadaOAuthState,
+  getLazadaTokenStatus,
+  isLazadaOAuthConfigured,
+} from "../services/lazada-oauth.js";
+import {
   getPlatformSyncSettings,
   updatePlatformSyncSettings,
 } from "../services/platform-sync-settings.js";
@@ -22,16 +28,47 @@ export async function registerAdminSyncRoutes(
   deps: AdminConsoleDeps,
 ): Promise<void> {
   app.get("/sync", async (_request, reply) => {
-    const [syncSettings, businessConfig] = await Promise.all([
+    const [syncSettings, businessConfig, lazadaOauth] = await Promise.all([
       getPlatformSyncSettings(deps.db),
       getBusinessConfig(deps.db, deps.config),
+      getLazadaTokenStatus(deps.db, deps.config),
     ]);
     return reply.view("backoffice/sync.njk", {
       pageTitle: "Đồng bộ sàn",
       backofficeSection: "sync",
       syncSettings,
+      lazadaOauth,
       cashbackHoldDays: businessConfig.cashbackHoldDays,
     });
+  });
+
+  // Bắt đầu OAuth Lazada: chỉ admin (hook backoffice đã chặn), tạo state ký
+  // HMAC hạn 15 phút rồi đưa trình duyệt sang trang authorize của Lazada.
+  app.get("/lazada/start", async (request, reply) => {
+    if (!MANAGE_ROLES.includes(request.currentUser!.role)) {
+      throw new AppError(
+        "FORBIDDEN",
+        "Bạn không có quyền kết nối Lazada.",
+        403,
+      );
+    }
+    if (!isLazadaOAuthConfigured(deps.config)) {
+      setFlash(
+        reply,
+        deps.config,
+        "error",
+        "Chưa cấu hình LAZADA_OPEN_API_APP_KEY / APP_SECRET.",
+      );
+      return reply.redirect("/backoffice/sync");
+    }
+    const state = createLazadaOAuthState(deps.config);
+    return reply.redirect(buildLazadaAuthorizationUrl(deps.config, state));
+  });
+
+  // Trạng thái OAuth Lazada cho admin — KHÔNG bao giờ trả token.
+  app.get("/lazada/status", async (_request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    return getLazadaTokenStatus(deps.db, deps.config);
   });
 
   app.post("/sync", async (request, reply) => {
