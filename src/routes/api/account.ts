@@ -41,7 +41,11 @@ export async function registerAccountApiRoutes(
       balances,
       // Hai số này trang chủ web hiện ngay trên hero và thẻ ví; app cần chúng
       // để dựng lại đúng, nếu không phải gọi thêm một vòng API nữa.
-      cashbackPercent: businessConfig.buyerCashbackPercent,
+      // "Hoàn tới X%" trên app: mức tối đa (đơn nhỏ 80%) — chỉ hiển thị.
+      cashbackPercent: Math.max(
+        businessConfig.buyerCashbackPercent,
+        businessConfig.smallOrderBuyerPercent,
+      ),
       purchasedProducts: Number(daMua.rows[0]?.n ?? 0),
       minWithdrawalVnd: deps.config.MIN_WITHDRAWAL_VND,
     };

@@ -82,7 +82,12 @@ export async function getAppDashboard(
       TIKTOK: isPlatformPurchaseEnabled(config, "TIKTOK"),
       LAZADA: isPlatformPurchaseEnabled(config, "LAZADA"),
     },
-    cashbackRate: businessConfig.buyerCashbackPercent,
+    // Marketing "Hoàn tới X%": mức TỐI ĐA người mua có thể nhận (đơn ≤ ngưỡng
+    // đơn nhỏ được smallOrderBuyerPercent) — cách tính tiền thật không đổi.
+    cashbackRate: Math.max(
+      businessConfig.buyerCashbackPercent,
+      businessConfig.smallOrderBuyerPercent,
+    ),
     // Thẻ ví ở trang chủ vẽ thanh tiến độ "còn bao nhiêu nữa thì rút được",
     // nên cần đúng ngưỡng đang áp dụng chứ không phải con số viết cứng.
     minWithdrawAmountVnd: businessConfig.minWithdrawAmountVnd,
@@ -111,7 +116,12 @@ export async function getGuestDashboard(db: Database, config: AppConfig) {
       TIKTOK: isPlatformPurchaseEnabled(config, "TIKTOK"),
       LAZADA: isPlatformPurchaseEnabled(config, "LAZADA"),
     },
-    cashbackRate: businessConfig.buyerCashbackPercent,
+    // Marketing "Hoàn tới X%": mức TỐI ĐA người mua có thể nhận (đơn ≤ ngưỡng
+    // đơn nhỏ được smallOrderBuyerPercent) — cách tính tiền thật không đổi.
+    cashbackRate: Math.max(
+      businessConfig.buyerCashbackPercent,
+      businessConfig.smallOrderBuyerPercent,
+    ),
     minWithdrawAmountVnd: businessConfig.minWithdrawAmountVnd,
     featuredVoucher: null as FeaturedVoucher | null,
   };
