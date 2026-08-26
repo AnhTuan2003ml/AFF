@@ -22,6 +22,8 @@ export async function requireUser(
 export const GUEST_APP_PATHS: ReadonlySet<string> = new Set([
   "/app",
   "/app/promo-products",
+  // Popup quảng cáo khi mở app — app native (guest lẫn đã đăng nhập) cùng đọc.
+  "/app/entry-promo",
   "/app/discover",
   "/app/discover/offer-products",
   "/app/support",

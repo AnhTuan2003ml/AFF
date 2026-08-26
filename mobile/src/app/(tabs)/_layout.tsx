@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EntryPromoModal } from '@/components/EntryPromoModal';
 import { MascotFab } from '@/components/MascotFab';
 import { PushRegistrar } from '@/components/PushRegistrar';
 import { WelcomeToast } from '@/components/WelcomeToast';
@@ -86,6 +87,8 @@ export default function TabsLayout() {
       />
     </Tabs>
       <MascotFab />
+      {/* Popup quảng cáo khi mở app — cùng nội dung với web, cỡ 60%. */}
+      <EntryPromoModal />
       <WelcomeToast />
       <PushRegistrar />
     </View>
