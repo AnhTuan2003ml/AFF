@@ -8844,3 +8844,46 @@ button.cal-cell.is-today:hover:not(:disabled) {
     justify-self: start
   }
 }
+
+/* ===== Popup quảng cáo khi mở app (entry-promo): thu còn ~60% kích thước cũ
+   — áp cho CẢ khổ điện thoại lẫn desktop (đè các số đo gốc ở khối phía trên).
+   Desktop: 620px → 372px; mobile: 100% → 60% chiều ngang; ảnh 360 → 216px;
+   chữ/đệm/nút đóng thu theo cùng tỷ lệ để bố cục không vỡ. ===== */
+.entry-promo-modal {
+  width: min(372px, 76%);
+  max-height: 62vh;
+}
+
+.entry-promo-scroll {
+  max-height: 62vh;
+}
+
+.entry-promo-visual img {
+  max-height: 216px;
+}
+
+.entry-promo-body {
+  padding: 15px;
+}
+
+.entry-promo-body h2 {
+  font-size: 18px;
+}
+
+.entry-promo-body p {
+  font-size: 12.5px;
+}
+
+.entry-promo-cta {
+  margin-top: 8px;
+}
+
+.entry-promo-closebar {
+  padding: 2px 12px 14px;
+}
+
+.entry-promo-closebar .entry-promo-close {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
