@@ -35,6 +35,7 @@ import { registerBackofficeRoutes } from "./routes/backoffice.js";
 import { registerAdminConsoleRoutes } from "./routes/admin-console.js";
 import { registerApiRoutes } from "./routes/api/index.js";
 import { registerSlackEventRoutes } from "./routes/slack-events.js";
+import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { EmailService } from "./services/email.js";
 import {
   ensureMissionDefinitionsSeeded,
@@ -321,6 +322,7 @@ await app.register(
   { prefix: "/api/v1" },
 );
 await registerSlackEventRoutes(app, { db, config, emailService });
+  await registerWebhookRoutes(app, { config });
 
 app.setNotFoundHandler(async (request, reply) => {
   if (request.url.startsWith("/api/")) {
