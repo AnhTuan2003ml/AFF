@@ -9061,3 +9061,58 @@ button.cal-cell.is-today:hover:not(:disabled) {
   background: #fff;
   color: var(--lx-orange);
 }
+
+/* ===== Dòng liên hệ trong cột thương hiệu (theo mẫu footer icon-led):
+   mỗi dòng một icon màu thương hiệu + nhãn đậm + nội dung. ===== */
+.px-footer-contactlines {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-width: 300px;
+}
+
+.px-footer-contactlines li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.px-footer-contactlines svg {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+}
+
+.px-cline-pin {
+  fill: none;
+  stroke: var(--lx-orange);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.px-cline-mail {
+  fill: none;
+  stroke: var(--lx-orange);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.px-footer-contactlines b {
+  font-weight: 800;
+}
+
+.px-footer-contactlines a {
+  opacity: .88;
+}
+
+.px-footer-contactlines a:hover {
+  color: var(--lx-orange);
+  opacity: 1;
+}
