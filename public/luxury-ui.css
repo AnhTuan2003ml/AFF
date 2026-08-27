@@ -9121,3 +9121,15 @@ button.cal-cell.is-today:hover:not(:disabled) {
   color: var(--lx-orange);
   opacity: 1;
 }
+
+/* Popup quảng cáo: CHỈ ảnh — bấm ảnh mở quảng cáo; ẩn khối chữ + nút
+   "Xem chi tiết". Nút ✕ đã tách riêng bên dưới trên nền mờ. */
+.entry-promo-modal .entry-promo-body {
+  display: none;
+}
+
+.entry-promo-modal .entry-promo-visual img {
+  max-height: none;
+  display: block;
+  cursor: pointer;
+}

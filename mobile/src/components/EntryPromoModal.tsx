@@ -3,10 +3,10 @@ import { Image } from 'expo-image';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { apiFetch } from '@/api/client';
-import { colors, radius, shadow } from '@/theme/tokens';
+import { colors, shadow } from '@/theme/tokens';
 
 /**
  * Popup quảng cáo khi mở app — bản native của `entry-promo` trên web:
@@ -77,41 +77,14 @@ export function EntryPromoModal() {
   return (
     <Modal visible={mo} transparent animationType="fade" onRequestClose={dong}>
       <View style={styles.scrim}>
-        <View style={styles.card}>
-          <ScrollView bounces={false} style={{ maxHeight: 430 }}>
-            {promo.imageUrl ? (
-              <Pressable onPress={moLink} disabled={!promo.targetUrl}>
-                <Image
-                  source={{ uri: promo.imageUrl }}
-                  style={styles.visual}
-                  contentFit="cover"
-                />
-              </Pressable>
-            ) : null}
-            <View style={styles.body}>
-              <View style={styles.chipRow}>
-                <Text style={styles.chip}>{promo.typeLabel}</Text>
-                {promo.badge ? <Text style={styles.badge}>{promo.badge}</Text> : null}
-              </View>
-              <Text style={styles.title}>{promo.title}</Text>
-              {promo.description ? (
-                <Text style={styles.desc} numberOfLines={4}>
-                  {promo.description}
-                </Text>
-              ) : null}
-              {promo.targetUrl ? (
-                <Pressable
-                  onPress={moLink}
-                  style={({ pressed }) => [
-                    styles.cta,
-                    pressed && { backgroundColor: colors.brandStrong },
-                  ]}>
-                  <Text style={styles.ctaText}>Xem chi tiết</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </ScrollView>
-        </View>
+        {/* CHỈ ảnh quảng cáo — bấm vào ảnh là mở; không chữ, không nút CTA. */}
+        <Pressable
+          onPress={moLink}
+          disabled={!promo.targetUrl}
+          accessibilityLabel={promo.title}
+          style={styles.card}>
+          <Image source={{ uri: promo.imageUrl ?? '' }} style={styles.visual} contentFit="cover" />
+        </Pressable>
         {/* Nút ✕ TÁCH RIÊNG dưới thẻ quảng cáo — nổi trên nền mờ trong suốt. */}
         <View style={styles.closebar}>
           <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel="Đóng quảng cáo">
@@ -140,31 +113,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow.card,
   },
-  visual: { width: '100%', height: 216 },
-  body: { padding: 15, gap: 8 },
-  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: colors.brandSoft,
-    color: colors.brand,
-    fontSize: 9,
-    fontWeight: '900',
-    overflow: 'hidden',
-  },
-  badge: { color: colors.brand, fontSize: 11, fontWeight: '800' },
-  title: { fontSize: 18, fontWeight: '900', color: colors.text, letterSpacing: -0.4 },
-  desc: { fontSize: 12.5, color: colors.muted, lineHeight: 18 },
-  cta: {
-    marginTop: 8,
-    height: 42,
-    borderRadius: radius.sm,
-    backgroundColor: colors.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 13.5 },
+  visual: { width: '100%', height: 300 },
   // Nút ✕ nằm NGOÀI thẻ, trên nền mờ — nền khu vực này trong suốt.
   closebar: { alignItems: 'center', marginTop: 14 },
   close: {
