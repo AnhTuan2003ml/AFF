@@ -111,12 +111,12 @@ export function EntryPromoModal() {
               ) : null}
             </View>
           </ScrollView>
-          {/* Nút ✕ ở chân popup — cách đóng duy nhất, tắt đến hết ngày. */}
-          <View style={styles.closebar}>
-            <Pressable onPress={dong} hitSlop={8} style={styles.close} accessibilityLabel="Đóng quảng cáo">
-              <Ionicons name="close" size={18} color={colors.inkSoft} />
-            </Pressable>
-          </View>
+        </View>
+        {/* Nút ✕ TÁCH RIÊNG dưới thẻ quảng cáo — nổi trên nền mờ trong suốt. */}
+        <View style={styles.closebar}>
+          <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel="Đóng quảng cáo">
+            <Ionicons name="close" size={20} color={colors.text} />
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -165,15 +165,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 13.5 },
-  closebar: { alignItems: 'center', paddingVertical: 10 },
+  // Nút ✕ nằm NGOÀI thẻ, trên nền mờ — nền khu vực này trong suốt.
+  closebar: { alignItems: 'center', marginTop: 14 },
   close: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.line,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.paper,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
 });

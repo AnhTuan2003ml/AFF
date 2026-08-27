@@ -9033,3 +9033,31 @@ button.cal-cell.is-today:hover:not(:disabled) {
   font-weight: 700;
   opacity: 1;
 }
+
+/* ===== Nút đóng quảng cáo TÁCH KHỎI khung: thẻ quảng cáo ở trên, nút ✕ tròn
+   trắng nổi trực tiếp trên nền mờ ngay bên dưới (nền trong suốt). ===== */
+.entry-promo-scrim {
+  align-content: center;
+  gap: 14px;
+}
+
+.entry-promo-scrim > .entry-promo-closebar {
+  padding: 0;
+  background: transparent;
+}
+
+.entry-promo-scrim > .entry-promo-closebar .entry-promo-close {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .96);
+  color: #1d2024;
+  font-size: 20px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .30);
+}
+
+.entry-promo-scrim > .entry-promo-closebar .entry-promo-close:hover {
+  background: #fff;
+  color: var(--lx-orange);
+}
