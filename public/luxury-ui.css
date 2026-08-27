@@ -8906,6 +8906,8 @@ button.cal-cell.is-today:hover:not(:disabled) {
   align-items: center;
   gap: 8px;
   align-self: flex-start;
+  /* Một số skin footer kéo giãn item theo cột — ghim nút theo nội dung. */
+  width: fit-content;
   padding: 8px 14px;
   border-radius: 999px;
   background: #1877f2;
