@@ -4,18 +4,15 @@
   const root = document.querySelector("[data-entry-promo]");
   if (!(root instanceof HTMLElement)) return;
 
-  // Nút X là cách đóng DUY NHẤT (nút "Bỏ qua" đã bỏ): bấm X là không hiện
-  // lại quảng cáo trên mọi tab cho đến hết ngày (localStorage lưu theo ngày).
-  const today = new Date();
-  const skipKey =
-    `shoptik-entry-promo-skip:${today.getFullYear()}-` +
-    `${String(today.getMonth() + 1).padStart(2, "0")}-` +
-    `${String(today.getDate()).padStart(2, "0")}`;
-  let skippedToday = false;
+  // Hiện MỘT LẦN mỗi lần mở web (theo phiên trình duyệt): đánh dấu ngay khi
+  // hiện nên đóng xong, chuyển trang/tab menu trong cùng phiên không hiện lại;
+  // mở web lần sau (phiên mới) lại hiện.
+  const SEEN_KEY = "shoptik-entry-promo-seen";
+  let daHien = false;
   try {
-    skippedToday = localStorage.getItem(skipKey) === "1";
+    daHien = sessionStorage.getItem(SEEN_KEY) === "1";
   } catch (e) {}
-  if (skippedToday) return;
+  if (daHien) return;
 
   const closeButton = root.querySelector("[data-entry-promo-close]");
   const imageLink = root.querySelector("[data-entry-promo-image-link]");
@@ -60,6 +57,9 @@
     root.hidden = false;
     root.removeAttribute("inert");
     body.classList.add("is-entry-promo-open");
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch (e) {}
 
     window.requestAnimationFrame(() => {
       closeButton.focus({ preventScroll: true });
@@ -70,9 +70,7 @@
     // Nút X và "Bỏ qua" phải cùng một hành vi: đã đóng là không bật lại
     // khi điều hướng nội bộ (lưu theo ngày, giống nút Bỏ qua) — trước đây
     // X chỉ đóng ở trang hiện tại khiến popup hiện lại ở trang kế tiếp.
-    try {
-      localStorage.setItem(skipKey, "1");
-    } catch (e) {}
+    // Đã đánh dấu "đã hiện" ngay lúc mở — đóng chỉ việc ẩn.
     // Đưa focus ra ngoài dialog trước khi ẩn. Nhờ vậy trình duyệt không còn
     // cảnh báo aria-hidden vì nút X vẫn giữ focus trong phần tử bị ẩn.
     if (previousFocus && document.contains(previousFocus)) {

@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -27,12 +26,9 @@ interface EntryPromo {
   badge: string | null;
 }
 
-const SKIP_KEY = 'shoptik-entry-promo-skip';
-
-function homNay(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// Hiện MỘT LẦN mỗi lần mở app: cờ nằm ở cấp module nên sống trọn phiên chạy
+// (chuyển tab/màn không hiện lại), mở app lần sau reset và hiện lại.
+let daHienTrongPhien = false;
 
 export function EntryPromoModal() {
   const [promo, setPromo] = useState<EntryPromo | null>(null);
@@ -42,13 +38,12 @@ export function EntryPromoModal() {
     let dangSong = true;
     (async () => {
       try {
-        // Đã bấm ✕ hôm nay thì thôi — không gọi mạng nữa.
-        const skipped = await SecureStore.getItemAsync(SKIP_KEY).catch(() => null);
-        if (skipped === homNay()) return;
+        if (daHienTrongPhien) return;
         const data = await apiFetch<{ promo: EntryPromo | null }>('/app/entry-promo', {
           auth: false,
         });
         if (dangSong && data.promo) {
+          daHienTrongPhien = true;
           setPromo(data.promo);
           setMo(true);
         }
@@ -63,7 +58,6 @@ export function EntryPromoModal() {
 
   function dong() {
     setMo(false);
-    void SecureStore.setItemAsync(SKIP_KEY, homNay()).catch(() => {});
   }
 
   async function moLink() {
