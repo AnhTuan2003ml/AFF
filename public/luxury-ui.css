@@ -9108,7 +9108,12 @@ button.cal-cell.is-today:hover:not(:disabled) {
   font-weight: 800;
 }
 
+/* Thắng rule `.px-footer-brand a` (flex + 21px của logo) đè lên link liên hệ. */
+.px-footer-brand .px-footer-contactlines a,
 .px-footer-contactlines a {
+  display: inline;
+  font-size: inherit;
+  gap: 0;
   opacity: .88;
 }
 
