@@ -5401,6 +5401,59 @@ label small {
 .support-thread {
   display: grid;
   gap: 14px;
+  align-content: start;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Ô nhắn trực tiếp dưới hội thoại. */
+.support-chatbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.support-chatbar textarea {
+  flex: 1;
+  min-height: 42px;
+  max-height: 110px;
+  resize: none;
+  padding: 10px 14px;
+  border: 1px solid var(--lx-line);
+  border-radius: 14px;
+  background: var(--lx-paper);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--lx-ink);
+}
+
+.support-chatbar textarea:focus {
+  outline: none;
+  border-color: var(--lx-orange);
+}
+
+.support-chatbar button {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--lx-orange);
+  cursor: pointer;
+}
+
+.support-chatbar button:disabled {
+  opacity: .5;
+}
+
+.support-chatbar button svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
 }
 
 .support-msg {

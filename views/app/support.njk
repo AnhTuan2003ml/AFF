@@ -87,43 +87,43 @@
       </form>
     </section>
 
-    {% if latestRequest or latestReply %}
+    {% if not guest %}
       <button type="button" class="support-reply-trigger" data-reply-open>
-        Phản Hồi{% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
+        Nhắn CSKH{% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
       </button>
       <aside class="panel support-thread-panel" data-reply-panel
         data-has-reply="{{ '1' if latestReply else '' }}" aria-label="Phản Hồi">
         <header class="panel-heading support-thread-head">
           <div>
-            <h2>Phản Hồi</h2>
-            <p>Yêu cầu hiện tại và phản hồi mới nhất từ đội CSKH.</p>
+            <h2>Nhắn với CSKH</h2>
+            <p>Chat trực tiếp — đội CSKH trả lời ngay tại đây.</p>
           </div>
           <button type="button" class="support-reply-close" data-reply-close aria-label="Đóng">×</button>
         </header>
 
-        <div class="support-thread">
-          {% if latestRequest %}
-            <div class="support-msg is-user">
+        <div class="support-thread" data-support-thread>
+          {% for m in messages %}
+            <div class="support-msg is-{{ 'user' if m.authorRole == 'USER' else 'agent' }}" data-message-id="{{ m.id }}">
+              {% if m.authorRole != 'USER' %}<span class="support-msg-avatar" data-agent-mascot aria-hidden="true"></span>{% endif %}
               <div class="support-msg-bubble">
-                <b>Yêu cầu của bạn</b>
-                <p>{{ latestRequest.body }}</p>
-                <time datetime="{{ latestRequest.createdAt.toISOString() }}">{{ latestRequest.createdAt | datetime }}</time>
-              </div>
-            </div>
-          {% endif %}
-          {% if latestReply %}
-            <div class="support-msg is-agent">
-              <span class="support-msg-avatar" data-agent-mascot aria-hidden="true"></span>
-              <div class="support-msg-bubble">
-                <b>Đội CSKH</b>
-                <p>{{ latestReply.body }}</p>
-                <time datetime="{{ latestReply.createdAt.toISOString() }}">{{ latestReply.createdAt | datetime }}</time>
+                <b>{{ 'Bạn' if m.authorRole == 'USER' else 'Đội CSKH' }}</b>
+                <p>{{ m.body }}</p>
+                <time datetime="{{ m.createdAt.toISOString() }}">{{ m.createdAt | datetime }}</time>
               </div>
             </div>
           {% else %}
-            <p class="support-thread-waiting">Đội CSKH đang xử lý — phản hồi sẽ hiện tại đây và báo bằng linh vật.</p>
-          {% endif %}
+            <p class="support-thread-waiting" data-thread-empty>Chưa có trao đổi nào — nhắn cho đội CSKH ngay bên dưới 👇</p>
+          {% endfor %}
         </div>
+
+        {# Ô nhắn trực tiếp: Enter gửi, Shift+Enter xuống dòng (support-reply.js). #}
+        <form class="support-chatbar" data-support-chatbar data-csrf="{{ csrfToken }}" novalidate>
+          <textarea data-chatbar-input rows="1" maxlength="3000" placeholder="Nhắn trực tiếp cho đội CSKH…" aria-label="Nội dung tin nhắn"></textarea>
+          <button type="submit" data-chatbar-send aria-label="Gửi tin">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 20 4l-7.2 16.5-2.1-7.2z"/></svg>
+          </button>
+        </form>
+        <p class="field-error" data-chatbar-error hidden role="alert"></p>
 
         <div class="support-thread-foot">
           <span class="support-thread-foot-ico" aria-hidden="true">
