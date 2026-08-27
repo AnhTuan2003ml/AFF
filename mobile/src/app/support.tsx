@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,9 +18,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  guiHoTro,
   guiYeuCauHoTro,
+  layHoTro,
   laySupportForm,
   type SupportFormData,
+  type SupportMessage,
   type SupportOrderOption,
   type SupportTopic,
 } from '@/api/account';
@@ -31,33 +35,272 @@ import { ngayGio } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
- * Hỗ trợ — FORM THEO MẪU y như trang /app/support của web (không phải chat):
- * chọn vấn đề → (đơn liên quan | mã đơn trên sàn) → mô tả → email nhận phản
- * hồi → Gửi. Đi cùng pipeline với web: POST /api/v1/support/requests →
- * submitSupportRequest → lưu hội thoại + đổ vào thread Slack CSKH (kèm
- * reply_broadcast để hiện ra ngoài kênh). Ô "Phản hồi" hiện yêu cầu mới nhất
- * của bạn và câu trả lời mới nhất của đội CSKH, có linh vật CamiO.
+ * Hỗ trợ — CHAT TRỰC TIẾP với tư vấn viên là mặc định (cùng thread Slack/DB
+ * với web: GET/POST /api/v1/support). Trong chat có:
+ *   - gợi ý CÂU HỎI THƯỜNG GẶP (chip bấm là điền sẵn vào ô nhập);
+ *   - nút "Nhắn tư vấn viên" khi chưa có hội thoại;
+ *   - nút 📦 chọn/đổi ĐƠN HÀNG cần hỏi — đơn được gắn vào đầu tin nhắn
+ *     ("[Đơn Shopee · #123…] …") để tư vấn viên biết ngay ngữ cảnh.
+ * "Gửi yêu cầu theo mẫu" (form như web) vẫn còn — nút "Theo mẫu" trên header.
  */
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const CAU_HOI_THUONG_GAP = [
+  'Đơn đã mua nhưng chưa thấy ghi nhận?',
+  'Bao lâu thì tiền hoàn về ví?',
+  'Cách rút tiền về ngân hàng?',
+  'Vì sao đơn của tôi bị hủy hoàn?',
+  'Link sản phẩm không tra cứu được?',
+  'Tiền hoàn được tính như thế nào?',
+];
 
 type FieldErrors = Partial<Record<'topic' | 'order' | 'code' | 'description' | 'email', string>>;
 
 export default function SupportScreen() {
   const { user } = useSession();
+  const [cheDo, setCheDo] = useState<'chat' | 'form'>('chat');
 
   if (!user) {
     return (
       <View style={styles.screen}>
         <Header />
-        <CanDangNhap mo_ta="Đăng nhập để gửi yêu cầu hỗ trợ và xem phản hồi." />
+        <CanDangNhap mo_ta="Đăng nhập để chat với tư vấn viên và xem lại trao đổi." />
       </View>
     );
   }
-  return <SupportForm />;
+  return cheDo === 'chat' ? (
+    <ChatHoTro moForm={() => setCheDo('form')} />
+  ) : (
+    <SupportForm veChat={() => setCheDo('chat')} />
+  );
 }
 
-function SupportForm() {
+/* ------------------------------------------------------------------ *
+ * Chat trực tiếp với tư vấn viên
+ * ------------------------------------------------------------------ */
+
+function ChatHoTro({ moForm }: { moForm: () => void }) {
+  const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
+  const listRef = useRef<FlatList<SupportMessage>>(null);
+  const inputRef = useRef<TextInput>(null);
+  const [noiDung, setNoiDung] = useState('');
+  const [donDangHoi, setDonDangHoi] = useState<SupportOrderOption | null>(null);
+  const [moChonDon, setMoChonDon] = useState(false);
+
+  const { data, isPending } = useQuery({
+    queryKey: ['support'],
+    queryFn: layHoTro,
+    refetchInterval: 15000,
+  });
+  // Danh sách đơn để gắn vào câu hỏi — dùng chung nguồn với form theo mẫu.
+  const { data: form } = useQuery({
+    queryKey: ['support-form'],
+    queryFn: laySupportForm,
+  });
+
+  const gui = useMutation({
+    mutationFn: guiHoTro,
+    onSuccess: async () => {
+      setNoiDung('');
+      await qc.invalidateQueries({ queryKey: ['support'] });
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 120);
+    },
+  });
+
+  function guiTin() {
+    const text = noiDung.trim();
+    if (!text || gui.isPending) return;
+    // Đơn đang hỏi được gắn vào đầu tin để tư vấn viên thấy ngay ngữ cảnh.
+    gui.mutate(donDangHoi ? `[Đơn ${donDangHoi.label}] ${text}` : text);
+  }
+
+  const tin = data ?? [];
+  const coDon = (form?.orderOptions.length ?? 0) > 0;
+  const loiChao = useMemo(() => CAMIO_VOICE.supportIntro[0], []);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={insets.top}>
+      <Header nutPhai={{ nhan: 'Theo mẫu', onPress: moForm }} />
+
+      {isPending ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.brand} />
+        </View>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={tin}
+          keyExtractor={(m) => m.id}
+          contentContainerStyle={styles.list}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          ListEmptyComponent={
+            <View style={styles.intro2}>
+              <Mascot mood="haohung" size={72} />
+              <Text style={styles.introTitle}>Tư vấn viên đang trực</Text>
+              <Text style={styles.introSub}>{loiChao}</Text>
+              <Pressable
+                onPress={() => inputRef.current?.focus()}
+                style={({ pressed }) => [
+                  styles.ctaChat,
+                  pressed && { backgroundColor: colors.brandStrong },
+                ]}>
+                <Ionicons name="chatbubble-ellipses" size={16} color={colors.onBrand} />
+                <Text style={styles.ctaChatText}>Nhắn tư vấn viên</Text>
+              </Pressable>
+            </View>
+          }
+          renderItem={({ item }) => <TinNhan m={item} />}
+        />
+      )}
+
+      {/* Gợi ý câu hỏi thường gặp — bấm là điền vào ô nhập, sửa rồi gửi. */}
+      <View style={styles.faqWrap}>
+        <Text style={styles.faqLabel}>Câu hỏi thường gặp</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.faqRow}>
+          {CAU_HOI_THUONG_GAP.map((q) => (
+            <Pressable
+              key={q}
+              onPress={() => {
+                setNoiDung(q);
+                inputRef.current?.focus();
+              }}
+              style={({ pressed }) => [styles.faqChip, pressed && { opacity: 0.8 }]}>
+              <Text style={styles.faqChipText}>{q}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Đơn đang hỏi — bấm để CHỌN LẠI, ✕ để bỏ gắn. */}
+      {donDangHoi ? (
+        <View style={styles.attachBar}>
+          <Pressable style={styles.attachChip} onPress={() => setMoChonDon(true)}>
+            <Ionicons name="cube-outline" size={14} color={colors.brand} />
+            <Text style={styles.attachText} numberOfLines={1}>
+              Đang hỏi về: {donDangHoi.label}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={colors.brand} />
+          </Pressable>
+          <Pressable onPress={() => setDonDangHoi(null)} hitSlop={8} style={styles.attachClear}>
+            <Ionicons name="close" size={14} color={colors.muted} />
+          </Pressable>
+        </View>
+      ) : null}
+
+      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+        {/* Chọn đơn hàng cần hỏi */}
+        <Pressable
+          onPress={() => coDon && setMoChonDon(true)}
+          hitSlop={6}
+          accessibilityLabel="Chọn đơn hàng cần hỏi"
+          style={[styles.attachBtn, !coDon && { opacity: 0.4 }]}>
+          <Ionicons name="cube-outline" size={20} color={colors.brand} />
+        </Pressable>
+        <TextInput
+          ref={inputRef}
+          value={noiDung}
+          onChangeText={setNoiDung}
+          placeholder="Nhắn tư vấn viên…"
+          placeholderTextColor={colors.muted}
+          style={styles.chatInput}
+          multiline
+        />
+        <Pressable
+          onPress={guiTin}
+          disabled={!noiDung.trim() || gui.isPending}
+          style={({ pressed }) => [
+            styles.send,
+            (!noiDung.trim() || gui.isPending) && { opacity: 0.5 },
+            pressed && { backgroundColor: colors.brandStrong },
+          ]}>
+          {gui.isPending ? (
+            <ActivityIndicator color={colors.onBrand} size="small" />
+          ) : (
+            <Ionicons name="send" size={18} color={colors.onBrand} />
+          )}
+        </Pressable>
+      </View>
+
+      {/* Chọn / chọn lại đơn hàng cần hỏi */}
+      <Modal
+        visible={moChonDon}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoChonDon(false)}>
+        <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Đơn hàng cần hỏi</Text>
+            <Text style={styles.sheetSub}>Đơn được gắn vào tin nhắn để tư vấn viên nắm ngay.</Text>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {(form?.orderOptions ?? []).map((o) => (
+                <Pressable
+                  key={o.key}
+                  onPress={() => {
+                    setDonDangHoi(o);
+                    setMoChonDon(false);
+                    inputRef.current?.focus();
+                  }}
+                  style={({ pressed }) => [
+                    styles.option,
+                    donDangHoi?.key === o.key && styles.optionOn,
+                    pressed && { opacity: 0.85 },
+                  ]}>
+                  <Text style={styles.optionText}>{o.label}</Text>
+                  {donDangHoi?.key === o.key && (
+                    <Ionicons name="checkmark" size={18} color={colors.brand} />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+            {donDangHoi ? (
+              <Pressable
+                style={styles.ghost}
+                onPress={() => {
+                  setDonDangHoi(null);
+                  setMoChonDon(false);
+                }}>
+                <Text style={styles.ghostText}>Bỏ gắn đơn</Text>
+              </Pressable>
+            ) : null}
+            <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}>
+              <Text style={styles.ghostText}>Đóng</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+function TinNhan({ m }: { m: SupportMessage }) {
+  const cua_toi = m.authorRole === 'USER';
+  return (
+    <View style={[styles.msgRow, cua_toi ? styles.msgRight : styles.msgLeft]}>
+      {!cua_toi && (
+        <View style={styles.agent}>
+          <Mascot mood="haohung" size={30} />
+        </View>
+      )}
+      <View style={[styles.bubble, cua_toi ? styles.bubbleMe : styles.bubbleAgent]}>
+        <Text style={[styles.bubbleText, cua_toi && { color: colors.onBrand }]}>{m.body}</Text>
+        <Text style={[styles.bubbleTime, cua_toi && { color: 'rgba(255,255,255,0.7)' }]}>
+          {ngayGio(m.createdAt)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Gửi yêu cầu theo mẫu (giữ nguyên, vào từ nút "Theo mẫu")
+ * ------------------------------------------------------------------ */
+
+function SupportForm({ veChat }: { veChat: () => void }) {
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
   const { data, isPending, isError, refetch } = useQuery({
@@ -141,10 +384,7 @@ function SupportForm() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={insets.top}>
-      <Header
-        coPhanHoi={!!data?.latestReply}
-        onMoPhanHoi={data?.latestRequest || data?.latestReply ? () => setMoPhanHoi(true) : undefined}
-      />
+      <Header nutPhai={{ nhan: '💬 Chat', onPress: veChat }} />
 
       {isPending ? (
         <View style={styles.center}>
@@ -170,6 +410,14 @@ function SupportForm() {
               <Text style={styles.introSub}>{loiChao}</Text>
             </View>
           </View>
+
+          {(data.latestRequest || data.latestReply) && (
+            <Pressable onPress={() => setMoPhanHoi(true)} style={styles.replyLink}>
+              <Text style={styles.replyBtnText}>Xem phản hồi mới nhất</Text>
+              {data.latestReply ? <View style={styles.replyDot} /> : null}
+              <Ionicons name="chevron-forward" size={14} color={colors.brand} />
+            </Pressable>
+          )}
 
           {/* Vấn đề cần hỗ trợ — combobox mở danh sách, như ô chọn đơn hàng. */}
           <Text style={styles.label}>Vấn đề cần hỗ trợ</Text>
@@ -429,7 +677,11 @@ function PhanHoi({ data }: { data: SupportFormData }) {
   );
 }
 
-function Header({ coPhanHoi, onMoPhanHoi }: { coPhanHoi?: boolean; onMoPhanHoi?: () => void }) {
+function Header({
+  nutPhai,
+}: {
+  nutPhai?: { nhan: string; onPress: () => void; dot?: boolean };
+}) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -437,10 +689,10 @@ function Header({ coPhanHoi, onMoPhanHoi }: { coPhanHoi?: boolean; onMoPhanHoi?:
         <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
       <Text style={styles.headerTitle}>Hỗ trợ</Text>
-      {onMoPhanHoi ? (
-        <Pressable onPress={onMoPhanHoi} hitSlop={8} style={styles.replyBtn}>
-          <Text style={styles.replyBtnText}>Phản hồi</Text>
-          {coPhanHoi ? <View style={styles.replyDot} /> : null}
+      {nutPhai ? (
+        <Pressable onPress={nutPhai.onPress} hitSlop={8} style={styles.replyBtn}>
+          <Text style={styles.replyBtnText}>{nutPhai.nhan}</Text>
+          {nutPhai.dot ? <View style={styles.replyDot} /> : null}
         </Pressable>
       ) : (
         <View style={{ width: 64 }} />
@@ -468,6 +720,7 @@ const styles = StyleSheet.create({
     minWidth: 64,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -476,7 +729,120 @@ const styles = StyleSheet.create({
   },
   replyBtnText: { fontSize: 12.5, fontWeight: '800', color: colors.brand },
   replyDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand },
+  replyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brandSoft,
+    marginBottom: 4,
+  },
 
+  /* ---- Chat ---- */
+  list: { padding: spacing.md, gap: 10, flexGrow: 1 },
+  intro2: { alignItems: 'center', paddingVertical: 36, gap: 8 },
+  ctaChat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: colors.brand,
+  },
+  ctaChatText: { color: colors.onBrand, fontWeight: '800', fontSize: 13.5 },
+  faqWrap: {
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  faqLabel: {
+    paddingHorizontal: spacing.md,
+    fontSize: 10.5,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+    color: colors.muted,
+    textTransform: 'uppercase',
+  },
+  faqRow: { paddingHorizontal: spacing.md, paddingVertical: 8, gap: 8 },
+  faqChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.brandLine,
+    backgroundColor: colors.brandSoft,
+  },
+  faqChipText: { fontSize: 12, fontWeight: '700', color: colors.brand },
+  attachBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 6,
+    backgroundColor: colors.surface,
+  },
+  attachChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.brandLine,
+    backgroundColor: colors.brandSoft,
+  },
+  attachText: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.brand },
+  attachClear: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  attachBtn: { width: 38, height: 42, alignItems: 'center', justifyContent: 'center' },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    backgroundColor: colors.surface,
+  },
+  chatInput: {
+    flex: 1,
+    maxHeight: 120,
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 10,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.paper,
+  },
+  send: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* ---- Form ---- */
   content: { padding: spacing.md, gap: 6 },
   // Lời mở của Camio không thẻ nền — linh vật đứng trực tiếp trên trang.
   intro: {
@@ -502,7 +868,6 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: '700',
   },
-
 
   select: {
     flexDirection: 'row',
@@ -592,7 +957,7 @@ const styles = StyleSheet.create({
   agent: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   bubble: { maxWidth: '82%', paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.md },
   bubbleAgent: {
-    backgroundColor: colors.paper,
+    backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderBottomLeftRadius: 4,
