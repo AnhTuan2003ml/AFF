@@ -8888,53 +8888,56 @@ button.cal-cell.is-today:hover:not(:disabled) {
   font-size: 16px;
 }
 
-/* ===== Cột "Liên hệ" ở chân trang: Facebook là nút nổi bật, địa chỉ mở
-   Google Maps — nhìn khác hẳn các cột link thường. ===== */
-.px-footer-contact {
-  gap: 10px;
+/* ===== Dải LIÊN HỆ ở chân trang: MỘT HÀNG ngang thẳng hàng (kiểu footer
+   chuẩn các trang lớn) — Facebook là nút nổi bật, email và địa chỉ cùng
+   baseline, địa chỉ mở Google Maps. Màn hẹp thì tự xuống dòng. ===== */
+.px-footer-contactbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, .14);
 }
 
-.px-footer-contact svg {
+.px-footer-contactbar svg {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
 }
 
-/* Facebook: viên nút màu thương hiệu Facebook, chữ trắng, nổi hẳn lên. */
-.px-footer-contact .px-contact-fb {
+.px-footer-contactbar .px-contact-fb {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  align-self: flex-start;
-  /* Một số skin footer kéo giãn item theo cột — ghim nút theo nội dung. */
-  width: fit-content;
   padding: 8px 14px;
   border-radius: 999px;
   background: #1877f2;
   color: #fff;
   font-weight: 700;
+  font-size: 13px;
   box-shadow: 0 6px 16px rgba(24, 119, 242, .32);
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.px-footer-contact .px-contact-fb:hover {
+.px-footer-contactbar .px-contact-fb:hover {
   color: #fff;
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(24, 119, 242, .42);
 }
 
-.px-footer-contact .px-contact-fb svg {
+.px-footer-contactbar .px-contact-fb svg {
   fill: #fff;
 }
 
-/* Email: dòng có icon thư, đổi màu cam khi rê chuột. */
-.px-footer-contact .px-contact-line {
+.px-footer-contactbar .px-contact-line {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 13px;
 }
 
-.px-footer-contact .px-contact-line svg {
+.px-footer-contactbar .px-contact-line svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -8942,38 +8945,18 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round;
 }
 
-/* Địa chỉ: ghim cam + chữ, kèm dòng "Xem trên Google Maps" màu thương hiệu. */
-.px-footer-contact .px-contact-addr {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  max-width: 250px;
-}
-
-.px-footer-contact .px-contact-addr svg {
-  margin-top: 1px;
-  fill: none;
+.px-footer-contactbar .px-contact-addr svg {
   stroke: var(--lx-orange);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
-.px-footer-contact .px-contact-addr span {
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--lx-muted);
-}
-
-.px-footer-contact .px-contact-addr b {
-  display: block;
-  margin-top: 3px;
+.px-footer-contactbar .px-contact-addr b {
   color: var(--lx-orange);
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-.px-footer-contact .px-contact-addr:hover span,
-.px-footer-contact .px-contact-addr:hover b {
+.px-footer-contactbar .px-contact-addr:hover span,
+.px-footer-contactbar .px-contact-addr:hover b {
   color: var(--lx-orange);
 }
