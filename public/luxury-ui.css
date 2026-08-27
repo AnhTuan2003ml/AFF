@@ -8887,3 +8887,11 @@ button.cal-cell.is-today:hover:not(:disabled) {
   height: 32px;
   font-size: 16px;
 }
+
+/* Cột "Liên hệ" ở chân trang: địa chỉ là chữ tĩnh, mờ và thoáng dòng. */
+.px-footer-address {
+  color: var(--lx-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  max-width: 230px;
+}
