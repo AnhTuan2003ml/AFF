@@ -8888,10 +8888,90 @@ button.cal-cell.is-today:hover:not(:disabled) {
   font-size: 16px;
 }
 
-/* Cột "Liên hệ" ở chân trang: địa chỉ là chữ tĩnh, mờ và thoáng dòng. */
-.px-footer-address {
-  color: var(--lx-muted);
+/* ===== Cột "Liên hệ" ở chân trang: Facebook là nút nổi bật, địa chỉ mở
+   Google Maps — nhìn khác hẳn các cột link thường. ===== */
+.px-footer-contact {
+  gap: 10px;
+}
+
+.px-footer-contact svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* Facebook: viên nút màu thương hiệu Facebook, chữ trắng, nổi hẳn lên. */
+.px-footer-contact .px-contact-fb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #1877f2;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(24, 119, 242, .32);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.px-footer-contact .px-contact-fb:hover {
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(24, 119, 242, .42);
+}
+
+.px-footer-contact .px-contact-fb svg {
+  fill: #fff;
+}
+
+/* Email: dòng có icon thư, đổi màu cam khi rê chuột. */
+.px-footer-contact .px-contact-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.px-footer-contact .px-contact-line svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Địa chỉ: ghim cam + chữ, kèm dòng "Xem trên Google Maps" màu thương hiệu. */
+.px-footer-contact .px-contact-addr {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 250px;
+}
+
+.px-footer-contact .px-contact-addr svg {
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--lx-orange);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.px-footer-contact .px-contact-addr span {
   font-size: 12px;
   line-height: 1.55;
-  max-width: 230px;
+  color: var(--lx-muted);
+}
+
+.px-footer-contact .px-contact-addr b {
+  display: block;
+  margin-top: 3px;
+  color: var(--lx-orange);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.px-footer-contact .px-contact-addr:hover span,
+.px-footer-contact .px-contact-addr:hover b {
+  color: var(--lx-orange);
 }
