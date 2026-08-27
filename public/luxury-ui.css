@@ -8888,56 +8888,63 @@ button.cal-cell.is-today:hover:not(:disabled) {
   font-size: 16px;
 }
 
-/* ===== Dải LIÊN HỆ ở chân trang: MỘT HÀNG ngang thẳng hàng (kiểu footer
-   chuẩn các trang lớn) — Facebook là nút nổi bật, email và địa chỉ cùng
-   baseline, địa chỉ mở Google Maps. Màn hẹp thì tự xuống dòng. ===== */
-.px-footer-contactbar {
+/* ===== Liên hệ ở chân trang — theo mẫu footer TMĐT chuẩn (TGDĐ/CellphoneS):
+   hàng icon tròn "Kết nối với chúng tôi" ở cột thương hiệu, còn địa chỉ +
+   email nằm ở DÒNG PHÁP LÝ cuối trang dưới copyright. ===== */
+.px-footer-connect {
+  margin-top: 16px;
+}
+
+.px-footer-connect b {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 10.5px;
+  font-weight: 850;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  opacity: .78;
+}
+
+.px-social-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px 26px;
-  padding: 18px 0;
-  border-top: 1px solid rgba(255, 255, 255, .14);
+  gap: 10px;
 }
 
-.px-footer-contactbar svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-}
-
-.px-footer-contactbar .px-contact-fb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: #1877f2;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  box-shadow: 0 6px 16px rgba(24, 119, 242, .32);
+.px-social {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.px-footer-contactbar .px-contact-fb:hover {
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(24, 119, 242, .42);
+.px-social svg {
+  width: 17px;
+  height: 17px;
 }
 
-.px-footer-contactbar .px-contact-fb svg {
+.px-social:hover {
+  transform: translateY(-2px);
+}
+
+.px-social-fb {
+  background: #1877f2;
+  box-shadow: 0 6px 14px rgba(24, 119, 242, .35);
+}
+
+.px-social-fb svg {
   fill: #fff;
 }
 
-.px-footer-contactbar .px-contact-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+.px-social-mail {
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .28);
+  color: #fff;
 }
 
-.px-footer-contactbar .px-contact-line svg {
+.px-social-mail svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -8945,18 +8952,22 @@ button.cal-cell.is-today:hover:not(:disabled) {
   stroke-linejoin: round;
 }
 
-.px-footer-contactbar .px-contact-addr svg {
-  stroke: var(--lx-orange);
+.px-social-mail:hover {
+  background: var(--lx-orange);
+  border-color: var(--lx-orange);
+  color: #fff;
 }
 
-.px-footer-contactbar .px-contact-addr b {
-  color: var(--lx-orange);
-  font-size: 12.5px;
-  font-weight: 800;
-  white-space: nowrap;
+/* Dòng pháp lý: địa chỉ + liên hệ, chữ nhỏ mờ dưới copyright (chuẩn TMĐT). */
+.px-footer-legal {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  opacity: .62;
 }
 
-.px-footer-contactbar .px-contact-addr:hover span,
-.px-footer-contactbar .px-contact-addr:hover b {
+.px-footer-legal a {
   color: var(--lx-orange);
+  font-weight: 700;
+  opacity: 1;
 }
