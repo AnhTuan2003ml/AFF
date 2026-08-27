@@ -8911,13 +8911,22 @@ button.cal-cell.is-today:hover:not(:disabled) {
   gap: 10px;
 }
 
-.px-social {
-  display: grid;
-  place-items: center;
+/* Selector kép để thắng rule `.px-footer-brand a` (flex + gap của logo)
+   đang đè lên và đẩy icon lệch khỏi tâm hình tròn. */
+.px-social,
+.px-footer-brand a.px-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.px-social svg {
+  display: block;
 }
 
 .px-social svg {
