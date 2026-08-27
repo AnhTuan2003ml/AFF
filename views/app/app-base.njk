@@ -51,6 +51,10 @@
              kiếm trỏ vào /app/discover nên để lộ ra chỉ gây rối. #}
           {% if currentUser %}
           <a class="px-head-icon" href="/app/discover" aria-label="Tìm kiếm">{{ icon('search') }}</a>
+          {# Mobile: điểm danh là icon lịch cạnh chuông (desktop dùng nút ở nav). #}
+          <button type="button" class="px-head-icon px-head-checkin" data-checkin-open aria-label="Điểm danh mỗi ngày">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg>
+          </button>
           {% endif %}
 
           {% if not currentUser %}
@@ -215,9 +219,6 @@
       <a href="/app/discover" {% if appSection == 'discover' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<b>Khám phá</b></a>
       <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>Đơn hàng</b></a>
       <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Ví</b></a>
-      {% if currentUser %}
-      <button type="button" class="px-bn-checkin" data-checkin-open aria-label="Điểm danh mỗi ngày"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg><b>Điểm danh</b></button>
-      {% endif %}
       <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<b>Tài khoản</b></a>
     </nav>
 
