@@ -77,20 +77,21 @@
     // trang này — styling thật đến từ luxury-ui.css .px-product-*).
     var card = el("article", "discover-card discover-card-product px-product-card");
     var media = el("div", "discover-card-media px-product-media");
-    if (product.imageUrl) {
-      var img = document.createElement("img");
-      img.src = product.imageUrl;
-      img.alt = product.name;
-      img.loading = "lazy";
-      img.referrerPolicy = "no-referrer";
-      img.setAttribute("data-discover-image", "");
-      media.appendChild(img);
-    } else {
-      var placeholder = el("div", "discover-card-placeholder");
-      placeholder.setAttribute("aria-hidden", "true");
-      placeholder.appendChild(el("span", "", "▣"));
-      media.appendChild(placeholder);
-    }
+    var FALLBACK_LOGO = "/assets/images/icon.png";
+    var img = document.createElement("img");
+    img.src = product.imageUrl || FALLBACK_LOGO;
+    img.alt = product.name;
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    img.setAttribute("data-discover-image", "");
+    // Ảnh Shopee hỏng/404 → thay bằng logo ShopTik thay vì ô trống.
+    img.addEventListener("error", function () {
+      if (img.src.indexOf(FALLBACK_LOGO) === -1) {
+        img.src = FALLBACK_LOGO;
+        img.classList.add("is-placeholder");
+      }
+    });
+    media.appendChild(img);
     var LABELS = { hot: "🔥 Hot", best: "Bán chạy", exclusive: "Độc quyền", recommend: "Đề xuất" };
     var badges = el("div", "discover-card-badges");
     badges.appendChild(

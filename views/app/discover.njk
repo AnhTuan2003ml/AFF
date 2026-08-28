@@ -50,8 +50,7 @@
         {% for item in items %}
           <article class="discover-card discover-card-{{ item.typeKey }} px-product-card" data-discover-card data-platform="{{ item.platform }}" data-category="{{ item.category }}">
             <div class="discover-card-media px-product-media">
-              {% if item.image_url %}<img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-discover-image>
-              {% else %}<div class="discover-card-placeholder" aria-hidden="true"><span>ShopTik</span></div>{% endif %}
+              <img src="{{ item.image_url if item.image_url else '/assets/images/icon.png' }}" alt="{{ item.title }}" loading="lazy" referrerpolicy="no-referrer" data-discover-image onerror="if(!this.src.endsWith('/assets/images/icon.png')){this.src='/assets/images/icon.png';this.classList.add('is-placeholder');}">
               <div class="discover-card-badges">
                 {% if item.platformName %}<span class="discover-platform-badge platform-{{ item.platform }}">{{ item.platformName }}</span>{% endif %}
                 {% if item.isProduct and item.cashbackRate is not none and item.cashbackRate > 0 %}<span class="discover-cashback-badge">+{{ item.cashbackRate }}%</span>{% endif %}

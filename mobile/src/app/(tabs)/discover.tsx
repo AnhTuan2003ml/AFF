@@ -291,16 +291,25 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
   }
 
   const giaGoc = p.original_price_vnd ? Number(p.original_price_vnd) : null;
+  const [anhLoi, setAnhLoi] = useState(false);
 
   return (
     <View style={styles.card}>
       <View style={styles.mediaWrap}>
-        {p.image_url ? (
-          <Image source={{ uri: p.image_url }} style={styles.img} contentFit="cover" />
+        {p.image_url && !anhLoi ? (
+          <Image
+            source={{ uri: p.image_url }}
+            style={styles.img}
+            contentFit="cover"
+            onError={() => setAnhLoi(true)}
+          />
         ) : (
-          <View style={[styles.img, styles.imgEmpty]}>
-            <Ionicons name="image-outline" size={22} color={colors.muted} />
-          </View>
+          // Ảnh hỏng/thiếu → dùng logo ShopTik thay vì ô trống.
+          <Image
+            source={require('../../assets/images/brand-logo.png')}
+            style={styles.img}
+            contentFit="contain"
+          />
         )}
         {phanTram !== null && phanTram > 0 && (
           <View style={styles.cashBadge}>
@@ -481,7 +490,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   vInfo: { flex: 1, gap: 4 },
-  vLogo: { width: 76, height: 76, borderRadius: 12, backgroundColor: '#fff' },
+  vLogo: { width: 104, height: 104, borderRadius: 12, backgroundColor: '#fff' },
   vLabel: { fontSize: 11, fontWeight: '800', color: '#eb3600' },
   vShop: { fontSize: 13.5, fontWeight: '800', color: colors.text },
   vTitle: { fontSize: 13.5, fontWeight: '700', color: colors.text, lineHeight: 18 },
