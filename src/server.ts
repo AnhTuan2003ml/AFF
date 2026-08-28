@@ -44,6 +44,7 @@ import {
   listNotifications,
 } from "./services/mission.js";
 import { getWalletBalances } from "./services/ledger.js";
+import { getBackofficeQueueCounts } from "./services/backoffice-queue.js";
 import { hasVerifiedBank } from "./services/app-dashboard.js";
 import { countUnreadSupportReplies } from "./services/support-chat.js";
 
@@ -219,44 +220,12 @@ app.addHook("preHandler", async (request, reply) => {
       request.currentUser.role,
     )
   ) {
-    const backofficeCounts = await query<{
-      orders_pending_count: string;
-      withdrawals_pending_count: string;
-      missions_pending_count: string;
-      referral_codes_pending_count: string;
-      banks_pending_count: string;
-    }>(
-      db,
-      `
-        SELECT
-          (SELECT count(*) FROM orders WHERE status = 'PENDING')::text
-            AS orders_pending_count,
-          (SELECT count(*) FROM withdrawals
-            WHERE status IN ('FUNDS_HELD', 'UNKNOWN'))::text
-            AS withdrawals_pending_count,
-          (SELECT count(*) FROM user_mission_claims WHERE status = 'PENDING')::text
-            AS missions_pending_count,
-          (SELECT count(*) FROM referral_code_requests WHERE status = 'PENDING')::text
-            AS referral_codes_pending_count,
-          (SELECT count(*) FROM user_bank_accounts WHERE status = 'PENDING_REVIEW')::text
-            AS banks_pending_count
-      `,
-    );
-    backofficeOrdersPendingCount = Number(
-      backofficeCounts.rows[0]?.orders_pending_count ?? 0,
-    );
-    backofficeWithdrawalsPendingCount = Number(
-      backofficeCounts.rows[0]?.withdrawals_pending_count ?? 0,
-    );
-    backofficeMissionsPendingCount = Number(
-      backofficeCounts.rows[0]?.missions_pending_count ?? 0,
-    );
-    backofficeReferralCodesPendingCount = Number(
-      backofficeCounts.rows[0]?.referral_codes_pending_count ?? 0,
-    );
-    backofficeBanksPendingCount = Number(
-      backofficeCounts.rows[0]?.banks_pending_count ?? 0,
-    );
+    const backofficeCounts = await getBackofficeQueueCounts(db);
+    backofficeOrdersPendingCount = backofficeCounts.orders;
+    backofficeWithdrawalsPendingCount = backofficeCounts.withdrawals;
+    backofficeMissionsPendingCount = backofficeCounts.missions;
+    backofficeReferralCodesPendingCount = backofficeCounts.referralCodes;
+    backofficeBanksPendingCount = backofficeCounts.banks;
   }
   let unreadNotificationCount = 0;
   let recentNotifications: Awaited<ReturnType<typeof listNotifications>> = [];

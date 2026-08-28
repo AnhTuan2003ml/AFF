@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRoles } from "../auth/guards.js";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
+import { getBackofficeQueueCounts } from "../services/backoffice-queue.js";
 import { AppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { parseInput } from "../lib/validation.js";
@@ -161,6 +162,13 @@ export async function registerBackofficeRoutes(
   // Trang tổng quan và đối soát đơn hợp nhất về AdminLayout mới — hai route
   // này từng có template/nghiệp vụ trùng lặp, nay chỉ giữ route chính.
   app.get("/", async (_request, reply) => reply.redirect("/backoffice/console"));
+
+  // JS trên khung quản trị poll endpoint này để badge/hàng chờ cập nhật
+  // gần-realtime, không phải tải lại trang (admin-queue-live.js).
+  app.get("/queue.json", async (_request, reply) => {
+    reply.header("cache-control", "private, no-store");
+    return getBackofficeQueueCounts(deps.db);
+  });
   app.get("/orders", async (_request, reply) =>
     reply.redirect("/backoffice/reconciliation"),
   );

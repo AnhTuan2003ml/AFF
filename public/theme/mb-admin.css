@@ -1289,3 +1289,14 @@
 .backoffice-shell .partner-pill.is-static {
   cursor: default;
 }
+
+/* Badge nháy khi số việc chờ TĂNG (admin-queue-live.js). */
+@keyframes boBadgeBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+
+.backoffice-shell .st-nav-badge.is-bump {
+  animation: boBadgeBump .5s ease;
+}

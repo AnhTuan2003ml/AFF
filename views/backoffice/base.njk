@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="/assets/theme/mb-skin.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/theme/mb-admin.css?v={{ assetVersion }}">
   <script src="/assets/admin-table.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/admin-queue-live.js?v={{ assetVersion }}" defer></script>
   {# Khung quản trị dùng CHUNG hệ shell st-* với app (app-shell.css):
      sidebar nhóm chức năng + topbar mỏng + tabbar mobile. Class
      backoffice-shell giữ lại cho CSS nội dung trang (dashboard.css,
@@ -143,8 +144,10 @@
           {% include "partials/flash.njk" %}
           {# Bản mobile của dải hàng chờ: topbar navy đã kín chỗ nên nó xuống
              đầu nội dung, cuộn ngang được. #}
-          {% if backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 %}
-            <div class="bo-queue-mobile" aria-label="Việc đang chờ xử lý">
+          {# Container luôn render (hidden khi trống) để admin-queue-live.js
+             bơm việc mới vào realtime mà không cần tải lại trang. #}
+          {% set moQueueMobile = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 %}
+            <div class="bo-queue-mobile" aria-label="Việc đang chờ xử lý"{% if not moQueueMobile %} hidden{% endif %}>
               {% if backofficeOrdersPendingCount > 0 %}
                 <a href="/backoffice/reconciliation"><b>{{ backofficeOrdersPendingCount }}</b>Đơn hoàn tiền</a>
               {% endif %}
@@ -161,7 +164,6 @@
                 <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
               {% endif %}
             </div>
-          {% endif %}
           {% block backoffice_content %}{% endblock %}
         </main>
       </div>
