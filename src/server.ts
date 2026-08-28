@@ -100,10 +100,12 @@ await app.register(helmet, {
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      // Xem trước ảnh/video KYC trên form dùng URL.createObjectURL (blob:).
+      mediaSrc: ["'self'", "blob:"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "blob:"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests:
