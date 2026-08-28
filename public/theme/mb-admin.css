@@ -1244,35 +1244,46 @@
   color: #b45309;
 }
 
-/* Nút gán/bỏ đối tác ngay tại bảng. */
+/* Nút gán/bỏ đối tác ngay tại bảng. app-shell ép mọi button[type=submit]
+   thành CTA đỏ bằng !important nên ở đây phải !important gỡ lại (giống
+   .button-ghost phía trên): CHƯA là đối tác = pill trắng viền xám, ĐANG là
+   đối tác = pill hổ phách — nhìn phát phân biệt được ngay. */
+.backoffice-shell .st-content button[type="submit"].partner-pill,
 .backoffice-shell .partner-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid #e2d6c6;
-  background: #fff;
-  color: #8d7e74;
-  border-radius: 999px;
+  border: 1px solid var(--line-strong) !important;
+  background: var(--surface) !important;
+  color: var(--ink-soft) !important;
+  border-radius: 999px !important;
   padding: 5px 11px;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+  box-shadow: none !important;
 }
 
+.backoffice-shell .st-content button[type="submit"].partner-pill:hover:not(:disabled),
 .backoffice-shell .partner-pill:hover {
-  border-color: #f59e0b;
-  color: #b45309;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+  background: #fff7ee !important;
 }
 
+.backoffice-shell .st-content button[type="submit"].partner-pill.is-on,
 .backoffice-shell .partner-pill.is-on {
-  background: #f59e0b;
-  border-color: #f59e0b;
-  color: #fff;
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+  color: #fff !important;
 }
 
+.backoffice-shell .st-content button[type="submit"].partner-pill.is-on:hover:not(:disabled),
 .backoffice-shell .partner-pill.is-on:hover {
-  background: #d97706;
+  background: #d97706 !important;
+  border-color: #d97706 !important;
+  color: #fff !important;
 }
 
 .backoffice-shell .partner-pill.is-static {
