@@ -69,6 +69,9 @@ export interface DiscoverProduct {
   shop_name: string | null;
   product_url: string;
   sales_count: string | null;
+  /** Voucher/HOT: giá gốc trước giảm + % giảm. */
+  original_price_vnd?: string | null;
+  discount_percent?: number | null;
 }
 
 export function layDiemDanh() {

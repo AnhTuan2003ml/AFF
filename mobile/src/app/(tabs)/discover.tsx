@@ -39,6 +39,17 @@ type TabKey = (typeof TABS)[number]['key'];
 
 const LIST_KEYS: TabKey[] = ['hot', 'recommend', 'best', 'exclusive'];
 
+/** Cửa sổ tối đa 5 số trang quanh trang hiện tại (để không tràn hàng). */
+function pageWindow(cur: number, total: number): number[] {
+  const span = 5;
+  let start = Math.max(1, cur - 2);
+  const end = Math.min(total, start + span - 1);
+  start = Math.max(1, end - span + 1);
+  const out: number[] = [];
+  for (let i = start; i <= end; i += 1) out.push(i);
+  return out;
+}
+
 export default function DiscoverScreen() {
   const params = useLocalSearchParams<{ list?: string }>();
   const [list, setList] = useState<TabKey>('best');
@@ -103,12 +114,25 @@ export default function DiscoverScreen() {
                 contentContainerStyle={styles.tabs}>
                 {TABS.map((t) => {
                   const on = t.key === list;
+                  const hot = t.key === 'hot';
                   return (
                     <Pressable
                       key={t.key}
                       onPress={() => chonTab(t.key)}
-                      style={[styles.tab, on && styles.tabOn]}>
-                      <Text style={[styles.tabText, on && styles.tabTextOn]}>{t.nhan}</Text>
+                      style={[
+                        styles.tab,
+                        hot && styles.tabHot,
+                        on && styles.tabOn,
+                        on && hot && styles.tabHotOn,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.tabText,
+                          hot && styles.tabHotText,
+                          on && styles.tabTextOn,
+                        ]}>
+                        {t.nhan}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -132,18 +156,21 @@ export default function DiscoverScreen() {
                 <Pressable
                   disabled={page <= 1}
                   onPress={() => doiTrang(page - 1)}
-                  style={[styles.pagerBtn, page <= 1 && styles.pagerOff]}>
+                  style={[styles.pageNav, page <= 1 && styles.pagerOff]}>
                   <Ionicons name="chevron-back" size={18} color={page <= 1 ? colors.muted : colors.brand} />
-                  <Text style={[styles.pagerText, page <= 1 && { color: colors.muted }]}>Trước</Text>
                 </Pressable>
-                <Text style={styles.pagerInfo}>
-                  Trang {page} / {soTrang}
-                </Text>
+                {pageWindow(page, soTrang).map((n) => (
+                  <Pressable
+                    key={n}
+                    onPress={() => n !== page && doiTrang(n)}
+                    style={[styles.pageNum, n === page && styles.pageNumOn]}>
+                    <Text style={[styles.pageNumText, n === page && styles.pageNumTextOn]}>{n}</Text>
+                  </Pressable>
+                ))}
                 <Pressable
                   disabled={page >= soTrang}
                   onPress={() => doiTrang(page + 1)}
-                  style={[styles.pagerBtn, page >= soTrang && styles.pagerOff]}>
-                  <Text style={[styles.pagerText, page >= soTrang && { color: colors.muted }]}>Sau</Text>
+                  style={[styles.pageNav, page >= soTrang && styles.pagerOff]}>
                   <Ionicons name="chevron-forward" size={18} color={page >= soTrang ? colors.muted : colors.brand} />
                 </Pressable>
               </View>
@@ -185,11 +212,10 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
     }
   }
 
+  const giaGoc = p.original_price_vnd ? Number(p.original_price_vnd) : null;
+
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
-      onPress={mua}
-      disabled={dang}>
+    <View style={styles.card}>
       <View style={styles.mediaWrap}>
         {p.image_url ? (
           <Image source={{ uri: p.image_url }} style={styles.img} contentFit="cover" />
@@ -203,19 +229,42 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
             <Text style={styles.cashBadgeText}>+{phanTram}%</Text>
           </View>
         )}
+        {p.discount_percent != null && p.discount_percent > 0 && (
+          <View style={styles.discBadge}>
+            <Text style={styles.discBadgeText}>-{p.discount_percent}%</Text>
+          </View>
+        )}
       </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={2}>
           {p.name}
         </Text>
-        <Text style={styles.price}>{gia !== null ? vnd(gia) : 'Đang cập nhật'}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.price}>{gia !== null ? vnd(gia) : 'Đang cập nhật'}</Text>
+          {giaGoc !== null && gia !== null && giaGoc > gia && (
+            <Text style={styles.priceOld}>{vnd(giaGoc)}</Text>
+          )}
+        </View>
         {hoaHong !== null && (
           <View style={styles.cashPill}>
             <Text style={styles.cashText}>Hoàn tới {vnd(hoaHong)}</Text>
           </View>
         )}
+        <Pressable
+          onPress={mua}
+          disabled={dang}
+          style={({ pressed }) => [styles.buyBtn, (pressed || dang) && { opacity: 0.7 }]}>
+          {dang ? (
+            <ActivityIndicator size="small" color={colors.onBrand} />
+          ) : (
+            <>
+              <Ionicons name="cart-outline" size={14} color={colors.onBrand} />
+              <Text style={styles.buyText}>Mua nhận hoàn tiền</Text>
+            </>
+          )}
+        </Pressable>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -240,6 +289,10 @@ const styles = StyleSheet.create({
   tabOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   tabText: { fontSize: 13, fontWeight: '800', color: colors.text },
   tabTextOn: { color: colors.onBrand },
+  // Tab Hot nổi bật: viền + chữ cam đỏ khi chưa chọn, nền đỏ khi chọn.
+  tabHot: { borderColor: '#ff5a1f', backgroundColor: '#fff2ec' },
+  tabHotOn: { backgroundColor: '#ff5a1f', borderColor: '#ff5a1f' },
+  tabHotText: { color: '#d63e12' },
 
   card: {
     flex: 1,
@@ -262,9 +315,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
   },
   cashBadgeText: { fontSize: 10.5, fontWeight: '900', color: colors.onBrand },
-  body: { padding: 10, gap: 4 },
+  discBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: '#ee4d2d',
+  },
+  discBadgeText: { fontSize: 11, fontWeight: '900', color: '#fff' },
+  body: { padding: 10, gap: 5 },
   name: { fontSize: 12.5, fontWeight: '700', color: colors.text, lineHeight: 17 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   price: { fontSize: 14, fontWeight: '900', color: colors.brand },
+  priceOld: {
+    fontSize: 11,
+    color: colors.muted,
+    textDecorationLine: 'line-through',
+  },
+  buyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: 2,
+    minHeight: 34,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brand,
+  },
+  buyText: { fontSize: 11.5, fontWeight: '900', color: colors.onBrand },
   cashPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
@@ -278,23 +358,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
+    gap: 6,
     paddingVertical: 20,
+    flexWrap: 'wrap',
   },
-  pagerBtn: {
-    flexDirection: 'row',
+  pageNav: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surface,
   },
-  pagerOff: { opacity: 0.5 },
-  pagerText: { fontSize: 13.5, fontWeight: '800', color: colors.brand },
-  pagerInfo: { fontSize: 13, fontWeight: '700', color: colors.text },
+  pageNum: {
+    minWidth: 38,
+    height: 38,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  pageNumOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  pageNumText: { fontSize: 14, fontWeight: '800', color: colors.text },
+  pageNumTextOn: { color: colors.onBrand },
+  pagerOff: { opacity: 0.4 },
 
   empty: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
