@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { query } from "../db.js";
+import { query, withTransaction } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { formatVnd } from "../lib/format.js";
@@ -946,16 +946,36 @@ export async function registerAdminUserRoutes(
             403,
           );
         }
-        const updated = await query(
-          deps.db,
-          `
-            UPDATE users
-            SET status = 'DISABLED', role = 'USER', deleted_at = now(),
-              deleted_by = $2, deletion_reason = $3
-            WHERE id = $1 AND deleted_at IS NULL
-          `,
-          [request.params.id, request.currentUser!.id, input.reason],
-        );
+        // Ẩn danh hóa GIỐNG luồng người dùng tự xóa (account-deletion.ts):
+        // email phải nhả ra để đăng ký lại được, phiên bị thu hồi và liên kết
+        // Google được gỡ. Trước đây chỉ set DISABLED giữ nguyên email → email
+        // bị chiếm vĩnh viễn, người dùng không đăng ký lại được.
+        const updated = await withTransaction(deps.db, async (client) => {
+          const done = await query(
+            client,
+            `
+              UPDATE users
+              SET status = 'DISABLED', role = 'USER', deleted_at = now(),
+                deleted_by = $2, deletion_reason = $3,
+                email = 'deleted+' || id::text || '@shoptik.invalid',
+                full_name = 'Người dùng đã xóa',
+                password_hash = NULL, updated_at = now()
+              WHERE id = $1 AND deleted_at IS NULL
+            `,
+            [request.params.id, request.currentUser!.id, input.reason],
+          );
+          if (done.rowCount) {
+            await query(
+              client,
+              "UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL",
+              [request.params.id],
+            );
+            await query(client, "DELETE FROM auth_identities WHERE user_id = $1", [
+              request.params.id,
+            ]);
+          }
+          return done;
+        });
         if (!updated.rowCount) {
           throw new AppError(
             "USER_ALREADY_DELETED",
