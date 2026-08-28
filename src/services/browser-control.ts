@@ -3,11 +3,14 @@ import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import {
+  HOT_DEALS_LIST_TYPE,
   OFFER_PAGE_SIZE,
   SHOPEE_OFFER_FOR_ME_URL,
   SHOPEE_OFFER_PAGE_URL,
+  parseShopeeMicrositeItems,
   parseShopeeOfferPage,
   saveOfferPage,
+  type HarvestedProduct,
 } from "./discover-harvest.js";
 
 /**
@@ -97,6 +100,11 @@ interface CdpSession {
   getOfferData(listType: number, offset: number): Promise<any>;
   waitForOfferPage(timeoutMs?: number): Promise<boolean>;
   reloadOffer(url: string): Promise<void>;
+  /** Tất cả requestId của response microsite/get_collection_items đã bắt. */
+  micrositeRequestIds(): string[];
+  getBody(requestId: string): Promise<any>;
+  /** Đưa tab ra trước để trang render + lazy-load khi cuộn (tab nền bị throttle). */
+  bringToFront(): Promise<void>;
   close(): void;
 }
 
@@ -106,6 +114,7 @@ function openCdpSession(wsUrl: string): Promise<CdpSession> {
     let seq = 0;
     const pending = new Map<number, (msg: any) => void>();
     const offerByKey = new Map<string, { requestId: string }>();
+    const micrositeIds: string[] = [];
     const keyOf = (listType: number, offset: number) => `${listType}:${offset}`;
 
     ws.onmessage = (event) => {
@@ -120,19 +129,18 @@ function openCdpSession(wsUrl: string): Promise<CdpSession> {
         pending.delete(msg.id);
         return;
       }
-      if (
-        msg.method === "Network.responseReceived" &&
-        String(msg.params?.response?.url || "").includes(
-          "/api/v3/offer/product/list",
-        )
-      ) {
-        const url = String(msg.params.response.url);
-        const listType = Number(url.match(/list_type=(\d+)/)?.[1] ?? -1);
-        const offset = Number(url.match(/page_offset=(\d+)/)?.[1] ?? -1);
-        if (listType >= 0 && offset >= 0) {
-          offerByKey.set(keyOf(listType, offset), {
-            requestId: msg.params.requestId,
-          });
+      if (msg.method === "Network.responseReceived") {
+        const url = String(msg.params?.response?.url || "");
+        if (url.includes("/api/v3/offer/product/list")) {
+          const listType = Number(url.match(/list_type=(\d+)/)?.[1] ?? -1);
+          const offset = Number(url.match(/page_offset=(\d+)/)?.[1] ?? -1);
+          if (listType >= 0 && offset >= 0) {
+            offerByKey.set(keyOf(listType, offset), {
+              requestId: msg.params.requestId,
+            });
+          }
+        } else if (url.includes("/api/v4/microsite/get_collection_items")) {
+          micrositeIds.push(msg.params.requestId);
         }
       }
     };
@@ -204,6 +212,27 @@ function openCdpSession(wsUrl: string): Promise<CdpSession> {
         await this.evaluate(`location.assign(${JSON.stringify(url)})`).catch(() => {});
         await this.waitForOfferPage();
         await sleep(2500);
+      },
+      micrositeRequestIds() {
+        return [...micrositeIds];
+      },
+      async bringToFront() {
+        await command("Page.enable").catch(() => {});
+        await command("Page.bringToFront").catch(() => {});
+      },
+      async getBody(requestId) {
+        const body = await command("Network.getResponseBody", { requestId }).catch(
+          () => null,
+        );
+        if (!body?.body) return null;
+        try {
+          const raw = body.base64Encoded
+            ? Buffer.from(body.body, "base64").toString("utf8")
+            : body.body;
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
       },
       close() {
         try {
@@ -375,12 +404,13 @@ async function ensureProfileRunning(
   return { cdpHost: host, cdpPort: port };
 }
 
-/** Chọn tab affiliate.shopee.vn (mở nếu chưa có), trả về webSocketDebuggerUrl. */
-async function ensureAffiliateTab(
+/** Chọn tab thuộc `origin` (mở nếu chưa có), trả về webSocketDebuggerUrl. */
+async function ensureTabForOrigin(
   config: AppConfig,
   profileId: string,
   cdpHost: string,
   cdpPort: number,
+  origin: string,
   pageUrl: string,
 ): Promise<string> {
   const pickTab = async (): Promise<any> => {
@@ -389,13 +419,13 @@ async function ensureAffiliateTab(
       (t) => t.type === "page" && t.webSocketDebuggerUrl,
     );
     return (
-      pages.find((t) => String(t.url || "").startsWith(AFFILIATE_ORIGIN)) ??
+      pages.find((t) => String(t.url || "").startsWith(origin)) ??
       pages[0] ??
       null
     );
   };
   let tab = await pickTab().catch(() => null);
-  if (!tab || !String(tab.url || "").startsWith(AFFILIATE_ORIGIN)) {
+  if (!tab || !String(tab.url || "").startsWith(origin)) {
     await bc(config, `/api/profiles/${profileId}/goto`, {
       method: "POST",
       body: JSON.stringify({ url: pageUrl }),
@@ -404,14 +434,28 @@ async function ensureAffiliateTab(
     tab = await pickTab();
   }
   if (!tab?.webSocketDebuggerUrl) {
-    throw new AppError(
-      "NO_TAB",
-      "Không mở được tab affiliate.shopee.vn trong profile.",
-      502,
-    );
+    throw new AppError("NO_TAB", `Không mở được tab ${origin} trong profile.`, 502);
   }
   // cdp_url dùng 127.0.0.1 → đổi sang host của Docker để container kết nối được.
   return String(tab.webSocketDebuggerUrl).replace("127.0.0.1", cdpHost);
+}
+
+/** Tab affiliate.shopee.vn — dùng cho luồng lấy sản phẩm offer. */
+function ensureAffiliateTab(
+  config: AppConfig,
+  profileId: string,
+  cdpHost: string,
+  cdpPort: number,
+  pageUrl: string,
+): Promise<string> {
+  return ensureTabForOrigin(
+    config,
+    profileId,
+    cdpHost,
+    cdpPort,
+    AFFILIATE_ORIGIN,
+    pageUrl,
+  );
 }
 
 function offerPageUrl(listType: number): string {
@@ -495,4 +539,100 @@ export async function directFetchOfferRange(
   );
 
   return { savedPages, savedItems, stoppedAt, note };
+}
+
+const HOT_DEALS_URL = "https://shopee.vn/m/ma-giam-gia";
+const SHOPEE_ORIGIN = "https://shopee.vn";
+
+export interface HotDealsResult {
+  savedPages: number;
+  savedItems: number;
+  collections: number;
+}
+
+/**
+ * ĐIỀU KHIỂN TRỰC TIẾP: mở shopee.vn/m/ma-giam-gia bằng profile, cuộn trang để
+ * kích các khối voucher tải thêm, bắt TẤT CẢ response
+ * microsite/get_collection_items, parse sản phẩm giá voucher và lưu vào kho
+ * HOT (list_type=99) — mọi luồng discover đọc chung từ đây.
+ */
+export async function directFetchHotDeals(
+  db: Database,
+  config: AppConfig,
+  input: { profileId: string; maxItems?: number },
+): Promise<HotDealsResult> {
+  const maxItems = Math.min(Math.max(input.maxItems ?? 200, 20), 1000);
+  const { cdpHost, cdpPort } = await ensureProfileRunning(config, input.profileId);
+  const wsUrl = await ensureTabForOrigin(
+    config,
+    input.profileId,
+    cdpHost,
+    cdpPort,
+    SHOPEE_ORIGIN,
+    HOT_DEALS_URL,
+  );
+
+  const session = await openCdpSession(wsUrl);
+  try {
+    // Tab đã ở trang voucher (ensureTabForOrigin goto). Đưa ra trước (tab nền
+    // bị throttle, không lazy-load), chờ render rồi CUỘN TĂNG DẦN — mỗi khối
+    // voucher lazy-load get_collection_items khi cuộn tới.
+    await session.bringToFront();
+    // LUÔN nạp lại trang từ đầu: tab tái dùng có thể đã cuộn hết, không lazy-load
+    // thêm. Reload rồi cuộn từ trên xuống mới kích get_collection_items.
+    await session.evaluate(`location.replace(${JSON.stringify(HOT_DEALS_URL)})`).catch(() => {});
+    await sleep(5000);
+    const needBatches = Math.ceil(maxItems / 20) + 2;
+    for (let i = 0; i < 20; i += 1) {
+      await session.evaluate(`window.scrollBy(0, 2000)`).catch(() => {});
+      await sleep(1500);
+      if (session.micrositeRequestIds().length >= needBatches) break;
+    }
+    await sleep(1500);
+
+    // Gom tất cả body microsite đã bắt, parse + dedupe theo item_id.
+    const ids = session.micrositeRequestIds();
+    const seen = new Set<string>();
+    const products: HarvestedProduct[] = [];
+    let collections = 0;
+    for (const id of ids) {
+      const body = await session.getBody(id);
+      if (!body) continue;
+      collections += 1;
+      for (const p of parseShopeeMicrositeItems(body)) {
+        if (seen.has(p.itemId)) continue;
+        seen.add(p.itemId);
+        products.push(p);
+        if (products.length >= maxItems) break;
+      }
+      if (products.length >= maxItems) break;
+    }
+
+    // Lưu theo trang 20 sản phẩm vào list_type HOT (xóa dữ liệu cũ ở các trang
+    // sẽ ghi đè để kho HOT luôn tươi theo lần lấy mới nhất).
+    let savedPages = 0;
+    for (let i = 0; i < products.length; i += OFFER_PAGE_SIZE) {
+      const pageNo = savedPages + 1;
+      await saveOfferPage(
+        db,
+        HOT_DEALS_LIST_TYPE,
+        pageNo,
+        products.slice(i, i + OFFER_PAGE_SIZE),
+      );
+      savedPages += 1;
+    }
+
+    await query(
+      db,
+      `UPDATE harvest_profiles
+       SET last_fetch_at = now(), last_status = 'OK', last_error = NULL,
+           updated_at = now()
+       WHERE id = $1`,
+      [input.profileId],
+    );
+
+    return { savedPages, savedItems: products.length, collections };
+  } finally {
+    session.close();
+  }
 }

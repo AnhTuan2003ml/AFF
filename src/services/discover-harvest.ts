@@ -32,6 +32,9 @@ export const SHOPEE_OFFER_API_PATH =
 export const RECOMMEND_LIST_TYPE = 0;
 export const BEST_SELLER_LIST_TYPE = 2;
 export const EXCLUSIVE_LIST_TYPE = 8;
+/** Danh mục HOT — sản phẩm voucher giá sốc từ shopee.vn/m/ma-giam-gia. Không
+ * phải list_type của Shopee; chỉ dùng nội bộ để lưu chung bảng offer. */
+export const HOT_DEALS_LIST_TYPE = 99;
 export const OFFER_PAGE_SIZE = 20;
 
 /** Số tiền trong API Shopee affiliate nhân sẵn 100.000. */
@@ -764,6 +767,56 @@ export function parseShopeeOfferPage(payload: unknown): HarvestedProduct[] {
       salesCount: numberOf(
         pickRaw(sources, ["historical_sold", "sold", "sales"]),
       ),
+    });
+  }
+  return products;
+}
+
+/**
+ * Parse response của shopee.vn/api/v4/microsite/get_collection_items (trang
+ * Mã giảm giá / voucher). Mỗi phần tử `data.items[]` có
+ * `customised_item_card.{item_data, item_card_displayed_asset}`. Giá đã áp
+ * khuyến mãi nằm ở `item_data.item_card_display_price.price` (nhân sẵn 100k).
+ */
+export function parseShopeeMicrositeItems(payload: unknown): HarvestedProduct[] {
+  const root = asObject(payload);
+  if (!root) return [];
+  const data = asObject(root.data);
+  const items = data && Array.isArray(data.items) ? data.items : [];
+
+  const products: HarvestedProduct[] = [];
+  for (const entry of items) {
+    const node = asObject(entry);
+    if (!node) continue;
+    const card = asObject(node.customised_item_card);
+    const itemData = asObject(card?.item_data);
+    const asset = asObject(card?.item_card_displayed_asset);
+    if (!itemData) continue;
+
+    const numId = (v: unknown): string =>
+      typeof v === "number" && Number.isFinite(v)
+        ? String(Math.trunc(v))
+        : stringOf(v);
+    const itemId = numId(itemData.itemid ?? itemData.item_id);
+    const shopId = numId(itemData.shopid ?? itemData.shop_id);
+    if (!itemId) continue;
+    const name = pickString([asset ?? {}], ["name", "title"]);
+    if (!name) continue;
+
+    const priceInfo = asObject(itemData.item_card_display_price);
+    const shopData = asObject(itemData.shop_data);
+
+    products.push({
+      itemId,
+      name,
+      imageUrl: normalizeImageUrl(pickString([asset ?? {}], ["image"])),
+      priceVnd: priceToVnd(priceInfo?.price ?? priceInfo?.applied_product_promo_price),
+      commissionRateBps: null,
+      shopName: shopData ? stringOf(shopData.shop_name) || null : null,
+      productUrl: shopId
+        ? `https://shopee.vn/product/${shopId}/${itemId}`
+        : `https://shopee.vn/product/i/${itemId}`,
+      salesCount: null,
     });
   }
   return products;
