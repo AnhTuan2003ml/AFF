@@ -36,8 +36,12 @@ export default function ReferralsScreen() {
       void qc.invalidateQueries({ queryKey: ['referrals'] });
       Alert.alert('Đã gửi yêu cầu', 'Admin duyệt xong bạn sẽ nhận được thông báo.');
     },
-    onError: (e) =>
-      Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại nhé.'),
+    onError: (e) => {
+      // Refetch cả khi lỗi: nếu lỗi là "đã có yêu cầu đang chờ" thì màn hình
+      // phải nhảy sang trạng thái ⏳ thay vì tiếp tục chìa form ra.
+      void qc.invalidateQueries({ queryKey: ['referrals'] });
+      Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại nhé.');
+    },
   });
 
   async function chep() {
