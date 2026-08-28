@@ -1066,3 +1066,71 @@
   color: #fff;
   border-color: #ff5a1f;
 }
+
+/* ===== Tab + thẻ Voucher (mã giảm giá Shopee) ===== */
+.discover-category-tabs button.discover-tab-voucher {
+  border-color: #f2a600;
+  color: #b26a00;
+  font-weight: 800;
+  background: linear-gradient(180deg, #fff8e8, #ffefcc);
+}
+.discover-category-tabs button.discover-tab-voucher.active {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+}
+
+.voucher-section { margin-top: 8px; }
+.voucher-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.voucher-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line, #eadfce);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  padding: 14px;
+  border-left: 4px solid #ee4d2d;
+}
+.voucher-card-head { display: flex; align-items: center; gap: 10px; }
+.voucher-logo {
+  width: 38px; height: 38px; border-radius: 10px; object-fit: cover;
+  border: 1px solid var(--line, #eadfce); flex: 0 0 auto;
+}
+.voucher-headtext { display: flex; flex-direction: column; min-width: 0; }
+.voucher-label { font-size: 11px; font-weight: 800; color: #eb3600; }
+.voucher-shop {
+  font-size: 13px; font-weight: 800; color: var(--text, #2c1d17);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.voucher-title {
+  font-size: 13.5px; font-weight: 700; color: var(--text, #2c1d17);
+  line-height: 1.35; margin: 2px 0 0;
+  min-height: 2.7em;
+}
+.voucher-expiry { font-size: 11.5px; color: var(--muted, #8d7e74); margin: 0; }
+.voucher-actions { display: flex; gap: 8px; margin-top: auto; }
+.voucher-btn {
+  flex: 1; min-height: 38px; border-radius: 10px; border: 0;
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+}
+.voucher-btn-copy {
+  background: rgba(238, 77, 45, .1); color: #ee4d2d;
+  border: 1px dashed #ee4d2d;
+}
+.voucher-btn-use { background: #ee4d2d; color: #fff; }
+.voucher-btn-use:hover { background: #d63e12; }
+
+@media (max-width: 900px) {
+  .voucher-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .voucher-grid { grid-template-columns: 1fr; }
+}

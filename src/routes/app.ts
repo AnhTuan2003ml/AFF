@@ -15,6 +15,7 @@ import {
 } from "../services/bank.js";
 import { getBusinessConfig } from "../services/business-config.js";
 import { listOrderHistory } from "../services/order-history.js";
+import { listShopeeVouchers } from "../services/shopee-voucher.js";
 import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
@@ -933,6 +934,12 @@ export async function registerAppRoutes(
     exclusive: EXCLUSIVE_LIST_TYPE,
     hot: HOT_DEALS_LIST_TYPE,
   };
+
+  // Voucher Shopee hôm nay cho tab Voucher (web).
+  app.get("/discover/vouchers", async (_request, reply) => {
+    reply.header("cache-control", "private, max-age=300");
+    return reply.send({ data: await listShopeeVouchers(deps.db, 80) });
+  });
 
   app.get("/discover/offer-products", async (request, reply) => {
     const queryParams = request.query as Record<string, unknown>;

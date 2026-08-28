@@ -145,6 +145,24 @@ export function guiDoiMaGioiThieu(newCode: string) {
   });
 }
 
+export interface ShopeeVoucher {
+  code: string;
+  title: string;
+  shop_name: string | null;
+  label: string | null;
+  label_color: string | null;
+  expiry_text: string | null;
+  used_percent: number | null;
+  logo_url: string | null;
+  use_url: string;
+  detail_url: string | null;
+}
+
+/** Voucher Shopee hôm nay (công khai). */
+export function layVoucher() {
+  return apiFetch<{ data: ShopeeVoucher[] }>('/api/v1/vouchers', { auth: false });
+}
+
 /** Không cần đăng nhập — khách xem sản phẩm đang hoàn tiền được. */
 export function layKhamPha(list: 'hot' | 'best' | 'recommend' | 'exclusive' = 'best', page = 1) {
   return apiFetch<{

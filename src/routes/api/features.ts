@@ -15,6 +15,7 @@ import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getBusinessConfig } from "../../services/business-config.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
 import { registerPushToken } from "../../services/push.js";
+import { listShopeeVouchers } from "../../services/shopee-voucher.js";
 import {
   applyReferralToUser,
   getReferralCodeState,
@@ -293,6 +294,12 @@ export async function registerFeatureApiRoutes(
   /* ------------------------------ Khám phá ---------------------------- */
 
   // Mở cho khách: xem sản phẩm đang hoàn tiền không cần tài khoản, giống web.
+  // Voucher Shopee hôm nay (công khai) — cho tab Voucher ở Khám phá.
+  app.get("/vouchers", async (_request, reply) => {
+    reply.header("cache-control", "public, max-age=300");
+    return { data: await listShopeeVouchers(deps.db, 80) };
+  });
+
   app.get("/discover", async (request, reply) => {
     reply.header("cache-control", "private, no-store");
     const q = request.query as Record<string, unknown>;

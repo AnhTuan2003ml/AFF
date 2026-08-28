@@ -22,6 +22,7 @@ import {
   directFetchHotDeals,
   directFetchOfferRange,
 } from "../services/browser-control.js";
+import { refreshShopeeVouchers } from "../services/shopee-voucher.js";
 import {
   flashAdminError,
   type AdminConsoleDeps,
@@ -206,6 +207,23 @@ export async function registerAdminProfileRoutes(
         deps.config,
         "success",
         `Đã lấy Deal Hot: ${result.savedItems} sản phẩm voucher từ ${result.collections} bộ sưu tập.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+
+  // Làm mới voucher Shopee hôm nay (fetch thẳng shopeeanalytics, không cần profile).
+  app.post("/profiles/refresh-vouchers", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const r = await refreshShopeeVouchers(deps.db);
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã làm mới ${r.count} voucher Shopee.`,
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);

@@ -15,7 +15,15 @@ import {
   View,
 } from 'react-native';
 
-import { layKhamPha, type DiscoverProduct } from '@/api/features';
+import * as Clipboard from 'expo-clipboard';
+import * as WebBrowser from 'expo-web-browser';
+
+import {
+  layKhamPha,
+  layVoucher,
+  type DiscoverProduct,
+  type ShopeeVoucher,
+} from '@/api/features';
 import { BrandHeader } from '@/components/BrandHeader';
 import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
@@ -30,14 +38,16 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 const TABS = [
   { key: 'hot', nhan: '🔥 Hot' },
+  { key: 'voucher', nhan: '🎟️ Voucher' },
   { key: 'recommend', nhan: 'Đề xuất' },
   { key: 'best', nhan: 'Bán chạy' },
   { key: 'exclusive', nhan: 'Độc quyền' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
+type ProductList = 'hot' | 'recommend' | 'best' | 'exclusive';
 
-const LIST_KEYS: TabKey[] = ['hot', 'recommend', 'best', 'exclusive'];
+const LIST_KEYS: TabKey[] = ['hot', 'voucher', 'recommend', 'best', 'exclusive'];
 
 /** Cửa sổ tối đa 5 số trang quanh trang hiện tại (để không tràn hàng). */
 function pageWindow(cur: number, total: number): number[] {
@@ -65,9 +75,16 @@ export default function DiscoverScreen() {
     }
   }, [params.list]);
 
+  const laVoucher = list === 'voucher';
   const { data, isPending, isRefetching, refetch } = useQuery({
     queryKey: ['discover', list, page],
-    queryFn: () => layKhamPha(list, page),
+    queryFn: () => layKhamPha(list as ProductList, page),
+    enabled: !laVoucher,
+  });
+  const voucherQ = useQuery({
+    queryKey: ['vouchers'],
+    queryFn: layVoucher,
+    enabled: laVoucher,
   });
   const soTrang = Math.max(1, data?.knownPages ?? 1);
 
@@ -82,15 +99,75 @@ export default function DiscoverScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }
 
+  const header = (
+    <View style={styles.head}>
+      <Text style={styles.eyebrow}>SHOPPING DISCOVERY</Text>
+      <Text style={styles.h1}>Sản phẩm đáng để khám phá.</Text>
+      <Text style={styles.sub}>
+        Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabs}>
+        {TABS.map((t) => {
+          const on = t.key === list;
+          const noiBat = t.key === 'hot' || t.key === 'voucher';
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => chonTab(t.key)}
+              style={[
+                styles.tab,
+                noiBat && styles.tabHot,
+                on && styles.tabOn,
+                on && noiBat && styles.tabHotOn,
+              ]}>
+              <Text style={[styles.tabText, noiBat && styles.tabHotText, on && styles.tabTextOn]}>
+                {t.nhan}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
+  const dangTai = laVoucher ? voucherQ.isPending : isPending;
+
   return (
     <View style={styles.screen}>
       <BrandHeader onRegister={() => router.push('/login')} />
-      {isPending ? (
+      {dangTai ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.brand} />
         </View>
+      ) : laVoucher ? (
+        <FlatList
+          key="voucher"
+          data={voucherQ.data?.data ?? []}
+          keyExtractor={(v) => v.code}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={voucherQ.isRefetching}
+              onRefresh={voucherQ.refetch}
+              tintColor={colors.brand}
+            />
+          }
+          ListHeaderComponent={header}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
+              <Text style={styles.emptyTitle}>Chưa có voucher</Text>
+              <Text style={styles.emptyNote}>Mã giảm giá được làm mới mỗi ngày. Quay lại sau nhé.</Text>
+            </View>
+          }
+          renderItem={({ item }) => <TheVoucher v={item} />}
+        />
       ) : (
         <FlatList
+          key="product"
           ref={listRef}
           data={data?.data ?? []}
           keyExtractor={(p) => p.item_id}
@@ -100,45 +177,7 @@ export default function DiscoverScreen() {
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />
           }
-          ListHeaderComponent={
-            <View style={styles.head}>
-              <Text style={styles.eyebrow}>SHOPPING DISCOVERY</Text>
-              <Text style={styles.h1}>Sản phẩm đáng để khám phá.</Text>
-              <Text style={styles.sub}>
-                Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.
-              </Text>
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.tabs}>
-                {TABS.map((t) => {
-                  const on = t.key === list;
-                  const hot = t.key === 'hot';
-                  return (
-                    <Pressable
-                      key={t.key}
-                      onPress={() => chonTab(t.key)}
-                      style={[
-                        styles.tab,
-                        hot && styles.tabHot,
-                        on && styles.tabOn,
-                        on && hot && styles.tabHotOn,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.tabText,
-                          hot && styles.tabHotText,
-                          on && styles.tabTextOn,
-                        ]}>
-                        {t.nhan}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          }
+          ListHeaderComponent={header}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="cube-outline" size={30} color={colors.muted} />
@@ -178,6 +217,48 @@ export default function DiscoverScreen() {
           }
         />
       )}
+    </View>
+  );
+}
+
+function TheVoucher({ v }: { v: ShopeeVoucher }) {
+  async function chep() {
+    await Clipboard.setStringAsync(v.code);
+    Alert.alert('Đã chép mã', v.code + ' — dán vào Shopee khi thanh toán.');
+  }
+  async function dungNgay() {
+    await Clipboard.setStringAsync(v.code); // chép sẵn để dán ở Shopee
+    await WebBrowser.openBrowserAsync(v.use_url).catch(() => {});
+  }
+  return (
+    <View style={styles.vCard}>
+      <View style={styles.vHead}>
+        {v.logo_url ? (
+          <Image source={{ uri: v.logo_url }} style={styles.vLogo} contentFit="cover" />
+        ) : (
+          <View style={[styles.vLogo, styles.imgEmpty]}>
+            <Ionicons name="pricetag" size={18} color={colors.brand} />
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          {v.label ? <Text style={styles.vLabel}>{v.label}</Text> : null}
+          <Text style={styles.vShop} numberOfLines={1}>
+            {v.shop_name || 'Shopee'}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.vTitle} numberOfLines={2}>
+        {v.title}
+      </Text>
+      {v.expiry_text ? <Text style={styles.vExpiry}>{v.expiry_text}</Text> : null}
+      <View style={styles.vActions}>
+        <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, pressed && { opacity: 0.7 }]}>
+          <Text style={styles.vBtnCopyText} numberOfLines={1}>Mã: {v.code}</Text>
+        </Pressable>
+        <Pressable onPress={dungNgay} style={({ pressed }) => [styles.vBtnUse, pressed && { opacity: 0.7 }]}>
+          <Text style={styles.vBtnUseText}>Dùng ngay ↗</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -387,6 +468,47 @@ const styles = StyleSheet.create({
   pageNumText: { fontSize: 14, fontWeight: '800', color: colors.text },
   pageNumTextOn: { color: colors.onBrand },
   pagerOff: { opacity: 0.4 },
+
+  // ── Voucher ──
+  vCard: {
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ee4d2d',
+    padding: 12,
+    marginBottom: spacing.md,
+    gap: 7,
+  },
+  vHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  vLogo: { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.surfaceMuted },
+  vLabel: { fontSize: 11, fontWeight: '800', color: '#eb3600' },
+  vShop: { fontSize: 13.5, fontWeight: '800', color: colors.text },
+  vTitle: { fontSize: 13.5, fontWeight: '700', color: colors.text, lineHeight: 18 },
+  vExpiry: { fontSize: 11.5, color: colors.muted },
+  vActions: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  vBtnCopy: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ee4d2d',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(238,77,45,0.08)',
+  },
+  vBtnCopyText: { fontSize: 12, fontWeight: '800', color: '#ee4d2d' },
+  vBtnUse: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ee4d2d',
+  },
+  vBtnUseText: { fontSize: 12, fontWeight: '900', color: '#fff' },
 
   empty: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: colors.text },

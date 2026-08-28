@@ -94,6 +94,18 @@
     </form>
   </section>
 
+  {# ── Voucher Shopee ──────────────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">🎟️ VOUCHER</span><h2>Mã giảm giá Shopee hôm nay</h2></div>
+    </header>
+    <p class="bp-hint">Lấy thẳng từ shopeeanalytics.com (không cần profile). Tự làm mới <b>1h sáng mỗi ngày</b> cùng Deal Hot.</p>
+    <form method="post" action="/backoffice/profiles/refresh-vouchers">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button class="button button-primary" type="submit">🎟️ Làm mới voucher ngay</button>
+    </form>
+  </section>
+
   {# ── Lấy dữ liệu theo dải trang ────────────────────────────────────── #}
   <section class="panel config-section">
     <header class="admin-section-heading">

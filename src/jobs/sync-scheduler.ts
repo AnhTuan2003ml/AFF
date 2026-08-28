@@ -3,6 +3,7 @@ import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { releaseDueCashback } from "../services/cashback-release.js";
 import { directFetchHotDeals } from "../services/browser-control.js";
+import { refreshShopeeVouchers } from "../services/shopee-voucher.js";
 import {
   enqueueDueHarvest,
   HOT_DEALS_LIST_TYPE,
@@ -101,6 +102,13 @@ export function startSyncScheduler(
                 maxItems: 200,
               });
               logger.info({ items: r.savedItems }, "Đã lấy Deal Hot (1h sáng)");
+            }
+            // Voucher hôm nay (fetch thẳng, không cần profile).
+            try {
+              const rv = await refreshShopeeVouchers(db);
+              logger.info({ count: rv.count }, "Đã làm mới voucher (1h sáng)");
+            } catch (e) {
+              logger.warn({ err: e }, "Làm mới voucher thất bại");
             }
           }
         }

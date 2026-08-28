@@ -37,6 +37,7 @@
           <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Lọc theo danh mục">
             <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
             <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 Hot</button>
+            <button type="button" class="discover-tab-voucher" data-discover-voucher aria-pressed="false">🎟️ Voucher</button>
             <button type="button" data-discover-livelist="recommend" aria-pressed="false">Đề xuất</button>
             <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
             <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Độc quyền</button>
@@ -87,6 +88,15 @@
       <p class="bestseller-status" data-bestseller-status hidden></p>
       <nav class="bestseller-pagination" data-bestseller-pagination aria-label="Chuyển trang" hidden></nav>
     </section>
+
+    {# ── Tab Voucher: mã giảm giá Shopee hôm nay ── #}
+    <section class="voucher-section" data-voucher-section hidden aria-label="Voucher Shopee hôm nay">
+      <header class="px-section-head"><div><span class="px-eyebrow">MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến Shopee.</p></header>
+      <div class="voucher-grid" data-voucher-grid aria-live="polite"></div>
+      <p class="bestseller-status" data-voucher-status hidden></p>
+    </section>
+
     <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
   </div>
+  <script src="/assets/discover-vouchers.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
