@@ -35,6 +35,7 @@
 
   // Mỗi danh mục giữ trang riêng — quay lại vẫn ở đúng trang đang xem.
   var listState = {
+    hot: { page: 1, known: 0, hasMore: true },
     recommend: { page: 1, known: 0, hasMore: true },
     best: { page: 1, known: 0, hasMore: true },
     exclusive: { page: 1, known: 0, hasMore: true },
