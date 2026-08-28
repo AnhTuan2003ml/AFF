@@ -902,33 +902,39 @@ export async function registerAdminUserRoutes(
           await saveKolContractFile(deps.db, request.params.id, contractPdf);
         }
 
-        // Duyệt xong: gửi ĐÚNG file PDF admin vừa đính kèm về email người đăng
-        // ký. Lỗi gửi mail KHÔNG được chặn việc duyệt — chỉ ghi log.
+        // Duyệt xong: gửi email hợp đồng CHẠY NỀN — KHÔNG chặn phản hồi (file PDF
+        // lớn có thể gửi vài chục giây; đừng để admin chờ treo). Lỗi chỉ ghi log.
         let mailNote = "";
         if (approve && contractPdf && to) {
-          try {
-            const partner = await query<{ referral_code: string }>(
-              deps.db,
-              "SELECT referral_code FROM users WHERE id = $1",
-              [result.userId],
-            );
-            await deps.emailService.sendKolContract({
-              to,
-              fullName: result.fullName,
-              partnerCode: partner.rows[0]?.referral_code ?? "—",
-              email: app0?.email ?? app0?.account_email ?? to,
-              phone: app0?.phone ?? "—",
-              approvedAt: new Date(),
-              pdf: contractPdf,
-            });
-            mailNote = ` Đã gửi hợp đồng tới ${to}.`;
-          } catch (mailError) {
-            request.log.error(
-              { err: mailError },
-              "Gửi hợp đồng KOL/KOC thất bại",
-            );
-            mailNote = " (Lưu ý: gửi email hợp đồng chưa thành công.)";
-          }
+          const pdf = contractPdf;
+          const userId = result.userId;
+          const fullName = result.fullName;
+          const email = app0?.email ?? app0?.account_email ?? to;
+          const phone = app0?.phone ?? "—";
+          void (async () => {
+            try {
+              const partner = await query<{ referral_code: string }>(
+                deps.db,
+                "SELECT referral_code FROM users WHERE id = $1",
+                [userId],
+              );
+              await deps.emailService.sendKolContract({
+                to,
+                fullName,
+                partnerCode: partner.rows[0]?.referral_code ?? "—",
+                email,
+                phone,
+                approvedAt: new Date(),
+                pdf,
+              });
+            } catch (mailError) {
+              request.log.error(
+                { err: mailError },
+                "Gửi hợp đồng KOL/KOC thất bại",
+              );
+            }
+          })();
+          mailNote = ` Đang gửi hợp đồng tới ${to} (chạy nền).`;
         }
         setFlash(
           reply,
