@@ -142,9 +142,14 @@ export async function registerProductApiRoutes(
         source: "share",
         campaign: "sharelink",
       });
+      // buyUrl thường đã là tuyệt đối (${APP_ORIGIN}/go/:clickId) — chỉ prepend
+      // khi lỡ là đường dẫn tương đối, tránh nối đôi domain.
       const origin = deps.config.APP_ORIGIN.replace(/\/+$/, "");
+      const shareUrl = link.buyUrl.startsWith("http")
+        ? link.buyUrl
+        : `${origin}${link.buyUrl}`;
       return reply.code(201).send({
-        shareUrl: `${origin}${link.buyUrl}`,
+        shareUrl,
         clickId: link.clickId,
         platform: link.platform,
         productName: cached.product.productName,
