@@ -73,8 +73,10 @@
 
   // Dùng đúng hệ class thẻ của trang Khám phá để giao diện đồng nhất.
   function renderCard(product, listKey) {
-    var card = el("article", "discover-card discover-card-product");
-    var media = el("div", "discover-card-media");
+    // Dùng ĐÚNG hệ class px-product-* như thẻ tĩnh (discover.css không nạp ở
+    // trang này — styling thật đến từ luxury-ui.css .px-product-*).
+    var card = el("article", "discover-card discover-card-product px-product-card");
+    var media = el("div", "discover-card-media px-product-media");
     if (product.imageUrl) {
       var img = document.createElement("img");
       img.src = product.imageUrl;
@@ -105,24 +107,19 @@
     }
     card.appendChild(media);
 
-    var body = el("div", "discover-card-body");
+    var body = el("div", "discover-card-body px-product-body");
+    if (product.shopName) {
+      body.appendChild(el("span", "px-product-category", product.shopName));
+    }
     body.appendChild(el("h2", "", product.name));
-    var metaParts = [];
-    if (product.shopName) metaParts.push(product.shopName);
-    if (product.salesCount) {
-      metaParts.push("Đã bán " + new Intl.NumberFormat("vi-VN").format(product.salesCount));
-    }
-    if (metaParts.length) {
-      body.appendChild(el("p", "discover-card-description", metaParts.join(" · ")));
-    }
-    var priceBox = el("div", "discover-price-box");
+    var priceBox = el("div", "discover-price-box px-price-box");
     var priceLine = el("div");
     priceLine.appendChild(
       el("strong", "", product.priceVnd ? formatVnd(product.priceVnd) : "Xem giá trên sàn")
     );
     priceBox.appendChild(priceLine);
     var refund = el("p");
-    refund.appendChild(el("span", "", "Nhận về Ví ShopTik:"));
+    refund.appendChild(el("span", "", "Hoàn về ví"));
     refund.appendChild(
       el("b", "", product.cashbackAmountVnd ? "+" + formatVnd(product.cashbackAmountVnd) : "Kiểm tra khi mua")
     );
@@ -130,7 +127,7 @@
     body.appendChild(priceBox);
     card.appendChild(body);
 
-    var footer = el("footer", "discover-card-footer");
+    var footer = el("footer", "discover-card-footer px-product-footer");
     var buy = el("button", "discover-primary-action");
     buy.type = "button";
     buy.setAttribute("data-discover-buy", "");
