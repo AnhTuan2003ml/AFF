@@ -1,30 +1,41 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { guiMaNguoiGioiThieu } from '@/api/features';
-import { FormScreen } from '@/components/FormScreen';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { Mascot, type CamioMood } from '@/components/Mascot';
+import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
- * Mời nhập mã giới thiệu cho tài khoản mới đăng ký qua Google (luồng form đã
- * có ô mã ngay lúc đăng ký; luồng Google thì server báo isNew=1 và app mở màn
- * này). Bỏ qua được — sau vẫn nhập bù ở tab Giới thiệu.
+ * Mời nhập mã giới thiệu (tài khoản mới qua Google, hoặc nhập bù từ tab
+ * Giới thiệu). CamiO dẫn chuyện và ĐỔI BIỂU CẢM theo thao tác: tò mò khi
+ * chưa gõ → hào hứng khi đang gõ → ngạc nhiên nếu mã sai → tự tin khi xong.
  */
 export default function NhapGioiThieuScreen() {
   const qc = useQueryClient();
   const [ma, setMa] = useState('');
+  const [trangThai, setTrangThai] = useState<'cho' | 'loi' | 'xong'>('cho');
 
   const gui = useMutation({
     mutationFn: guiMaNguoiGioiThieu,
     onSuccess: () => {
+      setTrangThai('xong');
       void qc.invalidateQueries({ queryKey: ['referrals'] });
-      Alert.alert('Đã ghi nhận', 'Người giới thiệu của bạn đã được ghi nhận.');
-      thoat();
+      // Cho CamiO khoe biểu cảm "tự tin" một nhịp rồi mới rời màn.
+      setTimeout(thoat, 1400);
     },
-    onError: (e) =>
-      Alert.alert('Chưa được', e instanceof Error ? e.message : 'Kiểm tra lại mã nhé.'),
+    onError: () => setTrangThai('loi'),
   });
 
   function thoat() {
@@ -32,57 +43,151 @@ export default function NhapGioiThieuScreen() {
     else router.replace('/(tabs)');
   }
 
+  const dangGo = ma.trim().length > 0;
+  const mood: CamioMood =
+    trangThai === 'xong' ? 'tutin' : trangThai === 'loi' ? 'ngacnhien' : dangGo ? 'haohung' : 'thichthu';
+  const loiNhan =
+    trangThai === 'xong'
+      ? 'Tuyệt! Đã ghi nhận người giới thiệu của bạn 🧡'
+      : trangThai === 'loi'
+        ? 'Ơ, mã này Camio tìm không ra… kiểm tra lại giúp mình nha!'
+        : dangGo
+          ? 'Nhìn ổn đấy! Bấm xác nhận là xong 🎯'
+          : 'Có mã của bạn bè không? Nhập vào là cả hai cùng có quà đó!';
+
   return (
-    <FormScreen
-      title="Bạn có mã giới thiệu?"
-      subtitle="Nếu có bạn bè/đối tác giới thiệu, nhập mã của họ để cả hai cùng nhận quyền lợi. Không có thì bỏ qua nhé.">
-      <TextInput
-        value={ma}
-        onChangeText={setMa}
-        placeholder="VD: 557922 hoặc NamDong"
-        placeholderTextColor={colors.muted}
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoFocus
-        maxLength={20}
-        style={styles.input}
-      />
-      <Pressable
-        onPress={() => ma.trim() && gui.mutate(ma.trim())}
-        disabled={gui.isPending || !ma.trim()}
-        style={({ pressed }) => [
-          styles.submit,
-          (pressed || gui.isPending || !ma.trim()) && { opacity: 0.7 },
-        ]}>
-        <Text style={styles.submitText}>{gui.isPending ? 'Đang gửi…' : 'Xác nhận'}</Text>
-      </Pressable>
-      <Pressable onPress={thoat} style={({ pressed }) => [styles.skip, pressed && { opacity: 0.7 }]}>
-        <Text style={styles.skipText}>Bỏ qua</Text>
-      </Pressable>
-    </FormScreen>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* CamiO dẫn chuyện — lơ lửng sẵn trong component Mascot. */}
+        <View style={styles.hero}>
+          <Mascot mood={mood} size={116} noi={loiNhan} />
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.giftBadge}>
+              <Ionicons name="gift" size={17} color={colors.onBrand} />
+            </View>
+            <Text style={styles.title}>Bạn có mã giới thiệu?</Text>
+          </View>
+          <Text style={styles.subtitle}>
+            Nhập mã của bạn bè/đối tác để cả hai cùng nhận quyền lợi. Không có thì bỏ qua —
+            sau vẫn nhập bù được ở mục Giới thiệu.
+          </Text>
+
+          <TextInput
+            value={ma}
+            onChangeText={(v) => {
+              setMa(v);
+              if (trangThai === 'loi') setTrangThai('cho');
+            }}
+            placeholder="VD: 557922 hoặc NamDong"
+            placeholderTextColor={colors.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+            maxLength={20}
+            editable={trangThai !== 'xong'}
+            style={[
+              styles.input,
+              trangThai === 'loi' && styles.inputLoi,
+              trangThai === 'xong' && styles.inputXong,
+            ]}
+          />
+
+          <Pressable
+            onPress={() => dangGo && gui.mutate(ma.trim())}
+            disabled={gui.isPending || !dangGo || trangThai === 'xong'}
+            style={({ pressed }) => [
+              styles.submit,
+              trangThai === 'xong' && styles.submitXong,
+              (pressed || gui.isPending || !dangGo) && trangThai !== 'xong' && { opacity: 0.7 },
+            ]}>
+            <Ionicons
+              name={trangThai === 'xong' ? 'checkmark-circle' : 'sparkles'}
+              size={17}
+              color={colors.onBrand}
+            />
+            <Text style={styles.submitText}>
+              {trangThai === 'xong' ? 'Đã ghi nhận!' : gui.isPending ? 'Đang gửi…' : 'Xác nhận mã'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {trangThai !== 'xong' && (
+          <Pressable
+            onPress={thoat}
+            style={({ pressed }) => [styles.skip, pressed && { opacity: 0.7 }]}>
+            <Text style={styles.skipText}>Không có mã — bỏ qua bước này</Text>
+          </Pressable>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  input: {
-    minHeight: 50,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    color: colors.text,
-    backgroundColor: colors.surface,
-    marginBottom: spacing.md,
+  screen: { flex: 1, backgroundColor: colors.paper },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.lg,
+    paddingBottom: 40,
   },
-  submit: {
-    minHeight: 50,
-    borderRadius: radius.sm,
+  hero: { alignItems: 'center', marginBottom: 6 },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.brandLine,
+    padding: spacing.lg,
+    ...shadow.card,
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  giftBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  title: { fontSize: 19, fontWeight: '900', color: colors.text, flex: 1 },
+  subtitle: { fontSize: 13, color: colors.muted, lineHeight: 19, marginTop: 8 },
+
+  input: {
+    minHeight: 52,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    paddingHorizontal: 14,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textAlign: 'center',
+    color: colors.text,
+    backgroundColor: colors.paper,
+    marginTop: spacing.md,
+  },
+  inputLoi: { borderColor: colors.danger },
+  inputXong: { borderColor: colors.success, color: colors.success },
+
+  submit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 52,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brand,
+    marginTop: spacing.md,
+  },
+  submitXong: { backgroundColor: colors.success },
   submitText: { color: colors.onBrand, fontWeight: '900', fontSize: 15 },
-  skip: { alignItems: 'center', paddingVertical: 14 },
-  skipText: { color: colors.muted, fontWeight: '700', fontSize: 14 },
+
+  skip: { alignItems: 'center', paddingVertical: 18 },
+  skipText: { color: colors.muted, fontWeight: '700', fontSize: 13.5 },
 });
