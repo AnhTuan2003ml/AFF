@@ -920,6 +920,9 @@ export async function registerAppRoutes(
       shopName: row.shop_name,
       salesCount: row.sales_count !== null ? Number(row.sales_count) : null,
       productUrl: row.product_url,
+      originalPriceVnd:
+        row.original_price_vnd !== null ? Number(row.original_price_vnd) : null,
+      discountPercent: row.discount_percent,
     };
   };
 

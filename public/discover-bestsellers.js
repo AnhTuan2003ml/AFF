@@ -91,7 +91,7 @@
       placeholder.appendChild(el("span", "", "▣"));
       media.appendChild(placeholder);
     }
-    var LABELS = { best: "Bán chạy", exclusive: "Độc quyền", recommend: "Đề xuất" };
+    var LABELS = { hot: "🔥 Hot", best: "Bán chạy", exclusive: "Độc quyền", recommend: "Đề xuất" };
     var badges = el("div", "discover-card-badges");
     badges.appendChild(
       el("span", "discover-category-badge", LABELS[listKey] || "Đề xuất")
@@ -100,6 +100,12 @@
       el("span", "discover-platform-badge platform-shopee", "Shopee")
     );
     media.appendChild(badges);
+    // Badge % giảm voucher (góc trên phải ảnh) — nổi bật deal Hot.
+    if (product.discountPercent) {
+      media.appendChild(
+        el("span", "discover-discount-badge", "-" + product.discountPercent + "%")
+      );
+    }
     if (product.cashbackRatePercent) {
       media.appendChild(
         el("span", "discover-cashback-badge", "Hoàn +" + product.cashbackRatePercent + "%")
@@ -117,6 +123,10 @@
     priceLine.appendChild(
       el("strong", "", product.priceVnd ? formatVnd(product.priceVnd) : "Xem giá trên sàn")
     );
+    // Voucher/HOT: giá gốc gạch ngang để thấy giảm bao nhiêu.
+    if (product.originalPriceVnd && product.originalPriceVnd > (product.priceVnd || 0)) {
+      priceLine.appendChild(el("del", "", formatVnd(product.originalPriceVnd)));
+    }
     priceBox.appendChild(priceLine);
     var refund = el("p");
     refund.appendChild(el("span", "", "Hoàn về ví"));

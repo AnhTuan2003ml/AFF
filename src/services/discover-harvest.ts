@@ -622,6 +622,10 @@ export interface HarvestedProduct {
   shopName: string | null;
   productUrl: string;
   salesCount: number | null;
+  /** Giá gốc trước giảm (₫) — chỉ có ở sản phẩm voucher/HOT. */
+  originalPriceVnd?: number | null;
+  /** % giảm giá (vd 63) — chỉ có ở sản phẩm voucher/HOT. */
+  discountPercent?: number | null;
 }
 
 function asObject(value: unknown): JsonObject | null {
@@ -805,6 +809,7 @@ export function parseShopeeMicrositeItems(payload: unknown): HarvestedProduct[] 
 
     const priceInfo = asObject(itemData.item_card_display_price);
     const shopData = asObject(itemData.shop_data);
+    const discountRaw = priceInfo ? numberOf(priceInfo.discount) : null;
 
     products.push({
       itemId,
@@ -817,6 +822,13 @@ export function parseShopeeMicrositeItems(payload: unknown): HarvestedProduct[] 
         ? `https://shopee.vn/product/${shopId}/${itemId}`
         : `https://shopee.vn/product/i/${itemId}`,
       salesCount: null,
+      originalPriceVnd: priceToVnd(
+        priceInfo?.original_price ?? priceInfo?.strikethrough_price,
+      ),
+      discountPercent:
+        discountRaw !== null && discountRaw >= 0 && discountRaw <= 100
+          ? Math.round(discountRaw)
+          : null,
     });
   }
   return products;
@@ -934,6 +946,8 @@ export interface StoredOfferProduct {
   shop_name: string | null;
   product_url: string;
   sales_count: string | null;
+  original_price_vnd: string | null;
+  discount_percent: number | null;
 }
 
 /** Trang đã từng lấy chưa (kể cả trang rỗng)? */
@@ -959,7 +973,8 @@ export async function getStoredOfferPage(
     db,
     `
       SELECT item_id, name, image_url, price_vnd::text, commission_rate_bps,
-        shop_name, product_url, sales_count::text
+        shop_name, product_url, sales_count::text,
+        original_price_vnd::text, discount_percent
       FROM shopee_offer_products
       WHERE list_type = $1 AND page_no = $2
       ORDER BY position
@@ -1041,8 +1056,9 @@ export async function saveOfferPage(
       `
         INSERT INTO shopee_offer_products (
           list_type, page_no, position, item_id, name, image_url, price_vnd,
-          commission_rate_bps, shop_name, product_url, sales_count
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          commission_rate_bps, shop_name, product_url, sales_count,
+          original_price_vnd, discount_percent
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       `,
       [
         listType,
@@ -1056,6 +1072,8 @@ export async function saveOfferPage(
         product.shopName,
         product.productUrl,
         product.salesCount,
+        product.originalPriceVnd ?? null,
+        product.discountPercent ?? null,
       ],
     );
   }
