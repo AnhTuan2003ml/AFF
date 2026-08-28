@@ -1,0 +1,48 @@
+{% extends "app/app-base.njk" %}
+
+{% block app_content %}
+  <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
+  <section class="kol-wrap">
+    <header class="kol-head">
+      <span class="kol-eyebrow">ĐỐI TÁC KOL/KOC</span>
+      <h1>Bạn đã là đối tác chính thức</h1>
+      <p>Hồ sơ của bạn đã được duyệt. Dưới đây là thông tin đã đăng ký, ảnh xác minh và hợp đồng hợp tác.</p>
+    </header>
+
+    <div class="kol-approved-badge">✓ Đã duyệt — không cần đăng ký lại</div>
+
+    <div class="kol-card">
+      <h2 class="kol-card-title">Thông tin đã đăng ký</h2>
+      <dl class="kol-approved-info">
+        <div><dt>Họ và tên</dt><dd>{{ a.full_name }}</dd></div>
+        <div><dt>Số CCCD</dt><dd>{{ a.cccd_number }}</dd></div>
+        <div><dt>Ngày sinh</dt><dd>{{ a.birth_date or '—' }}</dd></div>
+        <div><dt>Ngày cấp / Nơi cấp</dt><dd>{{ a.cccd_issue or '—' }}</dd></div>
+        <div><dt>Điện thoại</dt><dd>{{ a.phone }}</dd></div>
+        <div><dt>Email</dt><dd>{{ a.email or '—' }}</dd></div>
+        <div class="kol-col-2"><dt>Ngân hàng nhận tiền</dt><dd>{{ a.bank_account or '—' }} {{ a.bank_name or '' }}</dd></div>
+        <div class="kol-col-2"><dt>Địa chỉ</dt><dd>{{ a.address or '—' }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="kol-card">
+      <h2 class="kol-card-title">Ảnh &amp; video xác minh</h2>
+      <div class="kol-admin-kyc">
+        <figure><figcaption>CCCD mặt trước</figcaption>
+          <img src="/app/dang-ky-kol/file/cccd_front" alt="CCCD trước" loading="lazy"></figure>
+        <figure><figcaption>CCCD mặt sau</figcaption>
+          <img src="/app/dang-ky-kol/file/cccd_back" alt="CCCD sau" loading="lazy"></figure>
+        <figure><figcaption>Video khuôn mặt</figcaption>
+          <video src="/app/dang-ky-kol/file/face_video" controls preload="metadata" playsinline></video></figure>
+      </div>
+    </div>
+
+    {% if a.has_contract %}
+      <div class="kol-card">
+        <h2 class="kol-card-title">Hợp đồng hợp tác</h2>
+        <p class="kol-note">Bản hợp đồng đã được gửi tới email của bạn. Bạn có thể tải lại tại đây.</p>
+        <a class="button button-primary" href="/app/dang-ky-kol/file/contract_pdf" target="_blank" rel="noopener">⬇ Tải hợp đồng (PDF)</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

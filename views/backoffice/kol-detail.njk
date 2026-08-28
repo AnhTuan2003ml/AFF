@@ -72,6 +72,24 @@
           <button type="submit" class="button button-ghost button-small">Từ chối</button>
         </form>
       </footer>
+    {% elif a.status == 'APPROVED' %}
+      <form method="post" action="/backoffice/kol/{{ a.id }}/resend-email" class="kol-approve" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <p class="kol-approve-title">Hồ sơ đã duyệt. Gửi lại email hợp đồng (dùng file đã lưu, hoặc đính kèm PDF mới để thay).</p>
+        <p class="kol-docx-row">
+          <a class="button button-ghost button-small" href="/backoffice/kol/{{ a.id }}/file/contract_pdf" target="_blank" rel="noopener">⬇ Tải hợp đồng đã gửi (PDF)</a>
+        </p>
+        <label class="kol-file">
+          <input type="file" name="contractPdf" accept="application/pdf,.pdf" data-kol-pdf>
+          <span class="kol-file-face">
+            <b data-kol-pdf-name>Đính kèm PDF mới (tùy chọn)…</b>
+            <small>Để trống nếu chỉ gửi lại file hợp đồng đã lưu.</small>
+          </span>
+        </label>
+        <div class="kol-admin-actions">
+          <button type="submit" class="button button-primary button-small">Gửi lại email hợp đồng</button>
+        </div>
+      </form>
     {% elif a.reject_reason %}
       <footer class="kol-admin-actions"><small class="muted">Lý do từ chối: {{ a.reject_reason }}</small></footer>
     {% endif %}

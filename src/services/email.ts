@@ -30,9 +30,11 @@ export class EmailService {
               user: config.SMTP_USER,
               pass: config.SMTP_PASS,
             },
-            connectionTimeout: 8_000,
-            greetingTimeout: 8_000,
-            socketTimeout: 10_000,
+            // Email chào mừng KOL/KOC đính kèm PDF vài MB — socketTimeout phải đủ
+            // dài để upload attachment, nếu không gặp ETIMEDOUT giữa chừng.
+            connectionTimeout: 20_000,
+            greetingTimeout: 20_000,
+            socketTimeout: 60_000,
           })
         : null;
   }
@@ -237,7 +239,7 @@ export class EmailService {
       website,
     });
 
-    await this.transporter.sendMail({
+    const mail = {
       from: {
         name: this.config.SMTP_FROM_NAME,
         address: this.config.SMTP_FROM_EMAIL,
@@ -264,7 +266,20 @@ export class EmailService {
       ].join("\n"),
       html,
       attachments,
-    });
+    };
+
+    // Gửi kèm PDF đôi khi chậm/timeout — thử lại tối đa 3 lần trước khi báo lỗi.
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.transporter.sendMail(mail);
+        return;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 3) await new Promise((r) => setTimeout(r, 1500 * attempt));
+      }
+    }
+    throw lastErr;
   }
 
   /** Dựng HTML email chào mừng đối tác (bố cục bảng, an toàn cho email client). */

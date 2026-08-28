@@ -22,6 +22,8 @@ import {
   getKolApplication,
   getKolFile,
   listKolApplications,
+  saveKolContractFile,
+  type KolFileKind,
 } from "../services/kol-application.js";
 import { buildKolDocx } from "../services/kol-docx.js";
 import {
@@ -798,14 +800,12 @@ export async function registerAdminUserRoutes(
     "/kol/:id/file/:kind",
     async (request, reply) => {
       const kind = request.params.kind.toUpperCase();
-      if (!["CCCD_FRONT", "CCCD_BACK", "FACE_VIDEO"].includes(kind)) {
+      if (
+        !["CCCD_FRONT", "CCCD_BACK", "FACE_VIDEO", "CONTRACT_PDF"].includes(kind)
+      ) {
         return reply.code(404).send("Không tìm thấy.");
       }
-      const file = await getKolFile(
-        deps.db,
-        request.params.id,
-        kind as "CCCD_FRONT" | "CCCD_BACK" | "FACE_VIDEO",
-      );
+      const file = await getKolFile(deps.db, request.params.id, kind as KolFileKind);
       if (!file) return reply.code(404).send("Không tìm thấy file.");
       reply.header("content-type", file.contentType);
       reply.header("cache-control", "private, no-store");
@@ -897,6 +897,11 @@ export async function registerAdminUserRoutes(
           after: { fullName: result.fullName, cccd: app0?.cccd_number },
         });
 
+        // Lưu file PDF hợp đồng để người dùng xem lại + admin gửi lại nếu cần.
+        if (approve && contractPdf) {
+          await saveKolContractFile(deps.db, request.params.id, contractPdf);
+        }
+
         // Duyệt xong: gửi ĐÚNG file PDF admin vừa đính kèm về email người đăng
         // ký. Lỗi gửi mail KHÔNG được chặn việc duyệt — chỉ ghi log.
         let mailNote = "";
@@ -937,6 +942,58 @@ export async function registerAdminUserRoutes(
         flashAdminError(reply, deps.config, error);
       }
       return reply.redirect("/backoffice/kol");
+    },
+  );
+
+  // Gửi lại email hợp đồng cho hồ sơ đã duyệt (dùng PDF đã lưu, hoặc PDF mới upload).
+  app.post<{ Params: { id: string } }>(
+    "/kol/:id/resend-email",
+    async (request, reply) => {
+      try {
+        const id = request.params.id;
+        const body = request.body as Record<string, unknown>;
+        const app0 = await getKolApplication(deps.db, id);
+        if (!app0) throw new AppError("KOL_NOT_FOUND", "Không tìm thấy hồ sơ.", 404);
+        const to = app0.account_email ?? app0.email ?? undefined;
+        if (!to) throw new AppError("KOL_NO_EMAIL", "Không có email người đăng ký.", 400);
+
+        // PDF: ưu tiên file mới admin vừa upload, nếu không thì lấy bản đã lưu.
+        let pdf = kolMultipartBuffer(body.contractPdf);
+        if (pdf && !isPdf(pdf)) {
+          throw new AppError("KOL_BAD_PDF", "File đính kèm không phải PDF hợp lệ.", 400);
+        }
+        if (pdf) {
+          await saveKolContractFile(deps.db, id, pdf);
+        } else {
+          const stored = await getKolFile(deps.db, id, "CONTRACT_PDF");
+          pdf = stored?.content ?? null;
+        }
+        if (!pdf) {
+          throw new AppError(
+            "KOL_NO_PDF",
+            "Chưa có file hợp đồng. Vui lòng đính kèm PDF để gửi.",
+            400,
+          );
+        }
+        const partner = await query<{ referral_code: string }>(
+          deps.db,
+          "SELECT referral_code FROM users WHERE id = $1",
+          [app0.user_id],
+        );
+        await deps.emailService.sendKolContract({
+          to,
+          fullName: app0.full_name,
+          partnerCode: partner.rows[0]?.referral_code ?? "—",
+          email: app0.email ?? app0.account_email ?? to,
+          phone: app0.phone ?? "—",
+          approvedAt: new Date(),
+          pdf,
+        });
+        setFlash(reply, deps.config, "success", `Đã gửi lại hợp đồng tới ${to}.`);
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect(`/backoffice/kol/${request.params.id}`);
     },
   );
 

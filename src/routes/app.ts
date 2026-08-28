@@ -17,8 +17,11 @@ import { getBusinessConfig } from "../services/business-config.js";
 import { listOrderHistory } from "../services/order-history.js";
 import { listShopeeVouchers } from "../services/shopee-voucher.js";
 import {
+  getKolFile,
+  getUserKolApplication,
   getUserKolStatus,
   submitKolApplication,
+  type KolFileKind,
 } from "../services/kol-application.js";
 import {
   multipartBuffer,
@@ -1468,24 +1471,55 @@ export async function registerAppRoutes(
   });
 
   // ── Đăng ký KOL/KOC ──────────────────────────────────────────────────
-  // Bước 1: điều khoản + tích xác nhận.
+  // Bước 1: điều khoản + tích xác nhận. Đã duyệt thì hiện lại hồ sơ + hợp đồng.
   app.get("/dang-ky-kol", async (request, reply) => {
-    const kol = await getUserKolStatus(deps.db, userId(request));
+    const app0 = await getUserKolApplication(deps.db, userId(request));
+    if (app0 && app0.status === "APPROVED") {
+      return reply.view("app/kol-approved.njk", {
+        pageTitle: "Đối tác KOL/KOC",
+        appSection: "referrals",
+        a: app0,
+      });
+    }
     return reply.view("app/kol-terms.njk", {
       pageTitle: "Đăng ký KOL/KOC",
       appSection: "referrals",
       sections: KOL_AGREEMENT_SECTIONS,
       agreementVersion: KOL_AGREEMENT_VERSION,
-      pendingStatus: kol.status,
+      pendingStatus: app0?.status ?? null,
     });
   });
+
+  // Xem file KYC/hợp đồng của CHÍNH người dùng (sau khi được duyệt).
+  app.get<{ Params: { kind: string } }>(
+    "/dang-ky-kol/file/:kind",
+    async (request, reply) => {
+      const kind = request.params.kind.toUpperCase();
+      if (
+        !["CCCD_FRONT", "CCCD_BACK", "FACE_VIDEO", "CONTRACT_PDF"].includes(kind)
+      ) {
+        return reply.code(404).send("Không tìm thấy.");
+      }
+      const app0 = await getUserKolApplication(deps.db, userId(request));
+      if (!app0) return reply.code(404).send("Không tìm thấy hồ sơ.");
+      const file = await getKolFile(deps.db, app0.id, kind as KolFileKind);
+      if (!file) return reply.code(404).send("Không tìm thấy file.");
+      reply.header("content-type", file.contentType);
+      reply.header("cache-control", "private, no-store");
+      reply.header("content-disposition", "inline");
+      return reply.send(file.content);
+    },
+  );
 
   // Bước 2: form thông tin + KYC (chỉ vào được khi đã tích điều khoản).
   app.get("/dang-ky-kol/thong-tin", async (request, reply) => {
     const q = request.query as Record<string, unknown>;
     if (q.dong_y !== "1") return reply.redirect("/app/dang-ky-kol");
     const kol = await getUserKolStatus(deps.db, userId(request));
-    if (kol.status === "PENDING") return reply.redirect("/app/dang-ky-kol");
+    // Đang chờ hoặc đã là đối tác thì không cho điền lại.
+    if (kol.status === "PENDING" || kol.status === "APPROVED") {
+      return reply.redirect("/app/dang-ky-kol");
+    }
     return reply.view("app/kol-form.njk", {
       pageTitle: "Hồ sơ KOL/KOC",
       appSection: "referrals",

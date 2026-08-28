@@ -20,6 +20,27 @@ export function layTrangThaiKol() {
   return apiFetch<{ status: string | null }>('/api/v1/kol/status');
 }
 
+export interface HoSoKolDaNop {
+  fullName: string;
+  cccdNumber: string;
+  birthDate: string | null;
+  cccdIssue: string | null;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  bankAccount: string | null;
+  bankName: string | null;
+  hasContract: boolean;
+}
+
+/** Hồ sơ của chính người dùng — để hiện lại thông tin sau khi được duyệt. */
+export function layHoSoKol() {
+  return apiFetch<{
+    status: string | null;
+    application: HoSoKolDaNop | null;
+  }>('/api/v1/kol/me');
+}
+
 export interface HoSoKolInput {
   fullName: string;
   birthDate?: string;

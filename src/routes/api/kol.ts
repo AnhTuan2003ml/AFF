@@ -1,8 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { requireApiUser } from "../../auth/guards.js";
 import {
+  getKolFile,
+  getUserKolApplication,
   getUserKolStatus,
   submitKolApplication,
+  type KolFileKind,
 } from "../../services/kol-application.js";
 import {
   KOL_AGREEMENT_SECTIONS,
@@ -35,6 +38,48 @@ export async function registerKolApiRoutes(
     const kol = await getUserKolStatus(deps.db, request.currentUser!.id);
     return { status: kol.status };
   });
+
+  // Hồ sơ của chính người dùng (để app hiện lại thông tin sau khi được duyệt).
+  app.get("/kol/me", { preHandler: requireApiUser }, async (request) => {
+    const a = await getUserKolApplication(deps.db, request.currentUser!.id);
+    if (!a) return { status: null, application: null };
+    return {
+      status: a.status,
+      application: {
+        fullName: a.full_name,
+        cccdNumber: a.cccd_number,
+        birthDate: a.birth_date,
+        cccdIssue: a.cccd_issue,
+        phone: a.phone,
+        email: a.email,
+        address: a.address,
+        bankAccount: a.bank_account,
+        bankName: a.bank_name,
+        hasContract: a.has_contract,
+      },
+    };
+  });
+
+  // Xem file KYC/hợp đồng của chính người dùng (bearer).
+  app.get<{ Params: { kind: string } }>(
+    "/kol/file/:kind",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      const kind = request.params.kind.toUpperCase();
+      if (
+        !["CCCD_FRONT", "CCCD_BACK", "FACE_VIDEO", "CONTRACT_PDF"].includes(kind)
+      ) {
+        return reply.code(404).send("Không tìm thấy.");
+      }
+      const a = await getUserKolApplication(deps.db, request.currentUser!.id);
+      if (!a) return reply.code(404).send("Không tìm thấy hồ sơ.");
+      const file = await getKolFile(deps.db, a.id, kind as KolFileKind);
+      if (!file) return reply.code(404).send("Không tìm thấy file.");
+      reply.header("content-type", file.contentType);
+      reply.header("cache-control", "private, no-store");
+      return reply.send(file.content);
+    },
+  );
 
   // Nộp hồ sơ + KYC (multipart: cccdFront, cccdBack, faceVideo + các field text).
   app.post("/kol/apply", { preHandler: requireApiUser }, async (request) => {

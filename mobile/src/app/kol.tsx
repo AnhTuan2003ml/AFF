@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   guiHoSoKol,
   layDieuKhoanKol,
-  layTrangThaiKol,
+  layHoSoKol,
   type HoSoKolInput,
   type TepKyc,
 } from '@/api/kol';
@@ -47,9 +47,9 @@ export default function KolScreen() {
     queryKey: ['kol-terms'],
     queryFn: layDieuKhoanKol,
   });
-  const { data: trangThai } = useQuery({
-    queryKey: ['kol-status'],
-    queryFn: layTrangThaiKol,
+  const { data: hoSo } = useQuery({
+    queryKey: ['kol-me'],
+    queryFn: layHoSoKol,
   });
 
   function dat(k: keyof HoSoKolInput, v: string) {
@@ -139,7 +139,9 @@ export default function KolScreen() {
     }
   }
 
-  const daNop = trangThai?.status === 'PENDING' || xong;
+  const daDuyet = hoSo?.status === 'APPROVED';
+  const app = hoSo?.application;
+  const daNop = hoSo?.status === 'PENDING' || xong;
 
   return (
     <View style={styles.screen}>
@@ -154,10 +156,40 @@ export default function KolScreen() {
           <Text style={styles.backText}>Quay lại</Text>
         </Pressable>
 
-        <Text style={styles.eyebrow}>ĐĂNG KÝ ĐỐI TÁC</Text>
-        <Text style={styles.h1}>Đăng ký KOL/KOC</Text>
+        <Text style={styles.eyebrow}>
+          {daDuyet ? 'ĐỐI TÁC KOL/KOC' : 'ĐĂNG KÝ ĐỐI TÁC'}
+        </Text>
+        <Text style={styles.h1}>
+          {daDuyet ? 'Đối tác chính thức' : 'Đăng ký KOL/KOC'}
+        </Text>
 
-        {daNop ? (
+        {daDuyet ? (
+          <>
+            <View style={styles.card}>
+              <Ionicons name="ribbon" size={40} color={colors.success} />
+              <Text style={styles.doneTitle}>Bạn đã là đối tác chính thức</Text>
+              <Text style={styles.doneSub}>
+                Hồ sơ đã được duyệt. Hợp đồng đã gửi tới email của bạn. Bạn không
+                cần đăng ký lại.
+              </Text>
+            </View>
+            {app ? (
+              <View style={[styles.card, { alignItems: 'stretch', marginTop: 12 }]}>
+                <Text style={styles.section}>Thông tin đã đăng ký</Text>
+                <InfoRow label="Họ và tên" value={app.fullName} />
+                <InfoRow label="Số CCCD" value={app.cccdNumber} />
+                <InfoRow label="Ngày cấp / Nơi cấp" value={app.cccdIssue ?? '—'} />
+                <InfoRow label="Điện thoại" value={app.phone} />
+                <InfoRow label="Email" value={app.email ?? '—'} />
+                <InfoRow
+                  label="Ngân hàng"
+                  value={`${app.bankAccount ?? '—'} ${app.bankName ?? ''}`.trim()}
+                />
+                <InfoRow label="Địa chỉ" value={app.address ?? '—'} />
+              </View>
+            ) : null}
+          </>
+        ) : daNop ? (
           <View style={styles.card}>
             <Ionicons name="checkmark-circle" size={40} color={colors.success} />
             <Text style={styles.doneTitle}>Đã gửi hồ sơ</Text>
@@ -365,6 +397,15 @@ export default function KolScreen() {
   );
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value || '—'}</Text>
+    </View>
+  );
+}
+
 function UploadTile({
   label,
   icon,
@@ -416,6 +457,22 @@ const styles = StyleSheet.create({
     color: colors.brand,
     textAlign: 'center',
     marginTop: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 9,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
+  infoLabel: { fontSize: 12.5, color: colors.muted, flexShrink: 0 },
+  infoValue: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'right',
   },
 
   termsBox: {

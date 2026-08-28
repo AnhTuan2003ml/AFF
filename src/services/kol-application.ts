@@ -59,15 +59,17 @@ export async function submitKolApplication(
   }
 
   return withTransaction(db, async (client) => {
-    const existing = await query(
+    const existing = await query<{ status: string }>(
       client,
-      "SELECT 1 FROM kol_applications WHERE user_id = $1 AND status = 'PENDING'",
+      "SELECT status FROM kol_applications WHERE user_id = $1 AND status IN ('PENDING','APPROVED') LIMIT 1",
       [userId],
     );
     if (existing.rows.length) {
       throw new AppError(
-        "KOL_PENDING_EXISTS",
-        "Bạn đã có hồ sơ đang chờ duyệt.",
+        "KOL_ALREADY",
+        existing.rows[0]!.status === "APPROVED"
+          ? "Bạn đã là đối tác KOL/KOC, không cần đăng ký lại."
+          : "Bạn đã có hồ sơ đang chờ duyệt.",
         409,
       );
     }
@@ -165,11 +167,17 @@ export async function getKolApplication(
   return r.rows[0] ?? null;
 }
 
-/** Đọc một file KYC để admin xem (stream). */
+export type KolFileKind =
+  | "CCCD_FRONT"
+  | "CCCD_BACK"
+  | "FACE_VIDEO"
+  | "CONTRACT_PDF";
+
+/** Đọc một file KYC/hợp đồng để stream. */
 export async function getKolFile(
   db: Database,
   applicationId: string,
-  kind: KolFileUpload["kind"],
+  kind: KolFileKind,
 ): Promise<{ contentType: string; content: Buffer } | null> {
   const r = await query<{ content_type: string; content: Buffer }>(
     db,
@@ -180,6 +188,22 @@ export async function getKolFile(
   const row = r.rows[0];
   if (!row) return null;
   return { contentType: row.content_type, content: Buffer.from(row.content) };
+}
+
+/** Lưu (hoặc thay) file PDF hợp đồng admin upload khi duyệt, để xem lại/gửi lại. */
+export async function saveKolContractFile(
+  db: Database,
+  applicationId: string,
+  pdf: Buffer,
+): Promise<void> {
+  await query(
+    db,
+    `INSERT INTO kol_application_files (application_id, kind, content_type, byte_size, content)
+     VALUES ($1, 'CONTRACT_PDF', 'application/pdf', $2, $3)
+     ON CONFLICT (application_id, kind)
+     DO UPDATE SET content = EXCLUDED.content, byte_size = EXCLUDED.byte_size, content_type = EXCLUDED.content_type`,
+    [applicationId, pdf.length, pdf],
+  );
 }
 
 /** Hồ sơ KOL/KOC đang chờ của người dùng (để trang đăng ký hiện trạng thái). */
@@ -194,6 +218,25 @@ export async function getUserKolStatus(
     [userId],
   );
   return { status: r.rows[0]?.status ?? null };
+}
+
+/** Hồ sơ mới nhất của người dùng kèm cờ có file hợp đồng chưa (để hiện lại sau duyệt). */
+export async function getUserKolApplication(
+  db: Database,
+  userId: string,
+): Promise<(KolApplicationRow & { has_contract: boolean }) | null> {
+  const r = await query<KolApplicationRow & { has_contract: boolean }>(
+    db,
+    `SELECT a.id, a.user_id, a.status, a.full_name, a.birth_date, a.cccd_number,
+       a.cccd_issue, a.address, a.phone, a.email, a.tax_code, a.bank_account,
+       a.bank_name, a.social_links, a.reject_reason, a.created_at,
+       EXISTS(SELECT 1 FROM kol_application_files f
+         WHERE f.application_id = a.id AND f.kind = 'CONTRACT_PDF') AS has_contract
+     FROM kol_applications a WHERE a.user_id = $1
+     ORDER BY a.created_at DESC LIMIT 1`,
+    [userId],
+  );
+  return r.rows[0] ?? null;
 }
 
 /** Admin duyệt/từ chối. Duyệt → user thành đối tác đặc biệt + thông báo. */
