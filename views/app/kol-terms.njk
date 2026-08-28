@@ -48,11 +48,5 @@
       </form>
     {% endif %}
   </section>
-  <script>
-    (function () {
-      var c = document.getElementById('kol-accept');
-      var b = document.getElementById('kol-continue');
-      if (c && b) c.addEventListener('change', function () { b.disabled = !c.checked; });
-    })();
-  </script>
+  <script src="/assets/kol-terms.js?v={{ assetVersion }}" defer></script>
 {% endblock %}
