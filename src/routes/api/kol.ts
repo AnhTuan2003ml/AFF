@@ -43,6 +43,11 @@ export async function registerKolApiRoutes(
       const v = body[k];
       return typeof v === "string" && v.trim() ? v.trim() : undefined;
     };
+    // Ngày cấp + Nơi cấp và Chủ TK + Ngân hàng nhập tách rời, lưu gộp (khớp web).
+    const join = (a?: string, b?: string, sep = " · "): string | undefined => {
+      const parts = [a, b].filter(Boolean) as string[];
+      return parts.length ? parts.join(sep) : undefined;
+    };
 
     const fileDefs = [
       { kind: "CCCD_FRONT" as const, field: "cccdFront", isImage: true },
@@ -77,13 +82,13 @@ export async function registerKolApiRoutes(
         fullName: str("fullName") ?? "",
         birthDate: str("birthDate"),
         cccdNumber: str("cccdNumber") ?? "",
-        cccdIssue: str("cccdIssue"),
+        cccdIssue: join(str("cccdIssueDate"), str("cccdIssuePlace")),
         address: str("address"),
         phone: str("phone") ?? "",
         email: str("email"),
         taxCode: str("taxCode"),
         bankAccount: str("bankAccount"),
-        bankName: str("bankName"),
+        bankName: join(str("bankHolder"), str("bankName"), " - "),
         socialLinks: str("socialLinks"),
         agreementVersion: KOL_AGREEMENT_VERSION,
       },

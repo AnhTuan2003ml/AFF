@@ -229,10 +229,16 @@ export default function KolScreen() {
               onChangeText={(v) => dat('cccdNumber', v)}
             />
             <Field
-              label="Ngày cấp / Nơi cấp"
-              placeholder="01/01/2021 - Cục CSQLHC"
-              value={info.cccdIssue ?? ''}
-              onChangeText={(v) => dat('cccdIssue', v)}
+              label="Ngày cấp"
+              placeholder="01/01/2021"
+              value={info.cccdIssueDate ?? ''}
+              onChangeText={(v) => dat('cccdIssueDate', v)}
+            />
+            <Field
+              label="Nơi cấp"
+              placeholder="Cục CSQLHC về TTXH"
+              value={info.cccdIssuePlace ?? ''}
+              onChangeText={(v) => dat('cccdIssuePlace', v)}
             />
             <Field
               label="Địa chỉ liên hệ"
@@ -255,9 +261,15 @@ export default function KolScreen() {
               onChangeText={(v) => dat('bankAccount', v)}
             />
             <Field
-              label="Chủ tài khoản / Ngân hàng"
-              placeholder="NGUYEN VAN A - Vietcombank"
+              label="Tên chủ tài khoản"
+              placeholder="NGUYEN VAN A"
               autoCapitalize="characters"
+              value={info.bankHolder ?? ''}
+              onChangeText={(v) => dat('bankHolder', v)}
+            />
+            <Field
+              label="Ngân hàng"
+              placeholder="Vietcombank / Techcombank / MB…"
               value={info.bankName ?? ''}
               onChangeText={(v) => dat('bankName', v)}
             />

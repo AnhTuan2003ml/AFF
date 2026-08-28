@@ -121,6 +121,19 @@
   outline: none; border-color: var(--lx-orange, #ee4d2d); background: #fff;
   box-shadow: 0 0 0 4px rgba(238, 77, 45, .1);
 }
+.kol-select {
+  height: 48px; padding: 0 40px 0 15px;
+  border: 1px solid var(--lx-line, #e2d6c6); border-radius: 13px;
+  background: #fbfaf8; font-size: 15px; color: var(--lx-ink, #2c1d17);
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238d7e74' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 18px;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.kol-select:focus {
+  outline: none; border-color: var(--lx-orange, #ee4d2d); background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(238, 77, 45, .1);
+}
 
 .kol-note { font-size: 13px; color: var(--lx-muted, #8d7e74); margin: -6px 0 14px; line-height: 1.5; }
 .kol-uploads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -158,6 +171,26 @@
   .kol-uploads { grid-template-columns: 1fr; }
   .kol-continue { align-self: stretch; }
 }
+
+/* ── Admin: danh sách hồ sơ dạng bảng ── */
+.kol-table-wrap { overflow-x: auto; }
+.kol-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.kol-table thead th {
+  text-align: left; font-size: 11px; font-weight: 800; letter-spacing: .04em;
+  color: var(--muted, #8d7e74); text-transform: uppercase;
+  padding: 10px 14px; border-bottom: 1px solid var(--line, #eadfce); white-space: nowrap;
+}
+.kol-table tbody td { padding: 12px 14px; border-bottom: 1px solid #f2ece1; vertical-align: middle; }
+.kol-table tbody tr:last-child td { border-bottom: 0; }
+.kol-table tbody tr:hover { background: #fbf8f3; }
+.kol-t-muted { color: var(--muted, #8d7e74); white-space: nowrap; }
+.kol-t-right { text-align: right; white-space: nowrap; }
+
+.kol-back {
+  display: inline-block; margin-bottom: 14px; font-size: 13px; font-weight: 700;
+  color: var(--muted, #8d7e74); text-decoration: none;
+}
+.kol-back:hover { color: var(--lx-orange, #ee4d2d); }
 
 /* ── Admin duyệt KOL/KOC ── */
 .kol-admin-card { border: 1px solid var(--line, #eadfce); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }

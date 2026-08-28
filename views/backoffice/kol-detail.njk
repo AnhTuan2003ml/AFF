@@ -1,0 +1,79 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
+  <script src="/assets/kol-admin.js?v={{ assetVersion }}" defer></script>
+
+  <a class="kol-back" href="/backoffice/kol">← Danh sách hồ sơ</a>
+
+  <article class="kol-admin-card">
+    <header class="kol-admin-head">
+      <div>
+        <h3>{{ a.full_name }}</h3>
+        <small>{{ a.account_name }} · {{ a.account_email }} · gửi {{ a.created_at | datetime }}</small>
+      </div>
+      {% if a.status == 'APPROVED' %}<span class="status-badge status-positive">Đã duyệt</span>
+      {% elif a.status == 'REJECTED' %}<span class="status-badge status-negative">Từ chối</span>
+      {% else %}<span class="status-badge status-pending">Chờ duyệt</span>{% endif %}
+    </header>
+
+    <div class="kol-admin-body">
+      <dl class="kol-admin-info">
+        <div><dt>Số CCCD</dt><dd>{{ a.cccd_number }}</dd></div>
+        <div><dt>Ngày sinh</dt><dd>{{ a.birth_date or '—' }}</dd></div>
+        <div><dt>Ngày cấp / Nơi cấp</dt><dd>{{ a.cccd_issue or '—' }}</dd></div>
+        <div><dt>Điện thoại</dt><dd>{{ a.phone }}</dd></div>
+        <div><dt>Email</dt><dd>{{ a.email or '—' }}</dd></div>
+        <div><dt>MST</dt><dd>{{ a.tax_code or '—' }}</dd></div>
+        <div class="kol-col-2"><dt>Ngân hàng nhận tiền</dt><dd>{{ a.bank_account or '—' }} {{ a.bank_name or '' }}</dd></div>
+        <div class="kol-col-2"><dt>Địa chỉ</dt><dd>{{ a.address or '—' }}</dd></div>
+        <div class="kol-col-2"><dt>Mạng xã hội</dt><dd>{{ a.social_links or '—' }}</dd></div>
+      </dl>
+
+      <div class="kol-admin-kyc">
+        <figure><figcaption>CCCD mặt trước</figcaption>
+          <a href="/backoffice/kol/{{ a.id }}/file/cccd_front" target="_blank" rel="noopener">
+            <img src="/backoffice/kol/{{ a.id }}/file/cccd_front" alt="CCCD trước" loading="lazy"></a>
+        </figure>
+        <figure><figcaption>CCCD mặt sau</figcaption>
+          <a href="/backoffice/kol/{{ a.id }}/file/cccd_back" target="_blank" rel="noopener">
+            <img src="/backoffice/kol/{{ a.id }}/file/cccd_back" alt="CCCD sau" loading="lazy"></a>
+        </figure>
+        <figure><figcaption>Video khuôn mặt</figcaption>
+          <video src="/backoffice/kol/{{ a.id }}/file/face_video" controls preload="metadata" playsinline></video>
+        </figure>
+      </div>
+    </div>
+
+    {% if a.status == 'PENDING' %}
+      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-approve" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="decision" value="approve">
+        <p class="kol-approve-title">Quy trình: tải hợp đồng .docx (đã điền sẵn thông tin người đăng ký) → điền thông tin Bên A → xuất PDF → đính kèm bên dưới → bấm duyệt để gửi. Duyệt xong tài khoản mới được nâng thành đối tác đặc biệt.</p>
+        <p class="kol-docx-row">
+          <a class="button button-ghost button-small" href="/backoffice/kol/{{ a.id }}/contract.docx">⬇ Tải hợp đồng (.docx) đã điền thông tin Bên B</a>
+        </p>
+        <label class="kol-file">
+          <input type="file" name="contractPdf" accept="application/pdf,.pdf" required data-kol-pdf>
+          <span class="kol-file-face">
+            <b data-kol-pdf-name>Chọn file PDF hợp đồng…</b>
+            <small>Bấm duyệt là hệ thống gửi đúng file này về email người đăng ký.</small>
+          </span>
+        </label>
+        <div class="kol-admin-actions">
+          <button type="submit" class="button button-primary button-small">Phê duyệt &amp; gửi hợp đồng</button>
+        </div>
+      </form>
+      <footer class="kol-admin-actions">
+        <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-reject-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="decision" value="reject">
+          <input type="text" name="reason" placeholder="Lý do từ chối (tùy chọn)" maxlength="300">
+          <button type="submit" class="button button-ghost button-small">Từ chối</button>
+        </form>
+      </footer>
+    {% elif a.reject_reason %}
+      <footer class="kol-admin-actions"><small class="muted">Lý do từ chối: {{ a.reject_reason }}</small></footer>
+    {% endif %}
+  </article>
+{% endblock %}

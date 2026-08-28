@@ -1490,6 +1490,7 @@ export async function registerAppRoutes(
       pageTitle: "Hồ sơ KOL/KOC",
       appSection: "referrals",
       agreementVersion: KOL_AGREEMENT_VERSION,
+      banks: BANKS,
     });
   });
 
@@ -1501,8 +1502,16 @@ export async function registerAppRoutes(
       }
       const str = (k: string): string | undefined => {
         const v = body[k];
-        return typeof v === "string" ? v : undefined;
+        return typeof v === "string" && v.trim() ? v.trim() : undefined;
       };
+      // Ngày cấp + Nơi cấp và Chủ TK + Ngân hàng nhập tách rời trên form nhưng
+      // lưu gộp lại (khớp ô gộp trong mẫu hợp đồng).
+      const join = (a?: string, b?: string, sep = " · "): string | undefined => {
+        const parts = [a, b].filter(Boolean) as string[];
+        return parts.length ? parts.join(sep) : undefined;
+      };
+      const cccdIssue = join(str("cccdIssueDate"), str("cccdIssuePlace"));
+      const bankName = join(str("bankHolder"), str("bankName"), " - ");
       const fileDefs = [
         { kind: "CCCD_FRONT" as const, field: "cccdFront", isImage: true },
         { kind: "CCCD_BACK" as const, field: "cccdBack", isImage: true },
@@ -1537,13 +1546,13 @@ export async function registerAppRoutes(
           fullName: str("fullName") ?? "",
           birthDate: str("birthDate"),
           cccdNumber: str("cccdNumber") ?? "",
-          cccdIssue: str("cccdIssue"),
+          cccdIssue,
           address: str("address"),
           phone: str("phone") ?? "",
           email: str("email"),
           taxCode: str("taxCode"),
           bankAccount: str("bankAccount"),
-          bankName: str("bankName"),
+          bankName,
           socialLinks: str("socialLinks"),
           agreementVersion: KOL_AGREEMENT_VERSION,
         },

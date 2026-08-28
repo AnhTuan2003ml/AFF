@@ -779,6 +779,20 @@ export async function registerAdminUserRoutes(
     });
   });
 
+  // Chi tiết một hồ sơ: xem ảnh/video, tải hợp đồng, duyệt/từ chối.
+  app.get<{ Params: { id: string } }>("/kol/:id", async (request, reply) => {
+    const a = await getKolApplication(deps.db, request.params.id);
+    if (!a) {
+      setFlash(reply, deps.config, "error", "Không tìm thấy hồ sơ.");
+      return reply.redirect("/backoffice/kol");
+    }
+    return reply.view("backoffice/kol-detail.njk", {
+      pageTitle: `Hồ sơ ${a.full_name}`,
+      backofficeSection: "kol",
+      a,
+    });
+  });
+
   // Stream file KYC (ảnh CCCD / video) để admin xem đối chiếu.
   app.get<{ Params: { id: string; kind: string } }>(
     "/kol/:id/file/:kind",

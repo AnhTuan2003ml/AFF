@@ -19,12 +19,14 @@ export interface HoSoKolInput {
   fullName: string;
   birthDate?: string;
   cccdNumber: string;
-  cccdIssue?: string;
+  cccdIssueDate?: string;
+  cccdIssuePlace?: string;
   address?: string;
   phone: string;
   email?: string;
   taxCode?: string;
   bankAccount?: string;
+  bankHolder?: string;
   bankName?: string;
   socialLinks?: string;
 }

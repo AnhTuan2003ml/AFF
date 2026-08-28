@@ -4,8 +4,8 @@
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
   <section class="kol-wrap kol-form-wrap">
     <header class="kol-head">
-      <span class="kol-eyebrow">HỒ SƠ ĐỐI TÁC</span>
-      <h1>Thông tin & xác minh</h1>
+      <span class="kol-eyebrow">HỒ SƠ ĐỐI TÁC · BƯỚC 2/2</span>
+      <h1>Thông tin &amp; xác minh</h1>
       <p>Điền thông tin và tải lên ảnh CCCD hai mặt cùng video khuôn mặt để xác minh danh tính.</p>
     </header>
 
@@ -25,11 +25,14 @@
           <label class="kol-field"><span>Số điện thoại <i>*</i></span>
             <input name="phone" required inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
           </label>
-          <label class="kol-field"><span>Số CCCD/Căn cước <i>*</i></span>
+          <label class="kol-field kol-col-2"><span>Số CCCD/Căn cước <i>*</i></span>
             <input name="cccdNumber" required inputmode="numeric" placeholder="0xxxxxxxxxxx">
           </label>
-          <label class="kol-field"><span>Ngày cấp / Nơi cấp</span>
-            <input name="cccdIssue" placeholder="01/01/2021 - Cục CSQLHC">
+          <label class="kol-field"><span>Ngày cấp</span>
+            <input name="cccdIssueDate" type="date">
+          </label>
+          <label class="kol-field"><span>Nơi cấp</span>
+            <input name="cccdIssuePlace" placeholder="Cục CSQLHC về TTXH">
           </label>
           <label class="kol-field kol-col-2"><span>Địa chỉ liên hệ</span>
             <input name="address" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, tỉnh/thành">
@@ -44,7 +47,7 @@
       </div>
 
       <div class="kol-card">
-        <h2 class="kol-card-title">Thanh toán & thuế</h2>
+        <h2 class="kol-card-title">Thanh toán &amp; thuế</h2>
         <div class="kol-grid">
           <label class="kol-field"><span>Mã số thuế cá nhân</span>
             <input name="taxCode" inputmode="numeric" placeholder="Nếu có">
@@ -52,8 +55,14 @@
           <label class="kol-field"><span>Số tài khoản ngân hàng</span>
             <input name="bankAccount" inputmode="numeric" placeholder="Số tài khoản nhận hoa hồng">
           </label>
-          <label class="kol-field kol-col-2"><span>Chủ tài khoản / Ngân hàng</span>
-            <input name="bankName" placeholder="NGUYEN VAN A - Vietcombank">
+          <label class="kol-field"><span>Tên chủ tài khoản</span>
+            <input name="bankHolder" autocomplete="name" placeholder="NGUYEN VAN A">
+          </label>
+          <label class="kol-field"><span>Ngân hàng</span>
+            <select name="bankName" class="kol-select">
+              <option value="">— Chọn ngân hàng —</option>
+              {% for b in banks %}<option value="{{ b.name }}">{{ b.name }}</option>{% endfor %}
+            </select>
           </label>
         </div>
       </div>
