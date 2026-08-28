@@ -198,7 +198,8 @@ export class EmailService {
     const vn = new Date(params.approvedAt.getTime() + 7 * 3600 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
     const approvedStr = `${pad(vn.getUTCDate())}/${pad(vn.getUTCMonth() + 1)}/${vn.getUTCFullYear()}`;
-    const supportEmail = this.config.SMTP_FROM_EMAIL;
+    const supportEmail =
+      this.config.SUPPORT_EMAIL || this.config.SMTP_FROM_EMAIL;
     const website = this.config.APP_ORIGIN;
 
     // Logo nhúng theo CID để hiện cả khi client chặn ảnh ngoài.

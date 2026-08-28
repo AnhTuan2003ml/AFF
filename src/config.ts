@@ -76,6 +76,9 @@ const configSchema = z.object({
   SMTP_PASS: z.string().default(""),
   SMTP_FROM_NAME: z.string().default("ShopTik"),
   SMTP_FROM_EMAIL: z.string().email().default("no-reply@example.com"),
+  // Email hỗ trợ hiển thị cho người dùng (footer email chào mừng…). Trống thì
+  // dùng SMTP_FROM_EMAIL.
+  SUPPORT_EMAIL: z.string().trim().default(""),
   SHOPEE_AFFILIATE_ID: z.string().default(""),
   // Token cho profile-worker (Playwright chạy trên máy host) gọi API
   // /api/v1/harvest/*. Trống = tắt toàn bộ API worker.
