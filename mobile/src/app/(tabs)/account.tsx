@@ -9,7 +9,6 @@ import { layLenhRut } from '@/api/account';
 import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
-import { CheckinModal } from '@/components/CheckinModal';
 import { Mascot } from '@/components/Mascot';
 import { CAMIO_VOICE } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
@@ -19,7 +18,6 @@ import { colors, radius, spacing } from '@/theme/tokens';
 export default function AccountScreen() {
   const { user, dangXuat } = useSession();
   const [hoiXuat, setHoiXuat] = useState(false);
-  const [moDiemDanh, setMoDiemDanh] = useState(false);
 
   const { data: lenhRut } = useQuery({
     queryKey: ['withdrawals'],
@@ -86,12 +84,6 @@ export default function AccountScreen() {
             divider
           />
           <MenuRow
-            icon="calendar-outline"
-            label="Điểm danh"
-            onPress={() => setMoDiemDanh(true)}
-            divider
-          />
-          <MenuRow
             icon="flag-outline"
             label="Nhiệm vụ"
             onPress={() => router.push('/missions')}
@@ -142,9 +134,6 @@ export default function AccountScreen() {
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </Pressable>
       </ScrollView>
-
-      {/* Popup điểm danh đè lên trang, nút ✕ để đóng. */}
-      <CheckinModal mo={moDiemDanh} dong={() => setMoDiemDanh(false)} />
 
       <Modal
         visible={hoiXuat}

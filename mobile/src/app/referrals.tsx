@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { layGioiThieu } from '@/api/features';
+import { guiDoiMaGioiThieu, layGioiThieu } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
@@ -19,10 +20,24 @@ import { colors, radius, spacing } from '@/theme/tokens';
  */
 export default function ReferralsScreen() {
   const { user } = useSession();
+  const qc = useQueryClient();
+  const [maMoi, setMaMoi] = useState('');
   const { data, isPending } = useQuery({
     queryKey: ['referrals'],
     queryFn: layGioiThieu,
     enabled: !!user,
+  });
+
+  // Đối tác/KOL đổi mã 1 lần — gửi yêu cầu, admin duyệt xong sẽ có thông báo.
+  const doiMa = useMutation({
+    mutationFn: guiDoiMaGioiThieu,
+    onSuccess: () => {
+      setMaMoi('');
+      void qc.invalidateQueries({ queryKey: ['referrals'] });
+      Alert.alert('Đã gửi yêu cầu', 'Admin duyệt xong bạn sẽ nhận được thông báo.');
+    },
+    onError: (e) =>
+      Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại nhé.'),
   });
 
   async function chep() {
@@ -40,7 +55,15 @@ export default function ReferralsScreen() {
       ) : (
         <>
           <View style={styles.codeBox}>
-            <Text style={styles.codeLabel}>Mã giới thiệu của bạn</Text>
+            <View style={styles.codeHead}>
+              <Text style={styles.codeLabel}>Mã giới thiệu của bạn</Text>
+              {data?.codeState?.isPartner && (
+                <View style={styles.partnerBadge}>
+                  <Ionicons name="star" size={11} color={colors.onBrand} />
+                  <Text style={styles.partnerBadgeText}>Đối tác</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.codeRow}>
               <Text style={styles.code}>{data?.referralCode ?? '—'}</Text>
               <Pressable
@@ -52,6 +75,54 @@ export default function ReferralsScreen() {
               </Pressable>
             </View>
           </View>
+
+          {data?.codeState?.isPartner && (
+            <View style={styles.partnerBox}>
+              <Text style={styles.partnerTitle}>Đổi mã giới thiệu tự chọn</Text>
+              {data.codeState.pendingCode ? (
+                <Text style={styles.partnerNote}>
+                  ⏳ Yêu cầu đổi sang mã <Text style={styles.b}>{data.codeState.pendingCode}</Text> đang
+                  chờ admin duyệt. Có kết quả bạn sẽ nhận thông báo ngay.
+                </Text>
+              ) : data.codeState.customized ? (
+                <Text style={styles.partnerNote}>
+                  ✓ Bạn đã dùng quyền đổi mã (mỗi đối tác được đổi 1 lần). Dữ liệu và link cũ vẫn
+                  quy về bạn.
+                </Text>
+              ) : (
+                <>
+                  <Text style={styles.partnerNote}>
+                    Bạn được đổi mã <Text style={styles.b}>một lần duy nhất</Text>: 3–9 ký tự chữ và
+                    số (VD: NamDong). Mã có hiệu lực sau khi admin phê duyệt; dữ liệu giới thiệu cũ
+                    giữ nguyên.
+                  </Text>
+                  <View style={styles.partnerForm}>
+                    <TextInput
+                      value={maMoi}
+                      onChangeText={setMaMoi}
+                      placeholder="Mã mới (3–9 chữ/số)"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxLength={9}
+                      style={styles.partnerInput}
+                    />
+                    <Pressable
+                      onPress={() => maMoi.trim() && doiMa.mutate(maMoi.trim())}
+                      disabled={doiMa.isPending || !maMoi.trim()}
+                      style={({ pressed }) => [
+                        styles.partnerSubmit,
+                        (pressed || doiMa.isPending) && { opacity: 0.7 },
+                      ]}>
+                      <Text style={styles.partnerSubmitText}>
+                        {doiMa.isPending ? 'Đang gửi…' : 'Gửi admin duyệt'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </View>
+          )}
 
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>Tổng thưởng đã nhận</Text>
@@ -98,6 +169,49 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   codeLabel: { fontSize: 12, color: colors.muted, fontWeight: '700' },
+  codeHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  partnerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.brand,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  partnerBadgeText: { color: colors.onBrand, fontSize: 11, fontWeight: '800' },
+  partnerBox: {
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    marginBottom: 12,
+  },
+  partnerTitle: { fontSize: 14, fontWeight: '900', color: colors.text },
+  partnerNote: { fontSize: 12.5, color: colors.muted, lineHeight: 19, marginTop: 6 },
+  b: { fontWeight: '900', color: colors.text },
+  partnerForm: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  partnerInput: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.paper,
+  },
+  partnerSubmit: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerSubmitText: { color: colors.onBrand, fontWeight: '800', fontSize: 13 },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   code: {
     flex: 1,

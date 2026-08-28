@@ -116,7 +116,6 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
         dong={() => setMoMenu(false)}
         laQuanTri={!!user && user.role !== 'USER'}
         onDangXuat={dangXuat}
-        onDiemDanh={() => setMoDiemDanh(true)}
       />
     </View>
   );
@@ -127,13 +126,11 @@ function MenuTaiKhoan({
   dong,
   laQuanTri,
   onDangXuat,
-  onDiemDanh,
 }: {
   mo: boolean;
   dong: () => void;
   laQuanTri: boolean;
   onDangXuat: () => Promise<void>;
-  onDiemDanh: () => void;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -151,8 +148,6 @@ function MenuTaiKhoan({
           <Muc icon="person-outline" nhan="Thông tin cá nhân" onPress={() => di('/(tabs)/account')} />
           <Muc icon="card-outline" nhan="Tài khoản ngân hàng" onPress={() => di('/bank')} />
           <Muc icon="link-outline" nhan="Giới thiệu bạn bè" onPress={() => di('/referrals')} />
-          {/* Điểm danh là popup — đóng menu rồi mở popup, không chuyển màn. */}
-          <Muc icon="calendar-outline" nhan="Điểm danh" onPress={() => { dong(); onDiemDanh(); }} />
           <Muc icon="flag-outline" nhan="Nhiệm vụ" onPress={() => di('/missions')} />
 
           {laQuanTri && (

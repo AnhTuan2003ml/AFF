@@ -94,8 +94,22 @@ export function layGioiThieu() {
   return apiFetch<{
     referralCode: string | null;
     totalEarnedVnd: number;
+    /** Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app hiện form theo đây. */
+    codeState: {
+      isPartner: boolean;
+      customized: boolean;
+      pendingCode: string | null;
+    };
     data: Referral[];
   }>('/api/v1/referrals');
+}
+
+/** Đối tác gửi yêu cầu đổi mã giới thiệu tự chọn (3–9 chữ/số, admin duyệt). */
+export function guiDoiMaGioiThieu(newCode: string) {
+  return apiFetch<{ status: string }>('/api/v1/referrals/code-change', {
+    method: 'POST',
+    body: JSON.stringify({ newCode }),
+  });
 }
 
 /** Không cần đăng nhập — khách xem sản phẩm đang hoàn tiền được. */

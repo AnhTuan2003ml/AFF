@@ -15,6 +15,10 @@ import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
 import { registerPushToken } from "../../services/push.js";
 import {
+  getReferralCodeState,
+  requestReferralCodeChange,
+} from "../../services/referral-code.js";
+import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
   RECOMMEND_LIST_TYPE,
@@ -115,8 +119,15 @@ export async function registerFeatureApiRoutes(
       `SELECT referral_code FROM users WHERE id = $1`,
       [id],
     );
+    const codeState = await getReferralCodeState(deps.db, id);
 
     return {
+      // Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app dựa vào đây để hiện form.
+      codeState: {
+        isPartner: codeState.isPartner,
+        customized: Boolean(codeState.customizedAt),
+        pendingCode: codeState.pendingCode,
+      },
       // PHẢI là `referral_code`, không phải `tracking_code`. Hai cột khác nhau
       // và dùng cho hai việc khác nhau: `tracking_code` đi vào Sub ID để quy kết
       // đơn, còn lúc đăng ký backend tra người giới thiệu bằng
@@ -132,6 +143,20 @@ export async function registerFeatureApiRoutes(
         earnedVnd: Number(r.earned_vnd),
       })),
     };
+  });
+
+  // Đối tác/KOL gửi yêu cầu đổi mã giới thiệu (admin duyệt mới hiệu lực).
+  app.post("/referrals/code-change", { preHandler: requireApiUser }, async (request) => {
+    const input = parseInput(
+      z.object({ newCode: z.string().trim().min(1).max(20) }),
+      request.body,
+    );
+    await requestReferralCodeChange(
+      deps.db,
+      request.currentUser!.id,
+      input.newCode,
+    );
+    return { status: "PENDING" };
   });
 
   /* --------------------- Sản phẩm bạn quan tâm ------------------------ */
