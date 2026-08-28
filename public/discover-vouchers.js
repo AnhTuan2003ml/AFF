@@ -37,8 +37,17 @@
     img.loading = "lazy";
     img.referrerPolicy = "no-referrer";
     img.className = "voucher-logo";
-    img.addEventListener("error", function () {
-      if (img.src.indexOf(FALLBACK_LOGO) === -1) img.src = FALLBACK_LOGO;
+    function toFallback() {
+      if (img.src.indexOf(FALLBACK_LOGO) === -1) {
+        img.src = FALLBACK_LOGO;
+        img.classList.add("is-placeholder");
+      }
+    }
+    img.addEventListener("error", toFallback);
+    // Shopee trả ảnh placeholder "không có ảnh" (168px, ~2KB) với HTTP 200 —
+    // không bắt được bằng onerror; nhận diện bằng kích thước nhỏ.
+    img.addEventListener("load", function () {
+      if (img.naturalWidth && img.naturalWidth <= 170) toFallback();
     });
     card.appendChild(img);
 

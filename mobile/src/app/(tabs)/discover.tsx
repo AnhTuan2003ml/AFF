@@ -230,13 +230,24 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
     await Clipboard.setStringAsync(v.code); // chép sẵn để dán ở Shopee
     await WebBrowser.openBrowserAsync(v.use_url).catch(() => {});
   }
+  // Ảnh placeholder Shopee (nhỏ, ~168px) coi như không có → dùng logo ShopTik.
+  const [logoLoi, setLogoLoi] = useState(false);
   // Cột trái ảnh (fallback logo ShopTik), cột phải thông tin + nút dưới.
   return (
     <View style={styles.vCard}>
       <Image
-        source={v.logo_url ? { uri: v.logo_url } : require('../../assets/images/brand-logo.png')}
+        source={
+          v.logo_url && !logoLoi
+            ? { uri: v.logo_url }
+            : require('../../assets/images/brand-logo.png')
+        }
         style={styles.vLogo}
-        contentFit="cover"
+        contentFit={v.logo_url && !logoLoi ? 'cover' : 'contain'}
+        onError={() => setLogoLoi(true)}
+        onLoad={(e) => {
+          const w = e?.source?.width ?? 0;
+          if (w && w <= 170) setLogoLoi(true);
+        }}
       />
       <View style={styles.vInfo}>
         {v.label ? <Text style={styles.vLabel}>{v.label}</Text> : null}
@@ -302,9 +313,13 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
             style={styles.img}
             contentFit="cover"
             onError={() => setAnhLoi(true)}
+            onLoad={(e) => {
+              const w = e?.source?.width ?? 0;
+              if (w && w <= 170) setAnhLoi(true);
+            }}
           />
         ) : (
-          // Ảnh hỏng/thiếu → dùng logo ShopTik thay vì ô trống.
+          // Ảnh hỏng/thiếu/placeholder → dùng logo ShopTik thay vì ô trống.
           <Image
             source={require('../../assets/images/brand-logo.png')}
             style={styles.img}

@@ -9341,3 +9341,7 @@ button.cal-cell.is-today:hover:not(:disabled) {
 @media (max-width: 560px) {
   .voucher-grid { grid-template-columns: 1fr; }
 }
+
+/* Logo ShopTik thay ảnh placeholder — không cắt, có đệm. */
+.voucher-logo.is-placeholder { object-fit: contain; padding: 12px; background: #fff7f2; }
+.discover-card-media > img.is-placeholder { object-fit: contain; padding: 22px; opacity: .85; }

@@ -84,12 +84,17 @@
     img.loading = "lazy";
     img.referrerPolicy = "no-referrer";
     img.setAttribute("data-discover-image", "");
-    // Ảnh Shopee hỏng/404 → thay bằng logo ShopTik thay vì ô trống.
-    img.addEventListener("error", function () {
+    function toFallback() {
       if (img.src.indexOf(FALLBACK_LOGO) === -1) {
         img.src = FALLBACK_LOGO;
         img.classList.add("is-placeholder");
       }
+    }
+    // Ảnh Shopee hỏng/404 → logo ShopTik. Ảnh placeholder "không có ảnh" của
+    // Shopee (nhỏ, HTTP 200) không bắt được bằng onerror → dò kích thước.
+    img.addEventListener("error", toFallback);
+    img.addEventListener("load", function () {
+      if (img.naturalWidth && img.naturalWidth <= 170) toFallback();
     });
     media.appendChild(img);
     var LABELS = { hot: "🔥 Hot", best: "Bán chạy", exclusive: "Độc quyền", recommend: "Đề xuất" };
