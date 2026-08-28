@@ -48,6 +48,12 @@ export async function registerAdminUserRoutes(
       "ALL",
     );
     const status = selectedValue(USER_STATUSES, params.status, "ALL");
+    // Lọc nhanh đối tác/KOL để phân biệt với khách thường ngay trên danh sách.
+    const partner = selectedValue(
+      ["ALL", "PARTNER", "NORMAL"] as const,
+      params.partner,
+      "ALL",
+    );
     const page = pageNumber(params.page);
     const limit = 30;
     const offset = (page - 1) * limit;
@@ -58,6 +64,7 @@ export async function registerAdminUserRoutes(
       status: string;
       role: string;
       referral_code: string;
+      is_special_partner: boolean;
       created_at: Date;
       referred_by_name: string | null;
       referred_count: string;
@@ -142,13 +149,16 @@ export async function registerAdminUserRoutes(
           OR u.referral_code ILIKE '%' || $1 || '%')
           AND ($2 = 'ALL' OR u.role = $2)
           AND ($3 = 'ALL' OR u.status = $3)
+          AND ($6 = 'ALL'
+            OR ($6 = 'PARTNER' AND u.is_special_partner)
+            OR ($6 = 'NORMAL' AND NOT u.is_special_partner))
         ORDER BY
           CASE u.status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING_EMAIL' THEN 1
             WHEN 'LOCKED' THEN 2 ELSE 3 END,
           u.created_at DESC
         LIMIT $4 OFFSET $5
       `,
-      [q, role, status, limit, offset],
+      [q, role, status, limit, offset, partner],
     );
     const total = Number(users.rows[0]?.total_count ?? 0);
     const refRequests = await listReferralCodeRequests(deps.db);
@@ -157,7 +167,7 @@ export async function registerAdminUserRoutes(
       backofficeSection: "users",
       refRequests,
       users: users.rows,
-      filters: { q, role, status },
+      filters: { q, role, status, partner },
       pagination: {
         page,
         pages: Math.max(1, Math.ceil(total / limit)),
@@ -806,6 +816,9 @@ export async function registerAdminUserRoutes(
       } catch (error) {
         flashAdminError(reply, deps.config, error);
       }
+      // Gọi từ bảng danh sách (next=list) thì quay về đúng danh sách đang lọc.
+      const next = (request.body as Record<string, unknown>).next;
+      if (next === "list") return reply.redirect("/backoffice/accounts");
       return reply.redirect(`/backoffice/accounts/${request.params.id}`);
     },
   );

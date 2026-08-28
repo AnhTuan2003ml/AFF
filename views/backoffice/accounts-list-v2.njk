@@ -83,6 +83,13 @@
           <option value="DISABLED"{% if filters.status == 'DISABLED' %} selected{% endif %}>Đã xóa</option>
         </select>
       </label>
+      <label><span>Đối tác</span>
+        <select name="partner">
+          <option value="ALL"{% if filters.partner == 'ALL' %} selected{% endif %}>Tất cả</option>
+          <option value="PARTNER"{% if filters.partner == 'PARTNER' %} selected{% endif %}>⭐ Đối tác đặc biệt</option>
+          <option value="NORMAL"{% if filters.partner == 'NORMAL' %} selected{% endif %}>Khách thường</option>
+        </select>
+      </label>
       <div class="admin-filters-actions">
         <button class="button button-dark" type="submit" data-submit-button>Lọc</button>
         <a class="button button-ghost" href="/backoffice/accounts">Đặt lại</a>
@@ -94,15 +101,33 @@
     <header class="panel-heading"><div><span class="admin-kicker">DANH SÁCH</span><h2>{{ pagination.total }} tài khoản</h2></div><span class="muted">Trang {{ pagination.page }}/{{ pagination.pages }}</span></header>
     {% if users.length %}
       <div class="responsive-table"><table class="admin-data-table">
-        <thead><tr><th>Người dùng</th><th>Trạng thái</th><th>Nguồn vào</th><th>Đơn mua</th><th>Tiền hoàn</th><th>Link / click</th><th>Đã mời</th><th>Hoạt động cuối</th><th class="row-actions-cell"><span class="sr-only">Hành động</span></th></tr></thead>
-        <tbody>{% for user in users %}<tr>
-          <td><a class="user-cell" href="/backoffice/accounts/{{ user.id }}"><span class="avatar">{{ user.full_name | first | upper }}</span><span><strong>{{ user.full_name }}</strong><small>{{ user.email }}</small><small>{{ role_label(user.role) }}</small></span></a></td>
+        <thead><tr><th>Người dùng</th><th>Đối tác</th><th>Trạng thái</th><th>Nguồn vào</th><th>Đơn mua</th><th>Tiền hoàn</th><th>Đã mời</th><th>Hoạt động cuối</th><th class="row-actions-cell"><span class="sr-only">Hành động</span></th></tr></thead>
+        <tbody>{% for user in users %}<tr{% if user.is_special_partner %} class="is-partner-row"{% endif %}>
+          <td><a class="user-cell" href="/backoffice/accounts/{{ user.id }}"><span class="avatar{% if user.is_special_partner %} avatar-partner{% endif %}">{{ user.full_name | first | upper }}</span><span><strong>{{ user.full_name }}{% if user.is_special_partner %} <em class="partner-star" title="Đối tác/KOL đặc biệt">⭐</em>{% endif %}</strong><small>{{ user.email }}</small><small class="user-refcode">Mã mời: <b>{{ user.referral_code }}</b></small></span></a></td>
+          <td>
+            {# Gán/bỏ quyền đối tác NGAY tại bảng — không phải mở hồ sơ. #}
+            {% if user.role == 'USER' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+              <form method="post" action="/backoffice/accounts/{{ user.id }}/special-partner" data-confirm-form data-confirm-message="{{ 'Bỏ quyền đối tác đặc biệt của ' + user.full_name + '?' if user.is_special_partner else 'Đặt ' + user.full_name + ' làm đối tác/KOL đặc biệt?' }}">
+                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                <input type="hidden" name="next" value="list">
+                <input type="hidden" name="value" value="{{ '0' if user.is_special_partner else '1' }}">
+                {% if user.is_special_partner %}
+                  <button type="submit" class="partner-pill is-on" title="Bấm để bỏ quyền đối tác">⭐ Đặc biệt ×</button>
+                {% else %}
+                  <button type="submit" class="partner-pill" title="Bấm để đặt làm đối tác/KOL">☆ Đặt đối tác</button>
+                {% endif %}
+              </form>
+            {% elif user.is_special_partner %}
+              <span class="partner-pill is-on is-static">⭐ Đặc biệt</span>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
           <td>{{ status_badge(user.status) }}</td>
           <td>{% if user.referred_by_name %}<strong>{{ user.referred_by_name }}</strong><small>giới thiệu</small>{% else %}<span class="muted">Tự vào</span>{% endif %}</td>
           <td><strong>{{ user.verified_orders_count }} xác minh</strong><small>{{ user.order_value_vnd | vnd }} · {{ user.manual_orders_count }} cần kiểm tra</small></td>
           <td><strong>{{ user.cashback_vnd | vnd }}</strong><small>{{ user.pending_vnd | vnd }} đang chờ</small></td>
-          <td><strong>{{ user.links_count }} / {{ user.clicks_count }}</strong><small>link / lượt mở</small></td>
-          <td><strong>{{ user.referred_count }}</strong><small>{{ user.referred_rewarded_count }} đã mua · mã {{ user.referral_code }}</small></td>
+          <td><strong>{{ user.referred_count }}</strong><small>{{ user.referred_rewarded_count }} đã mua · {{ user.links_count }}/{{ user.clicks_count }} link/click</small></td>
           <td>{% if user.last_login_at %}{{ user.last_login_at | datetime }}{% else %}<span class="muted">Chưa đăng nhập</span>{% endif %}</td>
           <td class="row-actions-cell">
             <div class="row-menu">
@@ -129,7 +154,7 @@
           </td>
         </tr>{% endfor %}</tbody>
       </table></div>
-      {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Phân trang">{% if pagination.page > 1 %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;page={{ pagination.page - 1 }}">← Trước</a>{% endif %}<span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.page < pagination.pages %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;page={{ pagination.page + 1 }}">Sau →</a>{% endif %}</nav>{% endif %}
+      {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Phân trang">{% if pagination.page > 1 %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;partner={{ filters.partner }}&amp;page={{ pagination.page - 1 }}">← Trước</a>{% endif %}<span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.page < pagination.pages %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;partner={{ filters.partner }}&amp;page={{ pagination.page + 1 }}">Sau →</a>{% endif %}</nav>{% endif %}
     {% else %}{{ empty_state("Không tìm thấy tài khoản", "Hãy thử đổi từ khóa hoặc bộ lọc.") }}{% endif %}
   </section>
 

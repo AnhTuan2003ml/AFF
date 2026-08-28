@@ -1221,3 +1221,60 @@
   white-space: nowrap;
 }
 .backoffice-shell .refcode-actions-row form { margin: 0; display: inline-flex; }
+
+/* ===== Đối tác/KOL trong bảng người dùng ===== */
+/* Hàng đối tác nhuộm nền nhẹ để lướt bảng là nhận ra ngay. */
+.backoffice-shell tr.is-partner-row > td {
+  background: #fff7ee;
+}
+
+.backoffice-shell .partner-star {
+  font-style: normal;
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+.backoffice-shell .avatar-partner {
+  box-shadow: 0 0 0 2px #f59e0b;
+}
+
+.backoffice-shell .user-refcode b {
+  font-family: var(--font-data, monospace);
+  letter-spacing: .04em;
+  color: #b45309;
+}
+
+/* Nút gán/bỏ đối tác ngay tại bảng. */
+.backoffice-shell .partner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #e2d6c6;
+  background: #fff;
+  color: #8d7e74;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.backoffice-shell .partner-pill:hover {
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.backoffice-shell .partner-pill.is-on {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #fff;
+}
+
+.backoffice-shell .partner-pill.is-on:hover {
+  background: #d97706;
+}
+
+.backoffice-shell .partner-pill.is-static {
+  cursor: default;
+}
