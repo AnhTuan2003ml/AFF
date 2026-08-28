@@ -4,7 +4,6 @@ import { query, type Database } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import {
   OFFER_PAGE_SIZE,
-  SHOPEE_OFFER_API_PATH,
   SHOPEE_OFFER_FOR_ME_URL,
   SHOPEE_OFFER_PAGE_URL,
   parseShopeeOfferPage,
@@ -85,30 +84,30 @@ function cdpHttpGet(
   });
 }
 
-/** Chạy MỘT lệnh Runtime.evaluate qua WebSocket CDP, trả về giá trị JS. */
-function cdpEvaluate(
-  wsUrl: string,
-  expression: string,
-  timeoutMs = 45_000,
-): Promise<unknown> {
+/**
+ * Phiên CDP BỀN tới tab affiliate: gửi lệnh (Runtime.evaluate,
+ * Network.getResponseBody…) VÀ lắng nghe Network để gom response
+ * `offer/product/list` theo (list_type, page_offset). Đúng cách worker làm —
+ * vì với danh mục Đề xuất, Shopee phân trang bằng click chứ không nhận
+ * page_offset qua fetch tay.
+ */
+interface CdpSession {
+  evaluate(expression: string, timeoutMs?: number): Promise<unknown>;
+  hasOffer(listType: number, offset: number): boolean;
+  getOfferData(listType: number, offset: number): Promise<any>;
+  waitForOfferPage(timeoutMs?: number): Promise<boolean>;
+  reloadOffer(url: string): Promise<void>;
+  close(): void;
+}
+
+function openCdpSession(wsUrl: string): Promise<CdpSession> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
-    const done = (fn: () => void) => {
-      try {
-        ws.close();
-      } catch {
-        /* ignore */
-      }
-      fn();
-    };
-    ws.onopen = () =>
-      ws.send(
-        JSON.stringify({
-          id: 1,
-          method: "Runtime.evaluate",
-          params: { expression, awaitPromise: true, returnByValue: true },
-        }),
-      );
+    let seq = 0;
+    const pending = new Map<number, (msg: any) => void>();
+    const offerByKey = new Map<string, { requestId: string }>();
+    const keyOf = (listType: number, offset: number) => `${listType}:${offset}`;
+
     ws.onmessage = (event) => {
       let msg: any;
       try {
@@ -116,18 +115,229 @@ function cdpEvaluate(
       } catch {
         return;
       }
-      if (msg.id !== 1) return;
-      if (msg.error) return done(() => reject(new Error(`CDP: ${msg.error.message}`)));
-      const ex = msg.result?.exceptionDetails;
-      if (ex) {
-        const detail = ex.exception?.description || ex.text || "lỗi trong trang";
-        return done(() => reject(new Error(String(detail).slice(0, 200))));
+      if (msg.id && pending.has(msg.id)) {
+        pending.get(msg.id)!(msg);
+        pending.delete(msg.id);
+        return;
       }
-      done(() => resolve(msg.result?.result?.value));
+      if (
+        msg.method === "Network.responseReceived" &&
+        String(msg.params?.response?.url || "").includes(
+          "/api/v3/offer/product/list",
+        )
+      ) {
+        const url = String(msg.params.response.url);
+        const listType = Number(url.match(/list_type=(\d+)/)?.[1] ?? -1);
+        const offset = Number(url.match(/page_offset=(\d+)/)?.[1] ?? -1);
+        if (listType >= 0 && offset >= 0) {
+          offerByKey.set(keyOf(listType, offset), {
+            requestId: msg.params.requestId,
+          });
+        }
+      }
     };
-    ws.onerror = () => done(() => reject(new Error("Không kết nối được CDP của profile.")));
-    setTimeout(() => done(() => reject(new Error("CDP timeout."))), timeoutMs);
+
+    const command = (method: string, params?: any, timeoutMs = 30_000) =>
+      new Promise<any>((res, rej) => {
+        const id = ++seq;
+        pending.set(id, (msg) =>
+          msg.error
+            ? rej(new Error(`CDP ${method}: ${msg.error.message}`))
+            : res(msg.result),
+        );
+        ws.send(JSON.stringify({ id, method, params: params || {} }));
+        setTimeout(() => {
+          if (pending.has(id)) {
+            pending.delete(id);
+            rej(new Error(`CDP timeout: ${method}`));
+          }
+        }, timeoutMs);
+      });
+
+    const session: CdpSession = {
+      async evaluate(expression, timeoutMs) {
+        const result = await command(
+          "Runtime.evaluate",
+          { expression, awaitPromise: true, returnByValue: true },
+          timeoutMs,
+        );
+        if (result?.exceptionDetails) {
+          const ex = result.exceptionDetails;
+          throw new Error(
+            String(ex.exception?.description || ex.text || "lỗi trong trang").slice(0, 200),
+          );
+        }
+        return result?.result?.value;
+      },
+      hasOffer(listType, offset) {
+        return offerByKey.has(keyOf(listType, offset));
+      },
+      async getOfferData(listType, offset) {
+        const entry = offerByKey.get(keyOf(listType, offset));
+        if (!entry) return null;
+        const body = await command("Network.getResponseBody", {
+          requestId: entry.requestId,
+        }).catch(() => null);
+        if (!body?.body) return null;
+        try {
+          const raw = body.base64Encoded
+            ? Buffer.from(body.body, "base64").toString("utf8")
+            : body.body;
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      },
+      async waitForOfferPage(timeoutMs = 15_000) {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+          const ready = await this.evaluate(
+            `document.readyState === "complete" && !!document.querySelector(".PaginationNoTotal__wrap")`,
+            4000,
+          ).catch(() => false);
+          if (ready) return true;
+          await sleep(600);
+        }
+        return false;
+      },
+      async reloadOffer(url) {
+        await this.evaluate(`location.assign(${JSON.stringify(url)})`).catch(() => {});
+        await this.waitForOfferPage();
+        await sleep(2500);
+      },
+      close() {
+        try {
+          ws.close();
+        } catch {
+          /* ignore */
+        }
+      },
+    };
+
+    ws.onopen = async () => {
+      try {
+        await command("Network.enable");
+        resolve(session);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    ws.onerror = () => reject(new Error("Không kết nối được CDP của profile."));
+    setTimeout(() => reject(new Error("CDP timeout khi kết nối.")), 12_000);
   });
+}
+
+// Tab UI theo list_type (nhận cả tiếng Việt lẫn tiếng Anh). list_type=8 ở trang
+// riêng offer_for_me → không có tab.
+const TAB_BY_LIST_TYPE: Record<number, string[] | null> = {
+  0: ["Tất cả", "All"],
+  2: ["Bán chạy nhất", "Top Performing"],
+  8: null,
+};
+
+/** Click tab danh mục; "ACTIVE" nếu đã đứng sẵn, "NO_TAB_NEEDED" nếu trang riêng. */
+async function selectListTab(session: CdpSession, listType: number): Promise<string> {
+  const tabNames =
+    listType in TAB_BY_LIST_TYPE ? TAB_BY_LIST_TYPE[listType] : ["Tất cả", "All"];
+  if (tabNames === null) return "NO_TAB_NEEDED";
+  return String(
+    await session.evaluate(
+      `(() => {
+        const want = ${JSON.stringify(tabNames)};
+        const tabs = [...document.querySelectorAll(".rc-tabs-tab")];
+        const tab = tabs.find((el) => want.includes(el.textContent.trim()));
+        if (!tab) return "NO_TAB";
+        if (tab.classList.contains("rc-tabs-tab-active")) return "ACTIVE";
+        (tab.querySelector(".rc-tabs-tab-btn") || tab).click();
+        return "CLICKED";
+      })()`,
+    ),
+  );
+}
+
+/** Một bước điều hướng: click số trang đích, hoặc nhảy tới số lớn nhất/next. */
+async function paginationStep(
+  session: CdpSession,
+  targetPage: number,
+): Promise<{ state: string; active?: number }> {
+  return (await session.evaluate(
+    `(() => {
+      const wrap = document.querySelector(".PaginationNoTotal__wrap");
+      if (!wrap) return { state: "NO_PAGINATION" };
+      wrap.scrollIntoView({ block: "center" });
+      const pages = [...wrap.querySelectorAll(".page-page")];
+      const nums = pages.map((el) => Number(el.textContent.trim())).filter(Number.isFinite);
+      const active = Number(wrap.querySelector(".page-page.active")?.textContent.trim() || "0");
+      const target = ${Number(targetPage)};
+      if (active === target) return { state: "ARRIVED", active };
+      const targetEl = pages.find((el) => Number(el.textContent.trim()) === target);
+      if (targetEl) { targetEl.click(); return { state: "CLICKED_PAGE", active }; }
+      if (nums.length && target > Math.max(...nums)) {
+        const next = wrap.querySelector(".page-next");
+        if (!next || next.className.includes("disabled")) return { state: "END", active };
+        const maxNum = Math.max(...nums);
+        const jump = pages.find((el) => Number(el.textContent.trim()) === maxNum && !el.classList.contains("active"));
+        if (jump) { jump.click(); return { state: "CLICKED_JUMP", active }; }
+        next.click();
+        return { state: "CLICKED_NEXT", active };
+      }
+      const prev = wrap.querySelector(".page-prev");
+      if (prev && !prev.className.includes("disabled")) { prev.click(); return { state: "CLICKED_PREV", active }; }
+      return { state: "STUCK", active };
+    })()`,
+  )) as { state: string; active?: number };
+}
+
+/**
+ * Lấy MỘT trang bằng thao tác thật: chọn tab danh mục, click số trang tương
+ * ứng, rồi hứng response Network `list_type=<t>&page_offset=(pageNo-1)*20`.
+ */
+async function capturePageByClick(
+  session: CdpSession,
+  listType: number,
+  pageNo: number,
+): Promise<any> {
+  const offset = (pageNo - 1) * OFFER_PAGE_SIZE;
+
+  const tabResult = await selectListTab(session, listType);
+  if (tabResult === "NO_TAB") {
+    throw new Error("Không thấy tab danh mục — profile có thể cần đăng nhập lại.");
+  }
+  if (tabResult === "CLICKED") {
+    for (let wait = 0; wait < 12 && !session.hasOffer(listType, 0); wait += 1) {
+      await sleep(700);
+    }
+  }
+
+  if (!session.hasOffer(listType, offset)) {
+    for (let step = 0; step < 60 && !session.hasOffer(listType, offset); step += 1) {
+      const result = await paginationStep(session, pageNo);
+      if (result.state === "NO_PAGINATION") {
+        throw new Error("Không thấy khối phân trang trên trang offer.");
+      }
+      if (result.state === "END") {
+        throw new Error(`Danh sách không có tới trang ${pageNo}.`);
+      }
+      if (result.state === "STUCK") {
+        throw new Error("Không điều hướng được phân trang.");
+      }
+      if (result.state === "ARRIVED" && session.hasOffer(listType, offset)) break;
+      for (let wait = 0; wait < 8 && !session.hasOffer(listType, offset); wait += 1) {
+        await sleep(700);
+      }
+    }
+  }
+
+  const data = await session.getOfferData(listType, offset);
+  if (!data) {
+    throw new Error(`Không bắt được response trang ${pageNo}.`);
+  }
+  if (data.code !== 0) {
+    throw new Error(
+      `Shopee từ chối (code=${data.code}) — profile có thể cần đăng nhập lại.`,
+    );
+  }
+  return data;
 }
 
 /** Start profile nếu chưa chạy, trả về host+port CDP đã đổi về host của Docker. */
@@ -208,19 +418,6 @@ function offerPageUrl(listType: number): string {
   return listType === 8 ? SHOPEE_OFFER_FOR_ME_URL : SHOPEE_OFFER_PAGE_URL;
 }
 
-/** fetch() một trang offer NGAY TRONG TRANG bằng phiên đăng nhập của profile. */
-async function fetchOfferPageInPage(
-  wsUrl: string,
-  listType: number,
-  pageNo: number,
-): Promise<any> {
-  const offset = (pageNo - 1) * OFFER_PAGE_SIZE;
-  const url = `${AFFILIATE_ORIGIN}${SHOPEE_OFFER_API_PATH}&list_type=${listType}&page_offset=${offset}&page_limit=${OFFER_PAGE_SIZE}`;
-  const expr = `fetch(${JSON.stringify(url)},{credentials:"include",headers:{accept:"application/json"}}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})`;
-  const text = await cdpEvaluate(wsUrl, expr);
-  return JSON.parse(String(text));
-}
-
 export interface DirectFetchResult {
   savedPages: number;
   savedItems: number;
@@ -241,59 +438,50 @@ export async function directFetchOfferRange(
   const fromPage = Math.max(1, input.fromPage);
   const toPage = Math.max(fromPage, input.toPage);
 
+  const pageUrl = offerPageUrl(listType);
   const { cdpHost, cdpPort } = await ensureProfileRunning(config, profileId);
-  const wsUrl = await ensureAffiliateTab(
-    config,
-    profileId,
-    cdpHost,
-    cdpPort,
-    offerPageUrl(listType),
-  );
+  const wsUrl = await ensureAffiliateTab(config, profileId, cdpHost, cdpPort, pageUrl);
 
   let savedPages = 0;
   let savedItems = 0;
   let stoppedAt: number | null = null;
   let note: string | null = null;
 
-  for (let pageNo = fromPage; pageNo <= toPage; pageNo += 1) {
-    let data: any;
-    try {
-      data = await fetchOfferPageInPage(wsUrl, listType, pageNo);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (pageNo === fromPage) {
-        throw new AppError(
-          "DIRECT_FETCH_FAILED",
-          `Lấy trang ${pageNo} lỗi: ${message}. Profile có thể cần đăng nhập lại Shopee.`,
-          502,
-        );
+  const session = await openCdpSession(wsUrl);
+  try {
+    // Reload trang offer TRONG phiên (Network đã bật) để bắt trọn trang 1 của
+    // tab mặc định, rồi click phân trang tới từng trang cần lấy.
+    await session.reloadOffer(pageUrl);
+    for (let pageNo = fromPage; pageNo <= toPage; pageNo += 1) {
+      let data: any;
+      try {
+        data = await capturePageByClick(session, listType, pageNo);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (pageNo === fromPage) {
+          throw new AppError(
+            "DIRECT_FETCH_FAILED",
+            `Lấy trang ${pageNo} lỗi: ${message}`,
+            502,
+          );
+        }
+        stoppedAt = pageNo;
+        note = `Dừng ở trang ${pageNo}: ${message}`;
+        break;
       }
-      stoppedAt = pageNo;
-      note = `Dừng ở trang ${pageNo}: ${message}`;
-      break;
-    }
-    if (data?.code !== 0) {
-      if (pageNo === fromPage) {
-        throw new AppError(
-          "SHOPEE_REJECTED",
-          `Shopee từ chối (code=${data?.code}). Profile có thể cần đăng nhập lại.`,
-          502,
-        );
+      const products = parseShopeeOfferPage(data);
+      await saveOfferPage(db, listType, pageNo, products);
+      savedPages += 1;
+      savedItems += products.length;
+      if (products.length < OFFER_PAGE_SIZE) {
+        stoppedAt = pageNo;
+        note = `Hết danh sách ở trang ${pageNo} (chỉ ${products.length} sản phẩm).`;
+        break;
       }
-      stoppedAt = pageNo;
-      note = `Shopee từ chối ở trang ${pageNo} (code=${data?.code}).`;
-      break;
+      await sleep(800);
     }
-    const products = parseShopeeOfferPage(data);
-    await saveOfferPage(db, listType, pageNo, products);
-    savedPages += 1;
-    savedItems += products.length;
-    if (products.length < OFFER_PAGE_SIZE) {
-      stoppedAt = pageNo;
-      note = `Hết danh sách ở trang ${pageNo} (chỉ ${products.length} sản phẩm).`;
-      break;
-    }
-    await sleep(400);
+  } finally {
+    session.close();
   }
 
   // Ghi mốc lấy gần nhất cho profile để trang hiển thị.
