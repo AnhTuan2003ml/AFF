@@ -103,6 +103,21 @@ export const camioVoice = {
     };
   },
 
+  /** Admin duyệt mã giới thiệu tự chọn của đối tác/KOL. */
+  referralCodeApproved(p: { code: string }): CamioNotice {
+    return {
+      title: pick(["✅ Mã giới thiệu mới đã được duyệt!", "Camio báo: mã mới của bạn on sóng rồi 🧡"]),
+      body: `Mã giới thiệu của bạn giờ là "${p.code}". Dữ liệu giới thiệu cũ vẫn giữ nguyên, link cũ vẫn quy về bạn.`,
+    };
+  },
+
+  referralCodeRejected(p: { code: string }): CamioNotice {
+    return {
+      title: pick(["Mã giới thiệu chưa được duyệt 🥲", "Lần này mã chưa qua rồi 🥲"]),
+      body: `Mã "${p.code}" chưa được chấp nhận. Bạn vẫn giữ quyền đổi — nhắn đội hỗ trợ nếu cần Camio giải thích thêm nha.`,
+    };
+  },
+
   withdrawalApproved(p: { amount: string }): CamioNotice {
     return {
       title: pick(["Lệnh rút đã duyệt! 🫡", "Tiền đang về ngân hàng 🏦"]),

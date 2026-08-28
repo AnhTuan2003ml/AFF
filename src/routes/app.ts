@@ -60,6 +60,11 @@ import {
 } from "../services/discover-harvest.js";
 import { isSlackSupportEnabled } from "../services/slack.js";
 import {
+  applyReferralToUser,
+  getReferralCodeState,
+  requestReferralCodeChange,
+} from "../services/referral-code.js";
+import {
   claimMissionReward,
   getUnreadNotificationCount,
   WEB_BELL_EXCLUDED_TYPES,
@@ -1103,7 +1108,70 @@ export async function registerAppRoutes(
       },
       referralUrl: `${deps.config.APP_ORIGIN}/dang-ky?ref=${request.currentUser!.referralCode}`,
       referralCode: request.currentUser!.referralCode,
+      refCodeState: await getReferralCodeState(deps.db, id),
     });
+  });
+
+  // Đối tác/KOL xin đổi mã giới thiệu tự chọn (chờ admin duyệt).
+  app.post("/referrals/doi-ma", async (request, reply) => {
+    try {
+      const input = parseInput(
+        z.object({ newCode: z.string().trim().min(1).max(20) }),
+        request.body,
+      );
+      await requestReferralCodeChange(deps.db, userId(request), input.newCode);
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        "Đã gửi yêu cầu đổi mã. Admin duyệt xong bạn sẽ nhận được thông báo.",
+      );
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/app/referrals");
+  });
+
+  // Tài khoản mới qua Google chưa có chỗ nhập mã giới thiệu — trang này bù vào.
+  app.get("/nhap-gioi-thieu", async (request, reply) => {
+    const id = userId(request);
+    const me = await query<{ referred_by_user_id: string | null }>(
+      deps.db,
+      "SELECT referred_by_user_id FROM users WHERE id = $1",
+      [id],
+    );
+    if (me.rows[0]?.referred_by_user_id) return reply.redirect("/app");
+    return reply.view("app/nhap-gioi-thieu.njk", {
+      pageTitle: "Mã giới thiệu",
+      appSection: "referrals",
+    });
+  });
+
+  app.post("/nhap-gioi-thieu", async (request, reply) => {
+    try {
+      const input = parseInput(
+        z.object({ referralCode: z.string().trim().min(1).max(20) }),
+        request.body,
+      );
+      const ok = await applyReferralToUser(
+        deps.db,
+        userId(request),
+        input.referralCode,
+      );
+      if (!ok) {
+        setFlash(
+          reply,
+          deps.config,
+          "error",
+          "Mã giới thiệu không tồn tại hoặc không dùng được. Kiểm tra lại nhé.",
+        );
+        return reply.redirect("/app/nhap-gioi-thieu");
+      }
+      setFlash(reply, deps.config, "success", "Đã ghi nhận người giới thiệu của bạn.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/app");
   });
 
   app.get("/nhiem-vu", async (request, reply) => {
@@ -1357,6 +1425,7 @@ export async function registerAppRoutes(
     return reply.view("app/settings.njk", {
       pageTitle: "Chức năng",
       appSection: "settings",
+      appOrigin: deps.config.APP_ORIGIN,
     });
   });
 

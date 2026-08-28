@@ -30,6 +30,28 @@
     </div>
   </section>
 
+  {% if refCodeState and refCodeState.isPartner %}
+    <section class="panel referral-code-panel">
+      <header class="panel-heading">
+        <div><span class="eyebrow">QUYỀN CỦA ĐỐI TÁC</span><h2>Đổi mã giới thiệu tự chọn</h2></div>
+      </header>
+      {% if refCodeState.pendingCode %}
+        <aside class="info-strip"><span>⏳</span><div><b>Đang chờ duyệt</b><p>Yêu cầu đổi sang mã <b>{{ refCodeState.pendingCode }}</b> đã gửi tới admin. Được duyệt bạn sẽ nhận thông báo ngay.</p></div></aside>
+      {% elif refCodeState.customizedAt %}
+        <aside class="info-strip"><span>✓</span><div><b>Đã dùng quyền đổi mã</b><p>Mỗi đối tác được đổi mã một lần. Mã hiện tại của bạn là <b>{{ referralCode }}</b>; dữ liệu và link cũ vẫn quy về bạn.</p></div></aside>
+      {% else %}
+        <p class="panel-note">Bạn được đổi mã <b>một lần duy nhất</b>: 3–9 ký tự gồm chữ và số (VD: NamDong). Mã mới có hiệu lực sau khi admin phê duyệt; toàn bộ dữ liệu giới thiệu cũ giữ nguyên.</p>
+        <form method="post" action="/app/referrals/doi-ma" class="referral-code-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="text" name="newCode" maxlength="9" minlength="3" required
+                 pattern="[A-Za-z0-9]{3,9}" placeholder="Mã mới (3–9 chữ/số)"
+                 aria-label="Mã giới thiệu mới">
+          <button class="button button-primary" type="submit">Gửi admin duyệt</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
   <section class="stat-grid" aria-label="Hiệu quả mạng lưới">
     <div class="stat-card">
       <span class="stat-icon" aria-hidden="true">{{ icon('referral') }}</span>

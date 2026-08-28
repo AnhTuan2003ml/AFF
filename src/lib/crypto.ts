@@ -46,8 +46,10 @@ export function randomClickId(): string {
   return randomBytes(12).toString("base64url");
 }
 
+// Khách thường: mã giới thiệu là 6 CHỮ SỐ random, không được sửa.
+// (Đối tác/KOL có thể đổi sang mã chữ+số qua duyệt admin — referral-code.ts.)
 export function randomReferralCode(): string {
-  return randomBytes(6).toString("base64url").toUpperCase();
+  return randomInt(0, 1_000_000).toString().padStart(6, "0");
 }
 
 function encryptionKey(config: AppConfig): Buffer {

@@ -126,6 +126,12 @@
               {{ icon('chevron-down') }}
             </button>
             <div class="st-menu-panel" data-menu>
+              {# Mã giới thiệu ngay dưới tên tài khoản — copy nhanh một chạm. #}
+              <div class="st-menu-refcode copy-field">
+                <span class="st-refcode-copy"><small>Mã giới thiệu</small><b>{{ currentUser.referralCode }}</b></span>
+                <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-hidden="true" tabindex="-1">
+                <button type="button" data-copy-button aria-label="Sao chép mã giới thiệu">Copy</button>
+              </div>
               <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
               <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
               <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>

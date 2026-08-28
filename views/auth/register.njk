@@ -77,7 +77,9 @@
 
   {% if googleEnabled %}
     <div class="auth-divider"><span>hoặc</span></div>
-    <a class="button button-block button-large button-google" href="/auth/google">
+    {# Mang mã giới thiệu (từ ?ref= hoặc ô đã nhập) theo luồng Google. #}
+    {% set googleRef = (values.referralCode or referralCode or '') | trim %}
+    <a class="button button-block button-large button-google" href="/auth/google{% if googleRef %}?ref={{ googleRef | urlencode }}{% endif %}">
       {% include "partials/google-logo.njk" %}
       <span>Đăng ký nhanh với Google</span>
     </a>

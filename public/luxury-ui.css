@@ -9154,3 +9154,106 @@ button.cal-cell.is-today:hover:not(:disabled) {
   display: block;
   cursor: pointer;
 }
+
+/* ===== Mã giới thiệu: menu tài khoản, cài đặt, trang referrals ===== */
+.st-menu-refcode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 4px 6px 6px;
+  border-radius: 12px;
+  background: var(--lx-orange-soft);
+}
+
+.st-menu-refcode .st-refcode-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.st-menu-refcode small {
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--lx-ink-2);
+}
+
+.st-menu-refcode b {
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--lx-orange);
+}
+
+/* input chỉ để handler copy đọc giá trị — không chiếm chỗ. */
+.st-menu-refcode input[data-copy-source] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.st-menu-refcode [data-copy-button] {
+  border: 1px solid var(--lx-line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--lx-ink-2);
+}
+
+.st-menu-refcode [data-copy-button]:hover {
+  color: var(--lx-orange);
+  border-color: var(--lx-orange);
+}
+
+.mb-refcode .copy-field {
+  margin: 10px 0 0;
+}
+
+.mb-refcode-note {
+  margin: 10px 2px 0;
+  font-size: 12.5px;
+  color: var(--lx-ink-2);
+}
+
+.referral-code-panel .panel-note {
+  margin: 0 0 12px;
+  color: var(--lx-ink-2);
+}
+
+.referral-code-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.referral-code-form input[name="newCode"] {
+  flex: 1;
+  min-width: 180px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--lx-line);
+  border-radius: 12px;
+  font-size: 14px;
+  letter-spacing: .04em;
+}
+
+.referral-ask {
+  max-width: 560px;
+  margin: 24px auto;
+}
+
+.referral-ask-form {
+  margin-top: 14px;
+}
+
+.referral-ask-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}

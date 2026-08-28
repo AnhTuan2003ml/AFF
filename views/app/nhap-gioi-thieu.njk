@@ -1,0 +1,28 @@
+{% extends "app/app-base.njk" %}
+
+{# Trang mời nhập mã giới thiệu cho tài khoản mới đăng ký qua Google
+   (luồng form đã có ô mã ngay lúc đăng ký, luồng Google thì chưa). #}
+
+{% block app_content %}
+  <section class="panel referral-ask">
+    <header class="page-head">
+      <div>
+        <span class="eyebrow">CHÀO MỪNG BẠN ĐẾN VỚI SHOPTIK</span>
+        <h1>Bạn có mã giới thiệu không?</h1>
+        <p>Nếu có bạn bè/đối tác giới thiệu, nhập mã của họ để cả hai cùng nhận quyền lợi. Không có thì bỏ qua nhé.</p>
+      </div>
+    </header>
+    <form method="post" action="/app/nhap-gioi-thieu" class="referral-ask-form">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <label class="login-field" for="referral-input">
+        <span>Mã giới thiệu</span>
+        <input id="referral-input" type="text" name="referralCode" maxlength="20"
+               placeholder="VD: 557922 hoặc NamDong" autocomplete="off" autofocus>
+      </label>
+      <div class="referral-ask-actions">
+        <button class="button button-primary" type="submit">Xác nhận</button>
+        <a class="button button-ghost" href="/app">Bỏ qua</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

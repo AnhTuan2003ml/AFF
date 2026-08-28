@@ -12,6 +12,7 @@ import type { CurrentUser } from "../types/fastify.js";
 import { revokeAllUserSessions } from "../auth/session.js";
 import type { EmailService } from "./email.js";
 import { issueOtp, verifyOtp } from "./otp.js";
+import { resolveReferrerByCode } from "./referral-code.js";
 import { loadUserPolicyFacts } from "./user-policy.js";
 
 interface UserAuthRow {
@@ -69,12 +70,7 @@ export async function registerWithEmail(
 
     let referredBy: string | null = null;
     if (params.referralCode?.trim()) {
-      const referrer = await query<{ id: string }>(
-        client,
-        "SELECT id FROM users WHERE referral_code = $1 AND status = 'ACTIVE'",
-        [params.referralCode.trim().toUpperCase()],
-      );
-      referredBy = referrer.rows[0]?.id ?? null;
+      referredBy = await resolveReferrerByCode(client, params.referralCode);
     }
 
     if (current) {

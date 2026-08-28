@@ -28,6 +28,7 @@ import {
 } from "../services/google-auth.js";
 import { issueOtp } from "../services/otp.js";
 import { issueMobileTokens } from "../services/mobile-token.js";
+import { applyReferralToUser } from "../services/referral-code.js";
 import {
   exchangeLazadaAuthorizationCode,
   verifyLazadaOAuthState,
@@ -78,6 +79,9 @@ const OAUTH_NEXT_COOKIE = "aff_oauth_next";
 // nhận token qua deep-link. Lưu deep-link đích (đã kiểm scheme) để callback biết
 // phải trả token về app thay vì đặt cookie web.
 const OAUTH_MOBILE_REDIRECT_COOKIE = "aff_oauth_mredir";
+// Mã giới thiệu đi kèm khi bấm "Đăng ký bằng Google" từ link ?ref=... — giữ
+// qua vòng OAuth bằng cookie ký để callback gán đúng người giới thiệu.
+const OAUTH_REF_COOKIE = "aff_oauth_ref";
 
 /**
  * Chỉ cho phép deep-link về đúng app (scheme của Expo Go và của bản build), tránh
@@ -539,6 +543,12 @@ export async function registerAuthRoutes(
       if (next) {
         signedEmailCookie(reply, deps.config, OAUTH_NEXT_COOKIE, next);
       }
+      // Mang mã giới thiệu (nếu có) qua vòng OAuth — tài khoản MỚI sẽ được
+      // gán người giới thiệu ở callback.
+      const refCode = String(q.ref ?? "").trim().slice(0, 30);
+      if (refCode && /^[A-Za-z0-9]+$/.test(refCode)) {
+        signedEmailCookie(reply, deps.config, OAUTH_REF_COOKIE, refCode);
+      }
       // Luồng app di động: mở trong trình duyệt, kết thúc trả token về deep-link.
       if (q.flow === "mobile") {
         const redirect = safeMobileRedirect(q.redirect_uri);
@@ -564,6 +574,7 @@ export async function registerAuthRoutes(
       const query = request.query as Record<string, unknown>;
       const stateCookie = readSignedCookie(request, OAUTH_STATE_COOKIE);
       const nextCookie = readSignedCookie(request, OAUTH_NEXT_COOKIE);
+      const refCookie = readSignedCookie(request, OAUTH_REF_COOKIE);
       const queryState = String((request.query as Record<string, unknown>).state ?? "");
       // Ưu tiên cookie (Android); iOS mất cookie thì lấy từ state đã ký.
       const mobileRedirect =
@@ -572,6 +583,7 @@ export async function registerAuthRoutes(
       reply.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
       reply.clearCookie(OAUTH_NEXT_COOKIE, { path: "/" });
       reply.clearCookie(OAUTH_MOBILE_REDIRECT_COOKIE, { path: "/" });
+      reply.clearCookie(OAUTH_REF_COOKIE, { path: "/" });
 
       // App di động: kết thúc bằng deep-link, KHÔNG dùng flash/cookie web.
       // Token đặt ở fragment (#...) để không lọt vào log máy chủ.
@@ -602,13 +614,27 @@ export async function registerAuthRoutes(
 
       try {
         const profile = await fetchGoogleProfile(deps.config, code);
-        const { userId } = await findOrCreateGoogleUser(
+        const { userId, isNew } = await findOrCreateGoogleUser(
           deps.db,
           deps.emailService,
           deps.config,
           request,
           profile,
         );
+        // Tài khoản MỚI qua Google: gán người giới thiệu nếu link mang ?ref=;
+        // không có thì sau khi đăng nhập sẽ mời nhập mã (bỏ qua được).
+        let daCoNguoiGioiThieu = !isNew;
+        if (isNew && refCookie) {
+          try {
+            daCoNguoiGioiThieu = await applyReferralToUser(
+              deps.db,
+              userId,
+              refCookie,
+            );
+          } catch {
+            daCoNguoiGioiThieu = false;
+          }
+        }
         if (mobileRedirect) {
           const tokens = await issueMobileTokens(
             deps.db,
@@ -626,6 +652,10 @@ export async function registerAuthRoutes(
         }
         await createSession(deps.db, deps.config, request, reply, userId);
         setWelcome(reply, deps.config);
+        if (isNew && !daCoNguoiGioiThieu) {
+          // Đăng ký Google chưa có chỗ nhập mã — mời nhập ngay sau khi vào.
+          return reply.redirect("/app/nhap-gioi-thieu");
+        }
         return reply.redirect(safeNextPath(nextCookie, "/app"));
       } catch (error) {
         const message =

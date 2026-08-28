@@ -16,6 +16,45 @@
     {% endif %}
   </section>
 
+  {% if refRequests and refRequests.pending.length %}
+    <section class="panel data-panel refcode-queue">
+      <header class="panel-heading">
+        <div>
+          <span class="admin-kicker">CHỜ DUYỆT</span>
+          <h2>Yêu cầu đổi mã giới thiệu ({{ refRequests.pending.length }})</h2>
+        </div>
+        <span class="muted">Duyệt là mã có hiệu lực ngay, đối tác nhận thông báo; dữ liệu cũ giữ nguyên.</span>
+      </header>
+      <div class="responsive-table">
+        <table class="admin-data-table">
+          <thead><tr><th>Đối tác</th><th>Mã hiện tại</th><th>Mã đề nghị</th><th>Gửi lúc</th><th></th></tr></thead>
+          <tbody>
+            {% for r in refRequests.pending %}
+              <tr>
+                <td><a href="/backoffice/accounts/{{ r.user_id }}"><b>{{ r.full_name }}</b></a><br><small>{{ r.email }}</small></td>
+                <td><code>{{ r.old_code }}</code></td>
+                <td><code><b>{{ r.requested_code }}</b></code></td>
+                <td>{{ r.created_at | datetime }}</td>
+                <td class="refcode-queue-actions">
+                  <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <input type="hidden" name="decision" value="approve">
+                    <button class="button button-primary button-small" type="submit">Phê duyệt</button>
+                  </form>
+                  <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <input type="hidden" name="decision" value="reject">
+                    <button class="button button-ghost button-small" type="submit">Từ chối</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
   <section class="admin-filter-bar">
     <form method="get" action="/backoffice/accounts" class="admin-filters">
       <label class="admin-search-field">{{ icon("search") }}<input name="q" value="{{ filters.q }}" placeholder="Tên, email hoặc mã giới thiệu"></label>

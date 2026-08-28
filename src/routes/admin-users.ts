@@ -14,6 +14,10 @@ import { writeAuditLog } from "../services/audit.js";
 import { registerWithEmail } from "../services/auth.js";
 import { getWalletBalances } from "../services/ledger.js";
 import {
+  decideReferralCodeRequest,
+  listReferralCodeRequests,
+} from "../services/referral-code.js";
+import {
   flashAdminError,
   pageNumber,
   selectedValue,
@@ -147,9 +151,11 @@ export async function registerAdminUserRoutes(
       [q, role, status, limit, offset],
     );
     const total = Number(users.rows[0]?.total_count ?? 0);
+    const refRequests = await listReferralCodeRequests(deps.db);
     return reply.view("backoffice/accounts-list-v2.njk", {
       pageTitle: "Người dùng",
       backofficeSection: "users",
+      refRequests,
       users: users.rows,
       filters: { q, role, status },
       pagination: {
@@ -726,6 +732,45 @@ export async function registerAdminUserRoutes(
 
   // Bật/tắt ĐỐI TÁC ĐẶC BIỆT: đơn của người họ giới thiệu chia
   // specialPartnerSharePercent% (thay vì referrerSharePercent%).
+  // Duyệt/từ chối yêu cầu đổi mã giới thiệu của đối tác/KOL.
+  app.post<{ Params: { id: string } }>(
+    "/referral-codes/:id/decide",
+    async (request, reply) => {
+      try {
+        const approve =
+          (request.body as Record<string, unknown>).decision === "approve";
+        const decided = await decideReferralCodeRequest(
+          deps.db,
+          request.params.id,
+          approve,
+          request.currentUser!.id,
+        );
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: approve
+            ? "REFERRAL_CODE_APPROVED"
+            : "REFERRAL_CODE_REJECTED",
+          targetType: "USER",
+          targetId: decided.user_id,
+          after: {
+            old_code: decided.old_code,
+            requested_code: decided.requested_code,
+          },
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          approve
+            ? `Đã duyệt mã "${decided.requested_code}" — đối tác đã nhận thông báo.`
+            : `Đã từ chối mã "${decided.requested_code}".`,
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/accounts");
+    },
+  );
+
   app.post<{ Params: { id: string } }>(
     "/accounts/:id/special-partner",
     async (request, reply) => {

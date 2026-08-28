@@ -33,6 +33,21 @@
     <span class="mb-profile-go" aria-hidden="true">›</span>
   </a>
 
+  <section class="mb-panel mb-refcode" aria-label="Mã giới thiệu">
+    <div class="mb-panel-head">
+      <h2 class="mb-panel-title">Mã giới thiệu của bạn</h2>
+    </div>
+    <div class="copy-field mb-refcode-code">
+      <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-label="Mã giới thiệu">
+      <button class="button button-light" type="button" data-copy-button>Sao chép mã</button>
+    </div>
+    <div class="copy-field mb-refcode-link">
+      <input type="text" readonly value="{{ appOrigin or 'https://shoptikvn.com' }}/dang-ky?ref={{ currentUser.referralCode }}" data-copy-source aria-label="Link đăng ký kèm mã giới thiệu">
+      <button class="button button-light" type="button" data-copy-button>Sao chép link đăng ký</button>
+    </div>
+    <p class="mb-refcode-note">Gửi mã hoặc link cho bạn bè — họ đăng ký (web hoặc tải app đăng nhập cùng tài khoản) là mạng lưới ghi nhận về bạn. Link tải app trên App Store/Google Play sẽ bổ sung khi app phát hành.</p>
+  </section>
+
   <section class="mb-panel" aria-label="Tài khoản">
     <div class="mb-panel-head">
       <h2 class="mb-panel-title">Tài khoản</h2>
