@@ -574,38 +574,62 @@ export async function directFetchHotDeals(
 
   const session = await openCdpSession(wsUrl);
   try {
-    // Tab đã ở trang voucher (ensureTabForOrigin goto). Đưa ra trước (tab nền
-    // bị throttle, không lazy-load), chờ render rồi CUỘN TĂNG DẦN — mỗi khối
-    // voucher lazy-load get_collection_items khi cuộn tới.
+    // 1) Mở trang voucher, CUỘN TỪ TỪ (từng bước nhỏ ~800px) để mỗi bộ sưu tập
+    //    lazy-load get_collection_items — từ đó lấy collection_id của các bộ.
     await session.bringToFront();
-    // LUÔN nạp lại trang từ đầu: tab tái dùng có thể đã cuộn hết, không lazy-load
-    // thêm. Reload rồi cuộn từ trên xuống mới kích get_collection_items.
     await session.evaluate(`location.replace(${JSON.stringify(HOT_DEALS_URL)})`).catch(() => {});
     await sleep(5000);
-    const needBatches = Math.ceil(maxItems / 20) + 2;
-    for (let i = 0; i < 20; i += 1) {
-      await session.evaluate(`window.scrollBy(0, 2000)`).catch(() => {});
-      await sleep(1500);
-      if (session.micrositeRequestIds().length >= needBatches) break;
+    for (let i = 0; i < 30; i += 1) {
+      await session.evaluate(`window.scrollBy(0, 800)`).catch(() => {});
+      await sleep(900);
+      if (session.micrositeRequestIds().length >= 6) break;
     }
-    await sleep(1500);
+    await sleep(1200);
 
-    // Gom tất cả body microsite đã bắt, parse + dedupe theo item_id.
-    const ids = session.micrositeRequestIds();
+    // 2) Trích collection_id + tên từ các response get_collection_items.
+    const collectionMap = new Map<string, string>();
+    for (const id of session.micrositeRequestIds()) {
+      const body = await session.getBody(id);
+      const col = body?.data?.collection;
+      const cid = col?.collection_id;
+      if (cid != null) collectionMap.set(String(cid), String(col?.name ?? ""));
+    }
+    const collections = collectionMap.size;
+
+    // 3) Với TỪNG bộ sưu tập, gọi thẳng get_products_for_collection_landing_page
+    //    theo offset (60 sp/trang) — đã đo: fetch tay ra đúng từng trang.
     const seen = new Set<string>();
     const products: HarvestedProduct[] = [];
-    let collections = 0;
-    for (const id of ids) {
-      const body = await session.getBody(id);
-      if (!body) continue;
-      collections += 1;
-      for (const p of parseShopeeMicrositeItems(body)) {
-        if (seen.has(p.itemId)) continue;
-        seen.add(p.itemId);
-        products.push(p);
-        if (products.length >= maxItems) break;
+    outer: for (const cid of collectionMap.keys()) {
+      for (let offset = 0; offset < 600; offset += 60) {
+        const url =
+          `${SHOPEE_ORIGIN}/api/v4/microsite/get_products_for_collection_landing_page` +
+          `?by=relevancy&card_set_name=Microsite%20ATC%20Card&collection_id=${cid}` +
+          `&item_order=0&limit=60&match_id=${cid}&need_customised_item_card=true` +
+          `&newest=0&offset=${offset}&order=desc&page_type=collection` +
+          `&scenario=PAGE_COLLECTION&source=2&version=2`;
+        let body: any;
+        try {
+          const txt = await session.evaluate(
+            `fetch(${JSON.stringify(url)},{credentials:"include",headers:{accept:"application/json"}}).then(r=>r.text())`,
+            30_000,
+          );
+          body = JSON.parse(String(txt));
+        } catch {
+          break;
+        }
+        const parsed = parseShopeeMicrositeItems(body);
+        if (parsed.length === 0) break; // hết trang của bộ này
+        for (const p of parsed) {
+          if (seen.has(p.itemId)) continue;
+          seen.add(p.itemId);
+          products.push(p);
+          if (products.length >= maxItems) break outer;
+        }
+        const total = Number(body?.data?.total_count ?? 0);
+        if (offset + 60 >= total) break; // hết bộ này
+        await sleep(500);
       }
-      if (products.length >= maxItems) break;
     }
 
     // Lưu theo trang 20 sản phẩm vào list_type HOT (xóa dữ liệu cũ ở các trang
