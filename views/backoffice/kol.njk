@@ -1,0 +1,88 @@
+{% extends "backoffice/base.njk" %}
+
+{% macro app_card(a, decided) %}
+  <article class="kol-admin-card">
+    <header class="kol-admin-head">
+      <div>
+        <h3>{{ a.full_name }}</h3>
+        <small>{{ a.account_name }} · {{ a.account_email }} · gửi {{ a.created_at | datetime }}</small>
+      </div>
+      {% if a.status == 'APPROVED' %}<span class="status-badge status-positive">Đã duyệt</span>
+      {% elif a.status == 'REJECTED' %}<span class="status-badge status-negative">Từ chối</span>
+      {% else %}<span class="status-badge status-pending">Chờ duyệt</span>{% endif %}
+    </header>
+
+    <div class="kol-admin-body">
+      <dl class="kol-admin-info">
+        <div><dt>Số CCCD</dt><dd>{{ a.cccd_number }}</dd></div>
+        <div><dt>Ngày sinh</dt><dd>{{ a.birth_date or '—' }}</dd></div>
+        <div><dt>Cấp</dt><dd>{{ a.cccd_issue or '—' }}</dd></div>
+        <div><dt>Điện thoại</dt><dd>{{ a.phone }}</dd></div>
+        <div><dt>Email</dt><dd>{{ a.email or '—' }}</dd></div>
+        <div><dt>MST</dt><dd>{{ a.tax_code or '—' }}</dd></div>
+        <div><dt>Ngân hàng</dt><dd>{{ a.bank_account or '—' }} {{ a.bank_name or '' }}</dd></div>
+        <div class="kol-col-2"><dt>Địa chỉ</dt><dd>{{ a.address or '—' }}</dd></div>
+        <div class="kol-col-2"><dt>Mạng xã hội</dt><dd>{{ a.social_links or '—' }}</dd></div>
+      </dl>
+
+      <div class="kol-admin-kyc">
+        <figure><figcaption>CCCD mặt trước</figcaption>
+          <a href="/backoffice/kol/{{ a.id }}/file/cccd_front" target="_blank" rel="noopener">
+            <img src="/backoffice/kol/{{ a.id }}/file/cccd_front" alt="CCCD trước" loading="lazy"></a>
+        </figure>
+        <figure><figcaption>CCCD mặt sau</figcaption>
+          <a href="/backoffice/kol/{{ a.id }}/file/cccd_back" target="_blank" rel="noopener">
+            <img src="/backoffice/kol/{{ a.id }}/file/cccd_back" alt="CCCD sau" loading="lazy"></a>
+        </figure>
+        <figure><figcaption>Video khuôn mặt</figcaption>
+          <video src="/backoffice/kol/{{ a.id }}/file/face_video" controls preload="metadata" playsinline></video>
+        </figure>
+      </div>
+    </div>
+
+    {% if not decided %}
+      <footer class="kol-admin-actions">
+        <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-reject-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="decision" value="reject">
+          <input type="text" name="reason" placeholder="Lý do từ chối (tùy chọn)" maxlength="300">
+          <button type="submit" class="button button-ghost button-small">Từ chối</button>
+        </form>
+        <form method="post" action="/backoffice/kol/{{ a.id }}/decide" data-confirm-form data-confirm-message="Duyệt hồ sơ KOL/KOC của {{ a.full_name }}? Người dùng sẽ thành đối tác đặc biệt.">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="decision" value="approve">
+          <button type="submit" class="button button-primary button-small">Phê duyệt</button>
+        </form>
+      </footer>
+    {% elif a.reject_reason %}
+      <footer class="kol-admin-actions"><small class="muted">Lý do từ chối: {{ a.reject_reason }}</small></footer>
+    {% endif %}
+  </article>
+{% endmacro %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
+  <section class="admin-page-heading">
+    <div>
+      <span class="admin-kicker">ĐỐI TÁC</span>
+      <h1>Đăng ký KOL/KOC</h1>
+      <p>So video khuôn mặt với ảnh CCCD để xác minh. Duyệt xong người dùng thành đối tác đặc biệt.</p>
+    </div>
+  </section>
+
+  <section class="panel data-panel">
+    <header class="panel-heading"><div><span class="admin-kicker">CHỜ DUYỆT</span><h2>Hồ sơ mới ({{ applications.pending.length }})</h2></div></header>
+    {% if applications.pending.length %}
+      {% for a in applications.pending %}{{ app_card(a, false) }}{% endfor %}
+    {% else %}
+      <p class="bp-hint">Chưa có hồ sơ nào chờ duyệt.</p>
+    {% endif %}
+  </section>
+
+  {% if applications.recent.length %}
+    <section class="panel data-panel">
+      <header class="panel-heading"><div><span class="admin-kicker">GẦN ĐÂY</span><h2>Đã xử lý</h2></div></header>
+      {% for a in applications.recent %}{{ app_card(a, true) }}{% endfor %}
+    </section>
+  {% endif %}
+{% endblock %}

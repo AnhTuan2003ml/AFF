@@ -11,6 +11,7 @@ export interface BackofficeQueueCounts {
   missions: number;
   referralCodes: number;
   banks: number;
+  kol: number;
 }
 
 export async function getBackofficeQueueCounts(
@@ -22,6 +23,7 @@ export async function getBackofficeQueueCounts(
     missions_pending_count: string;
     referral_codes_pending_count: string;
     banks_pending_count: string;
+    kol_pending_count: string;
   }>(
     db,
     `
@@ -36,7 +38,9 @@ export async function getBackofficeQueueCounts(
         (SELECT count(*) FROM referral_code_requests WHERE status = 'PENDING')::text
           AS referral_codes_pending_count,
         (SELECT count(*) FROM user_bank_accounts WHERE status = 'PENDING_REVIEW')::text
-          AS banks_pending_count
+          AS banks_pending_count,
+        (SELECT count(*) FROM kol_applications WHERE status = 'PENDING')::text
+          AS kol_pending_count
     `,
   );
   const row = counts.rows[0];
@@ -46,5 +50,6 @@ export async function getBackofficeQueueCounts(
     missions: Number(row?.missions_pending_count ?? 0),
     referralCodes: Number(row?.referral_codes_pending_count ?? 0),
     banks: Number(row?.banks_pending_count ?? 0),
+    kol: Number(row?.kol_pending_count ?? 0),
   };
 }

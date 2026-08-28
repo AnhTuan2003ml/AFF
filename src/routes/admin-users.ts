@@ -18,6 +18,12 @@ import {
   listReferralCodeRequests,
 } from "../services/referral-code.js";
 import {
+  decideKolApplication,
+  getKolApplication,
+  getKolFile,
+  listKolApplications,
+} from "../services/kol-application.js";
+import {
   flashAdminError,
   pageNumber,
   selectedValue,
@@ -742,6 +748,74 @@ export async function registerAdminUserRoutes(
 
   // Bật/tắt ĐỐI TÁC ĐẶC BIỆT: đơn của người họ giới thiệu chia
   // specialPartnerSharePercent% (thay vì referrerSharePercent%).
+  // ── Hồ sơ đăng ký KOL/KOC ──────────────────────────────────────────
+  app.get("/kol", async (_request, reply) => {
+    const applications = await listKolApplications(deps.db);
+    return reply.view("backoffice/kol.njk", {
+      pageTitle: "Đăng ký KOL/KOC",
+      backofficeSection: "kol",
+      applications,
+    });
+  });
+
+  // Stream file KYC (ảnh CCCD / video) để admin xem đối chiếu.
+  app.get<{ Params: { id: string; kind: string } }>(
+    "/kol/:id/file/:kind",
+    async (request, reply) => {
+      const kind = request.params.kind.toUpperCase();
+      if (!["CCCD_FRONT", "CCCD_BACK", "FACE_VIDEO"].includes(kind)) {
+        return reply.code(404).send("Không tìm thấy.");
+      }
+      const file = await getKolFile(
+        deps.db,
+        request.params.id,
+        kind as "CCCD_FRONT" | "CCCD_BACK" | "FACE_VIDEO",
+      );
+      if (!file) return reply.code(404).send("Không tìm thấy file.");
+      reply.header("content-type", file.contentType);
+      reply.header("cache-control", "private, no-store");
+      reply.header("content-disposition", "inline");
+      return reply.send(file.content);
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/kol/:id/decide",
+    async (request, reply) => {
+      try {
+        const body = request.body as Record<string, unknown>;
+        const approve = body.decision === "approve";
+        const reason =
+          typeof body.reason === "string" ? body.reason.slice(0, 300) : undefined;
+        const app0 = await getKolApplication(deps.db, request.params.id);
+        const result = await decideKolApplication(
+          deps.db,
+          request.params.id,
+          approve,
+          request.currentUser!.id,
+          reason,
+        );
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: approve ? "KOL_APPROVED" : "KOL_REJECTED",
+          targetType: "USER",
+          targetId: result.userId,
+          after: { fullName: result.fullName, cccd: app0?.cccd_number },
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          approve
+            ? `Đã duyệt KOL/KOC "${result.fullName}" — người dùng thành đối tác đặc biệt.`
+            : `Đã từ chối hồ sơ "${result.fullName}".`,
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/kol");
+    },
+  );
+
   // Duyệt/từ chối yêu cầu đổi mã giới thiệu của đối tác/KOL.
   app.post<{ Params: { id: string } }>(
     "/referral-codes/:id/decide",

@@ -4458,6 +4458,29 @@ label small {
   color: #ffe4d9
 }
 
+.kol-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.kol-cta-copy { flex: 1 1 320px; min-width: 0 }
+.kol-cta-copy h2 { margin: 4px 0 6px }
+.kol-cta-copy p { color: var(--lx-muted, #8d7e74); line-height: 1.55; margin: 0 }
+.kol-cta .button { flex: 0 0 auto }
+.kol-cta .badge-pending {
+  flex: 0 0 auto;
+  background: #fff7e8;
+  border: 1px solid #ffe0a3;
+  color: #9a6b12;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
 .referral-hero strong {
   display: block;
   font-size: 42px;

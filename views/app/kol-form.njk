@@ -1,0 +1,90 @@
+{% extends "app/app-base.njk" %}
+
+{% block app_content %}
+  <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
+  <section class="kol-wrap kol-form-wrap">
+    <header class="kol-head">
+      <span class="kol-eyebrow">HỒ SƠ ĐỐI TÁC</span>
+      <h1>Thông tin & xác minh</h1>
+      <p>Điền thông tin và tải lên ảnh CCCD hai mặt cùng video khuôn mặt để xác minh danh tính.</p>
+    </header>
+
+    <form method="post" action="/app/dang-ky-kol" enctype="multipart/form-data" class="kol-form" data-kol-form>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <input type="hidden" name="acceptTerms" value="1">
+
+      <div class="kol-card">
+        <h2 class="kol-card-title">Thông tin cá nhân</h2>
+        <div class="kol-grid">
+          <label class="kol-field kol-col-2"><span>Họ và tên <i>*</i></span>
+            <input name="fullName" required autocomplete="name" placeholder="Nguyễn Văn A">
+          </label>
+          <label class="kol-field"><span>Ngày sinh</span>
+            <input name="birthDate" type="date">
+          </label>
+          <label class="kol-field"><span>Số điện thoại <i>*</i></span>
+            <input name="phone" required inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
+          </label>
+          <label class="kol-field"><span>Số CCCD/Căn cước <i>*</i></span>
+            <input name="cccdNumber" required inputmode="numeric" placeholder="0xxxxxxxxxxx">
+          </label>
+          <label class="kol-field"><span>Ngày cấp / Nơi cấp</span>
+            <input name="cccdIssue" placeholder="01/01/2021 - Cục CSQLHC">
+          </label>
+          <label class="kol-field kol-col-2"><span>Địa chỉ liên hệ</span>
+            <input name="address" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, tỉnh/thành">
+          </label>
+          <label class="kol-field kol-col-2"><span>Email</span>
+            <input name="email" type="email" autocomplete="email" placeholder="ban@email.com">
+          </label>
+          <label class="kol-field kol-col-2"><span>Kênh mạng xã hội (link)</span>
+            <input name="socialLinks" placeholder="TikTok / Facebook / Instagram…">
+          </label>
+        </div>
+      </div>
+
+      <div class="kol-card">
+        <h2 class="kol-card-title">Thanh toán & thuế</h2>
+        <div class="kol-grid">
+          <label class="kol-field"><span>Mã số thuế cá nhân</span>
+            <input name="taxCode" inputmode="numeric" placeholder="Nếu có">
+          </label>
+          <label class="kol-field"><span>Số tài khoản ngân hàng</span>
+            <input name="bankAccount" inputmode="numeric" placeholder="Số tài khoản nhận hoa hồng">
+          </label>
+          <label class="kol-field kol-col-2"><span>Chủ tài khoản / Ngân hàng</span>
+            <input name="bankName" placeholder="NGUYEN VAN A - Vietcombank">
+          </label>
+        </div>
+      </div>
+
+      <div class="kol-card">
+        <h2 class="kol-card-title">Xác minh danh tính</h2>
+        <p class="kol-note">Ảnh CCCD rõ nét, không chói sáng. Video quay chính diện khuôn mặt 3–5 giây để đối chiếu với CCCD.</p>
+        <div class="kol-uploads">
+          <label class="kol-upload" data-upload>
+            <input type="file" name="cccdFront" accept="image/*" required hidden data-upload-input>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>CCCD mặt trước <i>*</i></b><small data-upload-name>Chạm để chọn ảnh</small></div>
+            <img class="kol-upload-preview" data-upload-preview hidden alt="">
+          </label>
+          <label class="kol-upload" data-upload>
+            <input type="file" name="cccdBack" accept="image/*" required hidden data-upload-input>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>CCCD mặt sau <i>*</i></b><small data-upload-name>Chạm để chọn ảnh</small></div>
+            <img class="kol-upload-preview" data-upload-preview hidden alt="">
+          </label>
+          <label class="kol-upload kol-upload-video" data-upload>
+            <input type="file" name="faceVideo" accept="video/*" required hidden data-upload-input>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🎥</span><b>Video khuôn mặt <i>*</i></b><small data-upload-name>Chạm để chọn video</small></div>
+            <video class="kol-upload-preview" data-upload-preview hidden muted playsinline controls></video>
+          </label>
+        </div>
+      </div>
+
+      <div class="kol-submit-bar">
+        <a href="/app/dang-ky-kol" class="button button-ghost">← Quay lại</a>
+        <button class="button button-primary" type="submit" data-kol-submit>Gửi hồ sơ</button>
+      </div>
+    </form>
+  </section>
+  <script src="/assets/kol-form.js?v={{ assetVersion }}" defer></script>
+{% endblock %}

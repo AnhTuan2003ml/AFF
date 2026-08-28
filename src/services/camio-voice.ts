@@ -103,6 +103,23 @@ export const camioVoice = {
     };
   },
 
+  /** Admin duyệt hồ sơ đăng ký KOL/KOC. */
+  kolApproved(): CamioNotice {
+    return {
+      title: pick(["🎉 Chào mừng đối tác KOL/KOC!", "Hồ sơ KOL/KOC đã được duyệt 🧡"]),
+      body: "Bạn đã trở thành đối tác đặc biệt của ShopTik — hưởng hoa hồng cao hơn và được đổi mã giới thiệu. Vào mục Giới thiệu để bắt đầu!",
+    };
+  },
+
+  kolRejected(p: { reason?: string | undefined }): CamioNotice {
+    return {
+      title: pick(["Hồ sơ KOL/KOC chưa được duyệt 🥲", "Lần này hồ sơ chưa qua 🥲"]),
+      body: p.reason
+        ? `Lý do: ${p.reason}. Bạn có thể nộp lại hồ sơ sau khi chỉnh sửa.`
+        : "Hồ sơ chưa đạt. Kiểm tra lại ảnh CCCD/video rồi nộp lại giúp mình nhé.",
+    };
+  },
+
   /** Admin duyệt mã giới thiệu tự chọn của đối tác/KOL. */
   referralCodeApproved(p: { code: string }): CamioNotice {
     return {

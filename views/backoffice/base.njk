@@ -55,6 +55,7 @@
           <a href="/backoffice/banks" {% if backofficeSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ icon('bank') }}<span>Tài khoản ngân hàng</span>{% if backofficeBanksPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeBanksPendingCount }} tài khoản ngân hàng chờ xác minh">{{ backofficeBanksPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/products" {% if backofficeSection == 'products' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Khám phá</span></a>
           <a href="/backoffice/missions" {% if backofficeSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ</span>{% if backofficeMissionsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
+          <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Đăng ký KOL/KOC</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ KOL/KOC chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/revenue" {% if backofficeSection == 'revenue' %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<span>Doanh thu</span></a>
           <p class="st-nav-group">Hệ thống</p>
           <a href="/backoffice/sync" {% if backofficeSection == 'sync' %}class="active" aria-current="page"{% endif %}>{{ icon('refresh') }}<span>Đồng bộ sàn</span></a>
@@ -92,7 +93,7 @@
           {# Số việc đang chờ, đặt ngay trên topbar để người trực không phải mở
              từng trang mới biết còn tồn gì. Chỗ này trước là dải trắng trống. #}
           <div class="bo-queue">
-            {% set hasQueue = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 %}
+            {% set hasQueue = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 or backofficeKolPendingCount > 0 %}
             {% if hasQueue %}
               <span class="bo-queue-label">Đang chờ</span>
               {% if backofficeOrdersPendingCount > 0 %}
@@ -109,6 +110,9 @@
               {% endif %}
               {% if backofficeBanksPendingCount > 0 %}
                 <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
+              {% endif %}
+              {% if backofficeKolPendingCount > 0 %}
+                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Đăng ký KOL/KOC</a>
               {% endif %}
             {% else %}
               <span class="bo-queue-clear">Không còn việc chờ xử lý</span>
@@ -146,7 +150,7 @@
              đầu nội dung, cuộn ngang được. #}
           {# Container luôn render (hidden khi trống) để admin-queue-live.js
              bơm việc mới vào realtime mà không cần tải lại trang. #}
-          {% set moQueueMobile = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 %}
+          {% set moQueueMobile = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 or backofficeKolPendingCount > 0 %}
             <div class="bo-queue-mobile" aria-label="Việc đang chờ xử lý"{% if not moQueueMobile %} hidden{% endif %}>
               {% if backofficeOrdersPendingCount > 0 %}
                 <a href="/backoffice/reconciliation"><b>{{ backofficeOrdersPendingCount }}</b>Đơn hoàn tiền</a>
@@ -162,6 +166,9 @@
               {% endif %}
               {% if backofficeBanksPendingCount > 0 %}
                 <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
+              {% endif %}
+              {% if backofficeKolPendingCount > 0 %}
+                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Đăng ký KOL/KOC</a>
               {% endif %}
             </div>
           {% block backoffice_content %}{% endblock %}

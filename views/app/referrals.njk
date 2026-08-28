@@ -30,6 +30,29 @@
     </div>
   </section>
 
+  {% if not (refCodeState and refCodeState.isPartner) %}
+    <section class="panel kol-cta">
+      <div class="kol-cta-copy">
+        <span class="eyebrow">DÀNH CHO NGƯỜI SÁNG TẠO</span>
+        <h2>Trở thành đối tác KOL/KOC</h2>
+        {% if kolStatus and kolStatus.status == 'PENDING' %}
+          <p>Hồ sơ của bạn đang được đội ngũ xét duyệt. Bạn sẽ nhận thông báo ngay khi có kết quả.</p>
+        {% elif kolStatus and kolStatus.status == 'REJECTED' %}
+          <p>Hồ sơ trước chưa đạt. Bạn có thể chỉnh sửa thông tin và gửi lại để được duyệt.</p>
+        {% else %}
+          <p>Xác minh danh tính để nhận hoa hồng cao hơn và quyền tự chọn mã giới thiệu riêng.</p>
+        {% endif %}
+      </div>
+      {% if kolStatus and kolStatus.status == 'PENDING' %}
+        <span class="badge badge-pending">Đang chờ duyệt</span>
+      {% else %}
+        <a class="button button-primary" href="/app/dang-ky-kol">
+          {% if kolStatus and kolStatus.status == 'REJECTED' %}Gửi lại hồ sơ{% else %}Đăng ký ngay{% endif %}
+        </a>
+      {% endif %}
+    </section>
+  {% endif %}
+
   {% if refCodeState and refCodeState.isPartner %}
     <section class="panel referral-code-panel">
       <header class="panel-heading">

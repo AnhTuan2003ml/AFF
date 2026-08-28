@@ -89,7 +89,8 @@ await app.register(cookie, {
 await app.register(formbody, { bodyLimit: 64 * 1024 });
 await app.register(multipart, {
   attachFieldsToBody: "keyValues",
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 20 },
+  // Cho hồ sơ KOL/KOC: 2 ảnh CCCD + 1 video khuôn mặt (video tối đa ~30MB).
+  limits: { fileSize: 30 * 1024 * 1024, files: 3, fields: 30 },
 });
 await app.register(helmet, {
   global: true,
@@ -213,6 +214,7 @@ app.addHook("preHandler", async (request, reply) => {
   let backofficeMissionsPendingCount = 0;
   let backofficeReferralCodesPendingCount = 0;
   let backofficeBanksPendingCount = 0;
+  let backofficeKolPendingCount = 0;
   if (
     request.currentUser &&
     request.url.startsWith("/backoffice") &&
@@ -226,6 +228,7 @@ app.addHook("preHandler", async (request, reply) => {
     backofficeMissionsPendingCount = backofficeCounts.missions;
     backofficeReferralCodesPendingCount = backofficeCounts.referralCodes;
     backofficeBanksPendingCount = backofficeCounts.banks;
+    backofficeKolPendingCount = backofficeCounts.kol;
   }
   let unreadNotificationCount = 0;
   let recentNotifications: Awaited<ReturnType<typeof listNotifications>> = [];
@@ -267,6 +270,7 @@ app.addHook("preHandler", async (request, reply) => {
     backofficeMissionsPendingCount,
     backofficeReferralCodesPendingCount,
     backofficeBanksPendingCount,
+    backofficeKolPendingCount,
     communityZaloUrl: config.COMMUNITY_ZALO_URL,
     communityTelegramUrl: config.COMMUNITY_TELEGRAM_URL,
     currentUser: request.currentUser,

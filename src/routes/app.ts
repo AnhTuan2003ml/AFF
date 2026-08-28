@@ -16,6 +16,14 @@ import {
 import { getBusinessConfig } from "../services/business-config.js";
 import { listOrderHistory } from "../services/order-history.js";
 import { listShopeeVouchers } from "../services/shopee-voucher.js";
+import {
+  getUserKolStatus,
+  submitKolApplication,
+} from "../services/kol-application.js";
+import {
+  KOL_AGREEMENT_PARAGRAPHS,
+  KOL_AGREEMENT_VERSION,
+} from "../services/kol-agreement.js";
 import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
@@ -86,6 +94,35 @@ function userId(request: { currentUser: { id: string } | null }): string {
     throw new AppError("AUTH_REQUIRED", "Bạn cần đăng nhập.", 401);
   }
   return request.currentUser.id;
+}
+
+/** Lấy Buffer từ một field file của @fastify/multipart (mọi chế độ attach). */
+function multipartBuffer(value: unknown): Buffer | null {
+  if (Buffer.isBuffer(value)) return value.length ? value : null;
+  const v = value as { _buf?: Buffer } | null;
+  if (v && Buffer.isBuffer(v._buf)) return v._buf.length ? v._buf : null;
+  return null;
+}
+
+/** Nhận diện MIME qua magic bytes (keyValues làm mất content-type). */
+function sniffMime(buf: Buffer): string {
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff)
+    return "image/jpeg";
+  if (
+    buf.length >= 8 &&
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47
+  )
+    return "image/png";
+  if (buf.length >= 12 && buf.toString("ascii", 4, 8) === "ftyp")
+    return "video/mp4";
+  if (buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3)
+    return "video/webm";
+  if (buf.length >= 12 && buf.toString("ascii", 0, 4) === "RIFF")
+    return "image/webp";
+  return "application/octet-stream";
 }
 
 function flashError(
@@ -1053,7 +1090,8 @@ export async function registerAppRoutes(
   // nhận được bao nhiêu từ từng người, cộng tóm tắt mua sắm của chính mình.
   app.get("/referrals", async (request, reply) => {
     const id = userId(request);
-    const [referrals, mySource, myEarnings, myShopping] = await Promise.all([
+    const [referrals, mySource, myEarnings, myShopping, kolStatus] =
+      await Promise.all([
       query<{
         full_name: string;
         status: string;
@@ -1113,10 +1151,12 @@ export async function registerAppRoutes(
         `,
         [id],
       ),
+      getUserKolStatus(deps.db, id),
     ]);
     return reply.view("app/referrals.njk", {
       pageTitle: "Mạng lưới của tôi",
       appSection: "referrals",
+      kolStatus,
       referrals: referrals.rows,
       referredByName: mySource.rows[0]?.full_name ?? null,
       networkEarnings: myEarnings.rows[0] ?? {
@@ -1448,6 +1488,87 @@ export async function registerAppRoutes(
       appSection: "settings",
       appOrigin: deps.config.APP_ORIGIN,
     });
+  });
+
+  // ── Đăng ký KOL/KOC ──────────────────────────────────────────────────
+  // Bước 1: điều khoản + tích xác nhận.
+  app.get("/dang-ky-kol", async (request, reply) => {
+    const kol = await getUserKolStatus(deps.db, userId(request));
+    return reply.view("app/kol-terms.njk", {
+      pageTitle: "Đăng ký KOL/KOC",
+      appSection: "referrals",
+      paragraphs: KOL_AGREEMENT_PARAGRAPHS,
+      agreementVersion: KOL_AGREEMENT_VERSION,
+      pendingStatus: kol.status,
+    });
+  });
+
+  // Bước 2: form thông tin + KYC (chỉ vào được khi đã tích điều khoản).
+  app.get("/dang-ky-kol/thong-tin", async (request, reply) => {
+    const q = request.query as Record<string, unknown>;
+    if (q.dong_y !== "1") return reply.redirect("/app/dang-ky-kol");
+    const kol = await getUserKolStatus(deps.db, userId(request));
+    if (kol.status === "PENDING") return reply.redirect("/app/dang-ky-kol");
+    return reply.view("app/kol-form.njk", {
+      pageTitle: "Hồ sơ KOL/KOC",
+      appSection: "referrals",
+      agreementVersion: KOL_AGREEMENT_VERSION,
+    });
+  });
+
+  app.post("/dang-ky-kol", async (request, reply) => {
+    try {
+      const body = request.body as Record<string, unknown>;
+      if (!body.acceptTerms) {
+        throw new AppError("KOL_TERMS", "Bạn cần đồng ý điều khoản.", 400);
+      }
+      const str = (k: string): string | undefined => {
+        const v = body[k];
+        return typeof v === "string" ? v : undefined;
+      };
+      const files = [
+        { kind: "CCCD_FRONT" as const, field: "cccdFront" },
+        { kind: "CCCD_BACK" as const, field: "cccdBack" },
+        { kind: "FACE_VIDEO" as const, field: "faceVideo" },
+      ]
+        .map((f) => {
+          const buf = multipartBuffer(body[f.field]);
+          return buf
+            ? { kind: f.kind, contentType: sniffMime(buf), buffer: buf }
+            : null;
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
+
+      await submitKolApplication(
+        deps.db,
+        userId(request),
+        {
+          fullName: str("fullName") ?? "",
+          birthDate: str("birthDate"),
+          cccdNumber: str("cccdNumber") ?? "",
+          cccdIssue: str("cccdIssue"),
+          address: str("address"),
+          phone: str("phone") ?? "",
+          email: str("email"),
+          taxCode: str("taxCode"),
+          bankAccount: str("bankAccount"),
+          bankName: str("bankName"),
+          socialLinks: str("socialLinks"),
+          agreementVersion: KOL_AGREEMENT_VERSION,
+        },
+        files,
+      );
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        "Đã gửi hồ sơ KOL/KOC. Đội ngũ sẽ duyệt và thông báo kết quả cho bạn.",
+      );
+      return reply.redirect("/app/dang-ky-kol");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+      return reply.redirect("/app/dang-ky-kol");
+    }
   });
 
   app.get("/profile", async (request, reply) => {
