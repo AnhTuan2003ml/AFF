@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
   partnerTitle: { fontSize: 14, fontWeight: '900', color: colors.text },
   partnerNote: { fontSize: 12.5, color: colors.muted, lineHeight: 19, marginTop: 6 },
   b: { fontWeight: '900', color: colors.text },
-  partnerForm: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  // Ô nhập một hàng full chiều ngang, nút gửi nằm hàng riêng bên dưới.
+  partnerForm: { gap: 10, marginTop: 10 },
   partnerInput: {
-    flex: 1,
     minHeight: 44,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
