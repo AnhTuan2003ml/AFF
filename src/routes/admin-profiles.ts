@@ -9,7 +9,6 @@ import {
   EXCLUSIVE_LIST_TYPE,
   RECOMMEND_LIST_TYPE,
   deleteHarvestProfile,
-  enqueueOfferRangeFetch,
   getCachedPageRange,
   getHarvestSettings,
   isWorkerOnline,
@@ -19,6 +18,7 @@ import {
   updateHarvestSettings,
 } from "../services/discover-harvest.js";
 import { query } from "../db.js";
+import { directFetchOfferRange } from "../services/browser-control.js";
 import {
   flashAdminError,
   type AdminConsoleDeps,
@@ -111,19 +111,33 @@ export async function registerAdminProfileRoutes(
         best: "Bán chạy nhất",
         exclusive: "Ưu đãi độc quyền",
       };
-      await enqueueOfferRangeFetch(
-        deps.db,
-        listTypeByList[input.list]!,
-        input.fromPage,
-        input.toPage,
-        request.currentUser!.id,
-      );
+      if (input.toPage - input.fromPage + 1 > 40) {
+        throw new AppError(
+          "RANGE_TOO_LARGE",
+          "Mỗi lượt tối đa 40 trang. Hãy chia nhỏ dải trang.",
+        );
+      }
+      const profile = (await listHarvestProfiles(deps.db))[0];
+      if (!profile) {
+        throw new AppError(
+          "NO_PROFILE",
+          "Chưa có Profile ID. Điền Profile ID của Browser Control ở trên.",
+        );
+      }
+      // Server ĐIỀU KHIỂN TRỰC TIẾP profile qua CDP — không qua worker.
+      const result = await directFetchOfferRange(deps.db, deps.config, {
+        profileId: profile.id,
+        listType: listTypeByList[input.list]!,
+        fromPage: input.fromPage,
+        toPage: input.toPage,
+      });
       const label = labelByList[input.list]!;
       setFlash(
         reply,
         deps.config,
         "success",
-        `Đã gửi lệnh lấy ${label} trang ${input.fromPage}–${input.toPage}. Worker sẽ lưu vào kho dữ liệu; theo dõi ở mục Nhật ký.`,
+        `Đã lấy ${label}: ${result.savedItems} sản phẩm / ${result.savedPages} trang.` +
+          (result.note ? ` ${result.note}` : ""),
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);

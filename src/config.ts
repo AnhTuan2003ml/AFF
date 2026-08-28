@@ -80,6 +80,13 @@ const configSchema = z.object({
   // Token cho profile-worker (Playwright chạy trên máy host) gọi API
   // /api/v1/harvest/*. Trống = tắt toàn bộ API worker.
   HARVEST_WORKER_TOKEN: z.string().trim().default(""),
+  // Địa chỉ ứng dụng Browser Control để server ĐIỀU KHIỂN TRỰC TIẾP profile
+  // (không cần worker). Server chạy trong Docker nên mặc định trỏ host qua
+  // host.docker.internal; máy chạy trực tiếp thì đặt http://127.0.0.1:9222.
+  BROWSER_CONTROL_URL: z
+    .string()
+    .trim()
+    .default("http://host.docker.internal:9222"),
   // Lấy tại affiliate.shopee.vn → Công cụ → API.
   SHOPEE_OPEN_API_APP_ID: z.string().trim().default(""),
   SHOPEE_OPEN_API_SECRET: z.string().trim().default(""),

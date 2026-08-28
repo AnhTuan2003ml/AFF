@@ -83,6 +83,7 @@ export function testConfig(): AppConfig {
     SMTP_FROM_EMAIL: "no-reply@example.com",
     SHOPEE_AFFILIATE_ID: "14354840000",
     HARVEST_WORKER_TOKEN: "",
+    BROWSER_CONTROL_URL: "http://127.0.0.1:9222",
     SHOPEE_OPEN_API_APP_ID: "",
     SHOPEE_OPEN_API_SECRET: "",
     SHOPEE_PRODUCT_API_URL: "",
