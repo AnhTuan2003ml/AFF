@@ -48,6 +48,7 @@ import {
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
+  HOT_DEALS_LIST_TYPE,
   OFFER_PAGE_SIZE,
   RECOMMEND_LIST_TYPE,
   enqueueOfferPageFetch,
@@ -927,6 +928,7 @@ export async function registerAppRoutes(
     recommend: RECOMMEND_LIST_TYPE,
     best: BEST_SELLER_LIST_TYPE,
     exclusive: EXCLUSIVE_LIST_TYPE,
+    hot: HOT_DEALS_LIST_TYPE,
   };
 
   app.get("/discover/offer-products", async (request, reply) => {
@@ -958,6 +960,15 @@ export async function registerAppRoutes(
       });
     }
 
+    // Kho HOT chỉ được nạp bởi lịch 1h sáng / nút thủ công (directFetchHotDeals),
+    // KHÔNG enqueue lấy trang như offer thường.
+    if (listType === HOT_DEALS_LIST_TYPE) {
+      return reply.send({
+        status: "UNAVAILABLE",
+        page: pageNo,
+        message: "Deal Hot đang được cập nhật. Vui lòng quay lại sau.",
+      });
+    }
     const settings = await getHarvestSettings(deps.db);
     if (!isWorkerOnline(settings)) {
       return reply.send({

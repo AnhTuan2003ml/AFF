@@ -24,6 +24,7 @@ import { AppError } from "../../lib/errors.js";
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
+  HOT_DEALS_LIST_TYPE,
   RECOMMEND_LIST_TYPE,
   getKnownOfferPageCount,
   getStoredOfferPage,
@@ -300,6 +301,7 @@ export async function registerFeatureApiRoutes(
       recommend: RECOMMEND_LIST_TYPE,
       best: BEST_SELLER_LIST_TYPE,
       exclusive: EXCLUSIVE_LIST_TYPE,
+      hot: HOT_DEALS_LIST_TYPE,
     };
     const ten = String(q.list ?? "best");
     const listType = DANH_MUC[ten] ?? BEST_SELLER_LIST_TYPE;

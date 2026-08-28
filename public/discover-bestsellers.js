@@ -27,6 +27,7 @@
   var filterEmpty = page.querySelector("[data-discover-filter-empty]");
 
   var TITLES = {
+    hot: "🔥 Deal Hot — voucher giá sốc",
     recommend: "Đề xuất từ Shopee",
     best: "Bán chạy nhất trên Shopee",
     exclusive: "Ưu đãi độc quyền cho bạn",

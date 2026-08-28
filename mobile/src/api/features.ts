@@ -143,7 +143,7 @@ export function guiDoiMaGioiThieu(newCode: string) {
 }
 
 /** Không cần đăng nhập — khách xem sản phẩm đang hoàn tiền được. */
-export function layKhamPha(list: 'best' | 'recommend' | 'exclusive' = 'best', page = 1) {
+export function layKhamPha(list: 'hot' | 'best' | 'recommend' | 'exclusive' = 'best', page = 1) {
   return apiFetch<{
     list: string;
     page: number;

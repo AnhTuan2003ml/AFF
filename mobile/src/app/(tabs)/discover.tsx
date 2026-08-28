@@ -29,6 +29,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  */
 
 const TABS = [
+  { key: 'hot', nhan: '🔥 Hot' },
   { key: 'recommend', nhan: 'Đề xuất' },
   { key: 'best', nhan: 'Bán chạy' },
   { key: 'exclusive', nhan: 'Độc quyền' },
@@ -36,7 +37,7 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
-const LIST_KEYS: TabKey[] = ['recommend', 'best', 'exclusive'];
+const LIST_KEYS: TabKey[] = ['hot', 'recommend', 'best', 'exclusive'];
 
 export default function DiscoverScreen() {
   const params = useLocalSearchParams<{ list?: string }>();

@@ -1052,3 +1052,17 @@
     bottom: calc(var(--mb-bottomnav-h, 72px) + 100px + env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* Tab Deal Hot — nổi bật (viền + chữ cam, nền nhạt) để gây chú ý. */
+.discover-category-tabs button.discover-tab-hot {
+  border-color: #ff5a1f;
+  color: #d63e12;
+  font-weight: 800;
+  background: linear-gradient(180deg, #fff4ee, #ffe9df);
+}
+.discover-category-tabs button.discover-tab-hot[aria-pressed="true"],
+.discover-category-tabs button.discover-tab-hot.active {
+  background: #ff5a1f;
+  color: #fff;
+  border-color: #ff5a1f;
+}

@@ -18,7 +18,10 @@ import {
   updateHarvestSettings,
 } from "../services/discover-harvest.js";
 import { query } from "../db.js";
-import { directFetchOfferRange } from "../services/browser-control.js";
+import {
+  directFetchHotDeals,
+  directFetchOfferRange,
+} from "../services/browser-control.js";
 import {
   flashAdminError,
   type AdminConsoleDeps,
@@ -176,6 +179,33 @@ export async function registerAdminProfileRoutes(
         deps.config,
         "success",
         "Đã lưu Profile ID. Bấm nút lấy sản phẩm bên dưới là worker điều khiển thẳng profile này.",
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+
+  // Lấy Deal Hot (voucher) ngay: server điều khiển profile mở trang mã giảm giá.
+  app.post("/profiles/fetch-hot", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const profile = (await listHarvestProfiles(deps.db))[0];
+      if (!profile) {
+        throw new AppError(
+          "NO_PROFILE",
+          "Chưa có Profile ID. Điền Profile ID của Browser Control ở trên.",
+        );
+      }
+      const result = await directFetchHotDeals(deps.db, deps.config, {
+        profileId: profile.id,
+        maxItems: 200,
+      });
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã lấy Deal Hot: ${result.savedItems} sản phẩm voucher từ ${result.collections} bộ sưu tập.`,
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);

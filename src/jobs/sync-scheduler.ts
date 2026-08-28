@@ -2,7 +2,11 @@ import type { FastifyBaseLogger } from "fastify";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { releaseDueCashback } from "../services/cashback-release.js";
-import { enqueueDueHarvest } from "../services/discover-harvest.js";
+import { directFetchHotDeals } from "../services/browser-control.js";
+import {
+  enqueueDueHarvest,
+  HOT_DEALS_LIST_TYPE,
+} from "../services/discover-harvest.js";
 import { pruneUnconfirmedInstantBuys } from "../services/instantbuy-cleanup.js";
 import { getPlatformSyncSettings } from "../services/platform-sync-settings.js";
 import {
@@ -69,6 +73,39 @@ export function startSyncScheduler(
         }
       } catch (error) {
         logger.warn({ err: error }, "Không xếp được lệnh lấy sản phẩm đề xuất");
+      }
+
+      // Deal Hot (voucher): tự chạy MỘT lần/ngày lúc 1h sáng giờ VN, server
+      // điều khiển thẳng profile mở shopee.vn/m/ma-giam-gia.
+      try {
+        const now = new Date();
+        const vnHour = (now.getUTCHours() + 7) % 24;
+        if (vnHour === 1) {
+          const last = await query<{ t: Date | null }>(
+            db,
+            "SELECT max(fetched_at) AS t FROM shopee_offer_products WHERE list_type = $1",
+            [HOT_DEALS_LIST_TYPE],
+          );
+          const lastT = last.rows[0]?.t ? new Date(last.rows[0].t) : null;
+          const doneRecently =
+            lastT && now.getTime() - lastT.getTime() < 12 * 3600 * 1000;
+          if (!doneRecently) {
+            const prof = await query<{ id: string }>(
+              db,
+              `SELECT id FROM harvest_profiles WHERE status <> 'DISABLED'
+               ORDER BY last_fetch_at ASC NULLS FIRST LIMIT 1`,
+            );
+            if (prof.rows[0]) {
+              const r = await directFetchHotDeals(db, config, {
+                profileId: prof.rows[0].id,
+                maxItems: 200,
+              });
+              logger.info({ items: r.savedItems }, "Đã lấy Deal Hot (1h sáng)");
+            }
+          }
+        }
+      } catch (error) {
+        logger.warn({ err: error }, "Lấy Deal Hot thất bại");
       }
 
       const release = await releaseDueCashback(db, { actorId });

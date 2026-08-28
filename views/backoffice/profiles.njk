@@ -82,6 +82,18 @@
     <aside class="info-strip"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ settings.lastError }}</p></div></aside>
   {% endif %}
 
+  {# ── Deal Hot (voucher) ────────────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">🔥 DEAL HOT</span><h2>Sản phẩm voucher giá sốc</h2></div>
+    </header>
+    <p class="bp-hint">Server mở <b>shopee.vn/m/ma-giam-gia</b> bằng profile, cuộn để bắt các bộ sưu tập voucher rồi lưu vào kho HOT. Tự chạy <b>1h sáng mỗi ngày</b>; bấm dưới để lấy ngay.</p>
+    <form method="post" action="/backoffice/profiles/fetch-hot">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button class="button button-primary" type="submit">🔥 Lấy Deal Hot ngay</button>
+    </form>
+  </section>
+
   {# ── Lấy dữ liệu theo dải trang ────────────────────────────────────── #}
   <section class="panel config-section">
     <header class="admin-section-heading">
