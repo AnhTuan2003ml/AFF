@@ -178,23 +178,25 @@
   .kol-admin-body { grid-template-columns: 1fr; }
 }
 
-/* Bên A: admin điền trước khi duyệt → in vào hợp đồng. */
-.kol-partya {
+/* Duyệt: admin đính kèm file PDF hợp đồng → gửi cho người đăng ký. */
+.kol-approve {
   margin-top: 14px; padding: 14px 16px;
   border: 1px solid #ffe0a3; border-radius: 12px; background: #fffaf0;
 }
-.kol-partya-title { margin: 0 0 10px; font-size: 12.5px; font-weight: 800; color: #9a6b12; }
-.kol-partya-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
-.kol-partya-grid .kol-col-2 { grid-column: 1 / -1; }
-.kol-partya-grid label { display: flex; flex-direction: column; gap: 4px; }
-.kol-partya-grid span { font-size: 11px; font-weight: 700; color: #6b5a4e; }
-.kol-partya-grid input {
-  height: 38px; padding: 0 11px; border: 1px solid #e2d6c6; border-radius: 9px;
-  font-size: 13px; background: #fff;
+.kol-approve-title { margin: 0 0 10px; font-size: 12.5px; font-weight: 800; color: #9a6b12; }
+.kol-file { position: relative; display: block; cursor: pointer; }
+.kol-file input {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer;
 }
-.kol-partya-grid input:focus {
-  outline: none; border-color: var(--lx-orange, #ee4d2d);
-  box-shadow: 0 0 0 3px rgba(238, 77, 45, .12);
+.kol-file-face {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 14px; border: 1.5px dashed #d8b56a; border-radius: 10px;
+  background: #fff; transition: border-color .15s ease, background .15s ease;
 }
-.kol-partya .kol-admin-actions { margin-top: 12px; }
-@media (max-width: 560px) { .kol-partya-grid { grid-template-columns: 1fr; } }
+.kol-file:hover .kol-file-face { border-color: var(--lx-orange, #ee4d2d); background: #fff7f2; }
+.kol-file-face b { font-size: 13px; color: #2c1d17; }
+.kol-file-face.is-filled b { color: #166534; }
+.kol-file-face small { font-size: 11px; color: #8d7e74; }
+.kol-approve .kol-admin-actions { margin-top: 12px; }
+.kol-contract-link { font-size: 12.5px; font-weight: 700; color: var(--lx-orange, #ee4d2d); }

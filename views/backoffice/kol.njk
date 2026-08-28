@@ -41,18 +41,17 @@
     </div>
 
     {% if not decided %}
-      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-partya" data-confirm-form data-confirm-message="Duyệt hồ sơ KOL/KOC của {{ a.full_name }}? Hệ thống sẽ gửi hợp đồng ký số về email người đăng ký.">
+      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-approve" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         <input type="hidden" name="decision" value="approve">
-        <p class="kol-partya-title">Thông tin Bên A (in vào hợp đồng gửi người đăng ký)</p>
-        <div class="kol-partya-grid">
-          <label><span>Tên pháp nhân</span><input type="text" name="partyALegalName" placeholder="VD: Công ty TNHH ShopTik" maxlength="200"></label>
-          <label><span>Mã số thuế</span><input type="text" name="partyATaxCode" maxlength="200"></label>
-          <label class="kol-col-2"><span>Địa chỉ trụ sở</span><input type="text" name="partyAAddress" maxlength="200"></label>
-          <label><span>Người đại diện</span><input type="text" name="partyARep" maxlength="200"></label>
-          <label><span>Chức vụ</span><input type="text" name="partyATitle" maxlength="200"></label>
-          <label class="kol-col-2"><span>Điện thoại / Email</span><input type="text" name="partyAContact" maxlength="200"></label>
-        </div>
+        <p class="kol-approve-title">Đính kèm file hợp đồng (PDF) để gửi cho người đăng ký</p>
+        <label class="kol-file">
+          <input type="file" name="contractPdf" accept="application/pdf,.pdf" required data-kol-pdf>
+          <span class="kol-file-face">
+            <b data-kol-pdf-name>Chọn file PDF hợp đồng…</b>
+            <small>Bấm duyệt là hệ thống gửi đúng file này về email người đăng ký.</small>
+          </span>
+        </label>
         <div class="kol-admin-actions">
           <button type="submit" class="button button-primary button-small">Phê duyệt &amp; gửi hợp đồng</button>
         </div>
@@ -73,6 +72,7 @@
 
 {% block backoffice_content %}
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
+  <script src="/assets/kol-admin.js?v={{ assetVersion }}" defer></script>
   <section class="admin-page-heading">
     <div>
       <span class="admin-kicker">ĐỐI TÁC</span>

@@ -21,7 +21,6 @@ COPY package.json ./
 COPY migrations ./migrations
 COPY views ./views
 COPY public ./public
-COPY assets ./assets
 USER aff
 EXPOSE 3000
 CMD ["node", "dist/src/server.js"]

@@ -239,7 +239,7 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
         source={
           v.logo_url && !logoLoi
             ? { uri: v.logo_url }
-            : require('../../assets/images/brand-logo.png')
+            : require('../../../assets/images/brand-logo.png')
         }
         style={styles.vLogo}
         contentFit={v.logo_url && !logoLoi ? 'cover' : 'contain'}
@@ -321,7 +321,7 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
         ) : (
           // Ảnh hỏng/thiếu/placeholder → dùng logo ShopTik thay vì ô trống.
           <Image
-            source={require('../../assets/images/brand-logo.png')}
+            source={require('../../../assets/images/brand-logo.png')}
             style={styles.img}
             contentFit="contain"
           />

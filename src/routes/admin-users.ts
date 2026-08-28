@@ -23,7 +23,6 @@ import {
   getKolFile,
   listKolApplications,
 } from "../services/kol-application.js";
-import { buildKolContractPdf } from "../services/kol-contract.js";
 import {
   flashAdminError,
   pageNumber,
@@ -32,6 +31,26 @@ import {
   USER_STATUSES,
   type AdminConsoleDeps,
 } from "./admin-console-shared.js";
+
+/** Lấy Buffer từ field file @fastify/multipart (mọi chế độ attach). */
+function kolMultipartBuffer(value: unknown): Buffer | null {
+  if (Buffer.isBuffer(value)) return value.length ? value : null;
+  const v = value as { _buf?: Buffer } | null;
+  if (v && Buffer.isBuffer(v._buf)) return v._buf.length ? v._buf : null;
+  return null;
+}
+
+/** File PDF bắt đầu bằng "%PDF-". */
+function isPdf(buf: Buffer): boolean {
+  return (
+    buf.length >= 5 &&
+    buf[0] === 0x25 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x44 &&
+    buf[3] === 0x46 &&
+    buf[4] === 0x2d
+  );
+}
 
 function monthKey(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
@@ -789,6 +808,42 @@ export async function registerAdminUserRoutes(
         const reason =
           typeof body.reason === "string" ? body.reason.slice(0, 300) : undefined;
         const app0 = await getKolApplication(deps.db, request.params.id);
+        const to = app0?.account_email ?? app0?.email ?? undefined;
+
+        // Duyệt phải kèm file PDF hợp đồng để gửi cho người đăng ký. Kiểm tra
+        // TRƯỚC khi đổi trạng thái để không "duyệt hụt" mà chưa gửi được.
+        let contractPdf: Buffer | null = null;
+        if (approve) {
+          contractPdf = kolMultipartBuffer(body.contractPdf);
+          if (!contractPdf) {
+            setFlash(
+              reply,
+              deps.config,
+              "error",
+              "Vui lòng đính kèm file PDF hợp đồng để gửi cho người đăng ký.",
+            );
+            return reply.redirect("/backoffice/kol");
+          }
+          if (!isPdf(contractPdf)) {
+            setFlash(
+              reply,
+              deps.config,
+              "error",
+              "File đính kèm không phải PDF hợp lệ.",
+            );
+            return reply.redirect("/backoffice/kol");
+          }
+          if (!to) {
+            setFlash(
+              reply,
+              deps.config,
+              "error",
+              "Không tìm thấy email người đăng ký để gửi hợp đồng.",
+            );
+            return reply.redirect("/backoffice/kol");
+          }
+        }
+
         const result = await decideKolApplication(
           deps.db,
           request.params.id,
@@ -802,45 +857,24 @@ export async function registerAdminUserRoutes(
           targetId: result.userId,
           after: { fullName: result.fullName, cccd: app0?.cccd_number },
         });
-        // Duyệt xong: gửi hợp đồng hợp tác (PDF ký điện tử) về email tài khoản.
-        // Lỗi gửi mail KHÔNG được chặn việc duyệt — chỉ ghi log.
+
+        // Duyệt xong: gửi ĐÚNG file PDF admin vừa đính kèm về email người đăng
+        // ký. Lỗi gửi mail KHÔNG được chặn việc duyệt — chỉ ghi log.
         let mailNote = "";
-        if (approve && app0) {
-          const to = app0.account_email ?? app0.email ?? undefined;
-          if (to) {
-            try {
-              const str = (k: string) => {
-                const v = body[k];
-                return typeof v === "string" && v.trim()
-                  ? v.trim().slice(0, 200)
-                  : undefined;
-              };
-              const pdf = await buildKolContractPdf(app0, {
-                signedAt: app0.created_at,
-                approvedAt: new Date(),
-                appOrigin: deps.config.APP_ORIGIN,
-                partyA: {
-                  legalName: str("partyALegalName"),
-                  taxCode: str("partyATaxCode"),
-                  address: str("partyAAddress"),
-                  representative: str("partyARep"),
-                  title: str("partyATitle"),
-                  contact: str("partyAContact"),
-                },
-              });
-              await deps.emailService.sendKolContract({
-                to,
-                fullName: result.fullName,
-                pdf,
-              });
-              mailNote = ` Đã gửi hợp đồng tới ${to}.`;
-            } catch (mailError) {
-              request.log.error(
-                { err: mailError },
-                "Gửi hợp đồng KOL/KOC thất bại",
-              );
-              mailNote = " (Lưu ý: gửi email hợp đồng chưa thành công.)";
-            }
+        if (approve && contractPdf && to) {
+          try {
+            await deps.emailService.sendKolContract({
+              to,
+              fullName: result.fullName,
+              pdf: contractPdf,
+            });
+            mailNote = ` Đã gửi hợp đồng tới ${to}.`;
+          } catch (mailError) {
+            request.log.error(
+              { err: mailError },
+              "Gửi hợp đồng KOL/KOC thất bại",
+            );
+            mailNote = " (Lưu ý: gửi email hợp đồng chưa thành công.)";
           }
         }
         setFlash(
