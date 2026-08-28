@@ -377,6 +377,32 @@ export async function enqueueHarvestJob(
  * phép nhiều lệnh chờ cùng lúc trên một profile (worker xử lý tuần tự),
  * chỉ khử trùng theo (list_type, page).
  */
+/**
+ * Chọn profile để điều khiển. KHÔNG đòi status='READY': phiên đăng nhập thật
+ * nằm trong Browser Control (port 9222) và worker tự start profile qua port
+ * (ensureProfileRunning). Trạng thái DB chỉ phản ánh lần lấy gần nhất, không
+ * phải "đã đăng nhập hay chưa" — nên chỉ loại profile bị DISABLED tay.
+ */
+async function pickUsableProfile(db: Database): Promise<string> {
+  const profile = await query<{ id: string }>(
+    db,
+    `
+      SELECT id FROM harvest_profiles
+      WHERE status <> 'DISABLED'
+      ORDER BY (status = 'READY') DESC, last_fetch_at ASC NULLS FIRST
+      LIMIT 1
+    `,
+  );
+  if (!profile.rows[0]) {
+    throw new AppError(
+      "NO_PROFILE",
+      "Chưa có profile Shopee nào. Hãy thêm một profile ở trang Backoffice.",
+      503,
+    );
+  }
+  return profile.rows[0].id;
+}
+
 export async function enqueueOfferPageFetch(
   db: Database,
   listType: number,
@@ -395,29 +421,14 @@ export async function enqueueOfferPageFetch(
   );
   if (duplicate.rows[0]) return "ALREADY_QUEUED";
 
-  const profile = await query<{ id: string }>(
-    db,
-    `
-      SELECT id FROM harvest_profiles
-      WHERE status = 'READY'
-      ORDER BY last_fetch_at ASC NULLS FIRST
-      LIMIT 1
-    `,
-  );
-  if (!profile.rows[0]) {
-    throw new AppError(
-      "NO_READY_PROFILE",
-      "Chưa có profile Shopee nào sẵn sàng — đăng nhập profile ở Backoffice trước.",
-      503,
-    );
-  }
+  const profileId = await pickUsableProfile(db);
   await query(
     db,
     `
       INSERT INTO harvest_jobs (profile_id, kind, params)
       VALUES ($1, 'FETCH_PAGE', $2::jsonb)
     `,
-    [profile.rows[0].id, JSON.stringify({ listType, pageNo })],
+    [profileId, JSON.stringify({ listType, pageNo })],
   );
   return "QUEUED";
 }
@@ -450,22 +461,7 @@ export async function enqueueOfferRangeFetch(
       `Mỗi lượt lấy tối đa ${MAX_RANGE_PAGES} trang. Hãy chia nhỏ dải trang.`,
     );
   }
-  const profile = await query<{ id: string }>(
-    db,
-    `
-      SELECT id FROM harvest_profiles
-      WHERE status = 'READY'
-      ORDER BY last_fetch_at ASC NULLS FIRST
-      LIMIT 1
-    `,
-  );
-  if (!profile.rows[0]) {
-    throw new AppError(
-      "NO_READY_PROFILE",
-      "Chưa có profile Shopee nào sẵn sàng — đăng nhập profile trước.",
-      503,
-    );
-  }
+  const profileId = await pickUsableProfile(db);
   // Dọn job treo trước khi kiểm tra "bận": RUNNING quá 15 phút = worker chết
   // giữa chừng; PENDING quá 15 phút = không worker nào nhận (offline). Nếu
   // không dọn, một job kẹt sẽ chặn vĩnh viễn mọi lệnh mới của profile này.
@@ -482,7 +478,7 @@ export async function enqueueOfferRangeFetch(
           OR (status = 'PENDING' AND created_at < now() - interval '15 minutes')
         )
     `,
-    [profile.rows[0].id],
+    [profileId],
   );
   const busy = await query<{ id: string }>(
     db,
@@ -491,7 +487,7 @@ export async function enqueueOfferRangeFetch(
       WHERE profile_id = $1 AND status IN ('PENDING', 'RUNNING')
       LIMIT 1
     `,
-    [profile.rows[0].id],
+    [profileId],
   );
   if (busy.rows[0]) {
     throw new AppError(
@@ -509,7 +505,7 @@ export async function enqueueOfferRangeFetch(
         started_at, finished_at
     `,
     [
-      profile.rows[0].id,
+      profileId,
       JSON.stringify({ listType, fromPage, toPage }),
       actorId,
     ],

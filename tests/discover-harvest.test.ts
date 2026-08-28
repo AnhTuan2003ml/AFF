@@ -290,10 +290,11 @@ describe("hàng đợi job cho worker", () => {
 
   it("cache trang Bán chạy: enqueue trang thiếu, lưu kết quả, tái dùng", async () => {
     const config = testConfig();
-    // Chưa có profile sẵn sàng → không xếp được lệnh.
+    // Chưa có profile NÀO → không xếp được lệnh (không đòi READY: phiên đăng
+    // nhập nằm ở Browser Control, chỉ cần có một profile không bị DISABLED).
     await expect(
       enqueueOfferPageFetch(db, BEST_SELLER_LIST_TYPE, 3),
-    ).rejects.toMatchObject({ code: "NO_READY_PROFILE" });
+    ).rejects.toMatchObject({ code: "NO_PROFILE" });
 
     const profile = await createHarvestProfile(
       db,
