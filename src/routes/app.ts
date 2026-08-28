@@ -938,7 +938,7 @@ export async function registerAppRoutes(
   // Voucher Shopee hôm nay cho tab Voucher (web).
   app.get("/discover/vouchers", async (_request, reply) => {
     reply.header("cache-control", "private, max-age=300");
-    return reply.send({ data: await listShopeeVouchers(deps.db, 80) });
+    return reply.send({ data: await listShopeeVouchers(deps.db, 300) });
   });
 
   app.get("/discover/offer-products", async (request, reply) => {

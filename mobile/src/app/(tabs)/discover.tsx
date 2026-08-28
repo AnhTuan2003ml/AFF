@@ -230,34 +230,31 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
     await Clipboard.setStringAsync(v.code); // chép sẵn để dán ở Shopee
     await WebBrowser.openBrowserAsync(v.use_url).catch(() => {});
   }
+  // Cột trái ảnh (fallback logo ShopTik), cột phải thông tin + nút dưới.
   return (
     <View style={styles.vCard}>
-      <View style={styles.vHead}>
-        {v.logo_url ? (
-          <Image source={{ uri: v.logo_url }} style={styles.vLogo} contentFit="cover" />
-        ) : (
-          <View style={[styles.vLogo, styles.imgEmpty]}>
-            <Ionicons name="pricetag" size={18} color={colors.brand} />
-          </View>
-        )}
-        <View style={{ flex: 1 }}>
-          {v.label ? <Text style={styles.vLabel}>{v.label}</Text> : null}
-          <Text style={styles.vShop} numberOfLines={1}>
-            {v.shop_name || 'Shopee'}
-          </Text>
+      <Image
+        source={v.logo_url ? { uri: v.logo_url } : require('../../assets/images/brand-logo.png')}
+        style={styles.vLogo}
+        contentFit="cover"
+      />
+      <View style={styles.vInfo}>
+        {v.label ? <Text style={styles.vLabel}>{v.label}</Text> : null}
+        <Text style={styles.vShop} numberOfLines={1}>
+          {v.shop_name || 'Shopee'}
+        </Text>
+        <Text style={styles.vTitle} numberOfLines={2}>
+          {v.title}
+        </Text>
+        {v.expiry_text ? <Text style={styles.vExpiry}>{v.expiry_text}</Text> : null}
+        <View style={styles.vActions}>
+          <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, pressed && { opacity: 0.7 }]}>
+            <Text style={styles.vBtnCopyText} numberOfLines={1}>Mã: {v.code}</Text>
+          </Pressable>
+          <Pressable onPress={dungNgay} style={({ pressed }) => [styles.vBtnUse, pressed && { opacity: 0.7 }]}>
+            <Text style={styles.vBtnUseText}>Dùng ngay ↗</Text>
+          </Pressable>
         </View>
-      </View>
-      <Text style={styles.vTitle} numberOfLines={2}>
-        {v.title}
-      </Text>
-      {v.expiry_text ? <Text style={styles.vExpiry}>{v.expiry_text}</Text> : null}
-      <View style={styles.vActions}>
-        <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, pressed && { opacity: 0.7 }]}>
-          <Text style={styles.vBtnCopyText} numberOfLines={1}>Mã: {v.code}</Text>
-        </Pressable>
-        <Pressable onPress={dungNgay} style={({ pressed }) => [styles.vBtnUse, pressed && { opacity: 0.7 }]}>
-          <Text style={styles.vBtnUseText}>Dùng ngay ↗</Text>
-        </Pressable>
       </View>
     </View>
   );
@@ -471,6 +468,9 @@ const styles = StyleSheet.create({
 
   // ── Voucher ──
   vCard: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 12,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
@@ -479,15 +479,14 @@ const styles = StyleSheet.create({
     borderLeftColor: '#ee4d2d',
     padding: 12,
     marginBottom: spacing.md,
-    gap: 7,
   },
-  vHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  vLogo: { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.surfaceMuted },
+  vInfo: { flex: 1, gap: 4 },
+  vLogo: { width: 76, height: 76, borderRadius: 12, backgroundColor: '#fff' },
   vLabel: { fontSize: 11, fontWeight: '800', color: '#eb3600' },
   vShop: { fontSize: 13.5, fontWeight: '800', color: colors.text },
   vTitle: { fontSize: 13.5, fontWeight: '700', color: colors.text, lineHeight: 18 },
   vExpiry: { fontSize: 11.5, color: colors.muted },
-  vActions: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  vActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
   vBtnCopy: {
     flex: 1,
     minHeight: 40,

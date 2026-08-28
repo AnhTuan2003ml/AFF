@@ -24,30 +24,34 @@
     return n;
   }
 
+  // Logo ShopTik dùng khi voucher không có ảnh.
+  var FALLBACK_LOGO = "/assets/images/icon.png";
+
   function renderVoucher(v) {
     var card = el("article", "voucher-card");
-    var head = el("div", "voucher-card-head");
-    if (v.logo_url) {
-      var img = document.createElement("img");
-      img.src = v.logo_url;
-      img.alt = v.shop_name || "Shopee";
-      img.loading = "lazy";
-      img.referrerPolicy = "no-referrer";
-      img.className = "voucher-logo";
-      head.appendChild(img);
-    }
-    var headText = el("div", "voucher-headtext");
+
+    // CỘT TRÁI: ảnh (fallback logo ShopTik nếu voucher không có ảnh).
+    var img = document.createElement("img");
+    img.src = v.logo_url || FALLBACK_LOGO;
+    img.alt = v.shop_name || "Shopee";
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    img.className = "voucher-logo";
+    img.addEventListener("error", function () {
+      if (img.src.indexOf(FALLBACK_LOGO) === -1) img.src = FALLBACK_LOGO;
+    });
+    card.appendChild(img);
+
+    // CỘT PHẢI: thông tin + nút dùng ngay bên dưới.
+    var info = el("div", "voucher-info-col");
     if (v.label) {
       var label = el("span", "voucher-label", v.label);
       if (v.label_color) label.style.color = v.label_color;
-      headText.appendChild(label);
+      info.appendChild(label);
     }
-    headText.appendChild(el("b", "voucher-shop", v.shop_name || "Shopee"));
-    head.appendChild(headText);
-    card.appendChild(head);
-
-    card.appendChild(el("p", "voucher-title", v.title));
-    if (v.expiry_text) card.appendChild(el("p", "voucher-expiry", v.expiry_text));
+    info.appendChild(el("b", "voucher-shop", v.shop_name || "Shopee"));
+    info.appendChild(el("p", "voucher-title", v.title));
+    if (v.expiry_text) info.appendChild(el("p", "voucher-expiry", v.expiry_text));
 
     var actions = el("div", "voucher-actions");
     var copy = el("button", "voucher-btn voucher-btn-copy");
@@ -69,14 +73,15 @@
     use.href = v.use_url;
     use.target = "_blank";
     use.rel = "noopener noreferrer nofollow";
-    // Chép mã luôn khi bấm Dùng ngay cho tiện dán vào Shopee.
     use.addEventListener("click", function () {
       try {
         navigator.clipboard.writeText(v.code);
       } catch (e) {}
     });
     actions.appendChild(use);
-    card.appendChild(actions);
+    info.appendChild(actions);
+
+    card.appendChild(info);
     return card;
   }
 

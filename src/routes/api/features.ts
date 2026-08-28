@@ -297,7 +297,7 @@ export async function registerFeatureApiRoutes(
   // Voucher Shopee hôm nay (công khai) — cho tab Voucher ở Khám phá.
   app.get("/vouchers", async (_request, reply) => {
     reply.header("cache-control", "public, max-age=300");
-    return { data: await listShopeeVouchers(deps.db, 80) };
+    return { data: await listShopeeVouchers(deps.db, 300) };
   });
 
   app.get("/discover", async (request, reply) => {
