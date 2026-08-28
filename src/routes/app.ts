@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import heicConvert from "heic-convert";
 import { isGuestAppPath, requireUser } from "../auth/guards.js";
 import { revokeCurrentSession, revokeAllUserSessions } from "../auth/session.js";
 import type { AppConfig } from "../config.js";
@@ -116,13 +117,43 @@ function sniffMime(buf: Buffer): string {
     buf[3] === 0x47
   )
     return "image/png";
-  if (buf.length >= 12 && buf.toString("ascii", 4, 8) === "ftyp")
+  // Box ISO-BMFF: cùng magic "ftyp" ở offset 4 nhưng khác "brand" ở offset 8.
+  // Ảnh iPhone (HEIC/HEIF) cũng là ftyp — không được nhầm thành video/mp4.
+  if (buf.length >= 12 && buf.toString("ascii", 4, 8) === "ftyp") {
+    const brand = buf.toString("ascii", 8, 12);
+    if (/^(heic|heix|heim|heis|hevc|hevx|mif1|msf1)$/.test(brand))
+      return "image/heic";
+    if (brand === "avif" || brand === "avis") return "image/avif";
     return "video/mp4";
+  }
   if (buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3)
     return "video/webm";
   if (buf.length >= 12 && buf.toString("ascii", 0, 4) === "RIFF")
     return "image/webp";
   return "application/octet-stream";
+}
+
+/**
+ * Ảnh CCCD phải hiển thị được trên trình duyệt admin. Ảnh iPhone (HEIC/HEIF) và
+ * AVIF không render bằng <img> nên chuyển sang JPEG; JPG/PNG/WebP giữ nguyên.
+ * Định dạng ảnh lạ → báo lỗi để người dùng tải lại đúng.
+ */
+async function toDisplayableImage(
+  buf: Buffer,
+  mime: string,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  if (mime === "image/jpeg" || mime === "image/png" || mime === "image/webp") {
+    return { buffer: buf, contentType: mime };
+  }
+  if (mime === "image/heic" || mime === "image/heif" || mime === "image/avif") {
+    const out = await heicConvert({ buffer: buf, format: "JPEG", quality: 0.9 });
+    return { buffer: Buffer.from(out), contentType: "image/jpeg" };
+  }
+  throw new AppError(
+    "KOL_IMAGE_FORMAT",
+    "Ảnh CCCD phải là JPG, PNG hoặc ảnh iPhone (HEIC). Vui lòng chọn lại ảnh.",
+    400,
+  );
 }
 
 function flashError(
@@ -1526,18 +1557,32 @@ export async function registerAppRoutes(
         const v = body[k];
         return typeof v === "string" ? v : undefined;
       };
-      const files = [
-        { kind: "CCCD_FRONT" as const, field: "cccdFront" },
-        { kind: "CCCD_BACK" as const, field: "cccdBack" },
-        { kind: "FACE_VIDEO" as const, field: "faceVideo" },
-      ]
-        .map((f) => {
-          const buf = multipartBuffer(body[f.field]);
-          return buf
-            ? { kind: f.kind, contentType: sniffMime(buf), buffer: buf }
-            : null;
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null);
+      const fileDefs = [
+        { kind: "CCCD_FRONT" as const, field: "cccdFront", isImage: true },
+        { kind: "CCCD_BACK" as const, field: "cccdBack", isImage: true },
+        { kind: "FACE_VIDEO" as const, field: "faceVideo", isImage: false },
+      ];
+      const files: {
+        kind: "CCCD_FRONT" | "CCCD_BACK" | "FACE_VIDEO";
+        contentType: string;
+        buffer: Buffer;
+      }[] = [];
+      for (const f of fileDefs) {
+        const buf = multipartBuffer(body[f.field]);
+        if (!buf) continue;
+        const mime = sniffMime(buf);
+        if (f.isImage) {
+          // Ảnh CCCD: đảm bảo hiển thị được (HEIC iPhone → JPEG).
+          const img = await toDisplayableImage(buf, mime);
+          files.push({
+            kind: f.kind,
+            contentType: img.contentType,
+            buffer: img.buffer,
+          });
+        } else {
+          files.push({ kind: f.kind, contentType: mime, buffer: buf });
+        }
+      }
 
       await submitKolApplication(
         deps.db,
