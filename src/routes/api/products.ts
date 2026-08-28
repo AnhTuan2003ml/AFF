@@ -107,6 +107,53 @@ export async function registerProductApiRoutes(
     },
   );
 
+  // Tạo LINK CHIA SẺ từ một sản phẩm đã tra cứu: người tạo được hưởng hoa hồng
+  // chia sẻ (mặc định 5% hoa hồng sàn) khi có người mua qua link này. Cùng cơ
+  // chế web POST /links (campaign 'sharelink').
+  app.post(
+    "/products/share",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      const input = parseInput(
+        z.object({ previewId: z.string().trim().min(10).max(64) }),
+        request.body,
+      );
+      const businessConfig = await getBusinessConfig(deps.db, deps.config);
+      if (!businessConfig.enableShareLink) {
+        throw new AppError(
+          "SHARE_LINK_DISABLED",
+          "Chương trình chia sẻ link đang tạm tắt.",
+          403,
+        );
+      }
+      const cached = takePreview(request.currentUser!.id, input.previewId);
+      if (!cached) {
+        throw new AppError(
+          "PREVIEW_EXPIRED",
+          "Kết quả tra cứu đã hết hạn. Hãy tra cứu lại sản phẩm.",
+          410,
+        );
+      }
+      const link = await createPurchaseIntent(deps.db, deps.config, {
+        userId: request.currentUser!.id,
+        productUrl: cached.product.normalizedUrl,
+        cashbackRateBps: cached.product.buyerCashbackPercent * 100,
+        product: cached.product,
+        source: "share",
+        campaign: "sharelink",
+      });
+      const origin = deps.config.APP_ORIGIN.replace(/\/+$/, "");
+      return reply.code(201).send({
+        shareUrl: `${origin}${link.buyUrl}`,
+        clickId: link.clickId,
+        platform: link.platform,
+        productName: cached.product.productName,
+        // % hoa hồng người chia sẻ được hưởng — để app hiển thị.
+        sharerSharePercent: businessConfig.referrerSharePercent,
+      });
+    },
+  );
+
   // Bình luận cộng đồng dưới sản phẩm vừa tra cứu.
   app.get(
     "/products/comments",

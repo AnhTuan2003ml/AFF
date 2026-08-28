@@ -124,6 +124,12 @@ export default function AccountScreen() {
             divider
           />
           <MenuRow
+            icon="share-social-outline"
+            label="Chia sẻ nhận hoa hồng"
+            onPress={() => router.push('/chia-se')}
+            divider
+          />
+          <MenuRow
             icon="people-outline"
             label="Giới thiệu bạn bè"
             onPress={() => router.push('/referrals')}

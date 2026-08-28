@@ -106,6 +106,24 @@ export function layGioiThieu() {
   }>('/api/v1/referrals');
 }
 
+export interface ShareLink {
+  productName: string | null;
+  shareUrl: string;
+  clickCount: number;
+  ordersCount: number;
+  createdAt: string;
+}
+
+/** Danh sách link chia sẻ + tổng hoa hồng chia sẻ đã nhận. */
+export function layLinkChiaSe() {
+  return apiFetch<{
+    enabled: boolean;
+    sharerSharePercent: number;
+    totalEarnedVnd: number;
+    links: ShareLink[];
+  }>('/api/v1/links');
+}
+
 /** Tài khoản chưa có người giới thiệu (vd đăng ký Google) nhập mã bổ sung. */
 export function guiMaNguoiGioiThieu(referralCode: string) {
   return apiFetch<{ status: string }>('/api/v1/referrals/enter-code', {

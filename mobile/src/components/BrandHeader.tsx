@@ -147,6 +147,7 @@ function MenuTaiKhoan({
           onPress={(e) => e.stopPropagation()}>
           <Muc icon="person-outline" nhan="Thông tin cá nhân" onPress={() => di('/(tabs)/account')} />
           <Muc icon="card-outline" nhan="Tài khoản ngân hàng" onPress={() => di('/bank')} />
+          <Muc icon="share-social-outline" nhan="Chia sẻ nhận hoa hồng" onPress={() => di('/chia-se')} />
           <Muc icon="link-outline" nhan="Giới thiệu bạn bè" onPress={() => di('/referrals')} />
           <Muc icon="flag-outline" nhan="Nhiệm vụ" onPress={() => di('/missions')} />
 

@@ -12,6 +12,7 @@ import {
   markAllNotificationsRead,
 } from "../../services/mission.js";
 import { getPlatformLeaderboard } from "../../services/platform-stats.js";
+import { getBusinessConfig } from "../../services/business-config.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
 import { registerPushToken } from "../../services/push.js";
 import {
@@ -148,6 +149,59 @@ export async function registerFeatureApiRoutes(
         createdAt: r.created_at,
         approvedOrders: Number(r.approved_orders),
         earnedVnd: Number(r.earned_vnd),
+      })),
+    };
+  });
+
+  // Danh sách LINK CHIA SẺ của người dùng (campaign 'sharelink') + tổng hoa hồng
+  // chia sẻ đã nhận. Dùng cho tab Chia sẻ trên app.
+  app.get("/links", { preHandler: requireApiUser }, async (request) => {
+    const id = request.currentUser!.id;
+    const [businessConfig, links, shareEarnings] = await Promise.all([
+      getBusinessConfig(deps.db, deps.config),
+      query<{
+        product_name: string | null;
+        click_id: string;
+        click_count: string;
+        orders_count: string;
+        created_at: Date;
+      }>(
+        deps.db,
+        `
+          SELECT l.product_name, l.click_id, l.click_count::text,
+            (SELECT count(*) FROM orders o
+              WHERE o.affiliate_link_id = l.id
+                AND o.status NOT IN ('INVALID', 'CANCELLED', 'REVERSED'))::text
+              AS orders_count,
+            l.created_at
+          FROM affiliate_links l
+          WHERE l.user_id = $1 AND l.campaign = 'sharelink' AND l.status = 'ACTIVE'
+          ORDER BY l.created_at DESC
+          LIMIT 50
+        `,
+        [id],
+      ),
+      query<{ total: string }>(
+        deps.db,
+        `
+          SELECT COALESCE(sum(ce.referral_amount_vnd), 0)::text AS total
+          FROM commission_entries ce
+          WHERE ce.sharer_user_id = $1 AND ce.status = 'AVAILABLE'
+        `,
+        [id],
+      ),
+    ]);
+    const origin = deps.config.APP_ORIGIN.replace(/\/+$/, "");
+    return {
+      enabled: businessConfig.enableShareLink,
+      sharerSharePercent: businessConfig.referrerSharePercent,
+      totalEarnedVnd: Number(shareEarnings.rows[0]?.total ?? 0),
+      links: links.rows.map((l) => ({
+        productName: l.product_name,
+        shareUrl: `${origin}/go/${l.click_id}`,
+        clickCount: Number(l.click_count),
+        ordersCount: Number(l.orders_count),
+        createdAt: l.created_at,
       })),
     };
   });

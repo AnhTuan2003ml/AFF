@@ -58,3 +58,20 @@ export function taoLinkMua(previewId: string) {
     body: { previewId },
   });
 }
+
+/**
+ * Tạo LINK CHIA SẺ từ sản phẩm đã tra cứu. Người tạo hưởng % hoa hồng chia sẻ
+ * khi có người mua qua link. Trả về link tuyệt đối để chia sẻ ngay.
+ */
+export function taoLinkChiaSe(previewId: string) {
+  return apiFetch<{
+    shareUrl: string;
+    clickId: string;
+    platform: ProductPlatform;
+    productName: string;
+    sharerSharePercent: number;
+  }>('/api/v1/products/share', {
+    method: 'POST',
+    body: { previewId },
+  });
+}
