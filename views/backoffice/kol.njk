@@ -44,7 +44,10 @@
       <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-approve" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         <input type="hidden" name="decision" value="approve">
-        <p class="kol-approve-title">Đính kèm file hợp đồng (PDF) để gửi cho người đăng ký</p>
+        <p class="kol-approve-title">Quy trình: tải hợp đồng .docx (đã điền sẵn thông tin người đăng ký) → điền thông tin Bên A → xuất PDF → đính kèm bên dưới → bấm duyệt để gửi.</p>
+        <p class="kol-docx-row">
+          <a class="button button-ghost button-small" href="/backoffice/kol/{{ a.id }}/contract.docx">⬇ Tải hợp đồng (.docx) đã điền thông tin Bên B</a>
+        </p>
         <label class="kol-file">
           <input type="file" name="contractPdf" accept="application/pdf,.pdf" required data-kol-pdf>
           <span class="kol-file-face">

@@ -23,6 +23,7 @@ import {
   getKolFile,
   listKolApplications,
 } from "../services/kol-application.js";
+import { buildKolDocx } from "../services/kol-docx.js";
 import {
   flashAdminError,
   pageNumber,
@@ -796,6 +797,30 @@ export async function registerAdminUserRoutes(
       reply.header("cache-control", "private, no-store");
       reply.header("content-disposition", "inline");
       return reply.send(file.content);
+    },
+  );
+
+  // Tải hợp đồng .docx đã điền sẵn thông tin Bên B để admin điền Bên A + ký.
+  app.get<{ Params: { id: string } }>(
+    "/kol/:id/contract.docx",
+    async (request, reply) => {
+      const app0 = await getKolApplication(deps.db, request.params.id);
+      if (!app0) return reply.code(404).send("Không tìm thấy hồ sơ.");
+      const docx = await buildKolDocx(app0);
+      const safe = (app0.full_name || "hop-dong")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-");
+      reply.header(
+        "content-type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      );
+      reply.header("cache-control", "private, no-store");
+      reply.header(
+        "content-disposition",
+        `attachment; filename="hop-dong-KOL-${safe}.docx"`,
+      );
+      return reply.send(docx);
     },
   );
 

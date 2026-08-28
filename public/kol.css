@@ -198,5 +198,6 @@
 .kol-file-face b { font-size: 13px; color: #2c1d17; }
 .kol-file-face.is-filled b { color: #166534; }
 .kol-file-face small { font-size: 11px; color: #8d7e74; }
+.kol-docx-row { margin: 0 0 12px; }
 .kol-approve .kol-admin-actions { margin-top: 12px; }
 .kol-contract-link { font-size: 12.5px; font-weight: 700; color: var(--lx-orange, #ee4d2d); }
