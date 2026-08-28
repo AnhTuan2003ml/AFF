@@ -32,7 +32,7 @@ export default function KolScreen() {
   const insets = useSafeAreaInsets();
   const [dongY, setDongY] = useState(false);
   const [buoc, setBuoc] = useState<'dieu-khoan' | 'form'>('dieu-khoan');
-  const [muc, setMuc] = useState(0);
+  const [daDoc, setDaDoc] = useState(false);
   const [info, setInfo] = useState<HoSoKolInput>({
     fullName: '',
     cccdNumber: '',
@@ -169,40 +169,34 @@ export default function KolScreen() {
         ) : buoc === 'dieu-khoan' ? (
           (() => {
             const sections = dieuKhoan?.sections ?? [];
-            const total = sections.length;
-            const cur = Math.min(muc, Math.max(0, total - 1));
-            const section = sections[cur];
-            const last = total > 0 && cur === total - 1;
+            const paras = sections.flatMap((s) => s.paragraphs);
             return (
               <>
                 <Text style={styles.lead}>
-                  Chọn mục để đọc hoặc bấm “Tiếp theo”. Đọc hết rồi tích xác nhận.
+                  Đọc toàn bộ thỏa thuận. Cuộn tới cuối rồi tích xác nhận để tiếp
+                  tục điền hồ sơ.
                 </Text>
 
-                {/* Danh mục các Điều — chip cuộn ngang */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.chips}>
-                  {sections.map((s, i) => {
-                    const on = i === cur;
-                    return (
-                      <Pressable
-                        key={i}
-                        onPress={() => setMuc(i)}
-                        style={[styles.chip, on && styles.chipOn]}>
-                        <Text style={[styles.chipText, on && styles.chipTextOn]}>
-                          {s.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-
-                {/* Nội dung mục hiện tại */}
                 <View style={styles.termsBox}>
-                  <ScrollView nestedScrollEnabled style={{ maxHeight: 420 }}>
-                    {(section?.paragraphs ?? ['Đang tải điều khoản…']).map(
+                  <ScrollView
+                    nestedScrollEnabled
+                    style={{ maxHeight: 460 }}
+                    scrollEventThrottle={64}
+                    onScroll={(e) => {
+                      const { layoutMeasurement, contentOffset, contentSize } =
+                        e.nativeEvent;
+                      if (
+                        contentOffset.y + layoutMeasurement.height >=
+                        contentSize.height - 32
+                      ) {
+                        setDaDoc(true);
+                      }
+                    }}
+                    onContentSizeChange={(_w, h) => {
+                      // Nội dung ngắn không cần cuộn → mở khóa luôn.
+                      if (h <= 460) setDaDoc(true);
+                    }}>
+                    {(paras.length ? paras : ['Đang tải điều khoản…']).map(
                       (p, i) => {
                         const upper = p.toUpperCase();
                         const isDieu = p.toLowerCase().startsWith('điều ');
@@ -226,46 +220,27 @@ export default function KolScreen() {
                   </ScrollView>
                 </View>
 
-                {/* Điều hướng đọc */}
-                <View style={styles.pager}>
-                  <Pressable
-                    onPress={() => setMuc((v) => Math.max(0, v - 1))}
-                    disabled={cur === 0}
-                    style={[styles.pagerBtn, cur === 0 && { opacity: 0.4 }]}>
-                    <Text style={styles.pagerBtnText}>← Mục trước</Text>
-                  </Pressable>
-                  <Text style={styles.pagerInfo}>
-                    {section?.label} · {cur + 1}/{total || 1}
+                {!daDoc ? (
+                  <Text style={styles.scrollHint}>
+                    ↓ Cuộn đọc hết thỏa thuận để tích xác nhận
                   </Text>
-                  {last ? (
-                    <View style={{ width: 96 }} />
-                  ) : (
-                    <Pressable
-                      onPress={() => setMuc((v) => v + 1)}
-                      style={[styles.pagerBtn, styles.pagerBtnOn]}>
-                      <Text style={styles.pagerBtnOnText}>Tiếp theo →</Text>
-                    </Pressable>
-                  )}
-                </View>
-
-                {/* Đọc hết mới hiện ô đồng ý + nút tiếp tục */}
-                {last ? (
-                  <>
-                    <View style={{ marginTop: 18, marginBottom: 14 }}>
-                      <Checkbox
-                        checked={dongY}
-                        onToggle={() => setDongY((v) => !v)}>
-                        Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và
-                        Cam kết bảo mật thông tin.
-                      </Checkbox>
-                    </View>
-                    <PrimaryButton
-                      label="Tiếp tục điền hồ sơ"
-                      disabled={!dongY}
-                      onPress={() => setBuoc('form')}
-                    />
-                  </>
                 ) : null}
+                <View
+                  style={{ marginTop: 14, marginBottom: 14, opacity: daDoc ? 1 : 0.5 }}>
+                  <Checkbox
+                    checked={dongY}
+                    onToggle={() => {
+                      if (daDoc) setDongY((v) => !v);
+                    }}>
+                    Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam
+                    kết bảo mật thông tin.
+                  </Checkbox>
+                </View>
+                <PrimaryButton
+                  label="Tiếp tục điền hồ sơ"
+                  disabled={!dongY}
+                  onPress={() => setBuoc('form')}
+                />
               </>
             );
           })()
@@ -435,20 +410,13 @@ const styles = StyleSheet.create({
   h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1, marginTop: 4 },
   lead: { fontSize: 13.5, color: colors.muted, lineHeight: 20, marginTop: 8, marginBottom: 14 },
 
-  chips: { gap: 8, paddingVertical: 4, paddingRight: 8 },
-  chip: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scrollHint: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: colors.brand,
+    textAlign: 'center',
+    marginTop: 10,
   },
-  chipOn: { backgroundColor: colors.brand, borderColor: colors.brand },
-  chipText: { fontSize: 13, fontWeight: '800', color: colors.muted },
-  chipTextOn: { color: colors.onBrand },
 
   termsBox: {
     marginTop: 12,
@@ -475,27 +443,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   termTitle: { fontWeight: '900', textAlign: 'center', fontSize: 14 },
-
-  pager: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 14,
-  },
-  pagerBtn: {
-    height: 40,
-    paddingHorizontal: 14,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pagerBtnText: { fontSize: 13, fontWeight: '800', color: colors.text },
-  pagerBtnOn: { backgroundColor: colors.brand, borderColor: colors.brand },
-  pagerBtnOnText: { fontSize: 13, fontWeight: '800', color: colors.onBrand },
-  pagerInfo: { flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: '700', color: colors.muted },
 
   card: {
     alignItems: 'center',

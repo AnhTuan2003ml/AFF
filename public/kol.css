@@ -17,8 +17,12 @@
 .kol-status-pending { background: #fff7e8; border: 1px solid #ffe0a3; }
 .kol-status-reject { background: #fdecec; border: 1px solid #f5b5b5; }
 
-/* Trang đọc điều khoản dùng khổ rộng hơn để tận dụng chiều ngang. */
-.kol-terms-wrap { max-width: 1140px; }
+/* Trang đọc điều khoản: một trang cuộn, khổ đọc thoải mái. */
+.kol-terms-wrap { max-width: 920px; }
+.kol-check-hint {
+  display: block; margin-bottom: 4px;
+  font-size: 12px; font-weight: 800; color: var(--lx-orange, #ee4d2d);
+}
 
 /* Bố cục kiểu trang tài liệu: danh mục Điều bên trái, nội dung rộng bên phải. */
 .kol-reader {
@@ -72,7 +76,7 @@
 
 /* ── Văn bản thỏa thuận: trình bày như tài liệu hợp đồng, dễ đọc ── */
 .kol-doc {
-  min-height: 60vh; max-height: 80vh; overflow-y: auto;
+  max-height: 68vh; overflow-y: auto;
   border: 1px solid var(--lx-line, #eadfce); border-radius: 18px;
   background: #f3efe8; padding: 22px;
   -webkit-overflow-scrolling: touch;

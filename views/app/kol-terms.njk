@@ -20,7 +20,7 @@
     <header class="kol-head">
       <span class="kol-eyebrow">ĐĂNG KÝ ĐỐI TÁC · BƯỚC 1/2</span>
       <h1>Thỏa thuận hợp tác KOL/KOC</h1>
-      <p>Chọn mục ở danh sách bên trái hoặc bấm “Tiếp theo” để đọc lần lượt. Đọc hết rồi tích xác nhận để điền hồ sơ.</p>
+      <p>Vui lòng đọc toàn bộ thỏa thuận. Cuộn xuống cuối rồi tích xác nhận để tiếp tục điền hồ sơ.</p>
     </header>
 
     {% if pendingStatus == 'PENDING' %}
@@ -33,41 +33,26 @@
         <div class="kol-status kol-status-reject"><b>Hồ sơ trước chưa được duyệt</b><p>Bạn có thể nộp lại sau khi chỉnh sửa.</p></div>
       {% endif %}
 
-      <div class="kol-reader">
-        <nav class="kol-steps" aria-label="Các mục thỏa thuận" data-kol-steps>
+      <article class="kol-doc" tabindex="0" data-kol-doc>
+        <div class="kol-doc-sheet">
           {% for s in sections %}
-            <button type="button" class="kol-step{% if loop.first %} active{% endif %}" data-step="{{ loop.index0 }}">{{ s.label }}</button>
+            {% for p in s.paragraphs %}{{ para(p) }}{% endfor %}
           {% endfor %}
-        </nav>
+        </div>
+      </article>
 
-        <div class="kol-reader-main">
-          <article class="kol-doc" tabindex="0" data-kol-doc>
-            <div class="kol-doc-sheet">
-              {% for s in sections %}
-                <div class="kol-section" data-section="{{ loop.index0 }}"{% if not loop.first %} hidden{% endif %}>
-                  {% for p in s.paragraphs %}{{ para(p) }}{% endfor %}
-                </div>
-              {% endfor %}
-            </div>
-          </article>
-
-          <div class="kol-pager" data-kol-pager>
-            <button type="button" class="button button-ghost kol-pager-prev" data-prev disabled>← Mục trước</button>
-            <span class="kol-pager-info" data-progress aria-live="polite"></span>
-            <button type="button" class="button button-primary kol-pager-next" data-next>Tiếp theo →</button>
-          </div>
-
-          <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-agree-bar" id="kol-agree-form" data-agree-bar hidden>
+      <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-agree-bar" id="kol-agree-form">
         <input type="hidden" name="dong_y" value="1">
         <label class="kol-check" for="kol-accept">
-          <input type="checkbox" id="kol-accept" required>
+          <input type="checkbox" id="kol-accept" required disabled>
           <span class="kol-check-box" aria-hidden="true"></span>
-          <span class="kol-check-text">Tôi đã đọc và <b>đồng ý</b> toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.</span>
+          <span class="kol-check-text">
+            <span data-scroll-hint class="kol-check-hint">↓ Cuộn đọc hết thỏa thuận để tích xác nhận</span>
+            Tôi đã đọc và <b>đồng ý</b> toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.
+          </span>
         </label>
         <button class="button button-primary kol-continue" type="submit" id="kol-continue" disabled>Tiếp tục điền hồ sơ →</button>
-          </form>
-        </div>
-      </div>
+      </form>
     {% endif %}
   </section>
   <script src="/assets/kol-terms.js?v={{ assetVersion }}" defer></script>

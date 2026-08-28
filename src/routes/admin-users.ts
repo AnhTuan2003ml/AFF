@@ -902,9 +902,18 @@ export async function registerAdminUserRoutes(
         let mailNote = "";
         if (approve && contractPdf && to) {
           try {
+            const partner = await query<{ referral_code: string }>(
+              deps.db,
+              "SELECT referral_code FROM users WHERE id = $1",
+              [result.userId],
+            );
             await deps.emailService.sendKolContract({
               to,
               fullName: result.fullName,
+              partnerCode: partner.rows[0]?.referral_code ?? "—",
+              email: app0?.email ?? app0?.account_email ?? to,
+              phone: app0?.phone ?? "—",
+              approvedAt: new Date(),
               pdf: contractPdf,
             });
             mailNote = ` Đã gửi hợp đồng tới ${to}.`;
