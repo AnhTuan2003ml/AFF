@@ -5,7 +5,7 @@ import {
   submitKolApplication,
 } from "../../services/kol-application.js";
 import {
-  KOL_AGREEMENT_DISPLAY,
+  KOL_AGREEMENT_SECTIONS,
   KOL_AGREEMENT_VERSION,
 } from "../../services/kol-agreement.js";
 import {
@@ -27,7 +27,7 @@ export async function registerKolApiRoutes(
   // Điều khoản để app hiển thị ở bước 1 (không cần bundle vào app).
   app.get("/kol/terms", { preHandler: requireApiUser }, async () => ({
     version: KOL_AGREEMENT_VERSION,
-    paragraphs: KOL_AGREEMENT_DISPLAY,
+    sections: KOL_AGREEMENT_SECTIONS,
   }));
 
   // Trạng thái hồ sơ hiện tại của người dùng.

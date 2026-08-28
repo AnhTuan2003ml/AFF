@@ -32,6 +32,7 @@ export default function KolScreen() {
   const insets = useSafeAreaInsets();
   const [dongY, setDongY] = useState(false);
   const [buoc, setBuoc] = useState<'dieu-khoan' | 'form'>('dieu-khoan');
+  const [muc, setMuc] = useState(0);
   const [info, setInfo] = useState<HoSoKolInput>({
     fullName: '',
     cccdNumber: '',
@@ -166,44 +167,108 @@ export default function KolScreen() {
             </Text>
           </View>
         ) : buoc === 'dieu-khoan' ? (
-          <>
-            <Text style={styles.lead}>
-              Đọc kỹ thỏa thuận hợp tác, tích xác nhận để tiếp tục điền hồ sơ.
-            </Text>
-            <View style={styles.termsBox}>
-              <ScrollView nestedScrollEnabled style={{ maxHeight: 340 }}>
-                {(dieuKhoan?.paragraphs ?? ['Đang tải điều khoản…']).map(
-                  (p, i) => {
-                    const upper = p.toUpperCase();
-                    const isDieu = p.toLowerCase().startsWith('điều ');
-                    const isTitle = p === upper && p.length < 90;
+          (() => {
+            const sections = dieuKhoan?.sections ?? [];
+            const total = sections.length;
+            const cur = Math.min(muc, Math.max(0, total - 1));
+            const section = sections[cur];
+            const last = total > 0 && cur === total - 1;
+            return (
+              <>
+                <Text style={styles.lead}>
+                  Chọn mục để đọc hoặc bấm “Tiếp theo”. Đọc hết rồi tích xác nhận.
+                </Text>
+
+                {/* Danh mục các Điều — chip cuộn ngang */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chips}>
+                  {sections.map((s, i) => {
+                    const on = i === cur;
                     return (
-                      <Text
+                      <Pressable
                         key={i}
-                        style={[
-                          styles.termP,
-                          isDieu && styles.termDieu,
-                          isTitle && styles.termTitle,
-                        ]}>
-                        {p}
-                      </Text>
+                        onPress={() => setMuc(i)}
+                        style={[styles.chip, on && styles.chipOn]}>
+                        <Text style={[styles.chipText, on && styles.chipTextOn]}>
+                          {s.label}
+                        </Text>
+                      </Pressable>
                     );
-                  },
-                )}
-              </ScrollView>
-            </View>
-            <View style={{ marginVertical: 16 }}>
-              <Checkbox checked={dongY} onToggle={() => setDongY((v) => !v)}>
-                Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết
-                bảo mật thông tin.
-              </Checkbox>
-            </View>
-            <PrimaryButton
-              label="Tiếp tục điền hồ sơ"
-              disabled={!dongY}
-              onPress={() => setBuoc('form')}
-            />
-          </>
+                  })}
+                </ScrollView>
+
+                {/* Nội dung mục hiện tại */}
+                <View style={styles.termsBox}>
+                  <ScrollView nestedScrollEnabled style={{ maxHeight: 420 }}>
+                    {(section?.paragraphs ?? ['Đang tải điều khoản…']).map(
+                      (p, i) => {
+                        const upper = p.toUpperCase();
+                        const isDieu = p.toLowerCase().startsWith('điều ');
+                        const isTitle = p === upper && p.length < 90;
+                        if (isDieu) {
+                          return (
+                            <Text key={i} style={styles.termDieu}>
+                              {p}
+                            </Text>
+                          );
+                        }
+                        return (
+                          <Text
+                            key={i}
+                            style={[styles.termP, isTitle && styles.termTitle]}>
+                            {p}
+                          </Text>
+                        );
+                      },
+                    )}
+                  </ScrollView>
+                </View>
+
+                {/* Điều hướng đọc */}
+                <View style={styles.pager}>
+                  <Pressable
+                    onPress={() => setMuc((v) => Math.max(0, v - 1))}
+                    disabled={cur === 0}
+                    style={[styles.pagerBtn, cur === 0 && { opacity: 0.4 }]}>
+                    <Text style={styles.pagerBtnText}>← Mục trước</Text>
+                  </Pressable>
+                  <Text style={styles.pagerInfo}>
+                    {section?.label} · {cur + 1}/{total || 1}
+                  </Text>
+                  {last ? (
+                    <View style={{ width: 96 }} />
+                  ) : (
+                    <Pressable
+                      onPress={() => setMuc((v) => v + 1)}
+                      style={[styles.pagerBtn, styles.pagerBtnOn]}>
+                      <Text style={styles.pagerBtnOnText}>Tiếp theo →</Text>
+                    </Pressable>
+                  )}
+                </View>
+
+                {/* Đọc hết mới hiện ô đồng ý + nút tiếp tục */}
+                {last ? (
+                  <>
+                    <View style={{ marginTop: 18, marginBottom: 14 }}>
+                      <Checkbox
+                        checked={dongY}
+                        onToggle={() => setDongY((v) => !v)}>
+                        Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và
+                        Cam kết bảo mật thông tin.
+                      </Checkbox>
+                    </View>
+                    <PrimaryButton
+                      label="Tiếp tục điền hồ sơ"
+                      disabled={!dongY}
+                      onPress={() => setBuoc('form')}
+                    />
+                  </>
+                ) : null}
+              </>
+            );
+          })()
         ) : (
           <>
             <ErrorBox message={loi} />
@@ -370,16 +435,67 @@ const styles = StyleSheet.create({
   h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1, marginTop: 4 },
   lead: { fontSize: 13.5, color: colors.muted, lineHeight: 20, marginTop: 8, marginBottom: 14 },
 
+  chips: { gap: 8, paddingVertical: 4, paddingRight: 8 },
+  chip: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  chipText: { fontSize: 13, fontWeight: '800', color: colors.muted },
+  chipTextOn: { color: colors.onBrand },
+
   termsBox: {
+    marginTop: 12,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     padding: 16,
   },
-  termP: { fontSize: 12.5, lineHeight: 19, color: colors.text, marginBottom: 7 },
-  termDieu: { fontWeight: '900', marginTop: 8 },
-  termTitle: { fontWeight: '900', textAlign: 'center' },
+  termP: { fontSize: 14, lineHeight: 22, color: colors.text, marginBottom: 10 },
+  // Tiêu đề ĐIỀU: banner cam nhạt, gạch trái — tách hẳn với nội dung.
+  termDieu: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: colors.brand,
+    backgroundColor: colors.brandSoft,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.brand,
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginTop: 6,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  termTitle: { fontWeight: '900', textAlign: 'center', fontSize: 14 },
+
+  pager: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 14,
+  },
+  pagerBtn: {
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pagerBtnText: { fontSize: 13, fontWeight: '800', color: colors.text },
+  pagerBtnOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  pagerBtnOnText: { fontSize: 13, fontWeight: '800', color: colors.onBrand },
+  pagerInfo: { flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: '700', color: colors.muted },
 
   card: {
     alignItems: 'center',

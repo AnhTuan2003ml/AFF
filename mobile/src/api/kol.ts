@@ -1,8 +1,13 @@
 import { apiFetch, apiUpload } from './client';
 
+export interface KolSection {
+  label: string;
+  paragraphs: string[];
+}
+
 export interface KolTerms {
   version: number;
-  paragraphs: string[];
+  sections: KolSection[];
 }
 
 /** Điều khoản thỏa thuận để hiển thị ở bước 1. */
