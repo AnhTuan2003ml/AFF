@@ -138,6 +138,13 @@
 .kol-upload-box small { font-size: 11px; color: var(--lx-muted); }
 .kol-upload-preview { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 15px; display: block; }
 .kol-upload.is-filled .kol-upload-box { display: none; }
+/* Ảnh không preview được (HEIC…): giữ ô, đổi sang trạng thái "đã chọn". */
+.kol-upload.is-selected .kol-upload-box {
+  border-style: solid; border-color: #16a34a; background: #f0fdf4;
+}
+.kol-upload.is-selected .kol-upload-ico { color: #16a34a; }
+.kol-upload.is-selected .kol-upload-box b { color: #166534; }
+.kol-upload.is-selected [data-upload-name] { color: #16a34a; font-weight: 700; }
 
 .kol-submit-bar {
   display: flex; align-items: center; justify-content: space-between;

@@ -1,4 +1,5 @@
 import heicConvert from "heic-convert";
+import sharp from "sharp";
 import { AppError } from "../lib/errors.js";
 
 /** Lấy Buffer từ field file của @fastify/multipart (mọi chế độ attach). */
@@ -44,24 +45,40 @@ export function sniffMime(buf: Buffer): string {
 }
 
 /**
- * Ảnh CCCD phải hiển thị được trên trình duyệt admin. Ảnh iPhone (HEIC/HEIF) và
- * AVIF không render bằng <img> nên chuyển sang JPEG; JPG/PNG/WebP giữ nguyên.
- * Định dạng ảnh lạ → báo lỗi để người dùng tải lại đúng.
+ * Ảnh CCCD phải hiển thị nhanh trên trình duyệt admin. sharp đọc mọi định dạng
+ * phổ biến (kể cả HEIC/HEIF iPhone mà <img> không render được), xoay theo EXIF,
+ * thu nhỏ tối đa 1600px và nén JPEG ~80% → luôn ra ảnh JPEG nhẹ (thường vài trăm
+ * KB) load tức thì thay vì ảnh gốc 3–8MB đen mãi. Ảnh không đọc được → báo lỗi.
  */
 export async function toDisplayableImage(
   buf: Buffer,
   mime: string,
 ): Promise<{ buffer: Buffer; contentType: string }> {
-  if (mime === "image/jpeg" || mime === "image/png" || mime === "image/webp") {
-    return { buffer: buf, contentType: mime };
+  try {
+    // libvips prebuilt trên Linux KHÔNG decode được HEIF/HEIC (chỉ đăng ký format
+    // chứ không có bộ giải mã) — nên ảnh iPhone phải qua heic-convert (WASM, chạy
+    // mọi nền tảng) sang JPEG trước, rồi mới đưa vào sharp để resize/nén.
+    let src = buf;
+    if (mime === "image/heic" || mime === "image/heif") {
+      const jpg = await heicConvert({ buffer: buf, format: "JPEG", quality: 0.92 });
+      src = Buffer.from(jpg);
+    }
+    const out = await sharp(src)
+      .rotate()
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 80, mozjpeg: true })
+      .toBuffer();
+    return { buffer: out, contentType: "image/jpeg" };
+  } catch {
+    throw new AppError(
+      "KOL_IMAGE_FORMAT",
+      "Ảnh CCCD không đọc được. Vui lòng chọn ảnh JPG, PNG hoặc ảnh iPhone (HEIC).",
+      400,
+    );
   }
-  if (mime === "image/heic" || mime === "image/heif" || mime === "image/avif") {
-    const out = await heicConvert({ buffer: buf, format: "JPEG", quality: 0.9 });
-    return { buffer: Buffer.from(out), contentType: "image/jpeg" };
-  }
-  throw new AppError(
-    "KOL_IMAGE_FORMAT",
-    "Ảnh CCCD phải là JPG, PNG hoặc ảnh iPhone (HEIC). Vui lòng chọn lại ảnh.",
-    400,
-  );
 }
