@@ -43,6 +43,9 @@ function kolMultipartBuffer(value: unknown): Buffer | null {
   return null;
 }
 
+/** Giới hạn PDF hợp đồng để đính kèm email không vượt ~25MB của Gmail. */
+const MAX_CONTRACT_PDF = 18 * 1024 * 1024;
+
 /** File PDF bắt đầu bằng "%PDF-". */
 function isPdf(buf: Buffer): boolean {
   return (
@@ -872,6 +875,15 @@ export async function registerAdminUserRoutes(
             );
             return reply.redirect("/backoffice/kol");
           }
+          if (contractPdf.length > MAX_CONTRACT_PDF) {
+            setFlash(
+              reply,
+              deps.config,
+              "error",
+              "File PDF quá lớn (giới hạn ~18MB để đính kèm email). Vui lòng nén nhỏ lại rồi thử lại.",
+            );
+            return reply.redirect("/backoffice/kol");
+          }
           if (!to) {
             setFlash(
               reply,
@@ -981,21 +993,38 @@ export async function registerAdminUserRoutes(
             400,
           );
         }
+        if (pdf.length > MAX_CONTRACT_PDF) {
+          throw new AppError(
+            "KOL_PDF_TOO_BIG",
+            "File PDF quá lớn (giới hạn ~18MB để đính kèm email). Vui lòng đính kèm bản nén nhỏ hơn.",
+            400,
+          );
+        }
         const partner = await query<{ referral_code: string }>(
           deps.db,
           "SELECT referral_code FROM users WHERE id = $1",
           [app0.user_id],
         );
-        await deps.emailService.sendKolContract({
-          to,
-          fullName: app0.full_name,
-          partnerCode: partner.rows[0]?.referral_code ?? "—",
-          email: app0.email ?? app0.account_email ?? to,
-          phone: app0.phone ?? "—",
-          approvedAt: new Date(),
-          pdf,
-        });
-        setFlash(reply, deps.config, "success", `Đã gửi lại hợp đồng tới ${to}.`);
+        const sendPdf = pdf;
+        const fullName = app0.full_name;
+        const email = app0.email ?? app0.account_email ?? to;
+        const phone = app0.phone ?? "—";
+        const code = partner.rows[0]?.referral_code ?? "—";
+        // Gửi nền — file lớn có thể mất hơn một phút; đừng để admin chờ treo.
+        void deps.emailService
+          .sendKolContract({
+            to,
+            fullName,
+            partnerCode: code,
+            email,
+            phone,
+            approvedAt: new Date(),
+            pdf: sendPdf,
+          })
+          .catch((err) =>
+            request.log.error({ err }, "Gửi lại hợp đồng KOL/KOC thất bại"),
+          );
+        setFlash(reply, deps.config, "success", `Đang gửi lại hợp đồng tới ${to} (chạy nền).`);
       } catch (error) {
         flashAdminError(reply, deps.config, error);
       }

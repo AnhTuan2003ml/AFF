@@ -30,11 +30,11 @@ export class EmailService {
               user: config.SMTP_USER,
               pass: config.SMTP_PASS,
             },
-            // Email chào mừng KOL/KOC đính kèm PDF vài MB — socketTimeout phải đủ
-            // dài để upload attachment, nếu không gặp ETIMEDOUT giữa chừng.
+            // Email chào mừng KOL/KOC đính kèm PDF tới ~18MB — upload lên Gmail có
+            // thể chậm nên socketTimeout phải dài để không ETIMEDOUT giữa chừng.
             connectionTimeout: 20_000,
             greetingTimeout: 20_000,
-            socketTimeout: 60_000,
+            socketTimeout: 120_000,
           })
         : null;
   }
@@ -204,20 +204,14 @@ export class EmailService {
       this.config.SUPPORT_EMAIL || this.config.SMTP_FROM_EMAIL;
     const website = this.config.APP_ORIGIN;
 
-    // Gmail giới hạn ~25MB/email; PDF sau base64 phình ~33%. File > 15MB thì
-    // KHÔNG đính kèm (email sẽ bị từ chối/treo) — thay bằng link tải trong app.
-    const MAX_ATTACH = 15 * 1024 * 1024;
-    const attachContract = params.pdf.length <= MAX_ATTACH;
-    const contractUrl = `${website}/app/dang-ky-kol`;
-
-    const attachments: nodemailer.SendMailOptions["attachments"] = [];
-    if (attachContract) {
-      attachments.push({
+    // LUÔN đính kèm file PDF hợp đồng vào email.
+    const attachments: nodemailer.SendMailOptions["attachments"] = [
+      {
         filename: "Hop-dong-hop-tac-KOL-KOC-ShopTik.pdf",
         content: params.pdf,
         contentType: "application/pdf",
-      });
-    }
+      },
+    ];
     let logoTag = "";
     try {
       const logo = readFileSync(
@@ -243,8 +237,6 @@ export class EmailService {
       approvedStr,
       supportEmail,
       website,
-      attachContract,
-      contractUrl,
     });
 
     const mail = {
@@ -267,9 +259,7 @@ export class EmailService {
         `- Ngày được phê duyệt: ${approvedStr}`,
         `- Trạng thái: Đối tác chính thức`,
         "",
-        attachContract
-          ? "Bản hợp đồng hợp tác (PDF) được đính kèm trong email này. Vui lòng lưu lại."
-          : `Bản hợp đồng (PDF) dung lượng lớn nên không đính kèm — tải trong ứng dụng: ${contractUrl}`,
+        "Bản hợp đồng hợp tác (PDF) được đính kèm trong email này. Vui lòng lưu lại.",
         "",
         `Trân trọng, Đội ngũ ${this.config.APP_NAME}.`,
         `Hỗ trợ: ${supportEmail} · ${website}`,
@@ -302,8 +292,6 @@ export class EmailService {
     approvedStr: string;
     supportEmail: string;
     website: string;
-    attachContract: boolean;
-    contractUrl: string;
   }): string {
     const brand = "#ee4d2d";
     const ink = "#2c1d17";
@@ -382,15 +370,10 @@ export class EmailService {
     </tr>
     <tr>
       <td style="padding:14px 28px 6px">
-        <p style="margin:0 0 10px;font-size:13.5px;color:#3a302a;line-height:1.6">
-          ${
-            p.attachContract
-              ? "Bản <b>hợp đồng hợp tác</b> được đính kèm email này ở định dạng <b>PDF</b> — vui lòng lưu lại để đối chiếu khi cần."
-              : "Bản <b>hợp đồng hợp tác (PDF)</b> có dung lượng lớn nên không đính kèm trực tiếp. Bạn có thể tải về trong ứng dụng ShopTik."
-          }
+        <p style="margin:0 0 4px;font-size:13.5px;color:#3a302a;line-height:1.6">
+          Bản <b>hợp đồng hợp tác</b> được đính kèm email này ở định dạng <b>PDF</b> — vui lòng lưu lại để đối chiếu khi cần.
         </p>
-        <a href="${escapeHtml(p.contractUrl)}" style="display:inline-block;background:${brand};color:#fff;text-decoration:none;font-weight:800;font-size:13.5px;padding:11px 20px;border-radius:10px">⬇ Xem / tải hợp đồng</a>
-        <p style="margin:12px 0 0;font-size:13.5px;color:#3a302a;line-height:1.6">
+        <p style="margin:8px 0 0;font-size:13.5px;color:#3a302a;line-height:1.6">
           Chào mừng bạn chính thức là một phần của cộng đồng đối tác ${appName}. Chúc bạn thật nhiều chiến dịch thành công!
         </p>
       </td>
