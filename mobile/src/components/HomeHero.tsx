@@ -70,8 +70,9 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
       </View>
 
       <View style={styles.meta}>
+        {/* key theo NHÃN (không theo giá trị): hai ô cùng "0đ" từng trùng key. */}
         {SO_LIEU.map((o, i) => (
-          <View key={o.chinh} style={[styles.metaCell, i > 0 && styles.metaDivider]}>
+          <View key={o.phu ?? i} style={[styles.metaCell, i > 0 && styles.metaDivider]}>
             <Text style={styles.metaMain} numberOfLines={1}>
               {o.chinh}
             </Text>
