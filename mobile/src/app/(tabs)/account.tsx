@@ -130,6 +130,12 @@ export default function AccountScreen() {
             divider
           />
           <MenuRow
+            icon="ribbon-outline"
+            label="Đăng ký KOL/KOC"
+            onPress={() => router.push('/kol')}
+            divider
+          />
+          <MenuRow
             icon="people-outline"
             label="Giới thiệu bạn bè"
             onPress={() => router.push('/referrals')}

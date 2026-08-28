@@ -145,6 +145,33 @@ export async function apiFetch<T>(
   return (await response.json()) as T;
 }
 
+/**
+ * Gửi multipart/form-data (upload ảnh/video KYC). Không đặt Content-Type để
+ * fetch tự sinh boundary. Cùng cơ chế làm mới token khi gặp 401 như apiFetch.
+ */
+export async function apiUpload<T>(
+  path: string,
+  form: FormData,
+): Promise<T> {
+  const send = async (accessToken: string | null): Promise<Response> => {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    return fetch(`${BASE_URL}${path}`, { method: 'POST', headers, body: form });
+  };
+
+  let accessToken = (await readTokens())?.accessToken ?? null;
+  let response = await send(accessToken);
+  if (response.status === 401) {
+    const renewed = await refreshOnce();
+    if (!renewed) throw await toApiError(response);
+    accessToken = renewed;
+    response = await send(renewed);
+  }
+  if (!response.ok) throw await toApiError(response);
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
 /** Máy chủ có sống không — dùng ở màn hình kiểm tra kết nối. */
 export async function pingServer(): Promise<boolean> {
   try {

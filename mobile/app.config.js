@@ -64,6 +64,18 @@ module.exports = ({ config }) => {
     plugins: [
       ...(config.plugins ?? []),
       ["expo-build-properties", { android: { usesCleartextTraffic: choPhepHttp } }],
+      // Chọn/chụp ảnh CCCD và quay video khuôn mặt cho đăng ký KOL/KOC.
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "ShopTik cần truy cập thư viện ảnh để bạn tải ảnh CCCD khi đăng ký KOL/KOC.",
+          cameraPermission:
+            "ShopTik cần truy cập máy ảnh để chụp CCCD và quay video xác minh.",
+          microphonePermission:
+            "ShopTik cần micro để quay video khuôn mặt có tiếng khi xác minh.",
+        },
+      ],
       // Icon nhỏ trên thanh trạng thái phải là hình ĐƠN SẮC trắng trên nền trong
       // suốt (Android tự tô màu `color`); đưa logo màu vào đây sẽ thành khối
       // vuông xám bị phóng to. File sinh bởi scripts/make-brand-assets.py.

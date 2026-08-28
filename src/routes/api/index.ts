@@ -4,6 +4,7 @@ import { registerAuthApiRoutes } from "./auth.js";
 import { registerFeatureApiRoutes } from "./features.js";
 import type { ApiDeps } from "./deps.js";
 import { registerHarvestApiRoutes } from "./harvest.js";
+import { registerKolApiRoutes } from "./kol.js";
 import { registerMeApiRoutes } from "./me.js";
 import { registerProductApiRoutes } from "./products.js";
 
@@ -19,6 +20,7 @@ export async function registerApiRoutes(
   await registerProductApiRoutes(app, deps);
   await registerAccountApiRoutes(app, deps);
   await registerMeApiRoutes(app, deps);
+  await registerKolApiRoutes(app, deps);
   await registerHarvestApiRoutes(app, deps);
   await registerFeatureApiRoutes(app, deps);
 }
