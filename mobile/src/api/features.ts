@@ -106,9 +106,11 @@ export function layGioiThieu() {
 
 /** Đối tác gửi yêu cầu đổi mã giới thiệu tự chọn (3–9 chữ/số, admin duyệt). */
 export function guiDoiMaGioiThieu(newCode: string) {
+  // apiFetch TỰ stringify body — truyền object thường, đừng stringify trước
+  // (double-encode làm server nhận chuỗi thay vì object → VALIDATION_ERROR).
   return apiFetch<{ status: string }>('/api/v1/referrals/code-change', {
     method: 'POST',
-    body: JSON.stringify({ newCode }),
+    body: { newCode },
   });
 }
 
