@@ -8,16 +8,14 @@ import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
   RECOMMEND_LIST_TYPE,
-  createHarvestProfile,
   deleteHarvestProfile,
-  enqueueHarvestJob,
   enqueueOfferRangeFetch,
   getCachedPageRange,
   getHarvestSettings,
   isWorkerOnline,
   listHarvestProfiles,
   listRecentHarvestJobs,
-  setHarvestProfileDisabled,
+  setSingleHarvestProfile,
   updateHarvestSettings,
 } from "../services/discover-harvest.js";
 import { query } from "../db.js";
@@ -74,6 +72,7 @@ export async function registerAdminProfileRoutes(
       backofficeSection: "profiles",
       settings,
       profiles,
+      currentProfile: profiles[0] ?? null,
       jobs,
       workerOnline: isWorkerOnline(settings),
       workerConfigured: Boolean(deps.config.HARVEST_WORKER_TOKEN),
@@ -132,12 +131,14 @@ export async function registerAdminProfileRoutes(
     return reply.redirect("/backoffice/profiles");
   });
 
+  // Một ô Profile ID duy nhất: đặt/đổi profile Browser Control để lấy dữ liệu.
+  // Không có bước đăng nhập/mở/tắt — phiên nằm sẵn trong Browser Control.
   app.post("/profiles", async (request, reply) => {
     requireManage(request.currentUser!.role);
     try {
       const input = parseInput(
         z.object({
-          name: z.string().trim().min(2).max(80),
+          name: z.string().trim().max(80).optional(),
           profileId: z
             .string()
             .trim()
@@ -145,13 +146,13 @@ export async function registerAdminProfileRoutes(
         }),
         request.body,
       );
-      const profile = await createHarvestProfile(
+      const profile = await setSingleHarvestProfile(
         deps.db,
         { id: input.profileId, name: input.name },
         request.currentUser!.id,
       );
       await writeAuditLog(deps.db, deps.config, request, {
-        action: "HARVEST_PROFILE_CREATED",
+        action: "HARVEST_PROFILE_SET",
         targetType: "HARVEST_PROFILE",
         targetId: profile.id,
         after: { name: profile.name },
@@ -160,7 +161,7 @@ export async function registerAdminProfileRoutes(
         reply,
         deps.config,
         "success",
-        `Đã đăng ký profile "${profile.name}". Nếu profile đã đăng nhập Shopee sẵn, bấm "Mở đăng nhập" một lần để hệ thống xác nhận.`,
+        "Đã lưu Profile ID. Bấm nút lấy sản phẩm bên dưới là worker điều khiển thẳng profile này.",
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);
@@ -168,78 +169,7 @@ export async function registerAdminProfileRoutes(
     return reply.redirect("/backoffice/profiles");
   });
 
-  app.post<{ Params: { id: string } }>(
-    "/profiles/:id/login",
-    async (request, reply) => {
-      requireManage(request.currentUser!.role);
-      try {
-        const params = parseInput(idParams, request.params);
-        await enqueueHarvestJob(
-          deps.db,
-          params.id,
-          "LOGIN",
-          request.currentUser!.id,
-        );
-        setFlash(
-          reply,
-          deps.config,
-          "success",
-          "Đã gửi lệnh mở đăng nhập. Cửa sổ trình duyệt sẽ hiện trên máy đang chạy worker — đăng nhập xong cứ để worker tự đóng.",
-        );
-      } catch (error) {
-        flashAdminError(reply, deps.config, error);
-      }
-      return reply.redirect("/backoffice/profiles");
-    },
-  );
-
-  app.post<{ Params: { id: string } }>(
-    "/profiles/:id/fetch",
-    async (request, reply) => {
-      requireManage(request.currentUser!.role);
-      try {
-        const params = parseInput(idParams, request.params);
-        await enqueueHarvestJob(
-          deps.db,
-          params.id,
-          "FETCH",
-          request.currentUser!.id,
-        );
-        setFlash(
-          reply,
-          deps.config,
-          "success",
-          "Đã gửi lệnh lấy sản phẩm. Kết quả sẽ hiện ở trang này và trang Khám phá sau khi worker chạy xong.",
-        );
-      } catch (error) {
-        flashAdminError(reply, deps.config, error);
-      }
-      return reply.redirect("/backoffice/profiles");
-    },
-  );
-
-  app.post<{ Params: { id: string } }>(
-    "/profiles/:id/toggle",
-    async (request, reply) => {
-      requireManage(request.currentUser!.role);
-      try {
-        const params = parseInput(idParams, request.params);
-        const body = request.body as Record<string, unknown>;
-        const disabled = body.disabled === "on";
-        await setHarvestProfileDisabled(deps.db, params.id, disabled);
-        setFlash(
-          reply,
-          deps.config,
-          "success",
-          disabled ? "Đã tắt profile." : "Đã bật lại profile.",
-        );
-      } catch (error) {
-        flashAdminError(reply, deps.config, error);
-      }
-      return reply.redirect("/backoffice/profiles");
-    },
-  );
-
+  // Gỡ profile khỏi ShopTik (Browser Control vẫn giữ nguyên).
   app.post<{ Params: { id: string } }>(
     "/profiles/:id/delete",
     async (request, reply) => {
@@ -255,12 +185,7 @@ export async function registerAdminProfileRoutes(
           targetType: "HARVEST_PROFILE",
           targetId: params.id,
         });
-        setFlash(
-          reply,
-          deps.config,
-          "success",
-          "Đã xóa profile khỏi hệ thống. Profile trong Browser Control vẫn giữ nguyên.",
-        );
+        setFlash(reply, deps.config, "success", "Đã gỡ profile khỏi ShopTik.");
       } catch (error) {
         flashAdminError(reply, deps.config, error);
       }

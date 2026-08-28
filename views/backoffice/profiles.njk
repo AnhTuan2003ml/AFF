@@ -1,15 +1,5 @@
 {% extends "backoffice/base.njk" %}
 
-{% macro profile_status(status) %}
-  {% if status == 'READY' %}
-    <span class="status-badge status-positive">Sẵn sàng</span>
-  {% elif status == 'DISABLED' %}
-    <span class="status-badge status-neutral">Đang tắt</span>
-  {% else %}
-    <span class="status-badge status-pending">Chưa đăng nhập</span>
-  {% endif %}
-{% endmacro %}
-
 {% macro job_status(status) %}
   {% if status == 'DONE' %}
     <span class="status-badge status-positive">Xong</span>
@@ -38,8 +28,36 @@
     <div>
       <span class="eyebrow">SẢN PHẨM TỪ SHOPEE AFFILIATE</span>
       <h1>Profile Shopee</h1>
-      <p>Worker điều khiển profile trình duyệt (ứng dụng <b>Browser Control</b>, 127.0.0.1:9222) mở trang Product Offer, lấy danh sách sản phẩm và lưu vào kho dữ liệu. Trang Khám phá đọc thẳng từ kho — không lấy lại mỗi lần.</p>
+      <p>Điền một <b>Profile ID</b> của Browser Control (127.0.0.1:9222) rồi bấm lấy sản phẩm. Worker điều khiển thẳng profile đó — không cần đăng nhập/mở/tắt.</p>
     </div>
+  </section>
+
+  {# ── Một ô Profile ID duy nhất ─────────────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">PROFILE</span><h2>Profile ID (Browser Control)</h2></div>
+      {% if currentProfile %}
+        <span class="status-badge status-positive">Đang dùng</span>
+      {% endif %}
+    </header>
+    <form method="post" action="/backoffice/profiles" class="bp-id-form" data-validate-form novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <label class="bp-id-field">Profile ID
+        <input type="text" name="profileId" maxlength="40" autocomplete="off" spellcheck="false"
+               value="{{ currentProfile.id if currentProfile else '' }}"
+               placeholder="0054964c-313d-42c2-b627-c6a07b3eba4b" required
+               data-required-message="Dán Profile ID từ Browser Control.">
+      </label>
+      <input type="hidden" name="name" value="{{ currentProfile.name if currentProfile else 'Profile Shopee' }}">
+      <button class="button button-primary" type="submit" data-submit-button>Lưu Profile ID</button>
+    </form>
+    {% if currentProfile %}
+      <p class="bp-hint">
+        Lấy gần nhất:
+        {% if currentProfile.last_fetch_at %}{{ currentProfile.last_fetch_at | datetime }}{% if currentProfile.last_fetched_count %} · {{ currentProfile.last_fetched_count }} sản phẩm{% endif %}{% else %}chưa lấy lần nào{% endif %}.
+        {% if currentProfile.last_error %}<span class="field-error">{{ currentProfile.last_error }}</span>{% endif %}
+      </p>
+    {% endif %}
   </section>
 
   <section class="order-summary-grid" aria-label="Trạng thái hệ thống">
@@ -136,81 +154,6 @@
         <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Ưu đãi</button>
       </form>
     </div>
-  </section>
-
-  {# ── Danh sách profile ─────────────────────────────────────────────── #}
-  <section class="panel config-section">
-    <header class="admin-section-heading">
-      <div><span class="admin-kicker">PROFILE</span><h2>Danh sách profile</h2></div>
-    </header>
-
-    {% if profiles.length %}
-      <div class="responsive-table">
-        <table class="bp-profile-table">
-          <thead>
-            <tr>
-              <th>Tên</th>
-              <th>Trạng thái</th>
-              <th>Đăng nhập</th>
-              <th>Lấy gần nhất</th>
-              <th class="bp-actions-col">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for profile in profiles %}
-              <tr>
-                <td>
-                  <b>{{ profile.name }}</b>
-                  <small class="bp-profile-id">{{ profile.id }}</small>
-                </td>
-                <td>
-                  {{ profile_status(profile.status) }}
-                  {% if profile.last_error %}<small class="field-error bp-cell-error">{{ profile.last_error }}</small>{% endif %}
-                </td>
-                <td>{% if profile.last_login_at %}{{ profile.last_login_at | datetime }}{% else %}—{% endif %}</td>
-                <td>
-                  {% if profile.last_fetch_at %}{{ profile.last_fetch_at | datetime }}{% if profile.last_fetched_count %}<small>{{ profile.last_fetched_count }} sp</small>{% endif %}{% else %}—{% endif %}
-                </td>
-                <td>
-                  <div class="table-actions">
-                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/login">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button class="button button-small button-ghost" type="submit">Đăng nhập</button>
-                    </form>
-                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/fetch">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button class="button button-small button-primary" type="submit" {% if profile.status != 'READY' %}disabled title="Đăng nhập profile trước"{% endif %}>Lấy sản phẩm</button>
-                    </form>
-                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/toggle">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      {% if profile.status != 'DISABLED' %}<input type="hidden" name="disabled" value="on">{% endif %}
-                      <button class="button button-small button-ghost" type="submit">{% if profile.status == 'DISABLED' %}Bật lại{% else %}Tắt{% endif %}</button>
-                    </form>
-                    <form method="post" action="/backoffice/profiles/{{ profile.id }}/delete" onsubmit="return confirm('Xóa profile này khỏi hệ thống?');">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button class="button button-small button-danger" type="submit">Xóa</button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="bp-hint">Chưa có profile nào. Tạo profile trong Browser Control rồi đăng ký Profile ID bên dưới.</p>
-    {% endif %}
-
-    <form method="post" action="/backoffice/profiles" class="bp-add-form" data-validate-form novalidate>
-      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-      <label>Tên hiển thị
-        <input type="text" name="name" minlength="2" maxlength="80" placeholder="Ví dụ: Tài khoản chính" required data-required-message="Nhập tên profile.">
-      </label>
-      <label>Profile ID (từ Browser Control)
-        <input type="text" name="profileId" maxlength="40" autocomplete="off" spellcheck="false" placeholder="0054964c-313d-42c2-b627-c6a07b3eba4b" required data-required-message="Dán Profile ID.">
-      </label>
-      <button class="button button-primary" type="submit" data-submit-button>Đăng ký profile</button>
-    </form>
   </section>
 
   {# ── Lịch lấy tự động ──────────────────────────────────────────────── #}

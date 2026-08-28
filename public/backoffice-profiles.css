@@ -219,3 +219,32 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Form một-ô Profile ID (bản gọn): ô ID rộng + nút Lưu cùng hàng. */
+.backoffice-shell .bp-id-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.backoffice-shell .bp-id-field {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft, #6b5b50);
+}
+.backoffice-shell .bp-id-field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong, #e2d6c6);
+  border-radius: 10px;
+  font-family: var(--font-data, monospace);
+  font-size: 14px;
+  letter-spacing: .02em;
+}
+.backoffice-shell .bp-id-form button { min-height: 44px; }

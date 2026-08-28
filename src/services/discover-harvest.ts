@@ -259,6 +259,40 @@ export async function createHarvestProfile(
   return inserted.rows[0];
 }
 
+/**
+ * Đặt DUY NHẤT một profile Browser Control để dùng (upsert theo id, xóa mọi
+ * profile khác). Dùng cho trang gọn: chỉ một ô Profile ID, không quản lý
+ * danh sách. Không đụng tới phiên đăng nhập — phiên nằm ở Browser Control.
+ */
+export async function setSingleHarvestProfile(
+  db: Database,
+  input: { id: string; name?: string | undefined },
+  actorId: string,
+): Promise<HarvestProfile> {
+  const id = input.id.trim().toLowerCase();
+  if (!UUID_ID_PATTERN.test(id)) {
+    throw new AppError(
+      "INVALID_PROFILE_ID",
+      "Profile ID phải là UUID lấy từ ứng dụng Browser Control (GET /api/profiles).",
+    );
+  }
+  const name = (input.name?.trim() || "Profile Shopee").slice(0, 80);
+  const rows = await query<HarvestProfile>(
+    db,
+    `
+      WITH del AS (DELETE FROM harvest_profiles WHERE id <> $1)
+      INSERT INTO harvest_profiles (id, name, updated_by)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name, updated_by = EXCLUDED.updated_by,
+            updated_at = now()
+      RETURNING ${PROFILE_COLUMNS}
+    `,
+    [id, name, actorId],
+  );
+  return rows.rows[0]!;
+}
+
 export async function deleteHarvestProfile(
   db: Database,
   profileId: string,
@@ -475,7 +509,7 @@ export async function enqueueOfferRangeFetch(
       WHERE profile_id = $1
         AND (
           (status = 'RUNNING' AND started_at < now() - interval '15 minutes')
-          OR (status = 'PENDING' AND created_at < now() - interval '15 minutes')
+          OR (status = 'PENDING' AND created_at < now() - interval '2 minutes')
         )
     `,
     [profileId],
