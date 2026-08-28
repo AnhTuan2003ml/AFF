@@ -15,9 +15,11 @@ import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
 import { registerPushToken } from "../../services/push.js";
 import {
+  applyReferralToUser,
   getReferralCodeState,
   requestReferralCodeChange,
 } from "../../services/referral-code.js";
+import { AppError } from "../../lib/errors.js";
 import {
   BEST_SELLER_LIST_TYPE,
   EXCLUSIVE_LIST_TYPE,
@@ -114,14 +116,19 @@ export async function registerFeatureApiRoutes(
       ),
     ]);
 
-    const me = await query<{ referral_code: string }>(
+    const me = await query<{
+      referral_code: string;
+      referred_by_user_id: string | null;
+    }>(
       deps.db,
-      `SELECT referral_code FROM users WHERE id = $1`,
+      `SELECT referral_code, referred_by_user_id FROM users WHERE id = $1`,
       [id],
     );
     const codeState = await getReferralCodeState(deps.db, id);
 
     return {
+      // Chưa có người giới thiệu (vd đăng ký Google) → app hiện ô nhập mã.
+      hasReferrer: Boolean(me.rows[0]?.referred_by_user_id),
       // Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app dựa vào đây để hiện form.
       codeState: {
         isPartner: codeState.isPartner,
@@ -143,6 +150,27 @@ export async function registerFeatureApiRoutes(
         earnedVnd: Number(r.earned_vnd),
       })),
     };
+  });
+
+  // Tài khoản chưa có người giới thiệu (vd đăng ký Google) nhập mã sau khi vào app.
+  app.post("/referrals/enter-code", { preHandler: requireApiUser }, async (request) => {
+    const input = parseInput(
+      z.object({ referralCode: z.string().trim().min(1).max(20) }),
+      request.body,
+    );
+    const ok = await applyReferralToUser(
+      deps.db,
+      request.currentUser!.id,
+      input.referralCode,
+    );
+    if (!ok) {
+      throw new AppError(
+        "REFERRAL_CODE_NOT_FOUND",
+        "Mã giới thiệu không tồn tại hoặc không dùng được. Kiểm tra lại nhé.",
+        400,
+      );
+    }
+    return { status: "APPLIED" };
   });
 
   // Đối tác/KOL gửi yêu cầu đổi mã giới thiệu (admin duyệt mới hiệu lực).

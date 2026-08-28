@@ -24,7 +24,7 @@ interface SessionValue {
     password: string,
     ghiNho?: boolean,
   ) => Promise<void>;
-  dangNhapGoogle: () => Promise<void>;
+  dangNhapGoogle: () => Promise<{ isNew: boolean }>;
   dangXuat: () => Promise<void>;
   lamMoiHoSo: () => Promise<void>;
   /** Tên để linh vật chào ngay sau khi đăng nhập; null khi không có. */
@@ -76,10 +76,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setChaoMung(u.fullName || 'bạn');
       },
       async dangNhapGoogle() {
-        await authApi.loginWithGoogleWeb();
+        const { isNew } = await authApi.loginWithGoogleWeb();
         const me = await layMe();
         setUser(me.user);
         setChaoMung(me.user.fullName || 'bạn');
+        return { isNew };
       },
       async dangXuat() {
         await authApi.logout();

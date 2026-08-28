@@ -642,13 +642,15 @@ export async function registerAuthRoutes(
             request,
             userId,
           );
-          const frag = new URLSearchParams({
+          const fragParams = new URLSearchParams({
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
             expiresIn: String(tokens.expiresIn),
             refreshExpiresAt: new Date(tokens.refreshExpiresAt).toISOString(),
-          }).toString();
-          return reply.redirect(`${mobileRedirect}#${frag}`);
+          });
+          // Tài khoản MỚI chưa có người giới thiệu: app sẽ mở màn nhập mã.
+          if (isNew && !daCoNguoiGioiThieu) fragParams.set("isNew", "1");
+          return reply.redirect(`${mobileRedirect}#${fragParams.toString()}`);
         }
         await createSession(deps.db, deps.config, request, reply, userId);
         setWelcome(reply, deps.config);

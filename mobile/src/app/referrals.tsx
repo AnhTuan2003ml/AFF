@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
+
 
 /**
  * Giới thiệu — mã mời, tổng thưởng và danh sách người đã mời.
@@ -128,6 +130,17 @@ export default function ReferralsScreen() {
             </View>
           )}
 
+          {data && !data.hasReferrer && (
+            <Pressable
+              onPress={() => router.push('/nhap-gioi-thieu')}
+              style={({ pressed }) => [styles.enterCodeRow, pressed && { opacity: 0.75 }]}>
+              <Ionicons name="gift-outline" size={18} color={colors.brand} />
+              <Text style={styles.enterCodeText}>
+                Bạn có mã giới thiệu? <Text style={styles.b}>Nhập tại đây</Text>
+              </Text>
+            </Pressable>
+          )}
+
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>Tổng thưởng đã nhận</Text>
             <Text style={styles.totalValue}>{vnd(data?.totalEarnedVnd)}</Text>
@@ -195,6 +208,18 @@ const styles = StyleSheet.create({
   partnerTitle: { fontSize: 14, fontWeight: '900', color: colors.text },
   partnerNote: { fontSize: 12.5, color: colors.muted, lineHeight: 19, marginTop: 6 },
   b: { fontWeight: '900', color: colors.text },
+  enterCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.brandSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.brandLine,
+    marginBottom: 12,
+  },
+  enterCodeText: { fontSize: 13.5, color: colors.text },
   // Ô nhập một hàng full chiều ngang, nút gửi nằm hàng riêng bên dưới.
   partnerForm: { gap: 10, marginTop: 10 },
   partnerInput: {

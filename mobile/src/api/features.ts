@@ -93,6 +93,8 @@ export function nhanThuong(missionDefinitionId: string) {
 export function layGioiThieu() {
   return apiFetch<{
     referralCode: string | null;
+    /** false = chưa có người giới thiệu → app hiện ô nhập mã bổ sung. */
+    hasReferrer: boolean;
     totalEarnedVnd: number;
     /** Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app hiện form theo đây. */
     codeState: {
@@ -102,6 +104,14 @@ export function layGioiThieu() {
     };
     data: Referral[];
   }>('/api/v1/referrals');
+}
+
+/** Tài khoản chưa có người giới thiệu (vd đăng ký Google) nhập mã bổ sung. */
+export function guiMaNguoiGioiThieu(referralCode: string) {
+  return apiFetch<{ status: string }>('/api/v1/referrals/enter-code', {
+    method: 'POST',
+    body: { referralCode },
+  });
 }
 
 /** Đối tác gửi yêu cầu đổi mã giới thiệu tự chọn (3–9 chữ/số, admin duyệt). */

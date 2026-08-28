@@ -22,9 +22,11 @@ export function GoogleButton({ onError }: { onError?: (message: string) => void 
     if (dangChay) return;
     setDangChay(true);
     try {
-      await dangNhapGoogle();
+      const { isNew } = await dangNhapGoogle();
       // Đăng nhập xong: đóng các tờ giấy Đăng nhập/Đăng ký, về lại tab.
       if (router.canDismiss()) router.dismissAll();
+      // Tài khoản MỚI chưa có người giới thiệu → mời nhập mã (bỏ qua được).
+      if (isNew) router.push('/nhap-gioi-thieu');
     } catch (e) {
       // Người dùng tự đóng trình duyệt thì im lặng, còn lại mới báo lỗi.
       const msg =

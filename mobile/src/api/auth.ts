@@ -63,7 +63,7 @@ export async function login(
  * cặp Bearer token và chuyển hướng về deep-link của app kèm token ở fragment.
  * Nhờ vậy KHÔNG cần Android/iOS Client ID và chạy được cả trong Expo Go.
  */
-export async function loginWithGoogleWeb(): Promise<void> {
+export async function loginWithGoogleWeb(): Promise<{ isNew: boolean }> {
   // Có path để URL deep-link luôn hợp lệ trên iOS (shoptik://auth/google;
   // trong Expo Go thành exp://<host>/--/auth/google).
   const redirectUri = makeRedirectUri({ scheme: 'shoptik', path: 'auth/google' });
@@ -89,6 +89,9 @@ export async function loginWithGoogleWeb(): Promise<void> {
     );
   }
   await saveTokens({ accessToken, refreshToken }, true);
+  // Server cắm isNew=1 khi đây là tài khoản MỚI chưa có người giới thiệu —
+  // app sẽ mời nhập mã giới thiệu (bỏ qua được).
+  return { isNew: params.get('isNew') === '1' };
 }
 
 /** Bước 1 của đăng ký — backend gửi mã OTP 6 số về email. */
