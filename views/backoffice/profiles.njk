@@ -28,7 +28,7 @@
     <div>
       <span class="eyebrow">SẢN PHẨM TỪ SHOPEE AFFILIATE</span>
       <h1>Profile Shopee</h1>
-      <p>Điền một <b>Profile ID</b> của Browser Control (127.0.0.1:9222) rồi bấm lấy sản phẩm. Worker điều khiển thẳng profile đó — không cần đăng nhập/mở/tắt.</p>
+      <p>Điền một <b>Profile ID</b> của Browser Control rồi bấm lấy sản phẩm. Server điều khiển thẳng profile qua CDP — không cần worker, không đăng nhập/mở/tắt.</p>
     </div>
   </section>
 
@@ -60,15 +60,7 @@
     {% endif %}
   </section>
 
-  <section class="order-summary-grid" aria-label="Trạng thái hệ thống">
-    <a href="/backoffice/profiles">
-      <span>Worker</span>
-      <strong>
-        {% if workerOnline %}<span class="status-badge status-positive">Đang chạy</span>
-        {% else %}<span class="status-badge status-negative">Không kết nối</span>{% endif %}
-      </strong>
-      <small>{% if settings.workerLastSeenAt %}Lần cuối: {{ settings.workerLastSeenAt | datetime }}{% else %}Chưa thấy worker{% endif %}</small>
-    </a>
+  <section class="order-summary-grid" aria-label="Kho dữ liệu">
     <a href="/app/discover?list=recommend" target="_blank" rel="noopener">
       <span>Kho Đề xuất</span>
       <strong>{{ recommendRange.productCount }}</strong>
@@ -86,11 +78,6 @@
     </a>
   </section>
 
-  {% if not workerConfigured %}
-    <aside class="info-strip"><span>!</span><div><b>Chưa cấu hình token worker</b><p>Đặt <code>HARVEST_WORKER_TOKEN</code> trong <code>.env</code> của server và worker rồi khởi động lại.</p></div></aside>
-  {% elif not workerOnline %}
-    <aside class="info-strip"><span>!</span><div><b>Worker chưa chạy</b><p>Trên máy chủ: mở <b>Browser Control</b>, rồi vào thư mục <code>profile-worker</code> chạy <code>npm start</code>. Worker tự nhận lệnh trong vài giây.</p></div></aside>
-  {% endif %}
   {% if settings.lastError %}
     <aside class="info-strip"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ settings.lastError }}</p></div></aside>
   {% endif %}
@@ -117,7 +104,7 @@
             <input type="number" name="toPage" min="1" max="500" value="{{ (recommendRange.maxPage + 25) if recommendRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
           </label>
         </div>
-        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Đề xuất</button>
+        <button class="button button-primary" type="submit" data-submit-button>Nạp Đề xuất</button>
       </form>
 
       <form method="post" action="/backoffice/profiles/fetch-range" class="bp-range-card" data-validate-form novalidate>
@@ -134,7 +121,7 @@
             <input type="number" name="toPage" min="1" max="500" value="{{ (bestRange.maxPage + 25) if bestRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
           </label>
         </div>
-        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Bán chạy</button>
+        <button class="button button-primary" type="submit" data-submit-button>Nạp Bán chạy</button>
       </form>
 
       <form method="post" action="/backoffice/profiles/fetch-range" class="bp-range-card" data-validate-form novalidate>
@@ -151,7 +138,7 @@
             <input type="number" name="toPage" min="1" max="500" value="{{ (exclusiveRange.maxPage + 25) if exclusiveRange.maxPage else 25 }}" required data-required-message="Nhập trang cuối.">
           </label>
         </div>
-        <button class="button button-primary" type="submit" data-submit-button {% if not workerOnline %}disabled{% endif %}>Nạp Ưu đãi</button>
+        <button class="button button-primary" type="submit" data-submit-button>Nạp Ưu đãi</button>
       </form>
     </div>
   </section>
