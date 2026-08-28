@@ -35,17 +35,21 @@
                 <td><code>{{ r.old_code }}</code></td>
                 <td><code><b>{{ r.requested_code }}</b></code></td>
                 <td>{{ r.created_at | datetime }}</td>
-                <td class="refcode-queue-actions">
-                  <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
-                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                    <input type="hidden" name="decision" value="approve">
-                    <button class="button button-primary button-small" type="submit">Phê duyệt</button>
-                  </form>
-                  <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
-                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                    <input type="hidden" name="decision" value="reject">
-                    <button class="button button-ghost button-small" type="submit">Từ chối</button>
-                  </form>
+                <td>
+                  {# Hai nút PHẢI cùng một hàng — flex đặt trên div bọc, không đặt
+                     lên td (bị style bảng ghi đè làm nút xếp chồng). #}
+                  <div class="refcode-actions-row">
+                    <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <input type="hidden" name="decision" value="approve">
+                      <button class="button button-primary button-small" type="submit">Phê duyệt</button>
+                    </form>
+                    <form method="post" action="/backoffice/referral-codes/{{ r.id }}/decide">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <input type="hidden" name="decision" value="reject">
+                      <button class="button button-ghost button-small" type="submit">Từ chối</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% endfor %}

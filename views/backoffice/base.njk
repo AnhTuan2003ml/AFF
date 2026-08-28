@@ -49,9 +49,9 @@
           <a href="/backoffice/withdrawals" {% if backofficeSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>{{ icon('withdraw') }}<span>Yêu cầu rút tiền</span>{% if backofficeWithdrawalsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/support" {% if backofficeSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
           <p class="st-nav-group">Quản lý</p>
-          <a href="/backoffice/accounts" {% if backofficeSection == 'users' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Người dùng &amp; quyền</span></a>
+          <a href="/backoffice/accounts" {% if backofficeSection == 'users' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Người dùng &amp; quyền</span>{% if backofficeReferralCodesPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeReferralCodesPendingCount }} yêu cầu đổi mã giới thiệu chờ duyệt">{{ backofficeReferralCodesPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/purchase-history" {% if backofficeSection == 'purchase-history' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Lịch sử mua</span></a>
-          <a href="/backoffice/banks" {% if backofficeSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
+          <a href="/backoffice/banks" {% if backofficeSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ icon('bank') }}<span>Tài khoản ngân hàng</span>{% if backofficeBanksPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeBanksPendingCount }} tài khoản ngân hàng chờ xác minh">{{ backofficeBanksPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/products" {% if backofficeSection == 'products' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Khám phá</span></a>
           <a href="/backoffice/missions" {% if backofficeSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ</span>{% if backofficeMissionsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/revenue" {% if backofficeSection == 'revenue' %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<span>Doanh thu</span></a>
@@ -91,7 +91,7 @@
           {# Số việc đang chờ, đặt ngay trên topbar để người trực không phải mở
              từng trang mới biết còn tồn gì. Chỗ này trước là dải trắng trống. #}
           <div class="bo-queue">
-            {% set hasQueue = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 %}
+            {% set hasQueue = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 %}
             {% if hasQueue %}
               <span class="bo-queue-label">Đang chờ</span>
               {% if backofficeOrdersPendingCount > 0 %}
@@ -102,6 +102,12 @@
               {% endif %}
               {% if backofficeMissionsPendingCount > 0 %}
                 <a href="/backoffice/missions"><b>{{ backofficeMissionsPendingCount }}</b>Nhận thưởng</a>
+              {% endif %}
+              {% if backofficeReferralCodesPendingCount > 0 %}
+                <a href="/backoffice/accounts"><b>{{ backofficeReferralCodesPendingCount }}</b>Đổi mã mời</a>
+              {% endif %}
+              {% if backofficeBanksPendingCount > 0 %}
+                <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
               {% endif %}
             {% else %}
               <span class="bo-queue-clear">Không còn việc chờ xử lý</span>
@@ -147,6 +153,12 @@
               {% endif %}
               {% if backofficeMissionsPendingCount > 0 %}
                 <a href="/backoffice/missions"><b>{{ backofficeMissionsPendingCount }}</b>Nhận thưởng</a>
+              {% endif %}
+              {% if backofficeReferralCodesPendingCount > 0 %}
+                <a href="/backoffice/accounts"><b>{{ backofficeReferralCodesPendingCount }}</b>Đổi mã mời</a>
+              {% endif %}
+              {% if backofficeBanksPendingCount > 0 %}
+                <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
               {% endif %}
             </div>
           {% endif %}

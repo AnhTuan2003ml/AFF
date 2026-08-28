@@ -210,6 +210,8 @@ app.addHook("preHandler", async (request, reply) => {
   let backofficeOrdersPendingCount = 0;
   let backofficeWithdrawalsPendingCount = 0;
   let backofficeMissionsPendingCount = 0;
+  let backofficeReferralCodesPendingCount = 0;
+  let backofficeBanksPendingCount = 0;
   if (
     request.currentUser &&
     request.url.startsWith("/backoffice") &&
@@ -221,6 +223,8 @@ app.addHook("preHandler", async (request, reply) => {
       orders_pending_count: string;
       withdrawals_pending_count: string;
       missions_pending_count: string;
+      referral_codes_pending_count: string;
+      banks_pending_count: string;
     }>(
       db,
       `
@@ -231,7 +235,11 @@ app.addHook("preHandler", async (request, reply) => {
             WHERE status IN ('FUNDS_HELD', 'UNKNOWN'))::text
             AS withdrawals_pending_count,
           (SELECT count(*) FROM user_mission_claims WHERE status = 'PENDING')::text
-            AS missions_pending_count
+            AS missions_pending_count,
+          (SELECT count(*) FROM referral_code_requests WHERE status = 'PENDING')::text
+            AS referral_codes_pending_count,
+          (SELECT count(*) FROM user_bank_accounts WHERE status = 'PENDING_REVIEW')::text
+            AS banks_pending_count
       `,
     );
     backofficeOrdersPendingCount = Number(
@@ -242,6 +250,12 @@ app.addHook("preHandler", async (request, reply) => {
     );
     backofficeMissionsPendingCount = Number(
       backofficeCounts.rows[0]?.missions_pending_count ?? 0,
+    );
+    backofficeReferralCodesPendingCount = Number(
+      backofficeCounts.rows[0]?.referral_codes_pending_count ?? 0,
+    );
+    backofficeBanksPendingCount = Number(
+      backofficeCounts.rows[0]?.banks_pending_count ?? 0,
     );
   }
   let unreadNotificationCount = 0;
@@ -282,6 +296,8 @@ app.addHook("preHandler", async (request, reply) => {
     backofficeOrdersPendingCount,
     backofficeWithdrawalsPendingCount,
     backofficeMissionsPendingCount,
+    backofficeReferralCodesPendingCount,
+    backofficeBanksPendingCount,
     communityZaloUrl: config.COMMUNITY_ZALO_URL,
     communityTelegramUrl: config.COMMUNITY_TELEGRAM_URL,
     currentUser: request.currentUser,

@@ -1211,6 +1211,13 @@
 .backoffice-shell .bo-side-foot-link:hover { color: #fff; background: rgba(255,255,255,.08); }
 .backoffice-shell .bo-side-foot-link svg { color: rgba(255,255,255,.7); }
 
-/* Hàng đôi nút duyệt/từ chối mã giới thiệu */
-.backoffice-shell .refcode-queue-actions { display: flex; gap: 8px; }
-.backoffice-shell .refcode-queue-actions form { margin: 0; }
+/* Hàng đôi nút duyệt/từ chối mã giới thiệu — flex trên div bọc trong td,
+   hai nút luôn cùng MỘT hàng, không xuống dòng. */
+.backoffice-shell .refcode-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.backoffice-shell .refcode-actions-row form { margin: 0; display: inline-flex; }
