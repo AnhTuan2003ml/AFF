@@ -1,12 +1,26 @@
 {% extends "app/app-base.njk" %}
 
+{% macro para(p) %}
+  {% set upper = p | upper %}
+  {% set isDieu = (p | lower | truncate(5, true, '')) == 'điều ' %}
+  {% if isDieu %}
+    <h3 class="kol-dieu">{{ p }}</h3>
+  {% elif p == upper and (p | length) < 90 %}
+    <h2 class="kol-doc-title">{{ p }}</h2>
+  {% elif p | truncate(8, true, '') == 'Độc lập' or p == 'Căn cứ:' %}
+    <p class="kol-doc-sub">{{ p }}</p>
+  {% else %}
+    <p>{{ p }}</p>
+  {% endif %}
+{% endmacro %}
+
 {% block app_content %}
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
   <section class="kol-wrap">
     <header class="kol-head">
       <span class="kol-eyebrow">ĐĂNG KÝ ĐỐI TÁC · BƯỚC 1/2</span>
       <h1>Thỏa thuận hợp tác KOL/KOC</h1>
-      <p>Vui lòng đọc kỹ toàn bộ thỏa thuận và chính sách bên dưới. Tích xác nhận ở cuối trang để tiếp tục sang bước điền hồ sơ.</p>
+      <p>Đọc lần lượt từng mục, bấm “Tiếp theo” để sang điều kế. Đọc hết rồi tích xác nhận để điền hồ sơ.</p>
     </header>
 
     {% if pendingStatus == 'PENDING' %}
@@ -19,25 +33,29 @@
         <div class="kol-status kol-status-reject"><b>Hồ sơ trước chưa được duyệt</b><p>Bạn có thể nộp lại sau khi chỉnh sửa.</p></div>
       {% endif %}
 
-      <article class="kol-doc" aria-label="Thỏa thuận hợp tác KOL/KOC" tabindex="0">
+      <nav class="kol-steps" aria-label="Các mục thỏa thuận" data-kol-steps>
+        {% for s in sections %}
+          <button type="button" class="kol-step{% if loop.first %} active{% endif %}" data-step="{{ loop.index0 }}">{{ s.label }}</button>
+        {% endfor %}
+      </nav>
+
+      <article class="kol-doc" tabindex="0" data-kol-doc>
         <div class="kol-doc-sheet">
-          {% for p in paragraphs %}
-            {% set upper = p | upper %}
-            {% set isDieu = (p | lower | truncate(5, true, '')) == 'điều ' %}
-            {% if isDieu %}
-              <h3 class="kol-dieu">{{ p }}</h3>
-            {% elif p == upper and (p | length) < 90 %}
-              <h2 class="kol-doc-title">{{ p }}</h2>
-            {% elif p | truncate(8, true, '') == 'Độc lập' or p == 'Căn cứ:' %}
-              <p class="kol-doc-sub">{{ p }}</p>
-            {% else %}
-              <p>{{ p }}</p>
-            {% endif %}
+          {% for s in sections %}
+            <div class="kol-section" data-section="{{ loop.index0 }}"{% if not loop.first %} hidden{% endif %}>
+              {% for p in s.paragraphs %}{{ para(p) }}{% endfor %}
+            </div>
           {% endfor %}
         </div>
       </article>
 
-      <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-agree-bar" id="kol-agree-form">
+      <div class="kol-pager" data-kol-pager>
+        <button type="button" class="button button-ghost kol-pager-prev" data-prev disabled>← Mục trước</button>
+        <span class="kol-pager-info" data-progress aria-live="polite"></span>
+        <button type="button" class="button button-primary kol-pager-next" data-next>Tiếp theo →</button>
+      </div>
+
+      <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-agree-bar" id="kol-agree-form" data-agree-bar hidden>
         <input type="hidden" name="dong_y" value="1">
         <label class="kol-check" for="kol-accept">
           <input type="checkbox" id="kol-accept" required>

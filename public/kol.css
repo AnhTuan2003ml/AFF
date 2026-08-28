@@ -17,6 +17,33 @@
 .kol-status-pending { background: #fff7e8; border: 1px solid #ffe0a3; }
 .kol-status-reject { background: #fdecec; border: 1px solid #f5b5b5; }
 
+/* ── Thanh bước: Mở đầu · Điều 1 · Điều 2 … ── */
+.kol-steps {
+  display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 12px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+}
+.kol-step {
+  flex: 0 0 auto; height: 34px; padding: 0 15px;
+  border: 1px solid var(--lx-line, #e2d6c6); border-radius: 999px;
+  background: var(--lx-surface, #fff); color: var(--lx-muted, #8d7e74);
+  font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.kol-step:hover { border-color: var(--lx-orange, #ee4d2d); color: var(--lx-ink, #2c1d17); }
+.kol-step.active {
+  background: var(--lx-orange, #ee4d2d); border-color: var(--lx-orange, #ee4d2d);
+  color: #fff;
+}
+
+/* ── Điều hướng đọc: Trước / tiến độ / Tiếp theo ── */
+.kol-pager {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-top: 14px;
+}
+.kol-pager-info { font-size: 13px; font-weight: 700; color: var(--lx-muted, #8d7e74); }
+.kol-pager .button { min-width: 132px; }
+.kol-pager-prev { color: var(--lx-ink, #2c1d17); }
+
 /* ── Văn bản thỏa thuận: trình bày như tài liệu hợp đồng, dễ đọc ── */
 .kol-doc {
   max-height: 72vh; overflow-y: auto;
@@ -53,9 +80,9 @@
   margin-top: 8px; border-radius: 2px;
   background: var(--lx-orange, #ee4d2d); opacity: .85;
 }
-.kol-doc-sheet > .kol-doc-title:first-child,
-.kol-doc-sheet > .kol-dieu:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-.kol-doc-sheet > .kol-dieu:first-child::after { display: none; }
+.kol-section > .kol-doc-title:first-child,
+.kol-section > .kol-dieu:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.kol-section > .kol-dieu:first-child::after { display: none; }
 
 .kol-doc-sheet p {
   font-size: 14.5px; line-height: 1.85; color: #3a302a;

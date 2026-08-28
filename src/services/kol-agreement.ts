@@ -266,3 +266,32 @@ function buildDisplayParagraphs(): string[] {
 }
 
 export const KOL_AGREEMENT_DISPLAY: readonly string[] = buildDisplayParagraphs();
+
+export interface KolAgreementSection {
+  /** Nhãn ngắn cho thanh bước: "Mở đầu", "Điều 1", "Điều 2"… */
+  label: string;
+  paragraphs: string[];
+}
+
+/**
+ * Chia nội dung thành từng mục để đọc lần lượt: mục "Mở đầu" (quốc hiệu, căn cứ,
+ * dẫn nhập) rồi mỗi ĐIỀU là một mục. Người dùng bấm "Tiếp theo" đọc từng điều.
+ */
+function buildSections(): KolAgreementSection[] {
+  const sections: KolAgreementSection[] = [];
+  let current: KolAgreementSection = { label: "Mở đầu", paragraphs: [] };
+  for (const p of KOL_AGREEMENT_DISPLAY) {
+    if (p.toLowerCase().startsWith("điều ")) {
+      if (current.paragraphs.length) sections.push(current);
+      const m = p.match(/^ĐIỀU\s+(\d+)/i);
+      current = { label: m ? `Điều ${m[1]}` : "Điều", paragraphs: [p] };
+    } else {
+      current.paragraphs.push(p);
+    }
+  }
+  if (current.paragraphs.length) sections.push(current);
+  return sections;
+}
+
+export const KOL_AGREEMENT_SECTIONS: readonly KolAgreementSection[] =
+  buildSections();

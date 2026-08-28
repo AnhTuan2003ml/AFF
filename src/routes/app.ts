@@ -26,7 +26,7 @@ import {
   toDisplayableImage,
 } from "../services/kyc-upload.js";
 import {
-  KOL_AGREEMENT_DISPLAY,
+  KOL_AGREEMENT_SECTIONS,
   KOL_AGREEMENT_VERSION,
 } from "../services/kol-agreement.js";
 import { listViewedProducts } from "../services/viewed-products.js";
@@ -1474,7 +1474,7 @@ export async function registerAppRoutes(
     return reply.view("app/kol-terms.njk", {
       pageTitle: "Đăng ký KOL/KOC",
       appSection: "referrals",
-      paragraphs: KOL_AGREEMENT_DISPLAY,
+      sections: KOL_AGREEMENT_SECTIONS,
       agreementVersion: KOL_AGREEMENT_VERSION,
       pendingStatus: kol.status,
     });
