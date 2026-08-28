@@ -3,9 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import * as Clipboard from 'expo-clipboard';
 
 import { layLenhRut } from '@/api/account';
+import { layGioiThieu } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
@@ -24,6 +27,19 @@ export default function AccountScreen() {
     queryFn: layLenhRut,
     enabled: !!user,
   });
+  // Mã giới thiệu hiện ngay dưới khối tài khoản, kèm nút chép nhanh.
+  const { data: gioiThieu } = useQuery({
+    queryKey: ['referrals'],
+    queryFn: layGioiThieu,
+    enabled: !!user,
+  });
+
+  async function chepMa() {
+    const ma = gioiThieu?.referralCode;
+    if (!ma) return;
+    await Clipboard.setStringAsync(ma);
+    Alert.alert('Đã sao chép', 'Gửi mã này cho bạn bè để họ nhập lúc đăng ký.');
+  }
 
   if (!user) {
     return (
@@ -63,6 +79,24 @@ export default function AccountScreen() {
             <Text style={styles.email}>{user.email}</Text>
           </View>
         </View>
+
+        {/* Mã giới thiệu ngay dưới khối tài khoản + nút chép — vào tab là thấy. */}
+        <Pressable
+          onPress={() => router.push('/referrals')}
+          style={({ pressed }) => [styles.refBox, pressed && { opacity: 0.85 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.refLabel}>Mã giới thiệu của bạn</Text>
+            <Text style={styles.refCode}>{gioiThieu?.referralCode ?? '…'}</Text>
+          </View>
+          <Pressable
+            onPress={chepMa}
+            disabled={!gioiThieu?.referralCode}
+            hitSlop={8}
+            style={({ pressed }) => [styles.refCopy, pressed && { opacity: 0.7 }]}>
+            <Ionicons name="copy-outline" size={16} color={colors.onBrand} />
+            <Text style={styles.refCopyText}>Chép</Text>
+          </Pressable>
+        </Pressable>
 
         <Text style={styles.h2}>Thao tác</Text>
         <View style={styles.card}>
@@ -205,6 +239,35 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
   },
+  refBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 10,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.brandSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.brandLine,
+  },
+  refLabel: { fontSize: 11.5, color: colors.muted, fontWeight: '700' },
+  refCode: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: colors.brand,
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  refCopy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brand,
+  },
+  refCopyText: { color: colors.onBrand, fontWeight: '800', fontSize: 13 },
   avatar: {
     width: 54,
     height: 54,
