@@ -169,4 +169,56 @@ export class EmailService {
       html: mail.html,
     });
   }
+
+  /**
+   * Gửi bản hợp đồng hợp tác KOL/KOC (PDF ký điện tử) về email tài khoản sau khi
+   * hồ sơ được duyệt. Không có SMTP (dev) thì chỉ log, không ném lỗi.
+   */
+  async sendKolContract(params: {
+    to: string;
+    fullName: string;
+    pdf: Buffer;
+  }): Promise<void> {
+    const subject = `Hợp đồng hợp tác KOL/KOC ${this.config.APP_NAME}`;
+    if (!this.transporter) {
+      if (this.config.NODE_ENV !== "production") {
+        console.info(
+          `[EMAIL DEV] ${params.to} | ${subject} | PDF ${params.pdf.length} bytes`,
+        );
+      }
+      return;
+    }
+    const safeName = escapeHtml(params.fullName);
+    await this.transporter.sendMail({
+      from: {
+        name: this.config.SMTP_FROM_NAME,
+        address: this.config.SMTP_FROM_EMAIL,
+      },
+      to: params.to,
+      subject,
+      text: [
+        `Xin chào ${params.fullName},`,
+        "",
+        `Chúc mừng! Hồ sơ đăng ký KOL/KOC của bạn đã được ${this.config.APP_NAME} phê duyệt.`,
+        "Bản hợp đồng hợp tác (ký điện tử) được đính kèm trong email này ở định dạng PDF. Vui lòng lưu lại để đối chiếu khi cần.",
+        "",
+        `Trân trọng, ${this.config.APP_NAME}.`,
+      ].join("\n"),
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f2544">
+          <h1 style="font-size:22px">Chúc mừng, ${safeName}!</h1>
+          <p>Hồ sơ đăng ký <b>KOL/KOC</b> của bạn đã được ${escapeHtml(this.config.APP_NAME)} <b>phê duyệt</b>. Bạn đã trở thành đối tác đặc biệt.</p>
+          <p>Bản <b>hợp đồng hợp tác (ký điện tử)</b> được đính kèm email này ở định dạng PDF. Vui lòng lưu lại để đối chiếu khi cần.</p>
+          <p style="color:#5b6b85">Trân trọng,<br>${escapeHtml(this.config.APP_NAME)}</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: "Hop-dong-hop-tac-KOL-KOC-ShopTik.pdf",
+          content: params.pdf,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+  }
 }

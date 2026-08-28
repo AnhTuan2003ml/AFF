@@ -136,6 +136,11 @@
               <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
               <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
               <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
+              {% if currentUser.isSpecialPartner %}
+                <a href="/app/dang-ky-kol">{{ icon('user') }}<span>Đối tác KOL/KOC ✓</span></a>
+              {% else %}
+                <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>Đăng ký KOL/KOC</span></a>
+              {% endif %}
               <button type="button" class="st-menu-checkin" data-checkin-open><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg><span>Điểm danh</span></button>
               {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>Trang quản trị</span></a>{% endif %}
               <div class="st-menu-divider" role="separator"></div>

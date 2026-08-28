@@ -8,6 +8,7 @@ export interface CurrentUser {
   status: "PENDING_EMAIL" | "ACTIVE" | "LOCKED" | "DISABLED";
   referralCode: string;
   avatarUrl: string;
+  isSpecialPartner?: boolean;
 }
 
 declare module "fastify" {

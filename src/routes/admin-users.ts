@@ -23,6 +23,7 @@ import {
   getKolFile,
   listKolApplications,
 } from "../services/kol-application.js";
+import { buildKolContractPdf } from "../services/kol-contract.js";
 import {
   flashAdminError,
   pageNumber,
@@ -801,12 +802,39 @@ export async function registerAdminUserRoutes(
           targetId: result.userId,
           after: { fullName: result.fullName, cccd: app0?.cccd_number },
         });
+        // Duyệt xong: gửi hợp đồng hợp tác (PDF ký điện tử) về email tài khoản.
+        // Lỗi gửi mail KHÔNG được chặn việc duyệt — chỉ ghi log.
+        let mailNote = "";
+        if (approve && app0) {
+          const to = app0.account_email ?? app0.email ?? undefined;
+          if (to) {
+            try {
+              const pdf = await buildKolContractPdf(app0, {
+                signedAt: app0.created_at,
+                approvedAt: new Date(),
+                appOrigin: deps.config.APP_ORIGIN,
+              });
+              await deps.emailService.sendKolContract({
+                to,
+                fullName: result.fullName,
+                pdf,
+              });
+              mailNote = ` Đã gửi hợp đồng tới ${to}.`;
+            } catch (mailError) {
+              request.log.error(
+                { err: mailError },
+                "Gửi hợp đồng KOL/KOC thất bại",
+              );
+              mailNote = " (Lưu ý: gửi email hợp đồng chưa thành công.)";
+            }
+          }
+        }
         setFlash(
           reply,
           deps.config,
           "success",
           approve
-            ? `Đã duyệt KOL/KOC "${result.fullName}" — người dùng thành đối tác đặc biệt.`
+            ? `Đã duyệt KOL/KOC "${result.fullName}" — người dùng thành đối tác đặc biệt.${mailNote}`
             : `Đã từ chối hồ sơ "${result.fullName}".`,
         );
       } catch (error) {
