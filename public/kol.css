@@ -17,28 +17,86 @@
 .kol-status-pending { background: #fff7e8; border: 1px solid #ffe0a3; }
 .kol-status-reject { background: #fdecec; border: 1px solid #f5b5b5; }
 
-/* Điều khoản: khu cuộn riêng, dễ đọc. */
-.kol-terms {
-  max-height: 52vh; overflow-y: auto;
+/* ── Văn bản thỏa thuận: trình bày như tài liệu hợp đồng, dễ đọc ── */
+.kol-doc {
+  max-height: 62vh; overflow-y: auto;
   border: 1px solid var(--lx-line, #eadfce); border-radius: 18px;
-  background: var(--lx-surface, #fff); padding: 22px 24px;
+  background: #f4f1ec; padding: 20px;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
-.kol-terms h3 { font-size: 15px; font-weight: 800; text-align: center; margin: 14px 0 6px; color: var(--lx-ink); }
-.kol-terms h4 { font-size: 14.5px; font-weight: 800; margin: 18px 0 4px; color: var(--lx-orange, #ee4d2d); }
-.kol-terms p { font-size: 13.5px; line-height: 1.62; color: #4a3a30; margin: 6px 0; }
+.kol-doc:focus-visible { outline: 2px solid var(--lx-orange, #ee4d2d); outline-offset: 2px; }
+/* "Tờ giấy" trắng để nội dung nổi trên nền, giống bản in. */
+.kol-doc-sheet {
+  max-width: 720px; margin: 0 auto;
+  background: #fff; border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(44, 29, 23, .08);
+  padding: 34px 40px;
+}
+.kol-doc-title {
+  font-size: 15px; font-weight: 800; text-align: center;
+  letter-spacing: .01em; color: var(--lx-ink, #2c1d17);
+  margin: 4px 0; line-height: 1.4;
+}
+.kol-doc-title + .kol-doc-title { margin-top: 0; }
+.kol-doc-sub { text-align: center; font-size: 13px; color: #6b5a4e; margin: 2px 0 10px; }
+.kol-dieu {
+  font-size: 14px; font-weight: 800; color: var(--lx-ink, #2c1d17);
+  margin: 22px 0 8px; padding-top: 14px;
+  border-top: 1px solid #efe6d8;
+}
+.kol-doc-sheet > .kol-doc-title:first-child,
+.kol-doc-sheet > .kol-dieu:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.kol-doc-sheet p {
+  font-size: 13.5px; line-height: 1.72; color: #3d3128;
+  margin: 8px 0; text-align: justify;
+}
 
+/* ── Thanh xác nhận: checkbox thẳng hàng với chữ, nút cùng khối ── */
 .kol-agree-bar {
-  margin-top: 18px; padding: 16px 18px;
-  border: 1px solid var(--lx-line, #eadfce); border-radius: 18px;
+  position: sticky; bottom: 12px; z-index: 2;
+  margin-top: 16px; padding: 16px 20px;
+  border: 1px solid var(--lx-line, #eadfce); border-radius: 16px;
   background: var(--lx-surface, #fff);
-  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 8px 28px rgba(44, 29, 23, .1);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap;
 }
-.kol-check { display: flex; gap: 11px; align-items: flex-start; cursor: pointer; }
-.kol-check input { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--lx-orange, #ee4d2d); flex: 0 0 auto; }
-.kol-check span { font-size: 14px; line-height: 1.5; color: var(--lx-ink); }
-.kol-continue { align-self: flex-end; min-width: 160px; }
-.kol-continue:disabled { opacity: .45; }
+.kol-check {
+  position: relative; flex: 1 1 320px; min-width: 0;
+  display: grid; grid-template-columns: 24px 1fr; column-gap: 12px;
+  align-items: center; cursor: pointer;
+}
+/* Ẩn ô gốc nhưng vẫn focus được; ô hiển thị là .kol-check-box. */
+.kol-check input {
+  position: absolute; top: 0; left: 0;
+  width: 24px; height: 24px; margin: 0; opacity: 0; cursor: pointer;
+}
+.kol-check-box {
+  width: 24px; height: 24px; border: 2px solid #d4c6b4; border-radius: 7px;
+  background: #fff; display: grid; place-items: center;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.kol-check-box::after {
+  content: "✓"; color: #fff; font-size: 15px; font-weight: 800;
+  line-height: 1; opacity: 0; transition: opacity .12s ease;
+}
+.kol-check input:checked ~ .kol-check-box {
+  background: var(--lx-orange, #ee4d2d); border-color: var(--lx-orange, #ee4d2d);
+}
+.kol-check input:checked ~ .kol-check-box::after { opacity: 1; }
+.kol-check input:focus-visible ~ .kol-check-box {
+  box-shadow: 0 0 0 4px rgba(238, 77, 45, .18);
+}
+.kol-check-text { font-size: 14px; line-height: 1.5; color: var(--lx-ink, #2c1d17); }
+.kol-continue { flex: 0 0 auto; min-width: 200px; }
+.kol-continue:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 560px) {
+  .kol-doc-sheet { padding: 24px 20px; }
+  .kol-agree-bar { flex-direction: column; align-items: stretch; }
+  .kol-continue { width: 100%; }
+}
 
 /* ── Form (iOS style) ── */
 .kol-form { display: flex; flex-direction: column; gap: 16px; }
@@ -119,3 +177,24 @@
 @media (max-width: 820px) {
   .kol-admin-body { grid-template-columns: 1fr; }
 }
+
+/* Bên A: admin điền trước khi duyệt → in vào hợp đồng. */
+.kol-partya {
+  margin-top: 14px; padding: 14px 16px;
+  border: 1px solid #ffe0a3; border-radius: 12px; background: #fffaf0;
+}
+.kol-partya-title { margin: 0 0 10px; font-size: 12.5px; font-weight: 800; color: #9a6b12; }
+.kol-partya-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.kol-partya-grid .kol-col-2 { grid-column: 1 / -1; }
+.kol-partya-grid label { display: flex; flex-direction: column; gap: 4px; }
+.kol-partya-grid span { font-size: 11px; font-weight: 700; color: #6b5a4e; }
+.kol-partya-grid input {
+  height: 38px; padding: 0 11px; border: 1px solid #e2d6c6; border-radius: 9px;
+  font-size: 13px; background: #fff;
+}
+.kol-partya-grid input:focus {
+  outline: none; border-color: var(--lx-orange, #ee4d2d);
+  box-shadow: 0 0 0 3px rgba(238, 77, 45, .12);
+}
+.kol-partya .kol-admin-actions { margin-top: 12px; }
+@media (max-width: 560px) { .kol-partya-grid { grid-template-columns: 1fr; } }

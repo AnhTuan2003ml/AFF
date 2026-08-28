@@ -242,3 +242,27 @@ export const KOL_AGREEMENT_PARAGRAPHS: readonly string[] = [
   "Họ tên: __________________________",
   "Lưu ý sử dụng: Đây là mẫu thỏa thuận khung. Trước khi phát hành chính thức, cần điền đầy đủ thông tin pháp nhân, MST, người đại diện, ngưỡng/lịch thanh toán, kênh hỗ trợ và chính sách chiến dịch; nên được bộ phận pháp chế/luật sư rà soát theo mô hình vận hành thực tế của doanh nghiệp."
 ];
+
+/**
+ * Bản CHỈ ĐỂ ĐỌC hiển thị ở bước 1: giữ phần mở đầu (quốc hiệu, tiêu đề, căn cứ)
+ * và toàn bộ các ĐIỀU khoản; LƯỢC BỎ bảng thông tin Bên A/Bên B và các Phụ lục
+ * vì đó chỉ là khung có ô trống để điền — không phải nội dung để người dùng đọc.
+ * Thông tin Bên B điền ở bước 2, Bên A do admin điền khi duyệt (in vào PDF).
+ */
+function buildDisplayParagraphs(): string[] {
+  const all = KOL_AGREEMENT_PARAGRAPHS;
+  const partyStart = all.findIndex((p) => p.startsWith("Hôm nay, ngày"));
+  const clauseStart = all.findIndex((p) =>
+    p.startsWith("Bên A và Bên B sau đây gọi riêng"),
+  );
+  const appendixStart = all.findIndex((p) => p === "PHỤ LỤC 01");
+  if (partyStart < 0 || clauseStart <= partyStart || appendixStart <= clauseStart) {
+    return [...all];
+  }
+  return [
+    ...all.slice(0, partyStart),
+    ...all.slice(clauseStart, appendixStart),
+  ].filter((p) => !p.startsWith("Số:"));
+}
+
+export const KOL_AGREEMENT_DISPLAY: readonly string[] = buildDisplayParagraphs();

@@ -21,7 +21,7 @@ import {
   submitKolApplication,
 } from "../services/kol-application.js";
 import {
-  KOL_AGREEMENT_PARAGRAPHS,
+  KOL_AGREEMENT_DISPLAY,
   KOL_AGREEMENT_VERSION,
 } from "../services/kol-agreement.js";
 import { listViewedProducts } from "../services/viewed-products.js";
@@ -1497,7 +1497,7 @@ export async function registerAppRoutes(
     return reply.view("app/kol-terms.njk", {
       pageTitle: "Đăng ký KOL/KOC",
       appSection: "referrals",
-      paragraphs: KOL_AGREEMENT_PARAGRAPHS,
+      paragraphs: KOL_AGREEMENT_DISPLAY,
       agreementVersion: KOL_AGREEMENT_VERSION,
       pendingStatus: kol.status,
     });

@@ -41,17 +41,28 @@
     </div>
 
     {% if not decided %}
+      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-partya" data-confirm-form data-confirm-message="Duyệt hồ sơ KOL/KOC của {{ a.full_name }}? Hệ thống sẽ gửi hợp đồng ký số về email người đăng ký.">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="decision" value="approve">
+        <p class="kol-partya-title">Thông tin Bên A (in vào hợp đồng gửi người đăng ký)</p>
+        <div class="kol-partya-grid">
+          <label><span>Tên pháp nhân</span><input type="text" name="partyALegalName" placeholder="VD: Công ty TNHH ShopTik" maxlength="200"></label>
+          <label><span>Mã số thuế</span><input type="text" name="partyATaxCode" maxlength="200"></label>
+          <label class="kol-col-2"><span>Địa chỉ trụ sở</span><input type="text" name="partyAAddress" maxlength="200"></label>
+          <label><span>Người đại diện</span><input type="text" name="partyARep" maxlength="200"></label>
+          <label><span>Chức vụ</span><input type="text" name="partyATitle" maxlength="200"></label>
+          <label class="kol-col-2"><span>Điện thoại / Email</span><input type="text" name="partyAContact" maxlength="200"></label>
+        </div>
+        <div class="kol-admin-actions">
+          <button type="submit" class="button button-primary button-small">Phê duyệt &amp; gửi hợp đồng</button>
+        </div>
+      </form>
       <footer class="kol-admin-actions">
         <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-reject-form">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
           <input type="hidden" name="decision" value="reject">
           <input type="text" name="reason" placeholder="Lý do từ chối (tùy chọn)" maxlength="300">
           <button type="submit" class="button button-ghost button-small">Từ chối</button>
-        </form>
-        <form method="post" action="/backoffice/kol/{{ a.id }}/decide" data-confirm-form data-confirm-message="Duyệt hồ sơ KOL/KOC của {{ a.full_name }}? Người dùng sẽ thành đối tác đặc biệt.">
-          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-          <input type="hidden" name="decision" value="approve">
-          <button type="submit" class="button button-primary button-small">Phê duyệt</button>
         </form>
       </footer>
     {% elif a.reject_reason %}

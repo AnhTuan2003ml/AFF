@@ -809,10 +809,24 @@ export async function registerAdminUserRoutes(
           const to = app0.account_email ?? app0.email ?? undefined;
           if (to) {
             try {
+              const str = (k: string) => {
+                const v = body[k];
+                return typeof v === "string" && v.trim()
+                  ? v.trim().slice(0, 200)
+                  : undefined;
+              };
               const pdf = await buildKolContractPdf(app0, {
                 signedAt: app0.created_at,
                 approvedAt: new Date(),
                 appOrigin: deps.config.APP_ORIGIN,
+                partyA: {
+                  legalName: str("partyALegalName"),
+                  taxCode: str("partyATaxCode"),
+                  address: str("partyAAddress"),
+                  representative: str("partyARep"),
+                  title: str("partyATitle"),
+                  contact: str("partyAContact"),
+                },
               });
               await deps.emailService.sendKolContract({
                 to,

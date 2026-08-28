@@ -28,9 +28,23 @@ function signatureId(appId: string): string {
  * Bên A (ShopTik) ký bằng thao tác duyệt của quản trị viên. Font Roboto nhúng
  * sẵn nên tiếng Việt hiển thị đúng dấu.
  */
+export interface KolPartyA {
+  legalName?: string | undefined;
+  taxCode?: string | undefined;
+  address?: string | undefined;
+  representative?: string | undefined;
+  title?: string | undefined;
+  contact?: string | undefined;
+}
+
 export function buildKolContractPdf(
   app: KolApplicationRow,
-  opts: { signedAt: Date; approvedAt: Date; appOrigin: string },
+  opts: {
+    signedAt: Date;
+    approvedAt: Date;
+    appOrigin: string;
+    partyA?: KolPartyA;
+  },
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -73,8 +87,15 @@ export function buildKolContractPdf(
     const line = (t: string) =>
       doc.font("vn").fontSize(10.5).fillColor("#1f2937").text(t);
 
-    label("BÊN A — ShopTik (Bên tổ chức nền tảng)");
-    line("Nền tảng hoàn tiền & tiếp thị liên kết ShopTik.");
+    const a = opts.partyA ?? {};
+    label("BÊN A — Đơn vị vận hành nền tảng ShopTik");
+    line(`Tên pháp nhân: ${a.legalName || "ShopTik"}`);
+    if (a.taxCode) line(`Mã số thuế: ${a.taxCode}`);
+    if (a.address) line(`Địa chỉ trụ sở: ${a.address}`);
+    if (a.representative)
+      line(`Đại diện: ${a.representative}${a.title ? ` — ${a.title}` : ""}`);
+    if (a.contact) line(`Điện thoại / Email: ${a.contact}`);
+    line("Tên nền tảng: ShopTik.");
     doc.moveDown(0.5);
 
     label("BÊN B — Đối tác KOL/KOC");
