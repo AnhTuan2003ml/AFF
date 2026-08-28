@@ -1,10 +1,16 @@
 /**
- * Dieu khoan Thoa thuan hop tac KOL/KOC ShopTik (tu
- * Thoa_thuan_hop_tac_KOL_KOC_ShopTik_V2.docx). Hien thi o buoc 1 dang ky KOL/KOC.
+ * Dieu khoan Thoa thuan hop tac KOL/KOC ShopTik. Nguồn nội dung LÀ file mẫu
+ * templates/mau-hop-dong-kol-koc.docx — đọc trực tiếp lúc khởi động để trang đọc
+ * điều khoản luôn khớp với file hợp đồng; mảng dưới đây chỉ là bản DỰ PHÒNG khi
+ * đọc file lỗi.
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import PizZip from "pizzip";
+
 export const KOL_AGREEMENT_VERSION = 2;
 
-export const KOL_AGREEMENT_PARAGRAPHS: readonly string[] = [
+const FALLBACK_PARAGRAPHS: readonly string[] = [
   "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
   "Độc lập - Tự do - Hạnh phúc",
   "THỎA THUẬN HỢP TÁC KOL/KOC",
@@ -242,6 +248,50 @@ export const KOL_AGREEMENT_PARAGRAPHS: readonly string[] = [
   "Họ tên: __________________________",
   "Lưu ý sử dụng: Đây là mẫu thỏa thuận khung. Trước khi phát hành chính thức, cần điền đầy đủ thông tin pháp nhân, MST, người đại diện, ngưỡng/lịch thanh toán, kênh hỗ trợ và chính sách chiến dịch; nên được bộ phận pháp chế/luật sư rà soát theo mô hình vận hành thực tế của doanh nghiệp."
 ];
+
+/** Trích text từng đoạn (<w:p>) của file mẫu .docx theo đúng thứ tự. */
+function extractDocxParagraphs(): string[] {
+  const file = path.join(
+    process.cwd(),
+    "templates",
+    "mau-hop-dong-kol-koc.docx",
+  );
+  const zip = new PizZip(readFileSync(file));
+  const xml = zip.file("word/document.xml")?.asText() ?? "";
+  const decode = (s: string): string =>
+    s
+      .replace(/<w:tab[^>]*\/>/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_m, n) => String.fromCharCode(Number(n)));
+  const paras: string[] = [];
+  for (const block of xml.split(/<\/w:p>/)) {
+    const texts = [...block.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)].map((m) =>
+      decode(m[1] ?? ""),
+    );
+    const line = texts.join("").trim();
+    if (line) paras.push(line);
+  }
+  return paras;
+}
+
+/**
+ * Nội dung điều khoản = đọc trực tiếp từ file mẫu .docx (nguồn duy nhất, để sửa
+ * docx là trang đọc cập nhật theo). Lỗi đọc file thì dùng bản dự phòng hardcode.
+ */
+function loadParagraphs(): readonly string[] {
+  try {
+    const p = extractDocxParagraphs();
+    return p.length > 20 ? p : FALLBACK_PARAGRAPHS;
+  } catch {
+    return FALLBACK_PARAGRAPHS;
+  }
+}
+
+export const KOL_AGREEMENT_PARAGRAPHS: readonly string[] = loadParagraphs();
 
 /**
  * Bản CHỈ ĐỂ ĐỌC hiển thị ở bước 1: giữ phần mở đầu (quốc hiệu, tiêu đề, căn cứ)
