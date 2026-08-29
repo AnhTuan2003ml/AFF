@@ -4248,13 +4248,38 @@ label small {
   }
 
   .mission-row {
-    grid-template-columns: 38px 1fr
+    grid-template-columns: 38px 1fr auto;
+    grid-template-areas:
+      "icon main main"
+      ". reward action";
+    row-gap: 10px;
+    column-gap: 12px;
+    align-items: center
   }
 
-  .mission-row-reward,
+  .mission-row-icon { grid-area: icon }
+  .mission-row-main { grid-area: main }
+
+  .mission-row-reward {
+    grid-area: reward;
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 6px
+  }
+
+  .mission-row-reward span,
+  .mission-row-reward b {
+    display: inline
+  }
+
+  .mission-row-reward .mission-reward-gift {
+    display: none
+  }
+
   .mission-row-action {
-    grid-column: 2;
-    text-align: left
+    grid-area: action;
+    justify-self: end
   }
 
   .orders-history-hero {

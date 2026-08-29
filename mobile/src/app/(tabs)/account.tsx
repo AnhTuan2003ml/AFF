@@ -119,7 +119,7 @@ export default function AccountScreen() {
           />
           <MenuRow
             icon="flag-outline"
-            label="Nhiệm vụ"
+            label="Nhiệm vụ nhận thưởng"
             onPress={() => router.push('/missions')}
             divider
           />
@@ -139,6 +139,12 @@ export default function AccountScreen() {
             icon="people-outline"
             label="Giới thiệu bạn bè"
             onPress={() => router.push('/referrals')}
+            divider
+          />
+          <MenuRow
+            icon="chatbubbles-outline"
+            label="Hỗ trợ & khiếu nại"
+            onPress={() => router.push('/support')}
             divider
           />
         </View>

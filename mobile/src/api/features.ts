@@ -86,6 +86,21 @@ export function layNhiemVu() {
   return apiFetch<MissionOverview>('/api/v1/missions');
 }
 
+/** Khớp MissionReferralPerson ở backend. */
+export interface MissionReferralPerson {
+  fullName: string;
+  joinedAt: string;
+  active: boolean;
+  approvedOrders: number;
+  qualified: boolean;
+}
+
+export function layNguoiMoi() {
+  return apiFetch<{ people: MissionReferralPerson[] }>(
+    '/api/v1/missions/referral-people',
+  );
+}
+
 export function nhanThuong(missionDefinitionId: string) {
   return apiFetch<{ status: string }>('/api/v1/missions/claim', {
     method: 'POST',

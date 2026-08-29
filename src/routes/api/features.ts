@@ -8,6 +8,7 @@ import {
   claimMissionReward,
   getUnreadNotificationCount,
   getUserMissionOverview,
+  listMissionReferralPeople,
   listNotifications,
   markAllNotificationsRead,
 } from "../../services/mission.js";
@@ -68,6 +69,19 @@ export async function registerFeatureApiRoutes(
   app.get("/missions", { preHandler: requireApiUser }, async (request) => {
     return getUserMissionOverview(deps.db, request.currentUser!.id);
   });
+
+  // Danh sách từng người đã mời (để app phân biệt được từng người, khớp web).
+  app.get(
+    "/missions/referral-people",
+    { preHandler: requireApiUser },
+    async (request) => {
+      const people = await listMissionReferralPeople(
+        deps.db,
+        request.currentUser!.id,
+      );
+      return { people };
+    },
+  );
 
   app.post("/missions/claim", { preHandler: requireApiUser }, async (request) => {
     const input = parseInput(

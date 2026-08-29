@@ -2,11 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { layNhiemVu, nhanThuong, type MissionGroup, type MissionItem } from '@/api/features';
+import {
+  layNhiemVu,
+  layNguoiMoi,
+  nhanThuong,
+  type MissionGroup,
+  type MissionItem,
+  type MissionReferralPerson,
+} from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
-import { vnd } from '@/lib/format';
+import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -27,6 +34,11 @@ export default function MissionsScreen() {
   const { data, isPending } = useQuery({
     queryKey: ['missions'],
     queryFn: layNhiemVu,
+    enabled: !!user,
+  });
+  const { data: nguoiMoi } = useQuery({
+    queryKey: ['mission-referral-people'],
+    queryFn: layNguoiMoi,
     enabled: !!user,
   });
 
@@ -57,6 +69,18 @@ export default function MissionsScreen() {
             dangNhan={nhan.isPending}
           />
         ))
+      )}
+
+      {nguoiMoi && nguoiMoi.people.length > 0 && (
+        <View style={styles.people}>
+          <View style={styles.peopleHead}>
+            <Text style={styles.groupTitle}>Người bạn đã mời</Text>
+            <Text style={styles.peopleCount}>{nguoiMoi.people.length} người</Text>
+          </View>
+          {nguoiMoi.people.map((p, i) => (
+            <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} />
+          ))}
+        </View>
       )}
     </FormScreen>
   );
@@ -142,8 +166,69 @@ function Moc({
   );
 }
 
+function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
+  return (
+    <View style={[styles.person, !dau && styles.personDivider]}>
+      <View style={[styles.personAvatar, !p.qualified && styles.personAvatarOff]}>
+        <Text style={styles.personAvatarText}>
+          {(p.fullName || '?').charAt(0).toUpperCase()}
+        </Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.personName} numberOfLines={1}>
+          {p.fullName}
+        </Text>
+        <Text style={styles.personMeta}>
+          Tham gia {ngay(p.joinedAt)}
+          {p.approvedOrders > 0 ? ` · ${p.approvedOrders} đơn đã duyệt` : ''}
+        </Text>
+      </View>
+      <View style={[styles.badge, p.qualified ? styles.badgeOk : styles.badgeWait]}>
+        <Text style={[styles.badgeText, p.qualified ? styles.badgeTextOk : styles.badgeTextWait]}>
+          {p.qualified ? 'Đã tính' : 'Chờ xác nhận'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   loading: { fontSize: 13, color: colors.muted, paddingVertical: 20 },
+  people: {
+    marginTop: 4,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  peopleHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 6,
+  },
+  peopleCount: { fontSize: 12.5, fontWeight: '800', color: colors.brand },
+  person: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+  personDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  personAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  personAvatarOff: { backgroundColor: colors.muted },
+  personAvatarText: { color: '#fff', fontSize: 15, fontWeight: '900' },
+  personName: { fontSize: 14, fontWeight: '800', color: colors.text },
+  personMeta: { fontSize: 11.5, color: colors.muted, marginTop: 2 },
+  badge: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999 },
+  badgeOk: { backgroundColor: colors.successSoft },
+  badgeWait: { backgroundColor: colors.surfaceMuted },
+  badgeText: { fontSize: 10.5, fontWeight: '800' },
+  badgeTextOk: { color: colors.success },
+  badgeTextWait: { color: colors.muted },
   group: { marginBottom: spacing.lg },
   groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   groupTitle: { fontSize: 16, fontWeight: '900', color: colors.text },
