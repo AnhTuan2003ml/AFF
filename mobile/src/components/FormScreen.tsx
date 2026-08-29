@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
  * Khung chung cho các màn hình biểu mẫu mở dạng tờ giấy (Đăng ký, Quên mật
@@ -62,7 +62,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
+    ...shadow.card,
   },
-  title: { fontSize: 30, fontWeight: '900', color: colors.text, letterSpacing: -1.2 },
+  title: { fontSize: 25, fontWeight: '800', color: colors.text, letterSpacing: -0.6 },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 4, marginBottom: 20, lineHeight: 19 },
 });

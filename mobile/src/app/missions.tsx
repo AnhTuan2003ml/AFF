@@ -16,7 +16,7 @@ import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
  * Nhiệm vụ — hai nhóm mốc (mời bạn / mua sắm) chuyển bằng tab segmented, giống
@@ -150,11 +150,11 @@ function Moc({
   const daNhan = m.claimStatus === 'CLAIMED' || m.claimStatus === 'PAID';
   return (
     <View style={styles.item}>
-      <View style={[styles.itemIcon, { backgroundColor: daNhan ? colors.successSoft : colors.surfaceMuted }]}>
+      <View style={[styles.itemIcon, { backgroundColor: daNhan ? colors.successSoft : colors.brandSoft }]}>
         <Ionicons
-          name={daNhan ? 'checkmark-circle' : 'flag-outline'}
-          size={17}
-          color={daNhan ? colors.success : colors.muted}
+          name={daNhan ? 'checkmark-circle' : 'trophy-outline'}
+          size={18}
+          color={daNhan ? colors.success : colors.brand}
         />
       </View>
       <View style={{ flex: 1 }}>
@@ -224,20 +224,25 @@ const styles = StyleSheet.create({
   },
   tabBtnActive: {
     backgroundColor: colors.brand,
+    shadowColor: colors.brand,
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   tabText: { fontSize: 13.5, fontWeight: '800', color: colors.muted },
   tabTextActive: { color: colors.onBrand },
 
-  meterHead: { marginBottom: 10 },
-  meterValue: { fontSize: 24, fontWeight: '900', color: colors.brand, letterSpacing: -0.6 },
+  meterHead: { marginBottom: 12 },
+  meterValue: { fontSize: 27, fontWeight: '900', color: colors.brand, letterSpacing: -0.8 },
   bar: {
-    height: 8,
-    borderRadius: 4,
+    height: 9,
+    borderRadius: 999,
     backgroundColor: colors.surfaceMuted,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  barFill: { height: '100%', backgroundColor: colors.brand, borderRadius: 4 },
+  barFill: { height: '100%', backgroundColor: colors.brand, borderRadius: 999 },
   note: { fontSize: 12.5, color: colors.muted, marginBottom: 8 },
 
   list: { marginTop: 6 },
@@ -249,7 +254,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
   },
-  itemIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  itemIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   itemTitle: { fontSize: 14.5, fontWeight: '800', color: colors.text },
   itemReward: { fontSize: 12.5, fontWeight: '800', color: colors.success, marginTop: 3 },
   itemState: { fontSize: 12.5, fontWeight: '800', color: colors.muted },
@@ -264,10 +269,11 @@ const styles = StyleSheet.create({
   people: {
     marginTop: 18,
     padding: spacing.md,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.paper,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
+    ...shadow.card,
   },
   peopleHead: {
     flexDirection: 'row',
@@ -299,12 +305,17 @@ const styles = StyleSheet.create({
   badgeTextWait: { color: colors.muted },
 
   cta: {
-    marginTop: 20,
-    height: 50,
-    borderRadius: radius.sm,
+    marginTop: 22,
+    height: 52,
+    borderRadius: radius.md,
     backgroundColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.brand,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
-  ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 15 },
+  ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 15, letterSpacing: 0.2 },
 });

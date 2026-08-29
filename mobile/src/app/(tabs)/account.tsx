@@ -16,7 +16,7 @@ import { Mascot } from '@/components/Mascot';
 import { CAMIO_VOICE } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
 import { ngay, vnd } from '@/lib/format';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 export default function AccountScreen() {
   const { user, dangXuat } = useSession();
@@ -234,9 +234,11 @@ function MenuRow({
         divider && styles.menuDivider,
         pressed && { opacity: 0.6 },
       ]}>
-      <Ionicons name={icon} size={19} color={colors.brand} />
+      <View style={styles.menuIcon}>
+        <Ionicons name={icon} size={18} color={colors.brand} />
+      </View>
       <Text style={styles.menuLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={17} color={colors.muted} />
+      <Ionicons name="chevron-forward" size={17} color={colors.lineStrong} />
     </Pressable>
   );
 }
@@ -244,8 +246,8 @@ function MenuRow({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
   content: { padding: spacing.md, paddingBottom: spacing.xl, gap: 12 },
-  h1: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -1 },
-  h2: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 8 },
+  h1: { fontSize: 25, fontWeight: '800', color: colors.text, letterSpacing: -0.6 },
+  h2: { fontSize: 14, fontWeight: '800', color: colors.inkSoft, marginTop: 8, letterSpacing: 0.2 },
 
   profile: {
     flexDirection: 'row',
@@ -256,6 +258,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
+    ...shadow.card,
   },
   refBox: {
     flexDirection: 'row',
@@ -304,10 +307,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
     paddingHorizontal: spacing.md,
+    ...shadow.card,
   },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15 },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 13 },
   menuDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  menuLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.brandSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuLabel: { flex: 1, fontSize: 14.5, fontWeight: '700', color: colors.text },
 
   rutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   rutDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
