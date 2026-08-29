@@ -110,6 +110,112 @@ export function parseLazadaAffiliateFeed(
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * Feed DANH SÁCH cho trang Khám phá (mục Lazada). Dùng CHUNG endpoint
+ * /marketing/product/feed nhưng KHÔNG lọc productIds → trả cả trang sản phẩm
+ * affiliate (hoa hồng thật). API không có tham số sort nên "hot" (hoa hồng
+ * cao) / "best" (bán chạy 7 ngày) do phía server sắp xếp lại trong trang.
+ * ------------------------------------------------------------------ */
+
+export interface LazadaOfferProduct {
+  itemId: string;
+  name: string;
+  imageUrl: string | null;
+  priceVnd: number | null;
+  commissionRateBps: number | null;
+  commissionVnd: number | null;
+  shopName: string | null;
+  productUrl: string;
+  salesCount: number | null;
+}
+
+/** URL sản phẩm chỉ cần mang itemId để preview/purchase tách ra được. */
+function lazadaProductUrl(itemId: string): string {
+  return `https://www.lazada.vn/products/p-i${itemId}.html`;
+}
+
+function mapFeedItemToOffer(item: JsonObject): LazadaOfferProduct | null {
+  const itemId = optionalString(item.productId);
+  const name = optionalString(item.productName);
+  if (!itemId || !name) return null;
+  const images = Array.isArray(item.pictures) ? item.pictures : [];
+  const sales = Number(item.sales7d);
+  return {
+    itemId,
+    name,
+    imageUrl: optionalString(images[0]) ?? null,
+    priceVnd: optionalVnd(item.discountPrice) ?? null,
+    commissionRateBps: fractionToBps(item.totalCommissionRate) ?? null,
+    commissionVnd: optionalVnd(item.totalCommissionAmount) ?? null,
+    shopName: optionalString(item.sellerName) ?? null,
+    productUrl: lazadaProductUrl(itemId),
+    salesCount: Number.isFinite(sales) && sales >= 0 ? Math.floor(sales) : null,
+  };
+}
+
+export function parseLazadaOfferFeed(payload: unknown): LazadaOfferProduct[] {
+  const root = asObject(payload);
+  if (!root || (root.code !== "0" && root.code !== 0)) return [];
+  const result = asObject(root.result);
+  const data = Array.isArray(result?.data) ? result!.data : [];
+  const out: LazadaOfferProduct[] = [];
+  for (const entry of data) {
+    const obj = asObject(entry);
+    if (!obj) continue;
+    const mapped = mapFeedItemToOffer(obj);
+    if (mapped) out.push(mapped);
+  }
+  return out;
+}
+
+/** Lấy MỘT trang feed affiliate (offerType=1). categoryL1 lọc theo danh mục. */
+export async function fetchLazadaOfferPage(
+  config: AppConfig,
+  opts: { page: number; limit: number; categoryL1?: number },
+  fetcher: Fetcher = fetch,
+): Promise<LazadaOfferProduct[]> {
+  if (!isLazadaAffiliateConfigured(config)) return [];
+  const page = Math.min(Math.max(Math.trunc(opts.page) || 1, 1), 100);
+  const limit = Math.min(Math.max(Math.trunc(opts.limit) || 20, 1), 50);
+
+  const params: Record<string, string> = {
+    app_key: config.LAZADA_OPEN_API_APP_KEY,
+    timestamp: String(Date.now()),
+    sign_method: "sha256",
+    offerType: "1",
+    userToken: config.LAZADA_AFFILIATE_USER_TOKEN,
+    page: String(page),
+    limit: String(limit),
+  };
+  if (opts.categoryL1 && opts.categoryL1 > 0) {
+    params.categoryL1 = String(Math.trunc(opts.categoryL1));
+  }
+  const sign = signLazadaRequest(
+    API_PATH,
+    params,
+    config.LAZADA_OPEN_API_APP_SECRET,
+  );
+  const endpoint = new URL(`${BASE_URL}${API_PATH}`);
+  for (const [key, value] of Object.entries(params)) {
+    endpoint.searchParams.set(key, value);
+  }
+  endpoint.searchParams.set("sign", sign);
+
+  try {
+    const response = await fetcher(endpoint, {
+      redirect: "error",
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(config.SHOPEE_PRODUCT_LOOKUP_TIMEOUT_MS),
+    });
+    if (!response.ok) return [];
+    const text = await response.text();
+    if (Buffer.byteLength(text, "utf8") > 4 * 1024 * 1024) return [];
+    return parseLazadaOfferFeed(JSON.parse(text));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchLazadaAffiliateProduct(
   config: AppConfig,
   itemId: string,

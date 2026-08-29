@@ -2247,6 +2247,11 @@ label small {
   color: #fff
 }
 
+/* Menu con chọn sàn (Shopee | Lazada) trong mỗi mục Khám phá. */
+.discover-subplatform {
+  margin: 2px 0 14px
+}
+
 .px-category-row {
   margin-top: 8px
 }
@@ -9041,6 +9046,15 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 
 .px-social-fb svg {
+  fill: #fff;
+}
+
+.px-social-tg {
+  background: #29a9eb;
+  box-shadow: 0 6px 14px rgba(41, 169, 235, .35);
+}
+
+.px-social-tg svg {
   fill: #fff;
 }
 

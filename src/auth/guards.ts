@@ -26,6 +26,7 @@ export const GUEST_APP_PATHS: ReadonlySet<string> = new Set([
   "/app/entry-promo",
   "/app/discover",
   "/app/discover/offer-products",
+  "/app/discover/lazada-offers",
   "/app/support",
 ]);
 

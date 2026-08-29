@@ -12,6 +12,13 @@
   if (!root || !page) return;
 
   var endpoint = root.getAttribute("data-endpoint");
+  var endpointLazada = root.getAttribute("data-endpoint-lazada");
+  var endpoints = { shopee: endpoint, lazada: endpointLazada };
+  var activePlatform = "shopee";
+  var PLATFORM_NAMES = { shopee: "Shopee", lazada: "Lazada" };
+  var platformTabs = Array.prototype.slice.call(
+    root.querySelectorAll("[data-bestseller-platform] [data-platform-tab]")
+  );
   var grid = root.querySelector("[data-bestseller-grid]");
   var statusBox = root.querySelector("[data-bestseller-status]");
   var loadingBox = root.querySelector("[data-bestseller-loading]");
@@ -26,12 +33,19 @@
   var normalGrid = page.querySelector("[data-discover-grid]");
   var filterEmpty = page.querySelector("[data-discover-filter-empty]");
 
-  var TITLES = {
-    hot: "🔥 Deal Hot — voucher giá sốc",
-    recommend: "Đề xuất từ Shopee",
-    best: "Bán chạy nhất trên Shopee",
-    exclusive: "Ưu đãi độc quyền cho bạn",
+  var TITLE_BASE = {
+    hot: "🔥 Deal Hot",
+    recommend: "Đề xuất",
+    best: "Bán chạy nhất",
+    exclusive: "Ưu đãi độc quyền",
   };
+  function titleFor(listKey) {
+    return (
+      (TITLE_BASE[listKey] || "Sản phẩm") +
+      " trên " +
+      (PLATFORM_NAMES[activePlatform] || "Shopee")
+    );
+  }
 
   // Mỗi danh mục giữ trang riêng — quay lại vẫn ở đúng trang đang xem.
   var listState = {
@@ -103,7 +117,11 @@
       el("span", "discover-category-badge", LABELS[listKey] || "Đề xuất")
     );
     badges.appendChild(
-      el("span", "discover-platform-badge platform-shopee", "Shopee")
+      el(
+        "span",
+        "discover-platform-badge platform-" + activePlatform,
+        PLATFORM_NAMES[activePlatform] || "Shopee"
+      )
     );
     media.appendChild(badges);
     // Badge % giảm voucher (góc trên phải ảnh) — nổi bật deal Hot.
@@ -210,7 +228,7 @@
     var data;
     try {
       var response = await fetch(
-        endpoint + "?list=" + listKey + "&page=" + targetPage,
+        endpoints[activePlatform] + "?list=" + listKey + "&page=" + targetPage,
         { credentials: "same-origin", headers: { accept: "application/json" } }
       );
       data = await response.json();
@@ -281,9 +299,36 @@
     if (normalGrid) normalGrid.hidden = true;
     if (filterEmpty) filterEmpty.hidden = true;
     root.hidden = false;
-    if (title) title.textContent = TITLES[listKey];
+    if (title) title.textContent = titleFor(listKey);
+    // Đưa tiêu đề + menu con chọn sàn (Shopee | Lazada) vào tầm nhìn ngay khi
+    // mở mục — nếu không người dùng dễ không thấy nút chọn sàn.
+    try {
+      root.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {}
     loadPage(listKey, listState[listKey].page);
   }
+
+  // Đổi sàn (Shopee ⇄ Lazada) cho mục sống đang xem — dữ liệu khác nhau nên
+  // về trang 1 và tải lại từ endpoint tương ứng.
+  function setPlatform(platform) {
+    if (platform === activePlatform || !endpoints[platform]) return;
+    activePlatform = platform;
+    platformTabs.forEach(function (button) {
+      var on = button.getAttribute("data-platform-tab") === platform;
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    if (activeList) {
+      listState[activeList] = { page: 1, known: 0, hasMore: true };
+      if (title) title.textContent = titleFor(activeList);
+      loadPage(activeList, 1);
+    }
+  }
+  platformTabs.forEach(function (button) {
+    button.addEventListener("click", function () {
+      setPlatform(button.getAttribute("data-platform-tab"));
+    });
+  });
 
   function leaveLive() {
     if (activeList === null) return;

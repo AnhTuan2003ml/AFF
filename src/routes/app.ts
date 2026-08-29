@@ -14,6 +14,11 @@ import {
   BANKS,
 } from "../services/bank.js";
 import { getBusinessConfig } from "../services/business-config.js";
+import { resolveBuyerPercent } from "../services/commission.js";
+import {
+  fetchLazadaOfferPage,
+  isLazadaAffiliateConfigured,
+} from "../services/lazada-affiliate-api.js";
 import { listOrderHistory } from "../services/order-history.js";
 import { listShopeeVouchers } from "../services/shopee-voucher.js";
 import {
@@ -1016,6 +1021,76 @@ export async function registerAppRoutes(
         message: appError.message,
       });
     }
+  });
+
+  // Sản phẩm affiliate LAZADA cho mục Khám phá (menu con Lazada của Hot/Bán
+  // chạy/Đề xuất). Nguồn: API affiliate /marketing/product/feed — hoa hồng
+  // THẬT theo sản phẩm. API không có tham số sort nên server sắp xếp trong
+  // trang: hot = hoa hồng cao nhất, best = bán chạy 7 ngày. Tiền hoàn tính
+  // theo tỷ lệ người mua (đơn < 25k nhận 80%, còn lại 60%).
+  app.get("/discover/lazada-offers", async (request, reply) => {
+    reply.header("cache-control", "private, max-age=120");
+    const queryParams = request.query as Record<string, unknown>;
+    const list = String(queryParams.list ?? "recommend");
+    const parsedPage = Number.parseInt(String(queryParams.page ?? "1"), 10);
+    const pageNo = Math.min(
+      Math.max(Number.isFinite(parsedPage) ? parsedPage : 1, 1),
+      100,
+    );
+
+    if (!isLazadaAffiliateConfigured(deps.config)) {
+      return reply.send({
+        status: "UNAVAILABLE",
+        page: pageNo,
+        message: "Sản phẩm Lazada đang được cập nhật. Vui lòng quay lại sau.",
+      });
+    }
+
+    const [products, businessConfig] = await Promise.all([
+      fetchLazadaOfferPage(deps.config, { page: pageNo, limit: OFFER_PAGE_SIZE }),
+      getBusinessConfig(deps.db, deps.config),
+    ]);
+    const sorted = products.slice();
+    if (list === "hot") {
+      sorted.sort((a, b) => (b.commissionVnd ?? 0) - (a.commissionVnd ?? 0));
+    } else if (list === "best") {
+      sorted.sort((a, b) => (b.salesCount ?? 0) - (a.salesCount ?? 0));
+    }
+
+    const mapped = sorted.map((p) => {
+      const buyerPercent = resolveBuyerPercent(p.priceVnd, businessConfig);
+      const cashbackBps =
+        p.commissionRateBps !== null
+          ? Math.floor((p.commissionRateBps * buyerPercent) / 100)
+          : null;
+      const cashbackAmountVnd =
+        p.commissionVnd !== null
+          ? Math.floor((p.commissionVnd * buyerPercent) / 100)
+          : p.priceVnd !== null && cashbackBps !== null
+            ? Math.floor((p.priceVnd * cashbackBps) / 10000)
+            : null;
+      return {
+        name: p.name,
+        imageUrl: p.imageUrl,
+        priceVnd: p.priceVnd,
+        cashbackAmountVnd,
+        cashbackRatePercent:
+          cashbackBps !== null ? Math.round(cashbackBps / 10) / 10 : null,
+        shopName: p.shopName,
+        salesCount: p.salesCount,
+        productUrl: p.productUrl,
+        originalPriceVnd: null,
+        discountPercent: null,
+        platform: "lazada",
+      };
+    });
+    return reply.send({
+      status: "READY",
+      page: pageNo,
+      knownPages: pageNo,
+      pageSize: OFFER_PAGE_SIZE,
+      products: mapped,
+    });
   });
 
   // Băng chuyền quảng cáo trang chủ: nhiều sản phẩm NGẪU NHIÊN từ danh mục

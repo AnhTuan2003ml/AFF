@@ -80,17 +80,25 @@
       <section class="discover-database-empty"><h2>Chưa có nội dung để khám phá.</h2><p>Sản phẩm mới sẽ xuất hiện tại đây khi dữ liệu được cập nhật.</p></section>
     {% endif %}
 
-    <section class="bestseller-section" data-bestseller data-endpoint="/app/discover/offer-products" hidden aria-labelledby="bestseller-title">
+    <section class="bestseller-section" data-bestseller data-endpoint="/app/discover/offer-products" data-endpoint-lazada="/app/discover/lazada-offers" hidden aria-labelledby="bestseller-title">
       <header class="px-section-head bestseller-head"><div><span class="px-eyebrow">LIVE CATALOG</span><h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee.</h2></div><p>Mỗi trang 20 sản phẩm. Mua qua ShopTik để nhận hoàn tiền.</p></header>
+      <div class="discover-subplatform px-filter-tabs" role="group" aria-label="Chọn sàn" data-bestseller-platform>
+        <button type="button" class="active" data-platform-tab="shopee" aria-pressed="true">Shopee</button>
+        <button type="button" data-platform-tab="lazada" aria-pressed="false">Lazada</button>
+      </div>
       <div class="discover-grid px-product-grid" data-bestseller-grid aria-live="polite"></div>
       <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true"><span class="bestseller-spinner"></span></div>
       <p class="bestseller-status" data-bestseller-status hidden></p>
       <nav class="bestseller-pagination" data-bestseller-pagination aria-label="Chuyển trang" hidden></nav>
     </section>
 
-    {# ── Tab Voucher: mã giảm giá Shopee hôm nay ── #}
-    <section class="voucher-section" data-voucher-section hidden aria-label="Voucher Shopee hôm nay">
-      <header class="px-section-head"><div><span class="px-eyebrow">MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến Shopee.</p></header>
+    {# ── Tab Voucher: mã giảm giá theo sàn (Shopee có; Lazada đang cập nhật) ── #}
+    <section class="voucher-section" data-voucher-section hidden aria-label="Voucher hôm nay">
+      <header class="px-section-head"><div><span class="px-eyebrow" data-voucher-eyebrow>MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến sàn.</p></header>
+      <div class="discover-subplatform px-filter-tabs" role="group" aria-label="Chọn sàn" data-voucher-platform>
+        <button type="button" class="active" data-platform-tab="shopee" aria-pressed="true">Shopee</button>
+        <button type="button" data-platform-tab="lazada" aria-pressed="false">Lazada</button>
+      </div>
       <div class="voucher-grid" data-voucher-grid aria-live="polite"></div>
       <p class="bestseller-status" data-voucher-status hidden></p>
     </section>
