@@ -33,11 +33,12 @@
         <div class="kol-status kol-status-reject"><b>Hồ sơ trước chưa được duyệt</b><p>Bạn có thể nộp lại sau khi chỉnh sửa.</p></div>
       {% endif %}
 
-      <article class="kol-doc" tabindex="0" data-kol-doc>
+      <article class="kol-doc" data-kol-doc>
         <div class="kol-doc-sheet">
           {% for s in sections %}
             {% for p in s.paragraphs %}{{ para(p) }}{% endfor %}
           {% endfor %}
+          <span data-terms-end aria-hidden="true"></span>
         </div>
       </article>
 

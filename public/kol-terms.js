@@ -1,13 +1,13 @@
-/* Bước 1 KOL/KOC: đọc toàn bộ thỏa thuận trong một trang cuộn. Phải cuộn tới
-   CUỐI mới mở khóa ô đồng ý; tích ô mới bật nút "Tiếp tục". Tách file riêng vì
-   CSP 'self' chặn inline script. */
+/* Bước 1 KOL/KOC: đọc toàn bộ thỏa thuận bằng cách cuộn CẢ TRANG (một mạch).
+   Cuộn tới CUỐI (mốc [data-terms-end] lọt vào màn hình) mới mở khóa ô đồng ý;
+   tích ô mới bật nút "Tiếp tục". Tách file riêng vì CSP 'self' chặn inline. */
 (function () {
   "use strict";
-  var doc = document.querySelector("[data-kol-doc]");
   var accept = document.getElementById("kol-accept");
   var cont = document.getElementById("kol-continue");
   var hint = document.querySelector("[data-scroll-hint]");
-  if (!doc || !accept || !cont) return;
+  var end = document.querySelector("[data-terms-end]");
+  if (!accept || !cont) return;
 
   var daDoc = false;
   function moKhoa() {
@@ -16,12 +16,32 @@
     accept.disabled = false;
     if (hint) hint.hidden = true;
   }
-  function kiemTraCuoi() {
-    if (doc.scrollTop + doc.clientHeight >= doc.scrollHeight - 28) moKhoa();
+
+  if (end && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(
+      function (entries) {
+        if (entries[0] && entries[0].isIntersecting) {
+          moKhoa();
+          io.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -60px 0px" },
+    );
+    io.observe(end);
+  } else {
+    // Trình duyệt cũ: mở khóa khi cuộn gần cuối trang.
+    var check = function () {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.scrollHeight - 80
+      ) {
+        moKhoa();
+        window.removeEventListener("scroll", check);
+      }
+    };
+    window.addEventListener("scroll", check);
+    check();
   }
-  doc.addEventListener("scroll", kiemTraCuoi);
-  // Nội dung ngắn không cần cuộn → mở khóa luôn.
-  if (doc.scrollHeight <= doc.clientHeight + 28) moKhoa();
 
   accept.addEventListener("change", function () {
     cont.disabled = !accept.checked;

@@ -150,7 +150,20 @@ export default function KolScreen() {
           styles.scroll,
           { paddingTop: insets.top + spacing.sm },
         ]}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={64}
+        onScroll={(e) => {
+          // Cuộn cả màn hình để đọc; tới gần cuối thì mở khóa ô đồng ý.
+          const { layoutMeasurement, contentOffset, contentSize } =
+            e.nativeEvent;
+          if (
+            buoc === 'dieu-khoan' &&
+            contentOffset.y + layoutMeasurement.height >=
+              contentSize.height - 60
+          ) {
+            setDaDoc(true);
+          }
+        }}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
           <Text style={styles.backText}>Quay lại</Text>
@@ -209,47 +222,29 @@ export default function KolScreen() {
                   tục điền hồ sơ.
                 </Text>
 
+                {/* Điều khoản đọc bằng cách cuộn CẢ MÀN HÌNH (không hộp cuộn lồng). */}
                 <View style={styles.termsBox}>
-                  <ScrollView
-                    nestedScrollEnabled
-                    style={{ maxHeight: 460 }}
-                    scrollEventThrottle={64}
-                    onScroll={(e) => {
-                      const { layoutMeasurement, contentOffset, contentSize } =
-                        e.nativeEvent;
-                      if (
-                        contentOffset.y + layoutMeasurement.height >=
-                        contentSize.height - 32
-                      ) {
-                        setDaDoc(true);
-                      }
-                    }}
-                    onContentSizeChange={(_w, h) => {
-                      // Nội dung ngắn không cần cuộn → mở khóa luôn.
-                      if (h <= 460) setDaDoc(true);
-                    }}>
-                    {(paras.length ? paras : ['Đang tải điều khoản…']).map(
-                      (p, i) => {
-                        const upper = p.toUpperCase();
-                        const isDieu = p.toLowerCase().startsWith('điều ');
-                        const isTitle = p === upper && p.length < 90;
-                        if (isDieu) {
-                          return (
-                            <Text key={i} style={styles.termDieu}>
-                              {p}
-                            </Text>
-                          );
-                        }
+                  {(paras.length ? paras : ['Đang tải điều khoản…']).map(
+                    (p, i) => {
+                      const upper = p.toUpperCase();
+                      const isDieu = p.toLowerCase().startsWith('điều ');
+                      const isTitle = p === upper && p.length < 90;
+                      if (isDieu) {
                         return (
-                          <Text
-                            key={i}
-                            style={[styles.termP, isTitle && styles.termTitle]}>
+                          <Text key={i} style={styles.termDieu}>
                             {p}
                           </Text>
                         );
-                      },
-                    )}
-                  </ScrollView>
+                      }
+                      return (
+                        <Text
+                          key={i}
+                          style={[styles.termP, isTitle && styles.termTitle]}>
+                          {p}
+                        </Text>
+                      );
+                    },
+                  )}
                 </View>
 
                 {!daDoc ? (

@@ -75,14 +75,12 @@
 }
 
 /* ── Văn bản thỏa thuận: trình bày như tài liệu hợp đồng, dễ đọc ── */
+/* Cuộn CẢ TRANG (một mạch) để đọc — không hộp cuộn lồng. */
 .kol-doc {
-  max-height: 68vh; overflow-y: auto;
   border: 1px solid var(--lx-line, #eadfce); border-radius: 18px;
   background: #f3efe8; padding: 22px;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
 }
-.kol-doc:focus-visible { outline: 2px solid var(--lx-orange, #ee4d2d); outline-offset: 2px; }
+[data-terms-end] { display: block; height: 1px; }
 /* "Tờ giấy" trắng để nội dung nổi trên nền, giống bản in. */
 .kol-doc-sheet {
   max-width: 880px; margin: 0 auto;
