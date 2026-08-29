@@ -133,21 +133,15 @@
                 <button type="button" data-copy-button aria-label="Sao chép mã giới thiệu">Copy</button>
               </div>
               <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
-              <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
-              <div class="st-menu-divider" role="separator"></div>
-              <a href="/app/wallet">{{ icon('wallet') }}<span>Ví &amp; số dư</span></a>
-              <a href="/app/orders">{{ icon('orders') }}<span>Đơn hàng</span></a>
               <a href="/app/nhiem-vu">{{ icon('mission') }}<span>Nhiệm vụ nhận thưởng</span></a>
-              <a href="/app/referrals">{{ icon('referral') }}<span>Giới thiệu bạn bè</span></a>
-              <a href="/app/banks">{{ icon('bank') }}<span>Tài khoản ngân hàng</span></a>
               <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
               <a href="/app/support">{{ icon('support') }}<span>Hỗ trợ &amp; khiếu nại</span></a>
+              <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
               {% if currentUser.isSpecialPartner %}
                 <a href="/app/dang-ky-kol">{{ icon('user') }}<span>Đối tác KOL/KOC ✓</span></a>
               {% else %}
                 <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>Đăng ký KOL/KOC</span></a>
               {% endif %}
-              <button type="button" class="st-menu-checkin" data-checkin-open><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg><span>Điểm danh</span></button>
               {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>Trang quản trị</span></a>{% endif %}
               <div class="st-menu-divider" role="separator"></div>
               <form method="post" action="/dang-xuat">

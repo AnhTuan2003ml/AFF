@@ -3302,7 +3302,14 @@ label small {
 
 .mission-meter-head {
   display: flex;
-  justify-content: space-between
+  justify-content: flex-start
+}
+
+.mission-meter-head b {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  color: var(--lx-orange)
 }
 
 .mission-meter-track {

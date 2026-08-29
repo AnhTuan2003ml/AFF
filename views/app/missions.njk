@@ -19,8 +19,7 @@
 
     <div class="mission-row-main">
       <b>{{ item.definition.title }}</b>
-      {% if item.definition.description %}<p>{{ item.definition.description }}</p>{% endif %}
-      <small>Mốc: {{ item.definition.threshold }} · Tiến độ của bạn: {{ item.progress }}/{{ item.definition.threshold }}</small>
+      <small>{{ item.progress }} / {{ item.definition.threshold }}</small>
     </div>
 
     <div class="mission-row-reward">
@@ -52,7 +51,6 @@
 {% macro mission_group(group, unitLabel) %}
   <div class="mission-meter">
     <div class="mission-meter-head">
-      <span>Tiến độ hiện tại</span>
       <b>{{ group.currentProgress }}{% if group.maxThreshold %} / {{ group.maxThreshold }}{% endif %} {{ unitLabel }}</b>
     </div>
     {% if group.maxThreshold %}
@@ -89,7 +87,6 @@
   <header class="page-head">
     <div>
       <h1>Nhiệm vụ và <em>phần thưởng</em></h1>
-      <p>Đạt mốc rồi bấm "Nhận thưởng" — ShopTik sẽ kiểm tra và duyệt trước khi cộng vào ví.</p>
     </div>
   </header>
 
@@ -99,7 +96,6 @@
   </div>
 
   <section class="mission-panel" data-mission-panel="referral">
-    <p class="mission-panel-hint">Tính theo số người bạn mời đã <b>đăng ký thành công</b>, cộng dồn trọn đời — không reset theo tháng.</p>
     {{ mission_group(referralGroup, 'người') }}
 
     <div class="mission-people">
@@ -131,16 +127,13 @@
 
     <div class="st-mission-cta">
       <a class="button button-primary" href="/app/referrals">Mời bạn bè ngay</a>
-      <span>Gửi mã giới thiệu để tiến gần mốc thưởng tiếp theo.</span>
     </div>
   </section>
 
   <section class="mission-panel" data-mission-panel="purchase" hidden>
-    <p class="mission-panel-hint">Tính theo số đơn đã được duyệt trong tháng hiện tại — mốc tự reset vào đầu tháng sau.</p>
     {{ mission_group(purchaseGroup, 'đơn') }}
     <div class="st-mission-cta">
       <a class="button button-primary" href="/app">Tìm sản phẩm để mua</a>
-      <span>Mỗi đơn được duyệt trong tháng tính vào tiến độ.</span>
     </div>
   </section>
 {% endblock %}
