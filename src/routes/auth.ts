@@ -220,6 +220,10 @@ export async function registerAuthRoutes(
         return renderAuthError(reply, "auth/register.njk", error, {
           pageTitle: "Tạo tài khoản",
           googleEnabled: googleOAuthEnabled(deps.config),
+          // Cờ để hiện cảnh báo NGAY dưới ô mã giới thiệu.
+          referralError:
+            error instanceof AppError &&
+            error.code === "REFERRAL_CODE_NOT_FOUND",
           values: {
             fullName: String(body.fullName ?? ""),
             email: String(body.email ?? ""),

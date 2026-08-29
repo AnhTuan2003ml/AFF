@@ -71,6 +71,15 @@ export async function registerWithEmail(
     let referredBy: string | null = null;
     if (params.referralCode?.trim()) {
       referredBy = await resolveReferrerByCode(client, params.referralCode);
+      // Nhập mã nhưng không khớp ai → CẢNH BÁO để nhập lại (thay vì lặng lẽ bỏ
+      // qua). Bỏ trống thì không kiểm tra (mã giới thiệu không bắt buộc).
+      if (!referredBy) {
+        throw new AppError(
+          "REFERRAL_CODE_NOT_FOUND",
+          "Mã giới thiệu không tồn tại. Hãy kiểm tra lại hoặc để trống nếu không có.",
+          400,
+        );
+      }
     }
 
     if (current) {
