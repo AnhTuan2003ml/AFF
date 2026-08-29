@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -17,20 +19,17 @@ import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
- * Nhiệm vụ — hai nhóm mốc: mời bạn và mua sắm.
- *
- * Backend trả về theo nhóm chứ không phải danh sách phẳng, vì tiến độ được tính
- * gộp cho cả nhóm (`currentProgress` so với `maxThreshold`) rồi mới chia ra
- * từng mốc. Giữ nguyên cấu trúc đó ở app để không tự tính lại và lệch số.
+ * Nhiệm vụ — hai nhóm mốc (mời bạn / mua sắm) chuyển bằng tab segmented, giống
+ * web mobile. Backend trả tiến độ đã gộp cho cả nhóm (`currentProgress` so với
+ * `maxThreshold`) nên app không tự tính lại để khỏi lệch số.
  */
-const TEN_NHOM: Record<string, string> = {
-  REFERRAL_MILESTONE: 'Mời bạn bè',
-  PURCHASE_MILESTONE: 'Mua sắm',
-};
+type Tab = 'referral' | 'purchase';
 
 export default function MissionsScreen() {
   const { user } = useSession();
   const qc = useQueryClient();
+  const [tab, setTab] = useState<Tab>('referral');
+
   const { data, isPending } = useQuery({
     queryKey: ['missions'],
     queryFn: layNhiemVu,
@@ -55,65 +54,87 @@ export default function MissionsScreen() {
 
   if (!user) return <CanDangNhap mo_ta="Đăng nhập để xem tiến độ nhiệm vụ và nhận thưởng." />;
 
+  const nhom = tab === 'referral' ? data?.REFERRAL_MILESTONE : data?.PURCHASE_MILESTONE;
+  const donVi = tab === 'referral' ? 'người' : 'đơn';
+
   return (
-    <FormScreen title="Nhiệm vụ" subtitle="Hoàn thành mốc để nhận thưởng vào ví.">
-      {isPending ? (
+    <FormScreen title="Nhiệm vụ">
+      <View style={styles.tabs}>
+        <TabBtn icon="people" label="Mời người" active={tab === 'referral'} onPress={() => setTab('referral')} />
+        <TabBtn icon="receipt-outline" label="Mua hàng" active={tab === 'purchase'} onPress={() => setTab('purchase')} />
+      </View>
+
+      {isPending || !nhom ? (
         <Text style={styles.loading}>Đang tải…</Text>
       ) : (
-        Object.entries(data ?? {}).map(([khoa, nhom]) => (
-          <Nhom
-            key={khoa}
-            ten={TEN_NHOM[khoa] ?? khoa}
-            nhom={nhom as MissionGroup}
-            onNhan={(id) => nhan.mutate(id)}
-            dangNhan={nhan.isPending}
-          />
-        ))
-      )}
-
-      {nguoiMoi && nguoiMoi.people.length > 0 && (
-        <View style={styles.people}>
-          <View style={styles.peopleHead}>
-            <Text style={styles.groupTitle}>Người bạn đã mời</Text>
-            <Text style={styles.peopleCount}>{nguoiMoi.people.length} người</Text>
+        <>
+          <View style={styles.meterHead}>
+            <Text style={styles.meterValue}>
+              {nhom.currentProgress} / {nhom.maxThreshold} {donVi}
+            </Text>
           </View>
-          {nguoiMoi.people.map((p, i) => (
-            <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} />
-          ))}
-        </View>
+          <View style={styles.bar}>
+            <View style={[styles.barFill, { width: `${Math.min(100, nhom.fillPercent)}%` }]} />
+          </View>
+          {nhom.currentProgress < nhom.maxThreshold ? (
+            <Text style={styles.note}>
+              Còn {nhom.maxThreshold - nhom.currentProgress} {donVi} nữa để đạt mốc cao nhất.
+            </Text>
+          ) : (
+            <Text style={[styles.note, { color: colors.success }]}>Đã đạt mốc cao nhất!</Text>
+          )}
+
+          <View style={styles.list}>
+            {nhom.items.map((m) => (
+              <Moc key={m.definition.id} m={m} onNhan={(id) => nhan.mutate(id)} dangNhan={nhan.isPending} />
+            ))}
+          </View>
+
+          {tab === 'referral' && nguoiMoi && nguoiMoi.people.length > 0 && (
+            <View style={styles.people}>
+              <View style={styles.peopleHead}>
+                <Text style={styles.peopleTitle}>Người bạn đã mời</Text>
+                <Text style={styles.peopleCount}>{nguoiMoi.people.length} người</Text>
+              </View>
+              {nguoiMoi.people.map((p, i) => (
+                <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} />
+              ))}
+            </View>
+          )}
+
+          <Pressable
+            onPress={() => router.push(tab === 'referral' ? '/referrals' : '/')}
+            style={({ pressed }) => [styles.cta, pressed && { backgroundColor: colors.brandStrong }]}>
+            <Text style={styles.ctaText}>
+              {tab === 'referral' ? 'Mời bạn bè ngay' : 'Tìm sản phẩm để mua'}
+            </Text>
+          </Pressable>
+        </>
       )}
     </FormScreen>
   );
 }
 
-function Nhom({
-  ten,
-  nhom,
-  onNhan,
-  dangNhan,
+function TabBtn({
+  icon,
+  label,
+  active,
+  onPress,
 }: {
-  ten: string;
-  nhom: MissionGroup;
-  onNhan: (id: string) => void;
-  dangNhan: boolean;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  active: boolean;
+  onPress: () => void;
 }) {
   return (
-    <View style={styles.group}>
-      <View style={styles.groupHead}>
-        <Text style={styles.groupTitle}>{ten}</Text>
-        <Text style={styles.groupProgress}>
-          {nhom.currentProgress}/{nhom.maxThreshold}
-        </Text>
-      </View>
-
-      <View style={styles.bar}>
-        <View style={[styles.barFill, { width: `${Math.min(100, nhom.fillPercent)}%` }]} />
-      </View>
-
-      {nhom.items.map((m) => (
-        <Moc key={m.definition.id} m={m} onNhan={onNhan} dangNhan={dangNhan} />
-      ))}
-    </View>
+    <Pressable
+      onPress={onPress}
+      style={[styles.tabBtn, active && styles.tabBtnActive]}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}>
+      <Ionicons name={icon} size={17} color={active ? colors.onBrand : colors.muted} />
+      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -129,11 +150,7 @@ function Moc({
   const daNhan = m.claimStatus === 'CLAIMED' || m.claimStatus === 'PAID';
   return (
     <View style={styles.item}>
-      <View
-        style={[
-          styles.itemIcon,
-          { backgroundColor: daNhan ? colors.successSoft : colors.surfaceMuted },
-        ]}>
+      <View style={[styles.itemIcon, { backgroundColor: daNhan ? colors.successSoft : colors.surfaceMuted }]}>
         <Ionicons
           name={daNhan ? 'checkmark-circle' : 'flag-outline'}
           size={17}
@@ -142,19 +159,13 @@ function Moc({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.itemTitle}>{m.definition.title}</Text>
-        <Text style={styles.itemDesc} numberOfLines={2}>
-          {m.definition.description}
-        </Text>
         <Text style={styles.itemReward}>Thưởng {vnd(m.definition.rewardAmountVnd)}</Text>
       </View>
       {m.claimable && !daNhan ? (
         <Pressable
           onPress={() => onNhan(m.definition.id)}
           disabled={dangNhan}
-          style={({ pressed }) => [
-            styles.claim,
-            (dangNhan || pressed) && { backgroundColor: colors.brandStrong },
-          ]}>
+          style={({ pressed }) => [styles.claim, (dangNhan || pressed) && { backgroundColor: colors.brandStrong }]}>
           <Text style={styles.claimText}>Nhận</Text>
         </Pressable>
       ) : (
@@ -170,9 +181,7 @@ function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
   return (
     <View style={[styles.person, !dau && styles.personDivider]}>
       <View style={[styles.personAvatar, !p.qualified && styles.personAvatarOff]}>
-        <Text style={styles.personAvatarText}>
-          {(p.fullName || '?').charAt(0).toUpperCase()}
-        </Text>
+        <Text style={styles.personAvatarText}>{(p.fullName || '?').charAt(0).toUpperCase()}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.personName} numberOfLines={1}>
@@ -194,11 +203,69 @@ function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
 
 const styles = StyleSheet.create({
   loading: { fontSize: 13, color: colors.muted, paddingVertical: 20 },
+
+  tabs: {
+    flexDirection: 'row',
+    gap: 6,
+    padding: 5,
+    marginTop: 14,
+    marginBottom: 18,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceMuted,
+  },
+  tabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingVertical: 11,
+    borderRadius: radius.sm,
+  },
+  tabBtnActive: {
+    backgroundColor: colors.brand,
+  },
+  tabText: { fontSize: 13.5, fontWeight: '800', color: colors.muted },
+  tabTextActive: { color: colors.onBrand },
+
+  meterHead: { marginBottom: 10 },
+  meterValue: { fontSize: 24, fontWeight: '900', color: colors.brand, letterSpacing: -0.6 },
+  bar: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceMuted,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  barFill: { height: '100%', backgroundColor: colors.brand, borderRadius: 4 },
+  note: { fontSize: 12.5, color: colors.muted, marginBottom: 8 },
+
+  list: { marginTop: 6 },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 13,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
+  itemIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  itemTitle: { fontSize: 14.5, fontWeight: '800', color: colors.text },
+  itemReward: { fontSize: 12.5, fontWeight: '800', color: colors.success, marginTop: 3 },
+  itemState: { fontSize: 12.5, fontWeight: '800', color: colors.muted },
+  claim: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brand,
+  },
+  claimText: { color: colors.onBrand, fontWeight: '800', fontSize: 13 },
+
   people: {
-    marginTop: 4,
+    marginTop: 18,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.paper,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
   },
@@ -206,8 +273,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: 6,
+    marginBottom: 4,
   },
+  peopleTitle: { fontSize: 15, fontWeight: '900', color: colors.text },
   peopleCount: { fontSize: 12.5, fontWeight: '800', color: colors.brand },
   person: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   personDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
@@ -229,31 +297,14 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 10.5, fontWeight: '800' },
   badgeTextOk: { color: colors.success },
   badgeTextWait: { color: colors.muted },
-  group: { marginBottom: spacing.lg },
-  groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  groupTitle: { fontSize: 16, fontWeight: '900', color: colors.text },
-  groupProgress: { fontSize: 13, fontWeight: '800', color: colors.brand },
-  bar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.surfaceMuted,
-    overflow: 'hidden',
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  barFill: { height: '100%', backgroundColor: colors.brand, borderRadius: 4 },
 
-  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  itemIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  itemTitle: { fontSize: 14, fontWeight: '800', color: colors.text },
-  itemDesc: { fontSize: 12, color: colors.muted, marginTop: 2, lineHeight: 17 },
-  itemReward: { fontSize: 12, fontWeight: '800', color: colors.success, marginTop: 3 },
-  itemState: { fontSize: 12, fontWeight: '800', color: colors.muted },
-  claim: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+  cta: {
+    marginTop: 20,
+    height: 50,
     borderRadius: radius.sm,
     backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  claimText: { color: colors.onBrand, fontWeight: '800', fontSize: 13 },
+  ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 15 },
 });
