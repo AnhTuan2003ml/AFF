@@ -9053,6 +9053,7 @@ button.cal-cell.is-today:hover:not(:disabled) {
   color: #059669;
   letter-spacing: -0.02em;
   display: block;
+  white-space: nowrap;
 }
 
 .orders-history-payout .button {
