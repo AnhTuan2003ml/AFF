@@ -130,6 +130,22 @@
 .kol-jump svg { width: 22px; height: 22px; display: block; }
 .kol-jump:hover { background: var(--lx-orange-strong, #d63e1f); }
 .kol-jump[hidden] { display: none; }
+
+/* Popup nhắc "Kéo xuống" nổi ngay trên nút mũi tên. */
+.kol-jump-tip {
+  position: absolute; bottom: calc(100% + 9px); left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap; pointer-events: none;
+  background: var(--lx-ink, #2c1d17); color: #fff;
+  font-size: 12px; font-weight: 800; letter-spacing: .2px;
+  padding: 6px 11px; border-radius: 9px;
+  box-shadow: 0 6px 16px rgba(44, 29, 23, .28);
+}
+.kol-jump-tip::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--lx-ink, #2c1d17);
+}
 @keyframes kol-jump-bounce {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(5px); }
