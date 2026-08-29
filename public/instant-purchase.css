@@ -542,6 +542,22 @@
   white-space: nowrap;
 }
 
+/* % hoàn áp dụng cho sản phẩm — pill nhỏ cạnh chữ "Tiền hoàn". */
+.receipt-rate-badge {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--money-dark, #0f8a4f);
+  font-family: var(--font-data, inherit);
+  font-size: .72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.receipt-rate-badge[hidden] { display: none; }
+
 .receipt-saving-line {
   color: var(--success-strong, var(--money-dark));
   font-family: var(--font-body);

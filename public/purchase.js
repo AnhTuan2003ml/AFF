@@ -409,7 +409,16 @@
           : formatVnd(product.affiliateCommissionVnd);
     }
     if (receipt.rate) {
-      receipt.rate.textContent = `${product.buyerCashbackPercent}%`;
+      // % hoàn ÁP DỤNG cho chính sản phẩm này (đơn nhỏ ≤ ngưỡng nhận % cao hơn)
+      // — chỉ hiện khi đã xác minh và có số tiền hoàn thật (> 0).
+      const showRate =
+        verified &&
+        product.buyerCashbackVnd !== null &&
+        product.buyerCashbackVnd > 0;
+      receipt.rate.textContent = showRate
+        ? `Hoàn ${product.buyerCashbackPercent}%`
+        : "";
+      receipt.rate.hidden = !showRate;
     }
     if (receipt.total) {
       receipt.total.textContent =
