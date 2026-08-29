@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -33,6 +33,8 @@ export default function KolScreen() {
   const [dongY, setDongY] = useState(false);
   const [buoc, setBuoc] = useState<'dieu-khoan' | 'form'>('dieu-khoan');
   const [daDoc, setDaDoc] = useState(false);
+  const [ganCuoi, setGanCuoi] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [info, setInfo] = useState<HoSoKolInput>({
     fullName: '',
     cccdNumber: '',
@@ -146,6 +148,7 @@ export default function KolScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.scroll,
           { paddingTop: insets.top + spacing.sm },
@@ -153,15 +156,15 @@ export default function KolScreen() {
         keyboardShouldPersistTaps="handled"
         scrollEventThrottle={64}
         onScroll={(e) => {
-          // Cuộn cả màn hình để đọc; tới gần cuối thì mở khóa ô đồng ý.
+          // Cuộn cả màn hình để đọc; tới gần cuối thì mở khóa + ẩn mũi tên.
           const { layoutMeasurement, contentOffset, contentSize } =
             e.nativeEvent;
-          if (
-            buoc === 'dieu-khoan' &&
+          const toiCuoi =
             contentOffset.y + layoutMeasurement.height >=
-              contentSize.height - 60
-          ) {
-            setDaDoc(true);
+            contentSize.height - 60;
+          if (buoc === 'dieu-khoan') {
+            if (toiCuoi) setDaDoc(true);
+            setGanCuoi(toiCuoi); // mũi tên: tới cuối ẩn, cuộn lên lại hiện
           }
         }}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
@@ -388,6 +391,18 @@ export default function KolScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Mũi tên xuống: bấm là cuộn thẳng tới cuối điều khoản (chỗ checkbox).
+          Hiện khi chưa tới cuối; cuộn tới cuối thì ẩn, cuộn lên lại hiện. */}
+      {buoc === 'dieu-khoan' && !daDuyet && !daNop && !ganCuoi ? (
+        <Pressable
+          onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          style={styles.jump}
+          hitSlop={8}
+          accessibilityLabel="Xuống cuối điều khoản để xác nhận">
+          <Ionicons name="chevron-down" size={24} color={colors.onBrand} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -452,6 +467,23 @@ const styles = StyleSheet.create({
     color: colors.brand,
     textAlign: 'center',
     marginTop: 10,
+  },
+  jump: {
+    position: 'absolute',
+    bottom: 28,
+    left: '50%',
+    marginLeft: -23,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   infoRow: {
     flexDirection: 'row',

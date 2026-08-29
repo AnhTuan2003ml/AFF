@@ -15,19 +15,21 @@
   var daDoc = false;
   function moKhoa() {
     if (daDoc) return;
-    daDoc = true;
+    daDoc = true; // mở khóa checkbox chỉ một lần (không khóa lại khi cuộn lên)
     accept.disabled = false;
     if (hint) hint.hidden = true;
-    if (jump) jump.hidden = true;
   }
 
   // Đã đọc tới cuối khi mốc cuối (hoặc khối xác nhận) lọt vào màn hình.
   var target = end || form;
   function kiemTra() {
-    if (daDoc || !target) return;
+    if (!target) return;
     var r = target.getBoundingClientRect();
     var vh = window.innerHeight || document.documentElement.clientHeight;
-    if (r.top <= vh - 36 && r.bottom >= 0) moKhoa();
+    var toiCuoi = r.top <= vh - 36 && r.bottom >= 0;
+    if (toiCuoi) moKhoa();
+    // Mũi tên bám theo vị trí: tới cuối thì ẩn, cuộn lên lại hiện.
+    if (jump) jump.hidden = toiCuoi;
   }
   window.addEventListener("scroll", kiemTra, { passive: true });
   window.addEventListener("resize", kiemTra);
