@@ -106,7 +106,7 @@ export async function getBusinessConfig(
         referrer_share_percent, special_partner_share_percent,
         small_order_threshold_vnd, small_order_buyer_percent
       ) VALUES (
-        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 5, 10, 25000, 80
+        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 10, 10, 25000, 80
       )
       ON CONFLICT (id) DO UPDATE SET id = business_config.id
       RETURNING buyer_cashback_percent, platform_share_percent,
@@ -120,8 +120,8 @@ export async function getBusinessConfig(
     `,
     [
       appConfig.BUYER_CASHBACK_PERCENT,
-      // Nền tảng = phần còn lại sau người mua và 5% đối tác giới thiệu (seed).
-      Math.max(0, 100 - appConfig.BUYER_CASHBACK_PERCENT - 5),
+      // Nền tảng = phần còn lại sau người mua và 10% đối tác giới thiệu (seed).
+      Math.max(0, 100 - appConfig.BUYER_CASHBACK_PERCENT - 10),
       appConfig.SHARER_REWARD_FROM_PLATFORM_PERCENT,
       appConfig.REFERRER_REWARD_AMOUNT,
       appConfig.REFERRED_USER_BONUS_AMOUNT,

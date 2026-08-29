@@ -4,8 +4,8 @@
  *   · Người mua nhận `buyerCashbackPercent`% (60% chuẩn; đơn ≤ ngưỡng đơn nhỏ
  *     — 25.000₫ — thì tới `smallOrderBuyerPercent`% = 80%).
  *   · Người chia sẻ/giới thiệu nhận `sharerSharePercent`% TRỰC TIẾP trên hoa
- *     hồng (5% chuẩn; 10% nếu là ĐỐI TÁC ĐẶC BIỆT — quyết định ở nơi gọi).
- *   · Nền tảng giữ phần còn lại (35% chuẩn; 30% với đối tác đặc biệt).
+ *     hồng (10% chuẩn, cũng là mức của ĐỐI TÁC ĐẶC BIỆT — quyết định ở nơi gọi).
+ *   · Nền tảng giữ phần còn lại (30% khi người mua 60%).
  *
  * Buyer/sharer làm tròn xuống, phần dư về nền tảng để tổng luôn khớp
  * commissionVnd (ledger cân bằng).

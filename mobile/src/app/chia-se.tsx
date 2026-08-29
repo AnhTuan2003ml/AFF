@@ -16,7 +16,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
  * Chia sẻ — tạo link Affiliate từ một link sản phẩm. Khi có người mua qua link,
- * người tạo được hưởng hoa hồng chia sẻ (mặc định 5% hoa hồng sàn). Cùng cơ
+ * người tạo được hưởng hoa hồng chia sẻ (mặc định 10% hoa hồng sàn). Cùng cơ
  * chế với trang /app/links trên web (campaign 'sharelink').
  */
 export default function ChiaSeScreen() {
@@ -50,7 +50,7 @@ export default function ChiaSeScreen() {
 
   if (!user) return <CanDangNhap mo_ta="Đăng nhập để tạo link chia sẻ và nhận hoa hồng." />;
 
-  const percent = data?.sharerSharePercent ?? 5;
+  const percent = data?.sharerSharePercent ?? 10;
 
   async function chep(link: string) {
     await Clipboard.setStringAsync(link);

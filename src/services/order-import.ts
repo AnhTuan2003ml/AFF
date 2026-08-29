@@ -807,8 +807,8 @@ export async function importOrderRow(
     sharerLaDacBiet = sharerRow.rows[0]?.is_special_partner ?? false;
   }
 
-  // Chính sách 2026-08-25: người mua 60% (đơn ≤ 25k: 80%), đối tác giới thiệu
-  // 5% (đặc biệt 10%) TRỰC TIẾP trên hoa hồng, nền tảng giữ phần còn lại.
+  // Chính sách 2026-08-29: người mua 60% (đơn ≤ 25k: 80%), đối tác giới thiệu
+  // 10% (F1) TRỰC TIẾP trên hoa hồng, nền tảng giữ phần còn lại.
   const split = computeCommissionSplit(
     commission,
     {
