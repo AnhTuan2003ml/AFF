@@ -173,6 +173,16 @@ export function layKhamPha(list: 'hot' | 'best' | 'recommend' | 'exclusive' = 'b
   }>(`/api/v1/discover?list=${list}&page=${page}`, { auth: false });
 }
 
+/** Sản phẩm affiliate Lazada (menu Lazada) — hot = hoa hồng cao, best = bán chạy. */
+export function layKhamPhaLazada(list: 'hot' | 'best' | 'recommend' = 'recommend', page = 1) {
+  return apiFetch<{
+    list: string;
+    page: number;
+    knownPages: number;
+    data: DiscoverProduct[];
+  }>(`/api/v1/discover/lazada?list=${list}&page=${page}`, { auth: false });
+}
+
 /* ---------------------------- Bảng xếp hạng --------------------------- */
 
 export interface TopBuyer {

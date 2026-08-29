@@ -20,6 +20,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import {
   layKhamPha,
+  layKhamPhaLazada,
   layVoucher,
   type DiscoverProduct,
   type ShopeeVoucher,
@@ -36,7 +37,10 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * Sản phẩm lấy từ kho harvest theo từng list (recommend/best/exclusive).
  */
 
-const TABS = [
+// Sàn ở CẤP CAO NHẤT; bên trong mới tới hạng mục (giống web).
+type Platform = 'shopee' | 'lazada';
+
+const SHOPEE_TABS = [
   { key: 'hot', nhan: '🔥 Hot' },
   { key: 'voucher', nhan: '🎟️ Voucher' },
   { key: 'recommend', nhan: 'Đề xuất' },
@@ -44,7 +48,14 @@ const TABS = [
   { key: 'exclusive', nhan: 'Độc quyền' },
 ] as const;
 
-type TabKey = (typeof TABS)[number]['key'];
+// Lazada (feed affiliate): Đề xuất · Hoa hồng cao (hot) · Bán chạy.
+const LAZADA_TABS = [
+  { key: 'recommend', nhan: 'Đề xuất' },
+  { key: 'hot', nhan: '🔥 Hoa hồng cao' },
+  { key: 'best', nhan: 'Bán chạy' },
+] as const;
+
+type TabKey = (typeof SHOPEE_TABS)[number]['key'];
 type ProductList = 'hot' | 'recommend' | 'best' | 'exclusive';
 
 const LIST_KEYS: TabKey[] = ['hot', 'voucher', 'recommend', 'best', 'exclusive'];
@@ -62,9 +73,11 @@ function pageWindow(cur: number, total: number): number[] {
 
 export default function DiscoverScreen() {
   const params = useLocalSearchParams<{ list?: string }>();
+  const [platform, setPlatform] = useState<Platform>('shopee');
   const [list, setList] = useState<TabKey>('best');
   const [page, setPage] = useState(1);
   const listRef = useRef<FlatList<DiscoverProduct>>(null);
+  const tabs = platform === 'lazada' ? LAZADA_TABS : SHOPEE_TABS;
 
   // "Xem thêm" ở Trang chủ điều hướng kèm ?list=... → chọn đúng hạng mục.
   useEffect(() => {
@@ -75,10 +88,13 @@ export default function DiscoverScreen() {
     }
   }, [params.list]);
 
-  const laVoucher = list === 'voucher';
+  const laVoucher = platform === 'shopee' && list === 'voucher';
   const { data, isPending, isRefetching, refetch } = useQuery({
-    queryKey: ['discover', list, page],
-    queryFn: () => layKhamPha(list as ProductList, page),
+    queryKey: ['discover', platform, list, page],
+    queryFn: () =>
+      platform === 'lazada'
+        ? layKhamPhaLazada(list as 'hot' | 'best' | 'recommend', page)
+        : layKhamPha(list as ProductList, page),
     enabled: !laVoucher,
   });
   const voucherQ = useQuery({
@@ -94,6 +110,14 @@ export default function DiscoverScreen() {
     setPage(1);
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }
+  // Cấp 1 — đổi sàn: về hạng mục mặc định của sàn (Shopee=Bán chạy, Lazada=Đề xuất).
+  function chonSan(p: Platform) {
+    if (p === platform) return;
+    setPlatform(p);
+    setList(p === 'lazada' ? 'recommend' : 'best');
+    setPage(1);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }
   function doiTrang(p: number) {
     setPage(p);
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -106,11 +130,28 @@ export default function DiscoverScreen() {
       <Text style={styles.sub}>
         Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.
       </Text>
+      {/* CẤP 1 — chọn sàn (mặc định Shopee). */}
+      <View style={styles.platSwitch}>
+        <Pressable
+          onPress={() => chonSan('shopee')}
+          style={[styles.platBtn, platform === 'shopee' && styles.platBtnShopee]}>
+          <Text style={[styles.platText, platform === 'shopee' && styles.platTextOn]}>
+            Shopee
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => chonSan('lazada')}
+          style={[styles.platBtn, platform === 'lazada' && styles.platBtnLazada]}>
+          <Text style={[styles.platText, platform === 'lazada' && styles.platTextOn]}>
+            Lazada
+          </Text>
+        </Pressable>
+      </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabs}>
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const on = t.key === list;
           const noiBat = t.key === 'hot' || t.key === 'voucher';
           return (
@@ -395,6 +436,24 @@ const styles = StyleSheet.create({
   tabHot: { borderColor: '#ff5a1f', backgroundColor: '#fff2ec' },
   tabHotOn: { backgroundColor: '#ff5a1f', borderColor: '#ff5a1f' },
   tabHotText: { color: '#d63e12' },
+
+  // Công tắc chọn SÀN cấp 1 (segmented, màu thương hiệu).
+  platSwitch: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    gap: 4,
+    padding: 4,
+    marginTop: 14,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  platBtn: { paddingHorizontal: 22, paddingVertical: 9, borderRadius: radius.pill },
+  platBtnShopee: { backgroundColor: '#ee4d2d' },
+  platBtnLazada: { backgroundColor: '#1d2d86' },
+  platText: { fontSize: 13, fontWeight: '900', color: colors.text },
+  platTextOn: { color: '#fff' },
 
   card: {
     flex: 1,

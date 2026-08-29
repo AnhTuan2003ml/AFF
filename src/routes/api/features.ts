@@ -27,9 +27,14 @@ import {
   EXCLUSIVE_LIST_TYPE,
   HOT_DEALS_LIST_TYPE,
   RECOMMEND_LIST_TYPE,
+  OFFER_PAGE_SIZE,
   getKnownOfferPageCount,
   getStoredOfferPage,
 } from "../../services/discover-harvest.js";
+import {
+  getStoredLazadaOffers,
+  getStoredLazadaOffersCount,
+} from "../../services/lazada-offer-store.js";
 import type { ApiDeps } from "./deps.js";
 
 /**
@@ -320,5 +325,37 @@ export async function registerFeatureApiRoutes(
       getKnownOfferPageCount(deps.db, listType),
     ]);
     return { list: ten, page, knownPages, data: rows };
+  });
+
+  // Sản phẩm affiliate LAZADA cho app (menu con Lazada của Khám phá). Đọc từ
+  // kho lazada_offer_products; cùng shape DiscoverProduct với /discover.
+  app.get("/discover/lazada", async (request, reply) => {
+    reply.header("cache-control", "public, max-age=120");
+    const q = request.query as Record<string, unknown>;
+    const list = String(q.list ?? "recommend");
+    const parsed = Number.parseInt(String(q.page ?? "1"), 10);
+    const page = Math.min(Math.max(Number.isFinite(parsed) ? parsed : 1, 1), 100);
+
+    const [rows, total] = await Promise.all([
+      getStoredLazadaOffers(deps.db, { list, page, pageSize: OFFER_PAGE_SIZE }),
+      getStoredLazadaOffersCount(deps.db),
+    ]);
+    return {
+      list,
+      page,
+      knownPages: Math.max(1, Math.ceil(total / OFFER_PAGE_SIZE)),
+      data: rows.map((r) => ({
+        item_id: r.item_id,
+        name: r.name,
+        image_url: r.image_url,
+        price_vnd: r.price_vnd,
+        commission_rate_bps: r.commission_rate_bps,
+        shop_name: r.shop_name,
+        product_url: r.product_url,
+        sales_count: r.sales_count !== null ? String(r.sales_count) : null,
+        original_price_vnd: null,
+        discount_percent: null,
+      })),
+    };
   });
 }
