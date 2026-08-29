@@ -1188,7 +1188,8 @@ label small {
 .px-footer {
   background: #43271c;
   color: #fff;
-  padding: 28px max(28px, calc((100vw - 1500px)/2));
+  /* Chừa ~80px cuối trang để FAB "Hỏi Camio" không đè nội dung footer. */
+  padding: 28px max(28px, calc((100vw - 1500px)/2)) 80px;
 }
 
 .px-footer-top {
@@ -5001,8 +5002,8 @@ label small {
    ============================================================ */
 .st-support-fab {
   position: fixed;
-  right: 22px;
-  bottom: 22px;
+  right: 24px;
+  bottom: max(24px, env(safe-area-inset-bottom));
   z-index: 130;
   display: inline-flex;
   align-items: center;
@@ -5027,25 +5028,55 @@ label small {
   box-shadow: 0 16px 38px rgba(219, 72, 39, .44);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .st-support-fab {
-    animation: st-fab-bob 2.8s ease-in-out infinite;
-  }
-
-  .st-support-fab:hover {
-    animation-play-state: paused;
-  }
+/* Bay nhẹ từ dưới lên khi vào trang (thay cho nhảy vô hạn 2,8s). */
+.st-support-fab.camio-enter {
+  animation: camioEnter 550ms cubic-bezier(.2, .9, .3, 1.25) both;
 }
 
-@keyframes st-fab-bob {
+@keyframes camioEnter {
+  from { opacity: 0; transform: translateY(28px) scale(.72); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
-  0%,
-  100% {
-    transform: translateY(0);
-  }
+/* Nút CTA "Dán link ngay" trong bong bóng chào của Camio. */
+.camio-paste-cta {
+  display: inline-block;
+  margin-top: 9px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--lx-orange, #ee4d2d);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
 
-  50% {
-    transform: translateY(-5px);
+/* Bong bóng của FAB: neo về bên PHẢI (tránh tràn mép), xuống dòng, đủ rộng. */
+.st-support-fab .blob-bubble {
+  left: auto;
+  right: -2px;
+  transform: none;
+  white-space: normal;
+  width: max-content;
+  max-width: min(280px, 78vw);
+  padding: 12px 14px;
+  line-height: 1.42;
+  font-size: 12.5px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.st-support-fab .blob-bubble::after {
+  left: auto;
+  right: 20px;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-support-fab.camio-enter,
+  .st-support-fab .blob-bubble {
+    animation: none !important;
   }
 }
 
@@ -5064,7 +5095,7 @@ label small {
   }
 
   .st-support-fab .st-fab-mascot {
-    width: 42px;
+    width: 48px;
   }
 }
 
@@ -5403,7 +5434,7 @@ label small {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  width: 48px;
   line-height: 0;
 }
 
