@@ -156,7 +156,10 @@
 
 @media (max-width: 560px) {
   .kol-doc-sheet { padding: 24px 20px; }
-  .kol-agree-bar { flex-direction: column; align-items: stretch; }
+  .kol-agree-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  /* Trong layout cột, flex-basis 320px của .kol-check biến thành CHIỀU CAO làm
+     thanh phình to — reset về auto. */
+  .kol-check { flex: 0 0 auto; }
   .kol-continue { width: 100%; }
 }
 
