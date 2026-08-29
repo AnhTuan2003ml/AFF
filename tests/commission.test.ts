@@ -4,9 +4,10 @@ import {
   resolveBuyerPercent,
 } from "../src/services/commission.js";
 
-// Chính sách 2026-08-25: người mua 60%, đối tác giới thiệu 5% (đặc biệt 10%)
-// TRỰC TIẾP trên hoa hồng, nền tảng giữ phần còn lại; đơn ≤ 25.000₫ → 80%.
-const RATES = { buyerCashbackPercent: 60, sharerSharePercent: 5 };
+// Chính sách 2026-08-29: nền tảng LUÔN 40% (=100−buyer); người giới thiệu 6%
+// TRÍCH TỪ phần người mua → người mua 60% (không có F1) hoặc 54% (có F1).
+// Đơn ≤ 25.000₫: người mua 80% (nền tảng 20%).
+const RATES = { buyerCashbackPercent: 60, sharerSharePercent: 6 };
 const SPECIAL = { buyerCashbackPercent: 60, sharerSharePercent: 10 };
 const SMALL_CFG = {
   buyerCashbackPercent: 60,
@@ -15,7 +16,7 @@ const SMALL_CFG = {
 };
 
 describe("computeCommissionSplit", () => {
-  it("mua trực tiếp: người mua 60%, nền tảng giữ 40% (không có người giới thiệu)", () => {
+  it("không có người giới thiệu: người mua 60%, nền tảng 40%", () => {
     const split = computeCommissionSplit(100_000, RATES, false);
     expect(split.buyerVnd).toBe(60_000);
     expect(split.sharerVnd).toBe(0);
@@ -26,32 +27,32 @@ describe("computeCommissionSplit", () => {
     expect(split.buyerVnd + split.sharerVnd + split.platformVnd).toBe(100_000);
   });
 
-  it("có đối tác giới thiệu: 60/5/35 — phần giới thiệu tính trực tiếp trên hoa hồng", () => {
+  it("có người giới thiệu: 54/6/40 — F1 trích từ phần người mua, nền tảng vẫn 40%", () => {
     const split = computeCommissionSplit(100_000, RATES, true);
-    expect(split.buyerVnd).toBe(60_000);
-    expect(split.sharerVnd).toBe(5_000);
-    expect(split.platformVnd).toBe(35_000);
-    expect(split.buyerPercent).toBe(60);
-    expect(split.sharerPercent).toBe(5);
-    expect(split.platformPercent).toBe(35);
+    expect(split.buyerVnd).toBe(54_000);
+    expect(split.sharerVnd).toBe(6_000);
+    expect(split.platformVnd).toBe(40_000);
+    expect(split.buyerPercent).toBe(54);
+    expect(split.sharerPercent).toBe(6);
+    expect(split.platformPercent).toBe(40);
   });
 
-  it("đối tác ĐẶC BIỆT: 60/10/30", () => {
+  it("tỷ lệ F1 khác (10%): 50/10/40 — nền tảng luôn 40%", () => {
     const split = computeCommissionSplit(100_000, SPECIAL, true);
-    expect(split.buyerVnd).toBe(60_000);
+    expect(split.buyerVnd).toBe(50_000);
     expect(split.sharerVnd).toBe(10_000);
-    expect(split.platformVnd).toBe(30_000);
+    expect(split.platformVnd).toBe(40_000);
   });
 
-  it("đơn nhỏ (≤25k) người mua 80%: 80/5/15", () => {
+  it("đơn nhỏ (người mua 80%) có F1: 74/6/20", () => {
     const split = computeCommissionSplit(
       10_000,
-      { buyerCashbackPercent: 80, sharerSharePercent: 5 },
+      { buyerCashbackPercent: 80, sharerSharePercent: 6 },
       true,
     );
-    expect(split.buyerVnd).toBe(8_000);
-    expect(split.sharerVnd).toBe(500);
-    expect(split.platformVnd).toBe(1_500);
+    expect(split.buyerVnd).toBe(7_400);
+    expect(split.sharerVnd).toBe(600);
+    expect(split.platformVnd).toBe(2_000);
   });
 
   it("hoa hồng 0 (không có đơn hợp lệ) => không phần nào được trả", () => {
@@ -75,18 +76,19 @@ describe("computeCommissionSplit", () => {
     expect(() => computeCommissionSplit(1.5, RATES, false)).toThrow();
   });
 
-  it("từ chối tỷ lệ ngoài khoảng 0-100 hoặc tổng vượt 100", () => {
+  it("từ chối tỷ lệ ngoài 0-100, hoặc F1 vượt tỷ lệ người mua", () => {
     expect(() =>
       computeCommissionSplit(
         1000,
-        { buyerCashbackPercent: 150, sharerSharePercent: 5 },
+        { buyerCashbackPercent: 150, sharerSharePercent: 6 },
         false,
       ),
     ).toThrow();
+    // F1 (10%) vượt tỷ lệ người mua (5%) → không hợp lệ.
     expect(() =>
       computeCommissionSplit(
         1000,
-        { buyerCashbackPercent: 98, sharerSharePercent: 5 },
+        { buyerCashbackPercent: 5, sharerSharePercent: 10 },
         true,
       ),
     ).toThrow();

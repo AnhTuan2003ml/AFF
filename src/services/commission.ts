@@ -1,11 +1,13 @@
 /**
- * Chia hoa hồng thực nhận của một đơn theo chính sách 2026-08-25:
+ * Chia hoa hồng thực nhận của một đơn theo chính sách 2026-08-29:
  *
- *   · Người mua nhận `buyerCashbackPercent`% (60% chuẩn; đơn ≤ ngưỡng đơn nhỏ
- *     — 25.000₫ — thì tới `smallOrderBuyerPercent`% = 80%).
- *   · Người chia sẻ/giới thiệu nhận `sharerSharePercent`% TRỰC TIẾP trên hoa
- *     hồng (10% chuẩn, cũng là mức của ĐỐI TÁC ĐẶC BIỆT — quyết định ở nơi gọi).
- *   · Nền tảng giữ phần còn lại (30% khi người mua 60%).
+ *   · Nền tảng LUÔN giữ (100 − `buyerCashbackPercent`)% hoa hồng — mặc định 40%
+ *     (đơn ≤ ngưỡng đơn nhỏ 25.000₫: người mua tới `smallOrderBuyerPercent`%
+ *     = 80% nên nền tảng chỉ còn 20%).
+ *   · Người giới thiệu/chia sẻ (nếu có) hưởng `sharerSharePercent`% (mặc định
+ *     6%) — TRÍCH TỪ phần người mua, KHÔNG lấy thêm từ nền tảng.
+ *   · Vậy người mua nhận `buyerCashbackPercent`% khi KHÔNG có người giới thiệu
+ *     (60%), và (`buyerCashbackPercent` − `sharerSharePercent`)% khi CÓ (54%).
  *
  * Buyer/sharer làm tròn xuống, phần dư về nền tảng để tổng luôn khớp
  * commissionVnd (ledger cân bằng).
@@ -41,12 +43,14 @@ export function computeCommissionSplit(
     }
   }
 
-  const buyerPercent = rates.buyerCashbackPercent;
   const sharerPercent = hasSharer ? rates.sharerSharePercent : 0;
-  if (buyerPercent + sharerPercent > 100) {
-    throw new Error("Tổng tỷ lệ người mua + người chia sẻ vượt quá 100%.");
+  if (sharerPercent > rates.buyerCashbackPercent) {
+    throw new Error("Tỷ lệ người giới thiệu không được vượt tỷ lệ người mua.");
   }
-  const platformPercent = 100 - buyerPercent - sharerPercent;
+  // Người giới thiệu hưởng phần TRÍCH TỪ tỷ lệ người mua: nền tảng luôn giữ
+  // (100 − buyerCashbackPercent)%, người mua nhận phần còn lại của mình.
+  const buyerPercent = rates.buyerCashbackPercent - sharerPercent;
+  const platformPercent = 100 - rates.buyerCashbackPercent;
 
   if (commissionVnd === 0) {
     return { buyerVnd: 0, platformVnd: 0, sharerVnd: 0, buyerPercent, platformPercent, sharerPercent };

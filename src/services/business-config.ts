@@ -106,7 +106,7 @@ export async function getBusinessConfig(
         referrer_share_percent, special_partner_share_percent,
         small_order_threshold_vnd, small_order_buyer_percent
       ) VALUES (
-        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 10, 10, 25000, 80
+        true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 6, 6, 25000, 80
       )
       ON CONFLICT (id) DO UPDATE SET id = business_config.id
       RETURNING buyer_cashback_percent, platform_share_percent,
@@ -120,8 +120,9 @@ export async function getBusinessConfig(
     `,
     [
       appConfig.BUYER_CASHBACK_PERCENT,
-      // Nền tảng = phần còn lại sau người mua và 10% đối tác giới thiệu (seed).
-      Math.max(0, 100 - appConfig.BUYER_CASHBACK_PERCENT - 10),
+      // Nền tảng giữ phần còn lại sau người mua; hoa hồng người giới thiệu
+      // TRÍCH TỪ phần người mua nên không trừ thêm ở đây (seed).
+      Math.max(0, 100 - appConfig.BUYER_CASHBACK_PERCENT),
       appConfig.SHARER_REWARD_FROM_PLATFORM_PERCENT,
       appConfig.REFERRER_REWARD_AMOUNT,
       appConfig.REFERRED_USER_BONUS_AMOUNT,
@@ -180,17 +181,20 @@ export async function updateBusinessConfig(
       );
     }
   }
+  // Hoa hồng người giới thiệu TRÍCH TỪ phần người mua nên không được vượt tỷ
+  // lệ hoàn của người mua (cả mức thường lẫn mức đơn nhỏ).
   const sharerToiDa = Math.max(
     patch.referrerSharePercent,
     patch.specialPartnerSharePercent,
   );
-  if (
-    patch.buyerCashbackPercent + sharerToiDa > 100 ||
-    patch.smallOrderBuyerPercent + sharerToiDa > 100
-  ) {
+  const buyerToiThieu = Math.min(
+    patch.buyerCashbackPercent,
+    patch.smallOrderBuyerPercent,
+  );
+  if (sharerToiDa > buyerToiThieu) {
     throw new AppError(
       "INVALID_BUSINESS_CONFIG",
-      "Tổng tỷ lệ người mua + đối tác không được vượt 100%.",
+      "Tỷ lệ người giới thiệu không được vượt tỷ lệ hoàn của người mua.",
     );
   }
   if (patch.smallOrderThresholdVnd < 0) {
@@ -218,9 +222,9 @@ export async function updateBusinessConfig(
     );
   }
 
-  // Nền tảng giữ phần còn lại sau người mua và đối tác giới thiệu (mức thường).
-  const platformSharePercent =
-    100 - patch.buyerCashbackPercent - patch.referrerSharePercent;
+  // Nền tảng giữ phần còn lại sau người mua (mức thường). Hoa hồng người giới
+  // thiệu trích TỪ phần người mua nên KHÔNG trừ thêm ở đây.
+  const platformSharePercent = 100 - patch.buyerCashbackPercent;
   const before = await getBusinessConfig(db, appConfig);
 
   const updated = await query<BusinessConfigRow>(
