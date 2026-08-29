@@ -194,7 +194,7 @@ const configSchema = z.object({
   MISSION_REFERRAL_MILESTONES_JSON: z
     .string()
     .default(
-      '[{"threshold":1,"rewardVnd":10000,"title":"Mời 1 người"},{"threshold":5,"rewardVnd":50000,"title":"Mời 5 người"},{"threshold":10,"rewardVnd":150000,"title":"Mời 10 người"}]',
+      '[{"threshold":50,"rewardVnd":10000,"title":"Mời 50 người"},{"threshold":100,"rewardVnd":50000,"title":"Mời 100 người"},{"threshold":150,"rewardVnd":150000,"title":"Mời 150 người"}]',
     ),
   MISSION_PURCHASE_MILESTONES_JSON: z
     .string()
