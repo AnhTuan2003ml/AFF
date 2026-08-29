@@ -6077,12 +6077,14 @@ label small {
    TAB ĐƠN HÀNG: XUỐNG DÒNG thay vì cuộn ngang → không bị cắt (mobile + desktop)
    ============================================================ */
 .orders-history-tabs {
-  flex-wrap: wrap;
-  overflow: visible;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .orders-history-tabs a {
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 /* Tầng 2 gộp: nút sàn + danh mục chung một hàng, tự xuống dòng */
@@ -6104,6 +6106,7 @@ label small {
    tab trạng thái ở dưới (tự xuống dòng), áp cho cả desktop lẫn mobile. */
 .orders-history-controls {
   display: block;
+  min-width: 0;
 }
 
 .orders-history-controls .orders-history-search {
@@ -6113,8 +6116,10 @@ label small {
 
 .orders-history-controls .orders-history-tabs {
   margin: 0;
-  flex-wrap: wrap;
-  overflow: visible;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ============================================================
@@ -8615,6 +8620,12 @@ button.cal-cell.is-today:hover:not(:disabled) {
   padding: 8px 0 0px;
 }
 
+/* Shell là grid; grid item mặc định min-width:auto không co dưới min-content
+   nên hero/list bị tràn ngang. Cho phép co để nội dung cuộn/xuống dòng gọn. */
+.orders-history-shell > * {
+  min-width: 0;
+}
+
 .orders-history-hero {
   background: linear-gradient(135deg, #ffffff 0%, #fffbf8 100%);
   border: 1px solid var(--lx-line);
@@ -8715,6 +8726,7 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .orders-history-search input[type="search"] {
   flex: 1 !important;
   width: 100% !important;
+  min-width: 0 !important;
   height: 48px !important;
   padding: 0 !important;
   border: 0 !important;
