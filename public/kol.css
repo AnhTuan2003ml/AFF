@@ -116,7 +116,9 @@
 
 /* Nút mũi tên xuống: bấm là cuộn thẳng tới cuối điều khoản (chỗ checkbox). */
 .kol-jump {
-  position: fixed; left: 50%; bottom: 96px; z-index: 30;
+  position: fixed; left: 50%;
+  /* Nằm TRÊN thanh tab-nav mobile (.st-tabbar cao ~72px + safe-area, z-index 120) */
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px)); z-index: 130;
   width: 46px; height: 46px; padding: 0;
   border: none; border-radius: 999px; cursor: pointer;
   background: var(--lx-orange, #ee4d2d); color: #fff;

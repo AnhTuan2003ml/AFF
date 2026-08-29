@@ -12,6 +12,13 @@
   var form = document.getElementById("kol-agree-form");
   if (!accept || !cont) return;
 
+  // .kol-wrap có transform (animation vào trang) → tạo containing-block khiến
+  // position:fixed của mũi tên neo theo container (cao ~19000px) thay vì viewport.
+  // Đưa mũi tên ra thẳng <body> để fixed neo đúng theo màn hình.
+  if (jump && document.body && jump.parentElement !== document.body) {
+    document.body.appendChild(jump);
+  }
+
   var daDoc = false;
   function moKhoa() {
     if (daDoc) return;
