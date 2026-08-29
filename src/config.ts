@@ -119,6 +119,11 @@ const configSchema = z.object({
   LAZADA_OPEN_API_APP_KEY: z.string().trim().default(""),
   LAZADA_OPEN_API_APP_SECRET: z.string().trim().default(""),
   LAZADA_OPEN_API_ACCESS_TOKEN: z.string().trim().default(""),
+  // Lazada AFFILIATE Open Platform (adsense.lazada.vn → Mở API): dùng chung
+  // App Key/Secret ở trên (LiteApp) nhưng xác thực bằng User Token truyền như
+  // BUSINESS PARAM `userToken` (không phải access_token). Đây là nguồn hoa hồng
+  // thật theo sản phẩm (/marketing/product/feed → totalCommissionAmount/Rate).
+  LAZADA_AFFILIATE_USER_TOKEN: z.string().trim().default(""),
   // Callback OAuth Lazada Open Platform. Trống = tự suy ra
   // APP_ORIGIN + "/auth/lazada/callback" (production:
   // https://shoptikvn.com/auth/lazada/callback — khai đúng URL này trên Lazada).

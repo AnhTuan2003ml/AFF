@@ -12,6 +12,10 @@ import {
 } from "./shopee-open-api.js";
 import { fetchLazadaProductItem, type LazadaProductItem } from "./lazada-open-api.js";
 import {
+  fetchLazadaAffiliateProduct,
+  type LazadaAffiliateProduct,
+} from "./lazada-affiliate-api.js";
+import {
   fetchTikTokAffiliateProduct,
   type TikTokAffiliateProduct,
 } from "./tiktok-open-api.js";
@@ -1009,6 +1013,27 @@ function lazadaItemToProductData(
   };
 }
 
+function lazadaAffiliateToProductData(
+  item: LazadaAffiliateProduct | null,
+): ProductData | null {
+  if (!item) return null;
+  const imageUrl = safeImageUrl(item.imageUrl);
+  return {
+    productId: item.itemId,
+    ...(item.productName ? { productName: item.productName } : {}),
+    ...(item.shopName ? { shopName: item.shopName } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
+    ...(item.priceVnd !== undefined ? { priceVnd: item.priceVnd } : {}),
+    // Hoa hồng THẬT theo sản phẩm từ API affiliate (kể cả 0 khi không có hoàn).
+    ...(item.commissionVnd !== undefined
+      ? { affiliateCommissionVnd: item.commissionVnd }
+      : {}),
+    ...(item.commissionRateBps !== undefined
+      ? { commissionRateBps: item.commissionRateBps }
+      : {}),
+  };
+}
+
 function tikTokAffiliateToProductData(
   product: TikTokAffiliateProduct | null,
 ): ProductData | null {
@@ -1075,10 +1100,14 @@ export async function lookupProductPreview(
   // Lazada GetProductItem / TikTok Affiliate Creator — có hoa hồng nếu sàn
   // trả) → partner API tự cấu hình → API sàn/HTML công khai (thường bị
   // chặn bot, đặc biệt TikTok Shop).
-  const [shopeeOfferLookup, lazadaItem, tikTokProduct, partner, nativeProduct, pageProduct] =
+  const [shopeeOfferLookup, lazadaAffiliate, lazadaItem, tikTokProduct, partner, nativeProduct, pageProduct] =
     await Promise.all([
       platform === "SHOPEE" && identity
         ? lookupShopeeProductOffer(config, identity.productId, fetcher)
+        : Promise.resolve(null),
+      // Lazada: nguồn CHÍNH là API affiliate (có hoa hồng thật theo sản phẩm).
+      platform === "LAZADA" && identity
+        ? fetchLazadaAffiliateProduct(config, identity.productId, fetcher)
         : Promise.resolve(null),
       platform === "LAZADA" && identity
         ? fetchLazadaProductItem(config, identity.productId, identity.skuId, fetcher)
@@ -1104,6 +1133,7 @@ export async function lookupProductPreview(
       : lazadaUrlData;
   const officialOffer =
     offerToProductData(shopeeOfferLookup?.offer ?? null) ??
+    lazadaAffiliateToProductData(lazadaAffiliate) ??
     lazadaItemToProductData(lazadaItem) ??
     tikTokAffiliateToProductData(tikTokProduct);
   const product = mergeProductData(
