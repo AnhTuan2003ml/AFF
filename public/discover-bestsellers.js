@@ -14,11 +14,11 @@
   var endpoint = root.getAttribute("data-endpoint");
   var endpointLazada = root.getAttribute("data-endpoint-lazada");
   var endpoints = { shopee: endpoint, lazada: endpointLazada };
-  var activePlatform = "shopee";
   var PLATFORM_NAMES = { shopee: "Shopee", lazada: "Lazada" };
-  var platformTabs = Array.prototype.slice.call(
-    root.querySelectorAll("[data-bestseller-platform] [data-platform-tab]")
-  );
+  // Sàn do CẤP 1 (discover.js) quyết định — đọc từ data-discover-platform.
+  function currentPlatform() {
+    return page.dataset.discoverPlatform === "lazada" ? "lazada" : "shopee";
+  }
   var grid = root.querySelector("[data-bestseller-grid]");
   var statusBox = root.querySelector("[data-bestseller-status]");
   var loadingBox = root.querySelector("[data-bestseller-loading]");
@@ -33,18 +33,24 @@
   var normalGrid = page.querySelector("[data-discover-grid]");
   var filterEmpty = page.querySelector("[data-discover-filter-empty]");
 
-  var TITLE_BASE = {
+  var TITLE_SHOPEE = {
     hot: "🔥 Deal Hot",
     recommend: "Đề xuất",
     best: "Bán chạy nhất",
     exclusive: "Ưu đãi độc quyền",
   };
+  // Lazada: "hot" đóng vai "Hoa hồng cao" (feed sắp theo hoa hồng).
+  var TITLE_LAZADA = {
+    hot: "🔥 Hoa hồng cao",
+    recommend: "Đề xuất",
+    best: "Bán chạy nhất",
+  };
   function titleFor(listKey) {
-    return (
-      (TITLE_BASE[listKey] || "Sản phẩm") +
-      " trên " +
-      (PLATFORM_NAMES[activePlatform] || "Shopee")
-    );
+    var platform = currentPlatform();
+    var base =
+      (platform === "lazada" ? TITLE_LAZADA : TITLE_SHOPEE)[listKey] ||
+      "Sản phẩm";
+    return base + " trên " + (PLATFORM_NAMES[platform] || "Shopee");
   }
 
   // Mỗi danh mục giữ trang riêng — quay lại vẫn ở đúng trang đang xem.
@@ -116,11 +122,12 @@
     badges.appendChild(
       el("span", "discover-category-badge", LABELS[listKey] || "Đề xuất")
     );
+    var plat = currentPlatform();
     badges.appendChild(
       el(
         "span",
-        "discover-platform-badge platform-" + activePlatform,
-        PLATFORM_NAMES[activePlatform] || "Shopee"
+        "discover-platform-badge platform-" + plat,
+        PLATFORM_NAMES[plat] || "Shopee"
       )
     );
     media.appendChild(badges);
@@ -228,7 +235,7 @@
     var data;
     try {
       var response = await fetch(
-        endpoints[activePlatform] + "?list=" + listKey + "&page=" + targetPage,
+        endpoints[currentPlatform()] + "?list=" + listKey + "&page=" + targetPage,
         { credentials: "same-origin", headers: { accept: "application/json" } }
       );
       data = await response.json();
@@ -284,7 +291,15 @@
     }
   }
 
+  var lastPlatform = "shopee";
   function setLiveActive(listKey) {
+    // Đổi sàn → dữ liệu khác hẳn, đưa mọi mục về trang 1.
+    if (currentPlatform() !== lastPlatform) {
+      Object.keys(listState).forEach(function (key) {
+        listState[key] = { page: 1, known: 0, hasMore: true };
+      });
+      lastPlatform = currentPlatform();
+    }
     activeList = listKey;
     liveButtons.forEach(function (button) {
       var isActive = button.getAttribute("data-discover-livelist") === listKey;
@@ -300,35 +315,13 @@
     if (filterEmpty) filterEmpty.hidden = true;
     root.hidden = false;
     if (title) title.textContent = titleFor(listKey);
-    // Đưa tiêu đề + menu con chọn sàn (Shopee | Lazada) vào tầm nhìn ngay khi
-    // mở mục — nếu không người dùng dễ không thấy nút chọn sàn.
+    // Đưa tiêu đề mục vào tầm nhìn ngay khi mở.
     try {
       root.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) {}
     loadPage(listKey, listState[listKey].page);
   }
 
-  // Đổi sàn (Shopee ⇄ Lazada) cho mục sống đang xem — dữ liệu khác nhau nên
-  // về trang 1 và tải lại từ endpoint tương ứng.
-  function setPlatform(platform) {
-    if (platform === activePlatform || !endpoints[platform]) return;
-    activePlatform = platform;
-    platformTabs.forEach(function (button) {
-      var on = button.getAttribute("data-platform-tab") === platform;
-      button.classList.toggle("active", on);
-      button.setAttribute("aria-pressed", String(on));
-    });
-    if (activeList) {
-      listState[activeList] = { page: 1, known: 0, hasMore: true };
-      if (title) title.textContent = titleFor(activeList);
-      loadPage(activeList, 1);
-    }
-  }
-  platformTabs.forEach(function (button) {
-    button.addEventListener("click", function () {
-      setPlatform(button.getAttribute("data-platform-tab"));
-    });
-  });
 
   function leaveLive() {
     if (activeList === null) return;

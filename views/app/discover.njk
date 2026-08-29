@@ -25,16 +25,15 @@
           <input type="search" placeholder="Tìm sản phẩm, thương hiệu hoặc voucher" autocomplete="off" data-discover-search>
         </label>
 
-        {# Tầng 2: tất cả nút lọc (sàn + danh mục) chung một hàng, tự xuống dòng #}
         <div class="discover-filter-buttons">
-          {% if platforms.length %}
-            <div class="discover-platform-tabs px-filter-tabs" role="group" aria-label="Lọc theo sàn">
-              <button type="button" class="active" data-discover-platform="all" aria-pressed="true">Tất cả sàn</button>
-              {% for platform in platforms %}<button type="button" data-discover-platform="{{ platform.key }}" aria-pressed="false">{{ platform.label }}</button>{% endfor %}
-            </div>
-          {% endif %}
+          {# Cấp 1 — CHỌN SÀN. Vào mặc định Shopee. #}
+          <div class="discover-platform-switch" role="group" aria-label="Chọn sàn" data-platform-switch>
+            <button type="button" class="active platform-shopee" data-platform-select="shopee" aria-pressed="true">Shopee</button>
+            <button type="button" class="platform-lazada" data-platform-select="lazada" aria-pressed="false">Lazada</button>
+          </div>
 
-          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Lọc theo danh mục">
+          {# Cấp 2a — Hạng mục Shopee #}
+          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Danh mục Shopee" data-platform-cats="shopee">
             <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
             <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 Hot</button>
             <button type="button" class="discover-tab-voucher" data-discover-voucher aria-pressed="false">🎟️ Voucher</button>
@@ -42,6 +41,13 @@
             <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
             <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Độc quyền</button>
             {% for category in categories %}<button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>{% endfor %}
+          </div>
+
+          {# Cấp 2b — Hạng mục Lazada (feed affiliate; ẩn tới khi chọn Lazada) #}
+          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Danh mục Lazada" data-platform-cats="lazada" hidden>
+            <button type="button" class="active" data-discover-livelist="recommend" aria-pressed="true">Đề xuất</button>
+            <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 Hoa hồng cao</button>
+            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
           </div>
         </div>
       </section>
@@ -82,10 +88,6 @@
 
     <section class="bestseller-section" data-bestseller data-endpoint="/app/discover/offer-products" data-endpoint-lazada="/app/discover/lazada-offers" hidden aria-labelledby="bestseller-title">
       <header class="px-section-head bestseller-head"><div><span class="px-eyebrow">LIVE CATALOG</span><h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee.</h2></div><p>Mỗi trang 20 sản phẩm. Mua qua ShopTik để nhận hoàn tiền.</p></header>
-      <div class="discover-subplatform px-filter-tabs" role="group" aria-label="Chọn sàn" data-bestseller-platform>
-        <button type="button" class="active" data-platform-tab="shopee" aria-pressed="true">Shopee</button>
-        <button type="button" data-platform-tab="lazada" aria-pressed="false">Lazada</button>
-      </div>
       <div class="discover-grid px-product-grid" data-bestseller-grid aria-live="polite"></div>
       <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true"><span class="bestseller-spinner"></span></div>
       <p class="bestseller-status" data-bestseller-status hidden></p>
@@ -94,11 +96,7 @@
 
     {# ── Tab Voucher: mã giảm giá theo sàn (Shopee có; Lazada đang cập nhật) ── #}
     <section class="voucher-section" data-voucher-section hidden aria-label="Voucher hôm nay">
-      <header class="px-section-head"><div><span class="px-eyebrow" data-voucher-eyebrow>MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến sàn.</p></header>
-      <div class="discover-subplatform px-filter-tabs" role="group" aria-label="Chọn sàn" data-voucher-platform>
-        <button type="button" class="active" data-platform-tab="shopee" aria-pressed="true">Shopee</button>
-        <button type="button" data-platform-tab="lazada" aria-pressed="false">Lazada</button>
-      </div>
+      <header class="px-section-head"><div><span class="px-eyebrow">MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến Shopee.</p></header>
       <div class="voucher-grid" data-voucher-grid aria-live="polite"></div>
       <p class="bestseller-status" data-voucher-status hidden></p>
     </section>

@@ -2247,9 +2247,39 @@ label small {
   color: #fff
 }
 
-/* Menu con chọn sàn (Shopee | Lazada) trong mỗi mục Khám phá. */
-.discover-subplatform {
-  margin: 2px 0 14px
+/* Công tắc CHỌN SÀN cấp cao nhất (Shopee | Lazada) ở trang Khám phá. */
+.discover-platform-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: var(--lx-paper, #f3efe8);
+  border: 1px solid var(--lx-line-strong)
+}
+
+.discover-platform-switch button {
+  flex: none;
+  min-height: 38px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lx-ink, #2c1d17);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease
+}
+
+.discover-platform-switch button[data-platform-select="shopee"].active {
+  background: #ee4d2d;
+  color: #fff
+}
+
+.discover-platform-switch button[data-platform-select="lazada"].active {
+  background: #1d2d86;
+  color: #fff
 }
 
 .px-category-row {

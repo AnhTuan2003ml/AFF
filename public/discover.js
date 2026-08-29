@@ -6,8 +6,11 @@
 
   const cards = Array.from(page.querySelectorAll("[data-discover-card]"));
   const searchInput = page.querySelector("[data-discover-search]");
-  const platformButtons = Array.from(
-    page.querySelectorAll("[data-discover-platform]"),
+  const platformSelectButtons = Array.from(
+    page.querySelectorAll("[data-platform-select]"),
+  );
+  const categoryRows = Array.from(
+    page.querySelectorAll("[data-platform-cats]"),
   );
   const categoryButtons = Array.from(
     page.querySelectorAll("[data-discover-category]"),
@@ -15,7 +18,8 @@
   const emptyState = page.querySelector("[data-discover-filter-empty]");
   const toast = page.querySelector("[data-discover-toast]");
 
-  let activePlatform = "all";
+  // Sàn ở CẤP CAO NHẤT — vào mặc định Shopee; bên trong mới tới hạng mục.
+  let activePlatform = "shopee";
   let activeCategory = "all";
   let toastTimer = null;
 
@@ -53,17 +57,15 @@
         : "";
     let visibleCount = 0;
 
+    // Lưới tĩnh chỉ có sản phẩm Shopee → chỉ lọc theo danh mục + từ khóa.
     cards.forEach((card) => {
       if (!(card instanceof HTMLElement)) return;
-      const platform = card.dataset.platform ?? "";
       const category = card.dataset.category ?? "";
-      const matchesPlatform =
-        activePlatform === "all" || platform === activePlatform;
       const matchesCategory =
         activeCategory === "all" || category === activeCategory;
       const matchesSearch =
         query === "" || normalize(card.textContent).includes(query);
-      const visible = matchesPlatform && matchesCategory && matchesSearch;
+      const visible = matchesCategory && matchesSearch;
       card.hidden = !visible;
       if (visible) visibleCount += 1;
     });
@@ -73,15 +75,25 @@
     }
   };
 
-  platformButtons.forEach((button) => {
+  // CẤP 1 — chọn sàn: hiện đúng hàng hạng mục của sàn rồi kích hoạt hạng mục
+  // ĐẦU của sàn đó (Shopee = "Tất cả" lưới tĩnh; Lazada = "Đề xuất" feed).
+  const setPlatform = (platform) => {
+    activePlatform = platform;
+    page.dataset.discoverPlatform = platform;
+    updatePressedState(platformSelectButtons, platform, "data-platform-select");
+    categoryRows.forEach((row) => {
+      if (row instanceof HTMLElement) {
+        row.hidden = row.getAttribute("data-platform-cats") !== platform;
+      }
+    });
+    const row = page.querySelector('[data-platform-cats="' + platform + '"]');
+    const defaultBtn = row ? row.querySelector("button") : null;
+    // Bấm nút đầu để tái dùng luồng sẵn có (lọc lưới tĩnh / mở mục sống).
+    if (defaultBtn instanceof HTMLButtonElement) defaultBtn.click();
+  };
+  platformSelectButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      activePlatform = button.getAttribute("data-discover-platform") ?? "all";
-      updatePressedState(
-        platformButtons,
-        activePlatform,
-        "data-discover-platform",
-      );
-      applyFilters();
+      setPlatform(button.getAttribute("data-platform-select") ?? "shopee");
     });
   });
 
@@ -206,5 +218,6 @@
     true,
   );
 
+  page.dataset.discoverPlatform = activePlatform;
   applyFilters();
 })();

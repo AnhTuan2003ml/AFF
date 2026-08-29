@@ -14,15 +14,8 @@
   var normalGrid = document.querySelector("[data-discover-grid]");
   var live = document.querySelector("[data-bestseller]");
   var filterEmpty = document.querySelector("[data-discover-filter-empty]");
-  var loadedShopee = false;
+  var loaded = false;
   var active = false;
-  var platformTabs = Array.prototype.slice.call(
-    (document.querySelector("[data-voucher-platform]") || document).querySelectorAll(
-      "[data-platform-tab]"
-    )
-  );
-  var eyebrow = document.querySelector("[data-voucher-eyebrow]");
-  var activePlatform = "shopee";
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -101,9 +94,11 @@
     return card;
   }
 
-  function loadShopee() {
-    if (loadedShopee) return;
-    loadedShopee = true;
+  // Voucher chỉ có ở Shopee (API affiliate Lazada không cấp voucher) — nút
+  // Voucher chỉ nằm trong hàng hạng mục Shopee.
+  function load() {
+    if (loaded) return;
+    loaded = true;
     if (status) {
       status.hidden = false;
       status.textContent = "Đang tải mã giảm giá…";
@@ -116,7 +111,6 @@
         return r.ok ? r.json() : null;
       })
       .then(function (data) {
-        if (activePlatform !== "shopee") return;
         var list = (data && data.data) || [];
         grid.textContent = "";
         if (!list.length) {
@@ -132,46 +126,13 @@
         });
       })
       .catch(function () {
-        loadedShopee = false;
+        loaded = false;
         if (status) {
           status.hidden = false;
           status.textContent = "Không tải được voucher. Thử lại sau.";
         }
       });
   }
-
-  // Voucher THEO SÀN. Shopee lấy từ server; Lazada chưa có nguồn API voucher
-  // (feed affiliate Lazada không cấp voucher) → hiển thị "đang cập nhật".
-  function loadActive() {
-    grid.textContent = "";
-    if (eyebrow) {
-      eyebrow.textContent =
-        activePlatform === "lazada" ? "MÃ GIẢM GIÁ LAZADA" : "MÃ GIẢM GIÁ SHOPEE";
-    }
-    if (activePlatform === "lazada") {
-      if (status) {
-        status.hidden = false;
-        status.textContent = "Voucher Lazada đang được cập nhật. Vui lòng quay lại sau.";
-      }
-      return;
-    }
-    loadedShopee = false;
-    loadShopee();
-  }
-
-  platformTabs.forEach(function (button) {
-    button.addEventListener("click", function () {
-      var platform = button.getAttribute("data-platform-tab");
-      if (platform === activePlatform) return;
-      activePlatform = platform;
-      platformTabs.forEach(function (b) {
-        var on = b.getAttribute("data-platform-tab") === platform;
-        b.classList.toggle("active", on);
-        b.setAttribute("aria-pressed", String(on));
-      });
-      loadActive();
-    });
-  });
 
   function showVoucher() {
     active = true;
@@ -191,7 +152,7 @@
     try {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) {}
-    loadActive();
+    load();
   }
 
   function hideVoucher() {
