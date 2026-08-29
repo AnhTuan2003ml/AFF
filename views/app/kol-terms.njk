@@ -42,15 +42,13 @@
         </div>
       </article>
 
-      <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-agree-bar" id="kol-agree-form">
+      <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-accept" id="kol-agree-form">
         <input type="hidden" name="dong_y" value="1">
-        <label class="kol-check" for="kol-accept">
+        <span data-scroll-hint class="kol-accept-hint">↓ Cuộn đọc hết thỏa thuận để tích xác nhận</span>
+        <label class="kol-accept-row" for="kol-accept">
           <input type="checkbox" id="kol-accept" required disabled>
-          <span class="kol-check-box" aria-hidden="true"></span>
-          <span class="kol-check-text">
-            <span data-scroll-hint class="kol-check-hint">↓ Cuộn đọc hết thỏa thuận để tích xác nhận</span>
-            Tôi đã đọc và <b>đồng ý</b> toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.
-          </span>
+          <span class="kol-accept-box" aria-hidden="true"></span>
+          <span>Tôi đã đọc và <b>đồng ý</b> toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.</span>
         </label>
         <button class="button button-primary kol-continue" type="submit" id="kol-continue" disabled>Tiếp tục điền hồ sơ →</button>
       </form>

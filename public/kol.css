@@ -114,52 +114,44 @@
 /* Đoạn ngay dưới banner tiêu đề không cần lề trên dư. */
 .kol-dieu + p { margin-top: 4px; }
 
-/* ── Thanh xác nhận: checkbox thẳng hàng với chữ, nút cùng khối ── */
-.kol-agree-bar {
-  position: sticky; bottom: 12px; z-index: 2;
-  margin-top: 16px; padding: 16px 20px;
-  border: 1px solid var(--lx-line, #eadfce); border-radius: 16px;
-  background: var(--lx-surface, #fff);
-  box-shadow: 0 8px 28px rgba(44, 29, 23, .1);
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 18px; flex-wrap: wrap;
+/* ── Xác nhận: checkbox ĐƠN GIẢN dưới cùng (kiểu Dropbox), không thanh dính ── */
+.kol-accept { margin: 22px 4px 8px; }
+.kol-accept-hint {
+  display: block; margin-bottom: 12px;
+  font-size: 12.5px; font-weight: 800; color: var(--lx-orange, #ee4d2d);
 }
-.kol-check {
-  position: relative; flex: 1 1 320px; min-width: 0;
-  display: grid; grid-template-columns: 24px 1fr; column-gap: 12px;
-  align-items: center; cursor: pointer;
+.kol-accept-row {
+  position: relative; display: flex; align-items: flex-start; gap: 11px;
+  cursor: pointer; font-size: 14.5px; line-height: 1.55;
+  color: var(--lx-ink, #2c1d17);
 }
-/* Ẩn ô gốc nhưng vẫn focus được; ô hiển thị là .kol-check-box. */
-.kol-check input {
+/* Ẩn ô gốc nhưng vẫn focus được; ô hiển thị là .kol-accept-box. */
+.kol-accept-row input {
   position: absolute; top: 0; left: 0;
-  width: 24px; height: 24px; margin: 0; opacity: 0; cursor: pointer;
+  width: 20px; height: 20px; margin: 0; opacity: 0; cursor: pointer;
 }
-.kol-check-box {
-  width: 24px; height: 24px; border: 2px solid #d4c6b4; border-radius: 7px;
-  background: #fff; display: grid; place-items: center;
+.kol-accept-box {
+  flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px;
+  border: 2px solid #cdbfac; border-radius: 5px; background: #fff;
+  display: grid; place-items: center;
   transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-.kol-check-box::after {
-  content: "✓"; color: #fff; font-size: 15px; font-weight: 800;
-  line-height: 1; opacity: 0; transition: opacity .12s ease;
+.kol-accept-box::after {
+  content: "✓"; color: #fff; font-size: 13px; font-weight: 800; line-height: 1;
+  opacity: 0; transition: opacity .12s ease;
 }
-.kol-check input:checked ~ .kol-check-box {
+.kol-accept-row input:checked ~ .kol-accept-box {
   background: var(--lx-orange, #ee4d2d); border-color: var(--lx-orange, #ee4d2d);
 }
-.kol-check input:checked ~ .kol-check-box::after { opacity: 1; }
-.kol-check input:focus-visible ~ .kol-check-box {
+.kol-accept-row input:checked ~ .kol-accept-box::after { opacity: 1; }
+.kol-accept-row input:focus-visible ~ .kol-accept-box {
   box-shadow: 0 0 0 4px rgba(238, 77, 45, .18);
 }
-.kol-check-text { font-size: 14px; line-height: 1.5; color: var(--lx-ink, #2c1d17); }
-.kol-continue { flex: 0 0 auto; min-width: 200px; }
+.kol-continue { display: block; margin-top: 18px; min-width: 220px; }
 .kol-continue:disabled { opacity: .45; cursor: not-allowed; }
 
 @media (max-width: 560px) {
   .kol-doc-sheet { padding: 24px 20px; }
-  .kol-agree-bar { flex-direction: column; align-items: stretch; gap: 12px; }
-  /* Trong layout cột, flex-basis 320px của .kol-check biến thành CHIỀU CAO làm
-     thanh phình to — reset về auto. */
-  .kol-check { flex: 0 0 auto; }
   .kol-continue { width: 100%; }
 }
 
