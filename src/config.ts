@@ -44,7 +44,7 @@ const configSchema = z.object({
   TRUST_PROXY: booleanFromString,
   DATABASE_URL: z.string().min(1),
   DATABASE_SSL: booleanFromString,
-  DATABASE_POOL_MAX: z.coerce.number().int().min(2).max(100).default(10),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(2).max(100).default(20),
   REDIS_URL: z.string().optional().default(""),
   APP_SECRET: z.string().min(32),
   OTP_PEPPER: z.string().min(32),
