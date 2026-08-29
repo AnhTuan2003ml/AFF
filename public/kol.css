@@ -114,6 +114,26 @@
 /* Đoạn ngay dưới banner tiêu đề không cần lề trên dư. */
 .kol-dieu + p { margin-top: 4px; }
 
+/* Nút mũi tên xuống: bấm là cuộn thẳng tới cuối điều khoản (chỗ checkbox). */
+.kol-jump {
+  position: fixed; left: 50%; bottom: 96px; z-index: 30;
+  width: 46px; height: 46px; padding: 0;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: var(--lx-orange, #ee4d2d); color: #fff;
+  box-shadow: 0 8px 22px rgba(238, 77, 45, .45);
+  display: grid; place-items: center;
+  transform: translateX(-50%);
+  animation: kol-jump-bounce 1.5s ease-in-out infinite;
+}
+.kol-jump svg { width: 22px; height: 22px; display: block; }
+.kol-jump:hover { background: var(--lx-orange-strong, #d63e1f); }
+.kol-jump[hidden] { display: none; }
+@keyframes kol-jump-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) { .kol-jump { animation: none; } }
+
 /* ── Xác nhận: checkbox ĐƠN GIẢN dưới cùng (kiểu Dropbox), không thanh dính ── */
 .kol-accept { margin: 22px 4px 8px; }
 .kol-accept-hint {
