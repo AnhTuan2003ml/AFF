@@ -96,6 +96,7 @@ import {
   getUnreadNotificationCount,
   WEB_BELL_EXCLUDED_TYPES,
   getUserMissionOverview,
+  listMissionReferralPeople,
   listNotifications,
   markAllNotificationsRead,
 } from "../services/mission.js";
@@ -1334,12 +1335,17 @@ export async function registerAppRoutes(
   });
 
   app.get("/nhiem-vu", async (request, reply) => {
-    const missions = await getUserMissionOverview(deps.db, userId(request));
+    const id = userId(request);
+    const [missions, referralPeople] = await Promise.all([
+      getUserMissionOverview(deps.db, id),
+      listMissionReferralPeople(deps.db, id),
+    ]);
     return reply.view("app/missions.njk", {
       pageTitle: "Nhiệm vụ",
       appSection: "missions",
       referralGroup: missions.REFERRAL_MILESTONE,
       purchaseGroup: missions.PURCHASE_MILESTONE,
+      referralPeople,
     });
   });
 

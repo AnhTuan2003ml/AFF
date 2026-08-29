@@ -2701,7 +2701,107 @@ label small {
   background: #f3ebe5;
   color: var(--lx-ink-2);
   font-size: 9px;
-  font-weight: 800
+  font-weight: 800;
+  white-space: nowrap
+}
+
+/* Biến thể trạng thái — dùng chung toàn app (macro status_badge). */
+.status-badge.status-positive {
+  background: #e4f5ec;
+  color: #12704a
+}
+
+.status-badge.status-pending {
+  background: #fdf1dc;
+  color: #97600a
+}
+
+.status-badge.status-negative {
+  background: #fde7e3;
+  color: #bb2e18
+}
+
+.status-badge.status-neutral {
+  background: #eef0f3;
+  color: #55606e
+}
+
+/* Danh sách người đã mời trong màn Nhiệm vụ. */
+.mission-people {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--lx-line);
+  border-radius: 16px;
+  background: var(--lx-paper)
+}
+
+.mission-people-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px
+}
+
+.mission-people-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lx-orange)
+}
+
+.mission-people-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow-y: auto
+}
+
+.mission-person {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--lx-line)
+}
+
+.mission-person:last-child {
+  border-bottom: 0
+}
+
+.mission-person-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--lx-orange), #ff9c75)
+}
+
+.mission-person.is-pending .mission-person-avatar {
+  background: #cbb9ad
+}
+
+.mission-person-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px
+}
+
+.mission-person-main b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.mission-person-main small {
+  color: var(--lx-muted);
+  font-size: 11.5px
 }
 
 .info-strip,
@@ -3163,18 +3263,82 @@ label small {
 }
 
 .mission-meter-track {
-  height: 5px;
-  background: #e5d6cc;
+  height: 8px;
+  background: #ede1d8;
   border-radius: 99px;
   position: relative;
-  margin: 14px 0
+  margin: 16px 0
 }
 
 .mission-meter-fill {
   height: 100%;
+  width: 0;
   background: linear-gradient(90deg, var(--lx-orange), #ff9c75);
-  border-radius: 99px
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.22, 1, .36, 1)
 }
+
+/* CSP chặn style nội tuyến → dùng 21 lớp rời rạc (bội số 5) khớp roundPercentStep5. */
+.mission-meter-fill[data-pct="0"] { width: 0 }
+.mission-meter-fill[data-pct="5"] { width: 5% }
+.mission-meter-fill[data-pct="10"] { width: 10% }
+.mission-meter-fill[data-pct="15"] { width: 15% }
+.mission-meter-fill[data-pct="20"] { width: 20% }
+.mission-meter-fill[data-pct="25"] { width: 25% }
+.mission-meter-fill[data-pct="30"] { width: 30% }
+.mission-meter-fill[data-pct="35"] { width: 35% }
+.mission-meter-fill[data-pct="40"] { width: 40% }
+.mission-meter-fill[data-pct="45"] { width: 45% }
+.mission-meter-fill[data-pct="50"] { width: 50% }
+.mission-meter-fill[data-pct="55"] { width: 55% }
+.mission-meter-fill[data-pct="60"] { width: 60% }
+.mission-meter-fill[data-pct="65"] { width: 65% }
+.mission-meter-fill[data-pct="70"] { width: 70% }
+.mission-meter-fill[data-pct="75"] { width: 75% }
+.mission-meter-fill[data-pct="80"] { width: 80% }
+.mission-meter-fill[data-pct="85"] { width: 85% }
+.mission-meter-fill[data-pct="90"] { width: 90% }
+.mission-meter-fill[data-pct="95"] { width: 95% }
+.mission-meter-fill[data-pct="100"] { width: 100% }
+
+.mission-meter-tick {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  margin-left: -6px;
+  border: 2px solid #fff;
+  border-radius: 99px;
+  background: #cbb9ad;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12)
+}
+
+.mission-meter-tick-done {
+  background: var(--lx-orange)
+}
+
+.mission-meter-tick[data-pct="0"] { left: 0 }
+.mission-meter-tick[data-pct="5"] { left: 5% }
+.mission-meter-tick[data-pct="10"] { left: 10% }
+.mission-meter-tick[data-pct="15"] { left: 15% }
+.mission-meter-tick[data-pct="20"] { left: 20% }
+.mission-meter-tick[data-pct="25"] { left: 25% }
+.mission-meter-tick[data-pct="30"] { left: 30% }
+.mission-meter-tick[data-pct="35"] { left: 35% }
+.mission-meter-tick[data-pct="40"] { left: 40% }
+.mission-meter-tick[data-pct="45"] { left: 45% }
+.mission-meter-tick[data-pct="50"] { left: 50% }
+.mission-meter-tick[data-pct="55"] { left: 55% }
+.mission-meter-tick[data-pct="60"] { left: 60% }
+.mission-meter-tick[data-pct="65"] { left: 65% }
+.mission-meter-tick[data-pct="70"] { left: 70% }
+.mission-meter-tick[data-pct="75"] { left: 75% }
+.mission-meter-tick[data-pct="80"] { left: 80% }
+.mission-meter-tick[data-pct="85"] { left: 85% }
+.mission-meter-tick[data-pct="90"] { left: 90% }
+.mission-meter-tick[data-pct="95"] { left: 95% }
+.mission-meter-tick[data-pct="100"] { left: 100% }
 
 .mission-list {
   display: grid

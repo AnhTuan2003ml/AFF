@@ -365,9 +365,14 @@ async function computeUserProgress(
 ): Promise<UserProgressCounts> {
   const purchasePeriodKey = currentPurchasePeriodKey();
   const [referralCountResult, purchaseCountResult] = await Promise.all([
+    // Đếm người ĐÃ MỜI thành công = người được mời đã đăng ký xong (status
+    // ACTIVE, tức đã xác thực OTP). Loại các lượt đăng ký bỏ dở. Khớp với danh
+    // sách người mời hiển thị ở trang này và trang "Giới thiệu".
     query<{ count: string }>(
       db,
-      `SELECT count(*)::text FROM referrals WHERE referrer_user_id = $1 AND status = 'REWARDED'`,
+      `SELECT count(*)::text FROM referrals r
+       JOIN users u ON u.id = r.referred_user_id
+       WHERE r.referrer_user_id = $1 AND u.status = 'ACTIVE'`,
       [userId],
     ),
     query<{ count: string }>(
@@ -383,6 +388,52 @@ async function computeUserProgress(
     purchaseCount: Number(purchaseCountResult.rows[0]!.count),
     purchasePeriodKey,
   };
+}
+
+export interface MissionReferralPerson {
+  fullName: string;
+  joinedAt: Date;
+  active: boolean;
+  approvedOrders: number;
+  qualified: boolean;
+}
+
+/**
+ * Danh sách từng người mà user đã mời — để màn Nhiệm vụ phân biệt được từng
+ * người và trạng thái của họ (đã đăng ký / đã phát sinh đơn duyệt). Người đã
+ * đăng ký (ACTIVE) mới được TÍNH vào tiến độ nhiệm vụ.
+ */
+export async function listMissionReferralPeople(
+  db: Database,
+  userId: string,
+): Promise<MissionReferralPerson[]> {
+  const result = await query<{
+    full_name: string | null;
+    created_at: Date;
+    status: string;
+    approved_orders: string;
+  }>(
+    db,
+    `SELECT u.full_name, r.created_at, u.status,
+       (SELECT count(*) FROM orders o
+         WHERE o.user_id = u.id AND o.status = 'APPROVED')::text AS approved_orders
+     FROM referrals r
+     JOIN users u ON u.id = r.referred_user_id
+     WHERE r.referrer_user_id = $1
+     ORDER BY (u.status = 'ACTIVE') DESC, r.created_at DESC`,
+    [userId],
+  );
+  return result.rows.map((row) => {
+    const approvedOrders = Number(row.approved_orders);
+    const active = row.status === "ACTIVE";
+    return {
+      fullName: row.full_name?.trim() || "Người dùng ShopTik",
+      joinedAt: row.created_at,
+      active,
+      approvedOrders,
+      qualified: active,
+    };
+  });
 }
 
 function progressFor(

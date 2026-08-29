@@ -99,8 +99,36 @@
   </div>
 
   <section class="mission-panel" data-mission-panel="referral">
-    <p class="mission-panel-hint">Tính theo tổng số người bạn giới thiệu thành công, cộng dồn trọn đời — không reset theo tháng.</p>
+    <p class="mission-panel-hint">Tính theo số người bạn mời đã <b>đăng ký thành công</b>, cộng dồn trọn đời — không reset theo tháng.</p>
     {{ mission_group(referralGroup, 'người') }}
+
+    <div class="mission-people">
+      <div class="mission-people-head">
+        <b>Người bạn đã mời</b>
+        <span class="mission-people-count">{{ referralPeople | length }} người</span>
+      </div>
+      {% if referralPeople | length %}
+        <ul class="mission-people-list">
+          {% for p in referralPeople %}
+            <li class="mission-person {{ 'is-pending' if not p.qualified }}">
+              <span class="mission-person-avatar" aria-hidden="true">{{ p.fullName | first | upper }}</span>
+              <span class="mission-person-main">
+                <b>{{ p.fullName }}</b>
+                <small>Tham gia {{ p.joinedAt | date }}{% if p.approvedOrders %} · {{ p.approvedOrders }} đơn đã duyệt{% endif %}</small>
+              </span>
+              {% if p.qualified %}
+                <span class="status-badge status-positive">Đã tính</span>
+              {% else %}
+                <span class="status-badge status-pending">Chờ xác nhận</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ empty_state("Chưa mời ai", "Gửi mã giới thiệu cho bạn bè để bắt đầu tích lũy mốc thưởng.", compact=true) }}
+      {% endif %}
+    </div>
+
     <div class="st-mission-cta">
       <a class="button button-primary" href="/app/referrals">Mời bạn bè ngay</a>
       <span>Gửi mã giới thiệu để tiến gần mốc thưởng tiếp theo.</span>
