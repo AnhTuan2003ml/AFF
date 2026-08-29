@@ -118,8 +118,9 @@
 
               <div class="orders-history-info">
                 <div class="orders-history-meta">
-                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}Chưa có mã đơn{% endif %}</span>
                   <span class="orders-history-platform platform-{{ order.platform | lower }}">{% if order.platform == 'TIKTOK' %}TikTok{% elif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
+                  {{ order_status(order) }}
+                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}Chưa có mã đơn{% endif %}</span>
                 </div>
 
                 {% if order.reference_code %}
@@ -168,7 +169,6 @@
             </div>
 
             <aside class="orders-history-payout">
-              {{ order_status(order) }}
               <div>
                 <small>{% if order.record_kind == 'INTENT' %}Hoàn tiền dự kiến{% else %}Hoàn tiền{% endif %}{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
                 <strong>+{{ order.cashback_vnd | vnd }}</strong>
