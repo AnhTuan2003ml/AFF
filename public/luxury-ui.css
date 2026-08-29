@@ -1456,7 +1456,26 @@ label small {
 }
 
 .buy-input-field input {
-  padding-right: 46px
+  padding-right: 46px;
+  /* Viền ĐẬM để ô dán link nổi bật (hành động chính), đi cùng linh vật nhắc. */
+  border: 2px solid var(--lx-orange, #ee4d2d);
+  box-shadow: 0 2px 12px rgba(238, 77, 45, .16)
+}
+
+/* Linh vật Camio NHẮC dán link: nổi trên góc phải ô nhập, đung đưa + chỉ xuống.
+   Trang trí (pointer-events:none) để không chắn thao tác. */
+.buy-input-field .buy-paste-mascot {
+  position: absolute;
+  right: 2px;
+  top: -46px;
+  width: 52px;
+  height: 52px;
+  z-index: 4;
+  pointer-events: none
+}
+
+.buy-input-field .buy-paste-mascot .blob-mascot {
+  width: 100%
 }
 
 .buy-paste-button {

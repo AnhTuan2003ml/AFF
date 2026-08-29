@@ -42,4 +42,27 @@
     );
   }
   window.setInterval(nudge, 10000);
+
+  // Linh vật NHẮC dán link ngay tại ô nhập (chỉ ở trang có ô). Tự đung đưa và
+  // định kỳ chỉ xuống ô để thu hút chú ý — KHÔNG popup, không chắn thao tác.
+  var pasteHost = document.querySelector("[data-paste-mascot]");
+  if (pasteHost && !pasteHost.getAttribute("data-blobbed")) {
+    pasteHost.setAttribute("data-blobbed", "1");
+    var pm = window.BlobMascot.create({ mood: "happy", label: "Camio nhắc dán link" });
+    pasteHost.appendChild(pm.el);
+    pm.setGaze(-4, 12); // nhìn xuống ô nhập
+    var pointing = function () {
+      if (document.hidden || !pm.el.animate) return;
+      pm.el.animate(
+        [
+          { transform: "translateY(0) rotate(0)" },
+          { transform: "translateY(20%) rotate(5deg)", offset: 0.4 },
+          { transform: "translateY(0) rotate(0)" }
+        ],
+        { duration: 720, easing: "ease-in-out" }
+      );
+      pm.setGaze(-3, 13);
+    };
+    window.setInterval(pointing, 4500);
+  }
 })();
