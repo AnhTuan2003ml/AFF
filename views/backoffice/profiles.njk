@@ -106,6 +106,18 @@
     </form>
   </section>
 
+  {# ── Sản phẩm Lazada (API affiliate) ─────────────────────────────── #}
+  <section class="panel config-section">
+    <header class="admin-section-heading">
+      <div><span class="admin-kicker">🛒 LAZADA</span><h2>Sản phẩm affiliate Lazada</h2></div>
+    </header>
+    <p class="bp-hint">Lấy thẳng từ API affiliate Lazada (không cần profile). Tự làm mới <b>1h sáng mỗi ngày</b>, SONG SONG với Shopee — lưu sẵn vào DB cho trang Khám phá.</p>
+    <form method="post" action="/backoffice/profiles/refresh-lazada">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button class="button button-primary" type="submit">🛒 Làm mới sản phẩm Lazada ngay</button>
+    </form>
+  </section>
+
   {# ── Lấy dữ liệu theo dải trang ────────────────────────────────────── #}
   <section class="panel config-section">
     <header class="admin-section-heading">

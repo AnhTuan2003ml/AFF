@@ -8,6 +8,10 @@ import {
   enqueueDueHarvest,
   HOT_DEALS_LIST_TYPE,
 } from "../services/discover-harvest.js";
+import {
+  getLazadaOffersLastFetchedAt,
+  refreshLazadaOffers,
+} from "../services/lazada-offer-store.js";
 import { pruneUnconfirmedInstantBuys } from "../services/instantbuy-cleanup.js";
 import { getPlatformSyncSettings } from "../services/platform-sync-settings.js";
 import {
@@ -76,21 +80,25 @@ export function startSyncScheduler(
         logger.warn({ err: error }, "Không xếp được lệnh lấy sản phẩm đề xuất");
       }
 
-      // Deal Hot (voucher): tự chạy MỘT lần/ngày lúc 1h sáng giờ VN, server
-      // điều khiển thẳng profile mở shopee.vn/m/ma-giam-gia.
+      // 1h sáng VN: cập nhật kho Khám phá theo HAI LUỒNG SONG SONG, lưu vào DB
+      // trước để trang đọc nhanh:
+      //   · Shopee — Deal Hot (điều khiển profile) + voucher hôm nay.
+      //   · Lazada — sản phẩm affiliate (API /marketing/product/feed).
+      // Mỗi luồng có mốc chống chạy lại trong 12h; lỗi luồng này không chặn luồng kia.
       try {
         const now = new Date();
         const vnHour = (now.getUTCHours() + 7) % 24;
         if (vnHour === 1) {
-          const last = await query<{ t: Date | null }>(
-            db,
-            "SELECT max(fetched_at) AS t FROM shopee_offer_products WHERE list_type = $1",
-            [HOT_DEALS_LIST_TYPE],
-          );
-          const lastT = last.rows[0]?.t ? new Date(last.rows[0].t) : null;
-          const doneRecently =
-            lastT && now.getTime() - lastT.getTime() < 12 * 3600 * 1000;
-          if (!doneRecently) {
+          const shopeeFlow = (async () => {
+            const last = await query<{ t: Date | null }>(
+              db,
+              "SELECT max(fetched_at) AS t FROM shopee_offer_products WHERE list_type = $1",
+              [HOT_DEALS_LIST_TYPE],
+            );
+            const lastT = last.rows[0]?.t ? new Date(last.rows[0].t) : null;
+            const doneRecently =
+              lastT && now.getTime() - lastT.getTime() < 12 * 3600 * 1000;
+            if (doneRecently) return;
             const prof = await query<{ id: string }>(
               db,
               `SELECT id FROM harvest_profiles WHERE status <> 'DISABLED'
@@ -103,17 +111,34 @@ export function startSyncScheduler(
               });
               logger.info({ items: r.savedItems }, "Đã lấy Deal Hot (1h sáng)");
             }
-            // Voucher hôm nay (fetch thẳng, không cần profile).
             try {
               const rv = await refreshShopeeVouchers(db);
               logger.info({ count: rv.count }, "Đã làm mới voucher (1h sáng)");
             } catch (e) {
               logger.warn({ err: e }, "Làm mới voucher thất bại");
             }
-          }
+          })().catch((e) =>
+            logger.warn({ err: e }, "Luồng Shopee Deal Hot thất bại"),
+          );
+
+          const lazadaFlow = (async () => {
+            const lastLz = await getLazadaOffersLastFetchedAt(db);
+            const doneLz =
+              lastLz && now.getTime() - lastLz.getTime() < 12 * 3600 * 1000;
+            if (doneLz) return;
+            const r = await refreshLazadaOffers(db, config);
+            logger.info(
+              { items: r.saved },
+              "Đã làm mới sản phẩm Lazada (1h sáng)",
+            );
+          })().catch((e) =>
+            logger.warn({ err: e }, "Luồng làm mới Lazada thất bại"),
+          );
+
+          await Promise.all([shopeeFlow, lazadaFlow]);
         }
       } catch (error) {
-        logger.warn({ err: error }, "Lấy Deal Hot thất bại");
+        logger.warn({ err: error }, "Cập nhật kho Khám phá (Shopee/Lazada) thất bại");
       }
 
       const release = await releaseDueCashback(db, { actorId });

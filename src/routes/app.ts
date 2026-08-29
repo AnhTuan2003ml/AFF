@@ -19,6 +19,10 @@ import {
   fetchLazadaOfferPage,
   isLazadaAffiliateConfigured,
 } from "../services/lazada-affiliate-api.js";
+import {
+  getStoredLazadaOffers,
+  getStoredLazadaOffersCount,
+} from "../services/lazada-offer-store.js";
 import { listOrderHistory } from "../services/order-history.js";
 import { listShopeeVouchers } from "../services/shopee-voucher.js";
 import {
@@ -1038,26 +1042,65 @@ export async function registerAppRoutes(
       100,
     );
 
-    if (!isLazadaAffiliateConfigured(deps.config)) {
-      return reply.send({
-        status: "UNAVAILABLE",
+    // Ưu tiên đọc từ KHO (lazada_offer_products) — được job 1h sáng lưu sẵn.
+    // Kho rỗng (chưa refresh lần nào / trang vượt kho) thì lấy trực tiếp API.
+    const [stored, businessConfig] = await Promise.all([
+      getStoredLazadaOffers(deps.db, {
+        list,
         page: pageNo,
-        message: "Sản phẩm Lazada đang được cập nhật. Vui lòng quay lại sau.",
-      });
-    }
-
-    const [products, businessConfig] = await Promise.all([
-      fetchLazadaOfferPage(deps.config, { page: pageNo, limit: OFFER_PAGE_SIZE }),
+        pageSize: OFFER_PAGE_SIZE,
+      }),
       getBusinessConfig(deps.db, deps.config),
     ]);
-    const sorted = products.slice();
-    if (list === "hot") {
-      sorted.sort((a, b) => (b.commissionVnd ?? 0) - (a.commissionVnd ?? 0));
-    } else if (list === "best") {
-      sorted.sort((a, b) => (b.salesCount ?? 0) - (a.salesCount ?? 0));
+
+    interface NormalizedOffer {
+      name: string;
+      imageUrl: string | null;
+      priceVnd: number | null;
+      commissionRateBps: number | null;
+      commissionVnd: number | null;
+      shopName: string | null;
+      salesCount: number | null;
+      productUrl: string;
+    }
+    let source: NormalizedOffer[];
+    let knownPages = pageNo;
+
+    if (stored.length) {
+      source = stored.map((r) => ({
+        name: r.name,
+        imageUrl: r.image_url,
+        priceVnd: r.price_vnd !== null ? Number(r.price_vnd) : null,
+        commissionRateBps: r.commission_rate_bps,
+        commissionVnd: r.commission_vnd !== null ? Number(r.commission_vnd) : null,
+        shopName: r.shop_name,
+        salesCount: r.sales_count,
+        productUrl: r.product_url,
+      }));
+      const total = await getStoredLazadaOffersCount(deps.db);
+      knownPages = Math.max(1, Math.ceil(total / OFFER_PAGE_SIZE));
+    } else {
+      if (!isLazadaAffiliateConfigured(deps.config)) {
+        return reply.send({
+          status: "UNAVAILABLE",
+          page: pageNo,
+          message: "Sản phẩm Lazada đang được cập nhật. Vui lòng quay lại sau.",
+        });
+      }
+      const live = await fetchLazadaOfferPage(deps.config, {
+        page: pageNo,
+        limit: OFFER_PAGE_SIZE,
+      });
+      const sorted = live.slice();
+      if (list === "hot") {
+        sorted.sort((a, b) => (b.commissionVnd ?? 0) - (a.commissionVnd ?? 0));
+      } else if (list === "best") {
+        sorted.sort((a, b) => (b.salesCount ?? 0) - (a.salesCount ?? 0));
+      }
+      source = sorted;
     }
 
-    const mapped = sorted.map((p) => {
+    const mapped = source.map((p) => {
       const buyerPercent = resolveBuyerPercent(p.priceVnd, businessConfig);
       const cashbackBps =
         p.commissionRateBps !== null
@@ -1087,7 +1130,7 @@ export async function registerAppRoutes(
     return reply.send({
       status: "READY",
       page: pageNo,
-      knownPages: pageNo,
+      knownPages,
       pageSize: OFFER_PAGE_SIZE,
       products: mapped,
     });

@@ -23,6 +23,7 @@ import {
   directFetchOfferRange,
 } from "../services/browser-control.js";
 import { refreshShopeeVouchers } from "../services/shopee-voucher.js";
+import { refreshLazadaOffers } from "../services/lazada-offer-store.js";
 import {
   flashAdminError,
   type AdminConsoleDeps,
@@ -224,6 +225,24 @@ export async function registerAdminProfileRoutes(
         deps.config,
         "success",
         `Đã làm mới ${r.count} voucher Shopee.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
+
+  // Làm mới kho sản phẩm Lazada (API affiliate, không cần profile) — cùng luồng
+  // job 1h sáng, lưu vào lazada_offer_products cho trang Khám phá.
+  app.post("/profiles/refresh-lazada", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const r = await refreshLazadaOffers(deps.db, deps.config);
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã làm mới ${r.saved} sản phẩm Lazada.`,
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);
