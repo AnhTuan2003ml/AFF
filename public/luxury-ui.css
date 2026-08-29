@@ -5038,44 +5038,8 @@ label small {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Nút CTA "Dán link ngay" trong bong bóng chào của Camio. */
-.camio-paste-cta {
-  display: inline-block;
-  margin-top: 9px;
-  padding: 7px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--lx-orange, #ee4d2d);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* Bong bóng của FAB: neo về bên PHẢI (tránh tràn mép), xuống dòng, đủ rộng. */
-.st-support-fab .blob-bubble {
-  left: auto;
-  right: -2px;
-  transform: none;
-  white-space: normal;
-  width: max-content;
-  max-width: min(280px, 78vw);
-  padding: 12px 14px;
-  line-height: 1.42;
-  font-size: 12.5px;
-  text-align: left;
-  font-weight: 700;
-}
-
-.st-support-fab .blob-bubble::after {
-  left: auto;
-  right: 20px;
-  transform: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .st-support-fab.camio-enter,
-  .st-support-fab .blob-bubble {
+  .st-support-fab.camio-enter {
     animation: none !important;
   }
 }
