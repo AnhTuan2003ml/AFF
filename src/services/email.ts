@@ -2,10 +2,42 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import nodemailer, { type Transporter } from "nodemailer";
 import type { AppConfig } from "../config.js";
+import { AppError } from "../lib/errors.js";
 import {
   renderUserPolicyEmail,
   type UserPolicyFacts,
 } from "./user-policy.js";
+
+/**
+ * Với các mã lỗi hệ thống đã biết, gợi ý ngắn cách xử lý để admin đọc email là
+ * biết phải làm gì (không phải mở log lần mò). Trả về null nếu không nhận diện
+ * được — khi đó email chỉ hiển thị thông điệp lỗi thô.
+ */
+function hintForError(error: unknown): string | null {
+  const code = error instanceof AppError ? error.code : "";
+  switch (code) {
+    case "SHOPEE_COOKIE_REQUIRED":
+    case "SHOPEE_COOKIE_INVALID":
+    case "SHOPEE_REPORT_REJECTED":
+    case "SHOPEE_REPORT_INVALID":
+      return "Cookie Shopee có thể đã hết hạn hoặc không hợp lệ. Vào /backoffice/sync để dán lại cookie affiliate.shopee.vn mới.";
+    case "SHOPEE_REPORT_UNAVAILABLE":
+      return "Không kết nối được tới affiliate.shopee.vn. Kiểm tra mạng/tường lửa của máy chủ rồi thử lại.";
+    case "BROWSER_CONTROL_ERROR":
+      return "Không điều khiển được trình duyệt (Browser Control). Kiểm tra ứng dụng Chrome điều khiển có đang chạy tại BROWSER_CONTROL_URL không.";
+    default:
+      // Lỗi mạng khi gọi Browser Control (fetch ném TypeError, không có .code).
+      if (
+        !(error instanceof AppError) &&
+        /browser|cdp|econnrefused|fetch failed|websocket/i.test(
+          error instanceof Error ? error.message : String(error),
+        )
+      ) {
+        return "Có thể không kết nối được tới Browser Control để lấy sản phẩm. Kiểm tra ứng dụng Chrome điều khiển tại BROWSER_CONTROL_URL.";
+      }
+      return null;
+  }
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -172,6 +204,111 @@ export class EmailService {
       text: mail.text,
       html: mail.html,
     });
+  }
+
+  /** Nơi nhận cảnh báo lỗi: ADMIN_ALERT_EMAIL → SUPPORT_EMAIL → SMTP_FROM_EMAIL. */
+  private adminAlertRecipients(): string {
+    return (
+      this.config.ADMIN_ALERT_EMAIL ||
+      this.config.SUPPORT_EMAIL ||
+      this.config.SMTP_FROM_EMAIL
+    );
+  }
+
+  /**
+   * Gửi email cảnh báo LỖI HỆ THỐNG NỀN cho admin — ví dụ đồng bộ đối soát đơn
+   * thất bại, cookie Shopee hết hạn, không điều khiển được trình duyệt lấy sản
+   * phẩm Khám phá. Email nêu rõ tác vụ, mã lỗi, gợi ý xử lý và stack rút gọn.
+   *
+   * Tự nuốt mọi lỗi khi gửi (chỉ log) để việc cảnh báo KHÔNG BAO GIỜ làm sập
+   * tiến trình nền. Không có SMTP (dev) thì chỉ in ra console.
+   */
+  async sendAdminAlert(params: {
+    /** Nhãn ngắn của tác vụ bị lỗi. VD: "Đồng bộ đối soát đơn Shopee". */
+    context: string;
+    error: unknown;
+    /** Thông tin phụ (số bản ghi, id…) hiển thị dạng bảng key/value. */
+    details?: Record<string, string | number>;
+  }): Promise<void> {
+    const err =
+      params.error instanceof Error
+        ? params.error
+        : new Error(String(params.error));
+    const code = params.error instanceof AppError ? params.error.code : "";
+    const hint = hintForError(params.error);
+
+    const vn = new Date(Date.now() + 7 * 3600 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const atStr = `${pad(vn.getUTCDate())}/${pad(vn.getUTCMonth() + 1)}/${vn.getUTCFullYear()} ${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}:${pad(vn.getUTCSeconds())} (giờ VN)`;
+    const subject = `[${this.config.APP_NAME}] ⚠ Lỗi: ${params.context}`;
+    const stack = (err.stack || err.message || "").slice(0, 4000);
+
+    if (!this.transporter) {
+      if (this.config.NODE_ENV !== "production") {
+        console.error(
+          `[EMAIL DEV] ${this.adminAlertRecipients()} | ${subject}${code ? ` [${code}]` : ""} — ${err.message}${hint ? `\n  → ${hint}` : ""}`,
+        );
+      }
+      return;
+    }
+
+    const rows: Array<[string, string]> = [
+      ["Thời điểm", atStr],
+      ["Máy chủ", this.config.APP_ORIGIN],
+      ...(code ? [["Mã lỗi", code] as [string, string]] : []),
+      ...Object.entries(params.details ?? {}).map(
+        ([k, v]) => [k, String(v)] as [string, string],
+      ),
+    ];
+    const rowHtml = rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee;color:#64748b;font-size:13px">${escapeHtml(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600;font-size:13px">${escapeHtml(v)}</td></tr>`,
+      )
+      .join("");
+
+    try {
+      await this.transporter.sendMail({
+        from: {
+          name: this.config.SMTP_FROM_NAME,
+          address: this.config.SMTP_FROM_EMAIL,
+        },
+        to: this.adminAlertRecipients(),
+        subject,
+        text: [
+          `Tác vụ: ${params.context}`,
+          ...rows.map(([k, v]) => `${k}: ${v}`),
+          ...(hint ? ["", `Gợi ý xử lý: ${hint}`] : []),
+          "",
+          `Lỗi: ${err.message}`,
+          "",
+          "Stack:",
+          stack,
+        ].join("\n"),
+        html: `
+        <div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#0f172a">
+          <div style="background:#b91c1c;color:#fff;padding:16px 20px;border-radius:12px 12px 0 0">
+            <div style="font-size:12px;letter-spacing:.08em;opacity:.85">CẢNH BÁO HỆ THỐNG</div>
+            <div style="font-size:18px;font-weight:800;margin-top:2px">${escapeHtml(params.context)} thất bại</div>
+          </div>
+          <div style="border:1px solid #eee;border-top:none;border-radius:0 0 12px 12px;padding:18px 20px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px">${rowHtml}</table>
+            ${
+              hint
+                ? `<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px"><b>Gợi ý xử lý:</b> ${escapeHtml(hint)}</div>`
+                : ""
+            }
+            <div style="font-size:13px;color:#64748b;margin-bottom:4px">Thông điệp lỗi</div>
+            <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:12px 14px;border-radius:10px;font-size:13px;white-space:pre-wrap">${escapeHtml(err.message)}</div>
+            <div style="font-size:13px;color:#64748b;margin:14px 0 4px">Stack trace</div>
+            <pre style="background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:10px;font-size:11.5px;overflow:auto;white-space:pre-wrap">${escapeHtml(stack)}</pre>
+          </div>
+        </div>`,
+      });
+    } catch (sendErr) {
+      // Không để lỗi gửi mail cảnh báo làm sập tiến trình nền — chỉ ghi log.
+      console.error("Gửi email cảnh báo admin thất bại:", sendErr);
+    }
   }
 
   /**

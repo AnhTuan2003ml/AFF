@@ -79,6 +79,19 @@ const configSchema = z.object({
   // Email hỗ trợ hiển thị cho người dùng (footer email chào mừng…). Trống thì
   // dùng SMTP_FROM_EMAIL.
   SUPPORT_EMAIL: z.string().trim().default(""),
+  // Nơi nhận email cảnh báo lỗi hệ thống nền (đồng bộ đối soát đơn thất bại,
+  // cookie Shopee hết hạn, không điều khiển được trình duyệt lấy sản phẩm Khám
+  // phá…). Nhiều địa chỉ ngăn cách bằng dấu phẩy. Trống = tự suy ra theo thứ tự
+  // SUPPORT_EMAIL → SMTP_FROM_EMAIL.
+  ADMIN_ALERT_EMAIL: z.string().trim().default(""),
+  // Chống spam: mỗi LOẠI lỗi chỉ gửi lại email cảnh báo sau ngần này phút, kể cả
+  // khi job lỗi liên tục mỗi nhịp scheduler.
+  ADMIN_ALERT_COOLDOWN_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1440)
+    .default(30),
   SHOPEE_AFFILIATE_ID: z.string().default(""),
   // Token cho profile-worker (Playwright chạy trên máy host) gọi API
   // /api/v1/harvest/*. Trống = tắt toàn bộ API worker.

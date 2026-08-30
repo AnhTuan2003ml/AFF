@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from "fastify";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
+import type { EmailService } from "../services/email.js";
 import { releaseDueCashback } from "../services/cashback-release.js";
 import { directFetchHotDeals } from "../services/browser-control.js";
 import { refreshShopeeVouchers } from "../services/shopee-voucher.js";
@@ -30,8 +31,22 @@ export function startSyncScheduler(
   db: Database,
   config: AppConfig,
   logger: FastifyBaseLogger,
+  emailService: EmailService,
 ): { stop: () => void } {
   let running = false;
+
+  // Chống spam email: mỗi LOẠI lỗi (theo `key`) chỉ gửi lại sau khi hết cooldown,
+  // dù job lỗi liên tục mỗi nhịp scheduler. Log đầy đủ vẫn diễn ra ở nơi gọi.
+  const lastAlertAt = new Map<string, number>();
+  const cooldownMs = config.ADMIN_ALERT_COOLDOWN_MINUTES * 60 * 1000;
+  function alertAdmin(key: string, context: string, error: unknown): void {
+    const now = Date.now();
+    const last = lastAlertAt.get(key);
+    if (last && now - last < cooldownMs) return;
+    lastAlertAt.set(key, now);
+    // Không await: gửi mail không được chặn hay làm hỏng lượt đồng bộ.
+    void emailService.sendAdminAlert({ context, error });
+  }
 
   async function systemActorId(): Promise<string | null> {
     const actor = await query<{ id: string }>(
@@ -68,6 +83,11 @@ export function startSyncScheduler(
           );
         } catch (error) {
           logger.warn({ err: error }, "Đồng bộ báo cáo Shopee thất bại");
+          alertAdmin(
+            "shopee-order-sync",
+            "Đồng bộ đối soát đơn Shopee",
+            error,
+          );
         }
       }
 
@@ -78,6 +98,11 @@ export function startSyncScheduler(
         }
       } catch (error) {
         logger.warn({ err: error }, "Không xếp được lệnh lấy sản phẩm đề xuất");
+        alertAdmin(
+          "harvest-enqueue",
+          "Xếp lệnh lấy sản phẩm Khám phá (Shopee)",
+          error,
+        );
       }
 
       // 1h sáng VN: cập nhật kho Khám phá theo HAI LUỒNG SONG SONG, lưu vào DB
@@ -117,9 +142,14 @@ export function startSyncScheduler(
             } catch (e) {
               logger.warn({ err: e }, "Làm mới voucher thất bại");
             }
-          })().catch((e) =>
-            logger.warn({ err: e }, "Luồng Shopee Deal Hot thất bại"),
-          );
+          })().catch((e) => {
+            logger.warn({ err: e }, "Luồng Shopee Deal Hot thất bại");
+            alertAdmin(
+              "discover-shopee",
+              "Lấy sản phẩm Khám phá — Shopee Deal Hot",
+              e,
+            );
+          });
 
           const lazadaFlow = (async () => {
             const lastLz = await getLazadaOffersLastFetchedAt(db);
@@ -131,9 +161,14 @@ export function startSyncScheduler(
               { items: r.saved },
               "Đã làm mới sản phẩm Lazada (1h sáng)",
             );
-          })().catch((e) =>
-            logger.warn({ err: e }, "Luồng làm mới Lazada thất bại"),
-          );
+          })().catch((e) => {
+            logger.warn({ err: e }, "Luồng làm mới Lazada thất bại");
+            alertAdmin(
+              "discover-lazada",
+              "Lấy sản phẩm Khám phá — Lazada",
+              e,
+            );
+          });
 
           await Promise.all([shopeeFlow, lazadaFlow]);
         }

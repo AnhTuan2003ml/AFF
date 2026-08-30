@@ -82,6 +82,8 @@ export function testConfig(): AppConfig {
     SMTP_FROM_NAME: "ShopTik",
     SMTP_FROM_EMAIL: "no-reply@example.com",
     SUPPORT_EMAIL: "",
+    ADMIN_ALERT_EMAIL: "",
+    ADMIN_ALERT_COOLDOWN_MINUTES: 30,
     SHOPEE_AFFILIATE_ID: "14354840000",
     HARVEST_WORKER_TOKEN: "",
     BROWSER_CONTROL_URL: "http://127.0.0.1:9222",

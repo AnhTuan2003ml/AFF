@@ -400,7 +400,7 @@ try {
    * thật. clearInterval không cứu được vì nó chỉ chặn các lượt SAU.
    */
   if (config.ENABLE_SYNC_SCHEDULER) {
-    scheduler = startSyncScheduler(db, config, app.log);
+    scheduler = startSyncScheduler(db, config, app.log, emailService);
   }
 } catch (error) {
   // Chỉ clearInterval, gọi lại vô hại. Với thứ tự mới thì bộ hẹn giờ hầu như
