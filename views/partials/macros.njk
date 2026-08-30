@@ -1,36 +1,41 @@
-{% macro status_badge(status) %}
+{# `lang` truyền như THAM SỐ (macro import không thấy biến context). Trang người
+   dùng gọi status_badge(x, lang); backoffice gọi status_badge(x) → mặc định VN. #}
+{% macro status_badge(status, lang='vi') %}
   {% set positive = ['ACTIVE', 'APPROVED', 'AVAILABLE', 'VERIFIED', 'PAID', 'RESOLVED', 'PUBLISHED'] %}
   {% set pending = ['PENDING', 'PENDING_REVIEW', 'REQUESTED', 'FUNDS_HELD', 'PROCESSING', 'OPEN', 'IN_PROGRESS', 'WAITING_PARTNER', 'OTP_PENDING', 'ELIGIBLE', 'DRAFT'] %}
   {% set negative = ['INVALID', 'CANCELLED', 'REVERSED', 'REJECTED', 'FAILED', 'DISABLED', 'LOCKED', 'ARCHIVED'] %}
+  {% set L = {
+    'ACTIVE': ['Đang hoạt động', 'Active'],
+    'PENDING': ['Chờ xác nhận', 'Pending'],
+    'APPROVED': ['Đã duyệt', 'Approved'],
+    'DISABLED': ['Đã xóa', 'Deleted'],
+    'INVALID': ['Không hợp lệ', 'Invalid'],
+    'CANCELLED': ['Đã hủy', 'Cancelled'],
+    'REVERSED': ['Đã đảo', 'Reversed'],
+    'PENDING_REVIEW': ['Đã xác thực OTP · chờ duyệt', 'OTP verified · pending review'],
+    'VERIFIED': ['Đã xác minh', 'Verified'],
+    'REJECTED': ['Đã từ chối', 'Rejected'],
+    'FUNDS_HELD': ['Đã giữ tiền', 'Funds held'],
+    'PROCESSING': ['Đang chuyển', 'Processing'],
+    'PAID': ['Đã trả', 'Paid'],
+    'FAILED': ['Thất bại', 'Failed'],
+    'UNKNOWN': ['Chờ kiểm tra', 'Checking'],
+    'OPEN': ['Mới tiếp nhận', 'Open'],
+    'WAITING_PARTNER': ['Chờ đối tác', 'Waiting partner'],
+    'IN_PROGRESS': ['Đang xử lý', 'In progress'],
+    'RESOLVED': ['Đã giải quyết', 'Resolved'],
+    'CLOSED': ['Đã đóng', 'Closed'],
+    'PENDING_EMAIL': ['Chờ xác nhận email', 'Pending email confirmation'],
+    'ELIGIBLE': ['Đủ điều kiện', 'Eligible'],
+    'REWARDED': ['Đã thưởng', 'Rewarded'],
+    'LOCKED': ['Đã khóa', 'Locked'],
+    'PUBLISHED': ['Đang hiển thị', 'Published'],
+    'DRAFT': ['Đã ẩn', 'Hidden'],
+    'ARCHIVED': ['Đã lưu trữ', 'Archived']
+  } %}
   <span class="status-badge {% if status in positive %}status-positive{% elif status in pending %}status-pending{% elif status in negative %}status-negative{% else %}status-neutral{% endif %}">
-    {% if status == 'ACTIVE' %}Đang hoạt động
-    {% elif status == 'PENDING' %}Chờ xác nhận
-    {% elif status == 'APPROVED' %}Đã duyệt
-    {% elif status == 'DISABLED' %}Đã xóa
-    {% elif status == 'INVALID' %}Không hợp lệ
-    {% elif status == 'CANCELLED' %}Đã hủy
-    {% elif status == 'REVERSED' %}Đã đảo
-    {% elif status == 'PENDING_REVIEW' %}Đã xác thực OTP · chờ duyệt
-    {% elif status == 'VERIFIED' %}Đã xác minh
-    {% elif status == 'REJECTED' %}Đã từ chối
-    {% elif status == 'FUNDS_HELD' %}Đã giữ tiền
-    {% elif status == 'PROCESSING' %}Đang chuyển
-    {% elif status == 'PAID' %}Đã trả
-    {% elif status == 'FAILED' %}Thất bại
-    {% elif status == 'UNKNOWN' %}Chờ kiểm tra
-    {% elif status == 'OPEN' %}Mới tiếp nhận
-    {% elif status == 'WAITING_PARTNER' %}Chờ đối tác
-    {% elif status == 'IN_PROGRESS' %}Đang xử lý
-    {% elif status == 'RESOLVED' %}Đã giải quyết
-    {% elif status == 'CLOSED' %}Đã đóng
-    {% elif status == 'PENDING_EMAIL' %}Chờ xác nhận email
-    {% elif status == 'ELIGIBLE' %}Đủ điều kiện
-    {% elif status == 'REWARDED' %}Đã thưởng
-    {% elif status == 'LOCKED' %}Đã khóa
-    {% elif status == 'PUBLISHED' %}Đang hiển thị
-    {% elif status == 'DRAFT' %}Đã ẩn
-    {% elif status == 'ARCHIVED' %}Đã lưu trữ
-    {% else %}{{ status }}{% endif %}
+    {%- set pair = L[status] -%}
+    {%- if pair -%}{{ pair[1] if lang == 'en' else pair[0] }}{%- else -%}{{ status }}{%- endif -%}
   </span>
 {% endmacro %}
 

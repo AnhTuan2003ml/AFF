@@ -30,11 +30,11 @@
 
     <div class="mission-row-action">
       {% if item.claimStatus == 'APPROVED' %}
-        {{ status_badge('APPROVED') }}
+        {{ status_badge('APPROVED', lang) }}
       {% elif item.claimStatus == 'REJECTED' %}
-        {{ status_badge('REJECTED') }}
+        {{ status_badge('REJECTED', lang) }}
       {% elif item.claimStatus == 'PENDING' %}
-        {{ status_badge('PENDING') }}
+        {{ status_badge('PENDING', lang) }}
       {% elif item.claimable %}
         <form method="post" action="/app/nhiem-vu/claim">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">

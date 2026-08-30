@@ -36,7 +36,7 @@
             <article class="bank-visual-card {% if account.status == 'VERIFIED' %}is-verified{% endif %}">
               <header>
                 <span class="bank-visual-name">{{ account.bank_code }}</span>
-                {{ status_badge(account.status) }}
+                {{ status_badge(account.status, lang) }}
               </header>
               <span class="bank-visual-chip" aria-hidden="true"></span>
               <p class="bank-visual-number" aria-label="Số tài khoản đã che">

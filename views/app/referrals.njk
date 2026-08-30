@@ -130,7 +130,7 @@
             <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
             <span><b>{{ referral.full_name }}</b><small>Tham gia {{ referral.created_at | date }} · {{ referral.approved_orders }} đơn đã duyệt</small></span>
             <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>bạn nhận được</small></span>
-            {{ status_badge(referral.status) }}
+            {{ status_badge(referral.status, lang) }}
           </div>
         {% endfor %}
       </div>

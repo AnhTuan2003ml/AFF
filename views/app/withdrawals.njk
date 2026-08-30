@@ -4,85 +4,85 @@
 {% block app_content %}
   <div class="withdraw-layout">
     <section class="withdraw-action">
-      <span>Số dư có thể rút</span>
+      <span>{{ t('Số dư có thể rút', 'Withdrawable balance') }}</span>
       <strong>{{ balances.available | vnd }}</strong>
       {% if not accounts.length %}
         <div class="feature-gate">
-          <strong>Chưa có ngân hàng đã xác minh</strong>
-          <p>Thêm tài khoản nhận tiền và chờ bộ phận vận hành xác minh trước khi rút.</p>
-          <a class="button button-primary" href="/app/banks">Thêm ngân hàng</a>
+          <strong>{{ t('Chưa có ngân hàng đã xác minh', 'No verified bank yet') }}</strong>
+          <p>{{ t('Thêm tài khoản nhận tiền và chờ bộ phận vận hành xác minh trước khi rút.', 'Add a payout account and wait for operations to verify it before withdrawing.') }}</p>
+          <a class="button button-primary" href="/app/banks">{{ t('Thêm ngân hàng', 'Add bank') }}</a>
         </div>
       {% elif balances.available <= 0 %}
         <div class="feature-gate">
-          <strong>Bạn chưa có số dư có thể rút.</strong>
-          <p>Số dư sẽ chuyển sang khả dụng sau khi đơn hàng được đối tác duyệt.</p>
-          <button class="button button-coral button-block button-large" type="button" disabled>Gửi OTP và tiếp tục</button>
+          <strong>{{ t('Bạn chưa có số dư có thể rút.', 'You have no withdrawable balance yet.') }}</strong>
+          <p>{{ t('Số dư sẽ chuyển sang khả dụng sau khi đơn hàng được đối tác duyệt.', 'Balance becomes available after orders are approved by partners.') }}</p>
+          <button class="button button-coral button-block button-large" type="button" disabled>{{ t('Gửi OTP và tiếp tục', 'Send OTP and continue') }}</button>
         </div>
       {% elif balances.available < minimumWithdrawal %}
         <div class="feature-gate">
-          <strong>Số dư khả dụng chưa đủ mức tối thiểu để rút.</strong>
-          <p>Cần tối thiểu {{ minimumWithdrawal | vnd }} mỗi lần rút — bạn hiện có {{ balances.available | vnd }}.</p>
-          <button class="button button-coral button-block button-large" type="button" disabled>Gửi OTP và tiếp tục</button>
+          <strong>{{ t('Số dư khả dụng chưa đủ mức tối thiểu để rút.', 'Your available balance is below the minimum to withdraw.') }}</strong>
+          <p>{{ t('Cần tối thiểu', 'Minimum') }} {{ minimumWithdrawal | vnd }} {{ t('mỗi lần rút — bạn hiện có', 'per withdrawal — you currently have') }} {{ balances.available | vnd }}.</p>
+          <button class="button button-coral button-block button-large" type="button" disabled>{{ t('Gửi OTP và tiếp tục', 'Send OTP and continue') }}</button>
         </div>
       {% else %}
         <form method="post" action="/app/withdrawals/request" class="stack-form" data-validate-form data-withdraw-form novalidate>
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-          <label for="withdraw-amount-input">Số tiền muốn rút
+          <label for="withdraw-amount-input">{{ t('Số tiền muốn rút', 'Amount to withdraw') }}
             <span class="currency-input-shell">
               <input id="withdraw-amount-input" type="text" inputmode="numeric" autocomplete="off" placeholder="{{ minimumWithdrawal | vnd }}" required
                 data-currency-input
                 data-currency-min="{{ minimumWithdrawal }}"
                 data-currency-max="{{ maxWithdrawable }}"
                 data-currency-step="1000"
-                data-required-message="Vui lòng nhập số tiền muốn rút."
-                data-min-message="Số tiền tối thiểu là {{ minimumWithdrawal | vnd }}."
-                data-max-message="Số tiền tối đa là {{ maxWithdrawable | vnd }} (không vượt quá số dư khả dụng)."
-                data-step-message="Số tiền rút phải là bội số của 1.000 ₫.">
+                data-required-message="{{ t('Vui lòng nhập số tiền muốn rút.', 'Please enter the amount to withdraw.') }}"
+                data-min-message="{{ t('Số tiền tối thiểu là', 'The minimum amount is') }} {{ minimumWithdrawal | vnd }}."
+                data-max-message="{{ t('Số tiền tối đa là', 'The maximum amount is') }} {{ maxWithdrawable | vnd }} ({{ t('không vượt quá số dư khả dụng', 'not exceeding your available balance') }})."
+                data-step-message="{{ t('Số tiền rút phải là bội số của 1.000 ₫.', 'The amount must be a multiple of 1,000 ₫.') }}">
               <span class="currency-input-suffix" aria-hidden="true">₫</span>
             </span>
             <input type="hidden" name="amountVnd" data-currency-raw>
-            <small>Tối thiểu {{ minimumWithdrawal | vnd }}, tối đa {{ maximumWithdrawal | vnd }} mỗi yêu cầu.</small>
+            <small>{{ t('Tối thiểu', 'Min') }} {{ minimumWithdrawal | vnd }}, {{ t('tối đa', 'max') }} {{ maximumWithdrawal | vnd }} {{ t('mỗi yêu cầu.', 'per request.') }}</small>
             <small class="field-error" id="withdraw-amount-input-error" hidden></small>
           </label>
-          <label for="withdraw-bank-input">Nhận về
-            <select id="withdraw-bank-input" name="bankAccountId" required data-required-message="Vui lòng chọn tài khoản nhận tiền.">
+          <label for="withdraw-bank-input">{{ t('Nhận về', 'Receive to') }}
+            <select id="withdraw-bank-input" name="bankAccountId" required data-required-message="{{ t('Vui lòng chọn tài khoản nhận tiền.', 'Please choose a payout account.') }}">
               {% for account in accounts %}
                 <option value="{{ account.id }}">{{ account.bank_code }} · •••• {{ account.account_last4 }} · {{ account.account_name_masked }}</option>
               {% endfor %}
             </select>
             <small class="field-error" id="withdraw-bank-input-error" hidden></small>
           </label>
-          <button class="button button-coral button-block button-large" type="submit" data-submit-button>Gửi OTP và tiếp tục</button>
+          <button class="button button-coral button-block button-large" type="submit" data-submit-button>{{ t('Gửi OTP và tiếp tục', 'Send OTP and continue') }}</button>
         </form>
       {% endif %}
     </section>
 
     <aside class="withdraw-steps">
-      <h2>Yêu cầu đi qua 4 điểm kiểm soát</h2>
+      <h2>{{ t('Yêu cầu đi qua 4 điểm kiểm soát', 'Requests go through 4 checkpoints') }}</h2>
       <ol>
         {# Bước 1 chỉ sáng khi người dùng thực sự bắt đầu được (đã có ngân
            hàng xác minh và còn số dư khả dụng). #}
-        <li {% if accounts.length and balances.available > 0 %}class="active"{% endif %}><span>1</span><div><b>Xác nhận qua email</b><small>Xác minh chủ tài khoản ShopTik</small></div></li>
-        <li><span>2</span><div><b>Giữ số dư</b><small>Ngăn rút trùng trong khi xử lý</small></div></li>
-        <li><span>3</span><div><b>Kiểm tra rủi ro</b><small>Hệ thống kiểm tra và duyệt theo hạn mức</small></div></li>
-        <li><span>4</span><div><b>Chuyển khoản</b><small>Cập nhật khi tiền đã chuyển vào tài khoản ngân hàng</small></div></li>
+        <li {% if accounts.length and balances.available > 0 %}class="active"{% endif %}><span>1</span><div><b>{{ t('Xác nhận qua email', 'Confirm by email') }}</b><small>{{ t('Xác minh chủ tài khoản ShopTik', 'Verify the ShopTik account owner') }}</small></div></li>
+        <li><span>2</span><div><b>{{ t('Giữ số dư', 'Hold balance') }}</b><small>{{ t('Ngăn rút trùng trong khi xử lý', 'Prevent double withdrawals while processing') }}</small></div></li>
+        <li><span>3</span><div><b>{{ t('Kiểm tra rủi ro', 'Risk check') }}</b><small>{{ t('Hệ thống kiểm tra và duyệt theo hạn mức', 'System checks and approves within limits') }}</small></div></li>
+        <li><span>4</span><div><b>{{ t('Chuyển khoản', 'Bank transfer') }}</b><small>{{ t('Cập nhật khi tiền đã chuyển vào tài khoản ngân hàng', 'Updated when money is sent to your bank account') }}</small></div></li>
       </ol>
     </aside>
   </div>
 
   <section class="panel">
-    <header class="panel-heading"><div><span class="eyebrow">LỊCH SỬ</span><h2>Yêu cầu rút tiền</h2></div></header>
+    <header class="panel-heading"><div><span class="eyebrow">{{ t('LỊCH SỬ', 'HISTORY') }}</span><h2>{{ t('Yêu cầu rút tiền', 'Withdrawal requests') }}</h2></div></header>
     {% if withdrawals.length %}
       <div class="responsive-table">
         <table>
-          <thead><tr><th>Thời gian</th><th>Ngân hàng</th><th>Số tiền</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+          <thead><tr><th>{{ t('Thời gian', 'Time') }}</th><th>{{ t('Ngân hàng', 'Bank') }}</th><th>{{ t('Số tiền', 'Amount') }}</th><th>{{ t('Trạng thái', 'Status') }}</th><th>{{ t('Ghi chú', 'Note') }}</th></tr></thead>
           <tbody>
             {% for withdrawal in withdrawals %}
               <tr>
                 <td>{{ withdrawal.requested_at | datetime }}</td>
                 <td>{{ withdrawal.bank_code }} · •••• {{ withdrawal.bank_last4 }}</td>
                 <td><strong>{{ withdrawal.amount_vnd | vnd }}</strong></td>
-                <td>{{ status_badge(withdrawal.status) }}</td>
+                <td>{{ status_badge(withdrawal.status, lang) }}</td>
                 <td>{{ withdrawal.rejection_reason or '—' }}</td>
               </tr>
             {% endfor %}
@@ -90,7 +90,7 @@
         </table>
       </div>
     {% else %}
-      {{ empty_state("Chưa có yêu cầu rút", "Khi số dư khả dụng đạt mức tối thiểu, bạn có thể tạo yêu cầu tại đây.") }}
+      {{ empty_state(t("Chưa có yêu cầu rút", "No withdrawal requests"), t("Khi số dư khả dụng đạt mức tối thiểu, bạn có thể tạo yêu cầu tại đây.", "When your available balance reaches the minimum, you can create a request here.")) }}
     {% endif %}
   </section>
 {% endblock %}
