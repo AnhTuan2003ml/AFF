@@ -4,9 +4,9 @@
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
   <section class="kol-wrap kol-form-wrap">
     <header class="kol-head">
-      <span class="kol-eyebrow">HỒ SƠ ĐỐI TÁC · BƯỚC 2/2</span>
-      <h1>Thông tin &amp; xác minh</h1>
-      <p>Điền thông tin và tải lên ảnh CCCD hai mặt cùng video khuôn mặt để xác minh danh tính.</p>
+      <span class="kol-eyebrow">{{ t('HỒ SƠ ĐỐI TÁC · BƯỚC 2/2', 'PARTNER APPLICATION · STEP 2/2') }}</span>
+      <h1>{{ t('Thông tin &amp; xác minh', 'Information &amp; verification') }}</h1>
+      <p>{{ t('Điền thông tin và tải lên ảnh CCCD hai mặt cùng video khuôn mặt để xác minh danh tính.', 'Fill in your details and upload both sides of your ID plus a face video to verify your identity.') }}</p>
     </header>
 
     <form method="post" action="/app/dang-ky-kol" enctype="multipart/form-data" class="kol-form" data-kol-form>
@@ -14,53 +14,53 @@
       <input type="hidden" name="acceptTerms" value="1">
 
       <div class="kol-card">
-        <h2 class="kol-card-title">Thông tin cá nhân</h2>
+        <h2 class="kol-card-title">{{ t('Thông tin cá nhân', 'Personal information') }}</h2>
         <div class="kol-grid">
-          <label class="kol-field kol-col-2"><span>Họ và tên <i>*</i></span>
+          <label class="kol-field kol-col-2"><span>{{ t('Họ và tên', 'Full name') }} <i>*</i></span>
             <input name="fullName" required autocomplete="name" placeholder="Nguyễn Văn A">
           </label>
-          <label class="kol-field"><span>Ngày sinh</span>
+          <label class="kol-field"><span>{{ t('Ngày sinh', 'Date of birth') }}</span>
             <input name="birthDate" type="date">
           </label>
-          <label class="kol-field"><span>Số điện thoại <i>*</i></span>
+          <label class="kol-field"><span>{{ t('Số điện thoại', 'Phone number') }} <i>*</i></span>
             <input name="phone" required inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
           </label>
-          <label class="kol-field kol-col-2"><span>Số CCCD/Căn cước <i>*</i></span>
+          <label class="kol-field kol-col-2"><span>{{ t('Số CCCD/Căn cước', 'ID/Citizen number') }} <i>*</i></span>
             <input name="cccdNumber" required inputmode="numeric" placeholder="0xxxxxxxxxxx">
           </label>
-          <label class="kol-field"><span>Ngày cấp</span>
+          <label class="kol-field"><span>{{ t('Ngày cấp', 'Issue date') }}</span>
             <input name="cccdIssueDate" type="date">
           </label>
-          <label class="kol-field"><span>Nơi cấp</span>
-            <input name="cccdIssuePlace" placeholder="Cục CSQLHC về TTXH">
+          <label class="kol-field"><span>{{ t('Nơi cấp', 'Issued by') }}</span>
+            <input name="cccdIssuePlace" placeholder="{{ t('Cục CSQLHC về TTXH', 'Issuing authority') }}">
           </label>
-          <label class="kol-field kol-col-2"><span>Địa chỉ liên hệ</span>
-            <input name="address" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, tỉnh/thành">
+          <label class="kol-field kol-col-2"><span>{{ t('Địa chỉ liên hệ', 'Contact address') }}</span>
+            <input name="address" autocomplete="street-address" placeholder="{{ t('Số nhà, đường, phường/xã, tỉnh/thành', 'House no., street, ward, province/city') }}">
           </label>
           <label class="kol-field kol-col-2"><span>Email</span>
             <input name="email" type="email" autocomplete="email" placeholder="ban@email.com">
           </label>
-          <label class="kol-field kol-col-2"><span>Kênh mạng xã hội (link)</span>
+          <label class="kol-field kol-col-2"><span>{{ t('Kênh mạng xã hội (link)', 'Social channels (links)') }}</span>
             <input name="socialLinks" placeholder="TikTok / Facebook / Instagram…">
           </label>
         </div>
       </div>
 
       <div class="kol-card">
-        <h2 class="kol-card-title">Thanh toán &amp; thuế</h2>
+        <h2 class="kol-card-title">{{ t('Thanh toán &amp; thuế', 'Payment &amp; tax') }}</h2>
         <div class="kol-grid">
-          <label class="kol-field"><span>Mã số thuế cá nhân</span>
-            <input name="taxCode" inputmode="numeric" placeholder="Nếu có">
+          <label class="kol-field"><span>{{ t('Mã số thuế cá nhân', 'Personal tax code') }}</span>
+            <input name="taxCode" inputmode="numeric" placeholder="{{ t('Nếu có', 'If any') }}">
           </label>
-          <label class="kol-field"><span>Số tài khoản ngân hàng</span>
-            <input name="bankAccount" inputmode="numeric" placeholder="Số tài khoản nhận hoa hồng">
+          <label class="kol-field"><span>{{ t('Số tài khoản ngân hàng', 'Bank account number') }}</span>
+            <input name="bankAccount" inputmode="numeric" placeholder="{{ t('Số tài khoản nhận hoa hồng', 'Account to receive commission') }}">
           </label>
-          <label class="kol-field"><span>Tên chủ tài khoản</span>
+          <label class="kol-field"><span>{{ t('Tên chủ tài khoản', 'Account holder name') }}</span>
             <input name="bankHolder" autocomplete="name" placeholder="NGUYEN VAN A">
           </label>
-          <label class="kol-field"><span>Ngân hàng</span>
+          <label class="kol-field"><span>{{ t('Ngân hàng', 'Bank') }}</span>
             <select name="bankName" class="kol-select">
-              <option value="">— Chọn ngân hàng —</option>
+              <option value="">{{ t('— Chọn ngân hàng —', '— Choose a bank —') }}</option>
               {% for b in banks %}<option value="{{ b.name }}">{{ b.name }}</option>{% endfor %}
             </select>
           </label>
@@ -68,30 +68,30 @@
       </div>
 
       <div class="kol-card">
-        <h2 class="kol-card-title">Xác minh danh tính</h2>
-        <p class="kol-note">Ảnh CCCD rõ nét, không chói sáng. Video quay chính diện khuôn mặt 3–5 giây để đối chiếu với CCCD.</p>
+        <h2 class="kol-card-title">{{ t('Xác minh danh tính', 'Identity verification') }}</h2>
+        <p class="kol-note">{{ t('Ảnh CCCD rõ nét, không chói sáng. Video quay chính diện khuôn mặt 3–5 giây để đối chiếu với CCCD.', 'Clear ID photos without glare. Record a 3–5 second front-facing face video to match your ID.') }}</p>
         <div class="kol-uploads">
           <label class="kol-upload" data-upload>
             <input type="file" name="cccdFront" accept="image/*" required hidden data-upload-input>
-            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>CCCD mặt trước <i>*</i></b><small data-upload-name>Chạm để chọn ảnh</small></div>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>{{ t('CCCD mặt trước', 'ID front') }} <i>*</i></b><small data-upload-name>{{ t('Chạm để chọn ảnh', 'Tap to choose a photo') }}</small></div>
             <img class="kol-upload-preview" data-upload-preview hidden alt="">
           </label>
           <label class="kol-upload" data-upload>
             <input type="file" name="cccdBack" accept="image/*" required hidden data-upload-input>
-            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>CCCD mặt sau <i>*</i></b><small data-upload-name>Chạm để chọn ảnh</small></div>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🪪</span><b>{{ t('CCCD mặt sau', 'ID back') }} <i>*</i></b><small data-upload-name>{{ t('Chạm để chọn ảnh', 'Tap to choose a photo') }}</small></div>
             <img class="kol-upload-preview" data-upload-preview hidden alt="">
           </label>
           <label class="kol-upload kol-upload-video" data-upload>
             <input type="file" name="faceVideo" accept="video/*" required hidden data-upload-input>
-            <div class="kol-upload-box"><span class="kol-upload-ico">🎥</span><b>Video khuôn mặt <i>*</i></b><small data-upload-name>Chạm để chọn video</small></div>
+            <div class="kol-upload-box"><span class="kol-upload-ico">🎥</span><b>{{ t('Video khuôn mặt', 'Face video') }} <i>*</i></b><small data-upload-name>{{ t('Chạm để chọn video', 'Tap to choose a video') }}</small></div>
             <video class="kol-upload-preview" data-upload-preview hidden muted playsinline controls></video>
           </label>
         </div>
       </div>
 
       <div class="kol-submit-bar">
-        <a href="/app/dang-ky-kol" class="button button-ghost">← Quay lại</a>
-        <button class="button button-primary" type="submit" data-kol-submit>Gửi hồ sơ</button>
+        <a href="/app/dang-ky-kol" class="button button-ghost">← {{ t('Quay lại', 'Back') }}</a>
+        <button class="button button-primary" type="submit" data-kol-submit>{{ t('Gửi hồ sơ', 'Submit application') }}</button>
       </div>
     </form>
   </section>

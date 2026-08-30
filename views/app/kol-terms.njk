@@ -18,19 +18,19 @@
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
   <section class="kol-wrap kol-terms-wrap">
     <header class="kol-head">
-      <span class="kol-eyebrow">ĐĂNG KÝ ĐỐI TÁC · BƯỚC 1/2</span>
-      <h1>Thỏa thuận hợp tác KOL/KOC</h1>
-      <p>Vui lòng đọc toàn bộ thỏa thuận. Cuộn xuống cuối rồi tích xác nhận để tiếp tục điền hồ sơ.</p>
+      <span class="kol-eyebrow">{{ t('ĐĂNG KÝ ĐỐI TÁC · BƯỚC 1/2', 'PARTNER SIGN-UP · STEP 1/2') }}</span>
+      <h1>{{ t('Thỏa thuận hợp tác KOL/KOC', 'KOL/KOC Partnership Agreement') }}</h1>
+      <p>{{ t('Vui lòng đọc toàn bộ thỏa thuận. Cuộn xuống cuối rồi tích xác nhận để tiếp tục điền hồ sơ.', 'Please read the full agreement. Scroll to the end and tick to confirm before filling in your application.') }}</p>
     </header>
 
     {% if pendingStatus == 'PENDING' %}
       <div class="kol-status kol-status-pending">
-        <b>⏳ Hồ sơ đang chờ duyệt</b>
-        <p>Đội ngũ đang xét hồ sơ của bạn. Có kết quả bạn sẽ nhận thông báo.</p>
+        <b>⏳ {{ t('Hồ sơ đang chờ duyệt', 'Application under review') }}</b>
+        <p>{{ t('Đội ngũ đang xét hồ sơ của bạn. Có kết quả bạn sẽ nhận thông báo.', 'Our team is reviewing your application. You’ll be notified when there’s a result.') }}</p>
       </div>
     {% else %}
       {% if pendingStatus == 'REJECTED' %}
-        <div class="kol-status kol-status-reject"><b>Hồ sơ trước chưa được duyệt</b><p>Bạn có thể nộp lại sau khi chỉnh sửa.</p></div>
+        <div class="kol-status kol-status-reject"><b>{{ t('Hồ sơ trước chưa được duyệt', 'Your previous application wasn’t approved') }}</b><p>{{ t('Bạn có thể nộp lại sau khi chỉnh sửa.', 'You can resubmit after editing.') }}</p></div>
       {% endif %}
 
       <article class="kol-doc" data-kol-doc>
@@ -42,20 +42,20 @@
         </div>
       </article>
 
-      <button type="button" class="kol-jump" data-jump-end aria-label="Xuống cuối điều khoản để xác nhận">
-        <span class="kol-jump-tip" aria-hidden="true">Kéo xuống</span>
+      <button type="button" class="kol-jump" data-jump-end aria-label="{{ t('Xuống cuối điều khoản để xác nhận', 'Jump to the end to confirm') }}">
+        <span class="kol-jump-tip" aria-hidden="true">{{ t('Kéo xuống', 'Scroll down') }}</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
 
       <form method="get" action="/app/dang-ky-kol/thong-tin" class="kol-accept" id="kol-agree-form">
         <input type="hidden" name="dong_y" value="1">
-        <span data-scroll-hint class="kol-accept-hint">↓ Cuộn đọc hết thỏa thuận để tích xác nhận</span>
+        <span data-scroll-hint class="kol-accept-hint">{{ t('↓ Cuộn đọc hết thỏa thuận để tích xác nhận', '↓ Scroll through the whole agreement to enable the checkbox') }}</span>
         <label class="kol-accept-row" for="kol-accept">
           <input type="checkbox" id="kol-accept" required disabled>
           <span class="kol-accept-box" aria-hidden="true"></span>
-          <span>Tôi đã đọc và <b>đồng ý</b> toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.</span>
+          <span>{{ t('Tôi đã đọc và', 'I have read and') }} <b>{{ t('đồng ý', 'agree to') }}</b> {{ t('toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.', 'the entire KOL/KOC Partnership Agreement and Confidentiality Commitment.') }}</span>
         </label>
-        <button class="button button-primary kol-continue" type="submit" id="kol-continue" disabled>Tiếp tục điền hồ sơ →</button>
+        <button class="button button-primary kol-continue" type="submit" id="kol-continue" disabled>{{ t('Tiếp tục điền hồ sơ →', 'Continue to application →') }}</button>
       </form>
     {% endif %}
   </section>
