@@ -169,6 +169,33 @@ export default function AccountScreen() {
           )}
         </View>
 
+        <Text style={styles.h2}>Pháp lý & quyền riêng tư</Text>
+        <View style={styles.card}>
+          <MenuRow
+            icon="reader-outline"
+            label="Xem lại tài khoản"
+            onPress={() => router.push('/account-review')}
+          />
+          <MenuRow
+            icon="lock-closed-outline"
+            label="Quyền riêng tư"
+            onPress={() => router.push('/privacy')}
+            divider
+          />
+          <MenuRow
+            icon="alert-circle-outline"
+            label="Tuyên bố miễn trừ"
+            onPress={() => router.push('/disclaimer')}
+            divider
+          />
+          <MenuRow
+            icon="trash-outline"
+            label="Xóa tài khoản"
+            onPress={() => router.push('/delete-account')}
+            divider
+          />
+        </View>
+
         <Text style={styles.h2}>Thông tin</Text>
         <View style={styles.card}>
           <View style={styles.infoRow}>

@@ -61,6 +61,10 @@ export default function RootLayout() {
             <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
             <Stack.Screen name="kol" options={{ presentation: 'modal' }} />
             <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="privacy" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="delete-account" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="account-review" options={{ presentation: 'modal' }} />
           </Stack>
         </ThemeProvider>
       </SessionProvider>

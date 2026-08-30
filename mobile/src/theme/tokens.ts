@@ -101,3 +101,35 @@ export const shadow = {
     elevation: 3,
   },
 } as const;
+
+/**
+ * THANG CHỮ CHUẨN (form chữ cố định) — nguồn DUY NHẤT cho cỡ/độ đậm/giãn chữ
+ * toàn app. Trước đây mỗi màn tự đặt inline nên tiêu đề nhảy 25–32, h2 nhảy
+ * 13–19, weight lẫn 800/900. Dùng preset ở đây để mọi màn đồng nhất.
+ *
+ * Hướng tinh chỉnh (học từ ShopBack/Rakuten): đậm VỪA (800, không 900 khối),
+ * giãn dòng thoáng, ít cỡ. Số liệu lớn (tiền/mốc) giữ 900 để nổi bật.
+ *
+ * Cách dùng:  <Text style={[typography.screenTitle, { color: colors.text }]}>…</Text>
+ * (preset đã có color mặc định; ghi đè khi cần.)
+ */
+export const typography = {
+  /** Tiêu đề màn hình (h1). */
+  screenTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: colors.text },
+  /** Số liệu lớn: số dư, mốc, tổng. Giữ 900 cho nổi bật. */
+  statValue: { fontSize: 30, fontWeight: '900', letterSpacing: -1, color: colors.text },
+  /** Tiêu đề mục / thẻ lớn (h2). */
+  sectionTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2, color: colors.text },
+  /** Tiêu đề thẻ nhỏ / dòng danh sách. */
+  cardTitle: { fontSize: 14.5, fontWeight: '800', letterSpacing: -0.1, color: colors.text },
+  /** Nhãn nhỏ IN HOA phía trên tiêu đề (eyebrow). */
+  eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: colors.muted },
+  /** Nhãn trường form. */
+  label: { fontSize: 12.5, fontWeight: '800', letterSpacing: 0, color: colors.inkSoft },
+  /** Nội dung chính. */
+  body: { fontSize: 14, fontWeight: '500', lineHeight: 20, color: colors.inkSoft },
+  /** Nội dung phụ / mô tả dài. */
+  bodyMuted: { fontSize: 13.5, fontWeight: '400', lineHeight: 20, color: colors.muted },
+  /** Meta / thời gian / gợi ý nhỏ. */
+  small: { fontSize: 11.5, fontWeight: '600', color: colors.muted },
+} as const;
