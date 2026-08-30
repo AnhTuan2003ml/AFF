@@ -5,57 +5,57 @@
 {% block app_content %}
   <section class="page-heading">
     <div>
-      <h1>Link chia sẻ</h1>
-      <p>Tạo link nhanh và sao chép để gửi cho người mua.</p>
+      <h1>{{ t('Link chia sẻ', 'Share links') }}</h1>
+      <p>{{ t('Tạo link nhanh và sao chép để gửi cho người mua.', 'Create a link quickly and copy it to send to buyers.') }}</p>
     </div>
   </section>
 
   {% if shareEnabled %}
-    <section class="buy-card" aria-label="Tạo link chia sẻ">
+    <section class="buy-card" aria-label="{{ t('Tạo link chia sẻ', 'Create a share link') }}">
       <form class="buy-form" method="post" action="/app/links" data-validate-form novalidate>
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label class="buy-label" for="share-product-url">Link sản phẩm</label>
+        <label class="buy-label" for="share-product-url">{{ t('Link sản phẩm', 'Product link') }}</label>
         <div class="buy-input-row">
-          <input id="share-product-url" type="url" name="productUrl" inputmode="url" autocomplete="off" maxlength="2048" placeholder="Dán link sản phẩm" required data-required-message="Vui lòng dán link sản phẩm." data-pattern-message="Link chưa đúng định dạng URL.">
-          <button type="submit" data-submit-button>Tạo link</button>
+          <input id="share-product-url" type="url" name="productUrl" inputmode="url" autocomplete="off" maxlength="2048" placeholder="{{ t('Dán link sản phẩm', 'Paste a product link') }}" required data-required-message="{{ t('Vui lòng dán link sản phẩm.', 'Please paste a product link.') }}" data-pattern-message="{{ t('Link chưa đúng định dạng URL.', 'The link is not a valid URL.') }}">
+          <button type="submit" data-submit-button>{{ t('Tạo link', 'Create link') }}</button>
         </div>
         <small class="field-error" id="share-product-url-error" hidden></small>
       </form>
     </section>
   {% else %}
-    <section class="panel"><p class="muted">Chương trình chia sẻ link đang tạm tắt.</p></section>
+    <section class="panel"><p class="muted">{{ t('Chương trình chia sẻ link đang tạm tắt.', 'The share-link program is currently off.') }}</p></section>
   {% endif %}
 
-  <section class="stat-grid" aria-label="Hiệu quả bán hàng">
-    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('link') }}</span><span class="stat-copy"><small>Đã tạo</small><strong>{{ stats.links }}</strong></span></div>
-    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('discover') }}</span><span class="stat-copy"><small>Lượt mở</small><strong>{{ stats.clicks }}</strong></span></div>
-    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('orders') }}</span><span class="stat-copy"><small>Đơn ghi nhận</small><strong>{{ stats.orders }}</strong></span></div>
-    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('ops') }}</span><span class="stat-copy"><small>Chuyển đổi</small><strong>{{ stats.conversionPercent }}%</strong></span></div>
+  <section class="stat-grid" aria-label="{{ t('Hiệu quả bán hàng', 'Sales performance') }}">
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('link') }}</span><span class="stat-copy"><small>{{ t('Đã tạo', 'Created') }}</small><strong>{{ stats.links }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('discover') }}</span><span class="stat-copy"><small>{{ t('Lượt mở', 'Opens') }}</small><strong>{{ stats.clicks }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('orders') }}</span><span class="stat-copy"><small>{{ t('Đơn ghi nhận', 'Orders') }}</small><strong>{{ stats.orders }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon" aria-hidden="true">{{ icon('ops') }}</span><span class="stat-copy"><small>{{ t('Chuyển đổi', 'Conversion') }}</small><strong>{{ stats.conversionPercent }}%</strong></span></div>
   </section>
 
   <section class="panel">
-    <header class="panel-heading"><div><h2>Danh sách link</h2></div></header>
+    <header class="panel-heading"><div><h2>{{ t('Danh sách link', 'Your links') }}</h2></div></header>
     {% if links.length %}
       <div class="share-table-wrap responsive-table">
         <table class="share-link-table">
-          <thead><tr><th>Sản phẩm</th><th>Ngày tạo</th><th>Lượt mở</th><th>Đơn</th><th>Link chia sẻ</th><th><span class="sr-only">Hành động</span></th></tr></thead>
+          <thead><tr><th>{{ t('Sản phẩm', 'Product') }}</th><th>{{ t('Ngày tạo', 'Created') }}</th><th>{{ t('Lượt mở', 'Opens') }}</th><th>{{ t('Đơn', 'Orders') }}</th><th>{{ t('Link chia sẻ', 'Share link') }}</th><th><span class="sr-only">{{ t('Hành động', 'Actions') }}</span></th></tr></thead>
           <tbody>
             {% for link in links %}
               <tr>
-                <td class="share-product">{{ link.product_name or "Sản phẩm Shopee" }}</td>
+                <td class="share-product">{{ link.product_name or t("Sản phẩm Shopee", "Shopee product") }}</td>
                 <td>{{ link.created_at | date }}</td>
                 <td><strong>{{ link.click_count }}</strong></td>
                 <td><strong>{{ link.orders_count }}</strong></td>
                 <td>
                   <div class="copy-field share-copy">
-                    <input type="text" readonly value="{{ appOrigin }}/go/{{ link.click_id }}" data-copy-source aria-label="Link chia sẻ">
-                    <button type="button" class="button button-small button-ghost" data-copy-button>Sao chép</button>
+                    <input type="text" readonly value="{{ appOrigin }}/go/{{ link.click_id }}" data-copy-source aria-label="{{ t('Link chia sẻ', 'Share link') }}">
+                    <button type="button" class="button button-small button-ghost" data-copy-button>{{ t('Sao chép', 'Copy') }}</button>
                   </div>
                 </td>
                 <td>
-                  <form method="post" action="/app/links/{{ link.id }}/delete" data-confirm-form data-confirm-message="Xóa link chia sẻ này? Link sẽ ngừng hoạt động, đơn và thưởng đã ghi nhận vẫn được giữ.">
+                  <form method="post" action="/app/links/{{ link.id }}/delete" data-confirm-form data-confirm-message="{{ t('Xóa link chia sẻ này? Link sẽ ngừng hoạt động, đơn và thưởng đã ghi nhận vẫn được giữ.', 'Delete this share link? It will stop working; recorded orders and rewards are kept.') }}">
                     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                    <button class="button button-small button-danger" type="submit">Xóa</button>
+                    <button class="button button-small button-danger" type="submit">{{ t('Xóa', 'Delete') }}</button>
                   </form>
                 </td>
               </tr>
@@ -64,7 +64,7 @@
         </table>
       </div>
     {% else %}
-      {{ empty_state("Chưa có link nào", "Dán link sản phẩm ở ô phía trên để tạo link chia sẻ đầu tiên.") }}
+      {{ empty_state(t("Chưa có link nào", "No links yet"), t("Dán link sản phẩm ở ô phía trên để tạo link chia sẻ đầu tiên.", "Paste a product link in the box above to create your first share link.")) }}
     {% endif %}
   </section>
 {% endblock %}

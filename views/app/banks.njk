@@ -4,32 +4,32 @@
 {% block app_content %}
   <div class="two-column-layout bank-task-layout">
     <section class="panel bank-create-panel">
-      <header class="panel-heading"><div><span class="eyebrow">THÊM MỚI</span><h2>Tài khoản nhận tiền</h2></div></header>
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('THÊM MỚI', 'ADD NEW') }}</span><h2>{{ t('Tài khoản nhận tiền', 'Payout account') }}</h2></div></header>
       <form method="post" action="/app/banks/request" class="stack-form" data-validate-form novalidate>
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label for="bank-code-input">Ngân hàng
-          <select id="bank-code-input" name="bankCode" required data-required-message="Vui lòng chọn ngân hàng.">
-            <option value="">Chọn ngân hàng</option>
+        <label for="bank-code-input">{{ t('Ngân hàng', 'Bank') }}
+          <select id="bank-code-input" name="bankCode" required data-required-message="{{ t('Vui lòng chọn ngân hàng.', 'Please choose a bank.') }}">
+            <option value="">{{ t('Chọn ngân hàng', 'Choose a bank') }}</option>
             {% for bank in banks %}<option value="{{ bank.code }}">{{ bank.name }} ({{ bank.code }})</option>{% endfor %}
           </select>
           <small class="field-error" id="bank-code-input-error" hidden></small>
         </label>
-        <label for="account-number-input">Số tài khoản
-          <input id="account-number-input" type="text" name="accountNumber" inputmode="numeric" autocomplete="off" pattern="[0-9]{6,20}" maxlength="20" placeholder="Chỉ nhập số" required data-required-message="Vui lòng nhập số tài khoản." data-pattern-message="Số tài khoản chỉ gồm 6-20 chữ số.">
+        <label for="account-number-input">{{ t('Số tài khoản', 'Account number') }}
+          <input id="account-number-input" type="text" name="accountNumber" inputmode="numeric" autocomplete="off" pattern="[0-9]{6,20}" maxlength="20" placeholder="{{ t('Chỉ nhập số', 'Digits only') }}" required data-required-message="{{ t('Vui lòng nhập số tài khoản.', 'Please enter the account number.') }}" data-pattern-message="{{ t('Số tài khoản chỉ gồm 6-20 chữ số.', 'The account number must be 6–20 digits.') }}">
           <small class="field-error" id="account-number-input-error" hidden></small>
         </label>
-        <label for="account-name-input">Tên chủ tài khoản
-          <input id="account-name-input" class="account-name-input" type="text" name="accountName" autocomplete="off" minlength="3" maxlength="100" placeholder="NGUYEN VAN A" required data-required-message="Vui lòng nhập tên chủ tài khoản." data-minlength-message="Tên chủ tài khoản cần ít nhất 3 ký tự.">
-          <small>Nhập đúng tên hiển thị tại ngân hàng — hệ thống sẽ tự chuẩn hóa thành chữ in hoa.</small>
+        <label for="account-name-input">{{ t('Tên chủ tài khoản', 'Account holder name') }}
+          <input id="account-name-input" class="account-name-input" type="text" name="accountName" autocomplete="off" minlength="3" maxlength="100" placeholder="NGUYEN VAN A" required data-required-message="{{ t('Vui lòng nhập tên chủ tài khoản.', 'Please enter the account holder name.') }}" data-minlength-message="{{ t('Tên chủ tài khoản cần ít nhất 3 ký tự.', 'The account holder name needs at least 3 characters.') }}">
+          <small>{{ t('Nhập đúng tên hiển thị tại ngân hàng — hệ thống sẽ tự chuẩn hóa thành chữ in hoa.', 'Enter the exact name shown at your bank — the system normalizes it to uppercase.') }}</small>
           <small class="field-error" id="account-name-input-error" hidden></small>
         </label>
-        <button class="button button-primary button-block" type="submit" data-submit-button>Gửi OTP xác nhận</button>
+        <button class="button button-primary button-block" type="submit" data-submit-button>{{ t('Gửi OTP xác nhận', 'Send confirmation OTP') }}</button>
       </form>
-      <div class="security-note"><span>⌾</span><p>ShopTik không cần và không bao giờ hỏi mật khẩu, PIN hoặc OTP Internet Banking.</p></div>
+      <div class="security-note"><span>⌾</span><p>{{ t('ShopTik không cần và không bao giờ hỏi mật khẩu, PIN hoặc OTP Internet Banking.', 'ShopTik never needs or asks for your Internet Banking password, PIN or OTP.') }}</p></div>
     </section>
 
     <section class="panel bank-list-panel">
-      <header class="panel-heading"><div><span class="eyebrow">TÀI KHOẢN ĐÃ THÊM</span><h2>Danh sách nhận tiền</h2></div></header>
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('TÀI KHOẢN ĐÃ THÊM', 'ADDED ACCOUNTS') }}</span><h2>{{ t('Danh sách nhận tiền', 'Payout list') }}</h2></div></header>
       {% if accounts.length %}
         <div class="bank-visual-list">
           {% for account in accounts %}
@@ -43,16 +43,16 @@
                 xxxx&nbsp;xxxx&nbsp;x{{ account.account_last4.slice(1) }}
               </p>
               <footer>
-                <span><small>CHỦ TÀI KHOẢN</small><b>{{ account.account_name_full }}</b></span>
-                <span><small>NGÀY THÊM</small><b>{{ account.created_at | date }}</b></span>
+                <span><small>{{ t('CHỦ TÀI KHOẢN', 'ACCOUNT HOLDER') }}</small><b>{{ account.account_name_full }}</b></span>
+                <span><small>{{ t('NGÀY THÊM', 'ADDED ON') }}</small><b>{{ account.created_at | date }}</b></span>
               </footer>
               {% if account.rejection_reason %}<p class="bank-reason">{{ account.rejection_reason }}</p>{% endif %}
             </article>
           {% endfor %}
         </div>
-        <p class="bank-review-note">Xác nhận OTP xong là tài khoản dùng được ngay để rút tiền.</p>
+        <p class="bank-review-note">{{ t('Xác nhận OTP xong là tài khoản dùng được ngay để rút tiền.', 'Once the OTP is confirmed, the account is ready to use for withdrawals.') }}</p>
       {% else %}
-        {{ empty_state("Chưa có tài khoản ngân hàng", "Thêm tài khoản khi bạn chuẩn bị rút tiền.") }}
+        {{ empty_state(t("Chưa có tài khoản ngân hàng", "No bank account yet"), t("Thêm tài khoản khi bạn chuẩn bị rút tiền.", "Add an account when you’re ready to withdraw.")) }}
       {% endif %}
     </section>
   </div>
