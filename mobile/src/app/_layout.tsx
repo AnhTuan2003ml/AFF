@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { SessionProvider } from '@/hooks/useSession';
+import { LanguageProvider } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 /*
@@ -45,6 +46,7 @@ export default function RootLayout() {
       {/* SessionProvider nằm TRONG QueryClientProvider vì nó gọi
           useQueryClient() để xoá cache lúc đăng xuất. */}
       <SessionProvider>
+        <LanguageProvider>
         <ThemeProvider value={theme}>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
@@ -67,6 +69,7 @@ export default function RootLayout() {
             <Stack.Screen name="account-review" options={{ presentation: 'modal' }} />
           </Stack>
         </ThemeProvider>
+        </LanguageProvider>
       </SessionProvider>
     </QueryClientProvider>
   );

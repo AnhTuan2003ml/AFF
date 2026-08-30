@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLang } from '@/i18n';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export type LegalSection = { h: string; p: string };
@@ -30,7 +31,7 @@ export function LegalDoc({
   children?: (lang: 'vi' | 'en') => ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const [lang, setLang] = useState<'vi' | 'en'>('vi');
+  const { lang, setLang } = useLang();
   const doc = lang === 'vi' ? vi : en;
 
   return (

@@ -1,16 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layGioiThieu } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
+import { useLang, type Lang } from '@/i18n';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
-
-type Lang = 'vi' | 'en';
 
 const T = {
   vi: {
@@ -56,7 +54,7 @@ const T = {
 export default function AccountReviewScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
-  const [lang, setLang] = useState<Lang>('vi');
+  const { lang, setLang } = useLang();
   const t = T[lang];
   const { data: gioiThieu } = useQuery({
     queryKey: ['referrals'],

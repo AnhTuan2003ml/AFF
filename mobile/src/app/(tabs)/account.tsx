@@ -12,6 +12,8 @@ import { layGioiThieu } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { useT } from '@/i18n';
 import { Mascot } from '@/components/Mascot';
 import { CAMIO_VOICE } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
@@ -20,6 +22,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 export default function AccountScreen() {
   const { user, dangXuat } = useSession();
+  const t = useT();
   const [hoiXuat, setHoiXuat] = useState(false);
 
   const { data: lenhRut } = useQuery({
@@ -45,7 +48,12 @@ export default function AccountScreen() {
     return (
       <View style={styles.screen}>
         <BrandHeader />
-        <CanDangNhap mo_ta="Đăng nhập để xem hồ sơ, tài khoản ngân hàng nhận tiền và lịch sử rút." />
+        <CanDangNhap
+          mo_ta={t(
+            'Đăng nhập để xem hồ sơ, tài khoản ngân hàng nhận tiền và lịch sử rút.',
+            'Sign in to view your profile, payout bank account and withdrawal history.',
+          )}
+        />
       </View>
     );
   }
@@ -58,7 +66,7 @@ export default function AccountScreen() {
     <View style={styles.screen}>
       <BrandHeader />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.h1}>Tài khoản</Text>
+        <Text style={styles.h1}>{t('Tài khoản', 'Account')}</Text>
 
         <View style={styles.profile}>
           {user.avatarUrl ? (
@@ -75,7 +83,7 @@ export default function AccountScreen() {
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{user.fullName || 'Chưa đặt tên'}</Text>
+            <Text style={styles.name}>{user.fullName || t('Chưa đặt tên', 'No name yet')}</Text>
             <Text style={styles.email}>{user.email}</Text>
           </View>
         </View>
@@ -85,7 +93,7 @@ export default function AccountScreen() {
           onPress={() => router.push('/referrals')}
           style={({ pressed }) => [styles.refBox, pressed && { opacity: 0.85 }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.refLabel}>Mã giới thiệu của bạn</Text>
+            <Text style={styles.refLabel}>{t('Mã giới thiệu của bạn', 'Your referral code')}</Text>
             <Text style={styles.refCode}>{gioiThieu?.referralCode ?? '…'}</Text>
           </View>
           <Pressable
@@ -94,62 +102,66 @@ export default function AccountScreen() {
             hitSlop={8}
             style={({ pressed }) => [styles.refCopy, pressed && { opacity: 0.7 }]}>
             <Ionicons name="copy-outline" size={16} color={colors.onBrand} />
-            <Text style={styles.refCopyText}>Chép</Text>
+            <Text style={styles.refCopyText}>{t('Chép', 'Copy')}</Text>
           </Pressable>
         </Pressable>
 
-        <Text style={styles.h2}>Thao tác</Text>
+        <View style={[styles.card, styles.langCard]}>
+          <LanguageToggle />
+        </View>
+
+        <Text style={styles.h2}>{t('Thao tác', 'Actions')}</Text>
         <View style={styles.card}>
           <MenuRow
             icon="person-outline"
-            label="Thông tin cá nhân"
+            label={t('Thông tin cá nhân', 'Personal info')}
             onPress={() => router.push('/profile')}
           />
           <MenuRow
             icon="card-outline"
-            label="Tài khoản ngân hàng"
+            label={t('Tài khoản ngân hàng', 'Bank account')}
             onPress={() => router.push('/bank')}
             divider
           />
           <MenuRow
             icon="arrow-up-circle-outline"
-            label="Rút tiền"
+            label={t('Rút tiền', 'Withdraw')}
             onPress={() => router.push('/withdraw')}
             divider
           />
           <MenuRow
             icon="flag-outline"
-            label="Nhiệm vụ nhận thưởng"
+            label={t('Nhiệm vụ nhận thưởng', 'Rewards & missions')}
             onPress={() => router.push('/missions')}
             divider
           />
           <MenuRow
             icon="share-social-outline"
-            label="Chia sẻ nhận hoa hồng"
+            label={t('Chia sẻ nhận hoa hồng', 'Share for commission')}
             onPress={() => router.push('/chia-se')}
             divider
           />
           <MenuRow
             icon="ribbon-outline"
-            label="Đăng ký KOL/KOC"
+            label={t('Đăng ký KOL/KOC', 'Become a KOL/KOC')}
             onPress={() => router.push('/kol')}
             divider
           />
           <MenuRow
             icon="people-outline"
-            label="Giới thiệu bạn bè"
+            label={t('Giới thiệu bạn bè', 'Refer friends')}
             onPress={() => router.push('/referrals')}
             divider
           />
           <MenuRow
             icon="chatbubbles-outline"
-            label="Hỗ trợ & khiếu nại"
+            label={t('Hỗ trợ & khiếu nại', 'Support & complaints')}
             onPress={() => router.push('/support')}
             divider
           />
         </View>
 
-        <Text style={styles.h2}>Lệnh rút gần đây</Text>
+        <Text style={styles.h2}>{t('Lệnh rút gần đây', 'Recent withdrawals')}</Text>
         <View style={styles.card}>
           {lenhRut && lenhRut.length > 0 ? (
             lenhRut.slice(0, 5).map((w, i) => (
@@ -165,43 +177,43 @@ export default function AccountScreen() {
               </View>
             ))
           ) : (
-            <Text style={styles.emptyRow}>Chưa có lệnh rút nào.</Text>
+            <Text style={styles.emptyRow}>{t('Chưa có lệnh rút nào.', 'No withdrawals yet.')}</Text>
           )}
         </View>
 
-        <Text style={styles.h2}>Pháp lý & quyền riêng tư</Text>
+        <Text style={styles.h2}>{t('Pháp lý & quyền riêng tư', 'Legal & privacy')}</Text>
         <View style={styles.card}>
           <MenuRow
             icon="reader-outline"
-            label="Xem lại tài khoản"
+            label={t('Xem lại tài khoản', 'Account review')}
             onPress={() => router.push('/account-review')}
           />
           <MenuRow
             icon="lock-closed-outline"
-            label="Quyền riêng tư"
+            label={t('Quyền riêng tư', 'Privacy')}
             onPress={() => router.push('/privacy')}
             divider
           />
           <MenuRow
             icon="alert-circle-outline"
-            label="Tuyên bố miễn trừ"
+            label={t('Tuyên bố miễn trừ', 'Disclaimer')}
             onPress={() => router.push('/disclaimer')}
             divider
           />
           <MenuRow
             icon="trash-outline"
-            label="Xóa tài khoản"
+            label={t('Xóa tài khoản', 'Delete account')}
             onPress={() => router.push('/delete-account')}
             divider
           />
         </View>
 
-        <Text style={styles.h2}>Thông tin</Text>
+        <Text style={styles.h2}>{t('Thông tin', 'Info')}</Text>
         <View style={styles.card}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Máy chủ</Text>
+            <Text style={styles.infoLabel}>{t('Máy chủ', 'Server')}</Text>
             <Text style={styles.infoValue} numberOfLines={1}>
-              {apiBaseUrl || 'chưa cấu hình'}
+              {apiBaseUrl || t('chưa cấu hình', 'not configured')}
             </Text>
           </View>
         </View>
@@ -210,7 +222,7 @@ export default function AccountScreen() {
           onPress={hoiDangXuat}
           style={({ pressed }) => [styles.logout, pressed && { backgroundColor: colors.dangerSoft }]}>
           <Ionicons name="log-out-outline" size={19} color={colors.danger} />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
+          <Text style={styles.logoutText}>{t('Đăng xuất', 'Sign out')}</Text>
         </Pressable>
       </ScrollView>
 
@@ -222,7 +234,7 @@ export default function AccountScreen() {
         <Pressable style={styles.scrim} onPress={() => setHoiXuat(false)}>
           <Pressable style={styles.confirm} onPress={(e) => e.stopPropagation()}>
             <Mascot mood="ngacnhien" size={64} />
-            <Text style={styles.confirmTitle}>Đăng xuất?</Text>
+            <Text style={styles.confirmTitle}>{t('Đăng xuất?', 'Sign out?')}</Text>
             <Text style={styles.confirmSub}>{CAMIO_VOICE.logoutStay[0]}</Text>
             <Pressable
               style={({ pressed }) => [styles.confirmDanger, pressed && { opacity: 0.9 }]}
@@ -230,10 +242,10 @@ export default function AccountScreen() {
                 setHoiXuat(false);
                 void dangXuat();
               }}>
-              <Text style={styles.confirmDangerText}>Đăng xuất</Text>
+              <Text style={styles.confirmDangerText}>{t('Đăng xuất', 'Sign out')}</Text>
             </Pressable>
             <Pressable style={styles.confirmGhost} onPress={() => setHoiXuat(false)}>
-              <Text style={styles.confirmGhostText}>Ở lại</Text>
+              <Text style={styles.confirmGhostText}>{t('Ở lại', 'Stay')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -336,6 +348,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     ...shadow.card,
   },
+  langCard: { paddingVertical: 14, marginBottom: 10 },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 13 },
   menuDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   menuIcon: {
