@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  const LANG = document.documentElement.lang === "en" ? "en" : "vi";
+  const T = (vi, en) => (LANG === "en" ? en : vi);
+
   const page = document.querySelector("[data-discover-page]");
   if (!(page instanceof HTMLElement)) return;
 
@@ -130,7 +133,7 @@
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
       const error = new Error(
-        payload?.error?.message || "Hệ thống đang bận. Vui lòng thử lại.",
+        payload?.error?.message || T("Hệ thống đang bận. Vui lòng thử lại.", "The system is busy. Please try again."),
       );
       error.status = response.status;
       throw error;
@@ -157,7 +160,7 @@
       const isMobile = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
       const purchaseWindow = isMobile ? null : window.open("about:blank", "_blank");
       button.disabled = true;
-      if (label) label.textContent = "Đang tạo link mua…";
+      if (label) label.textContent = T("Đang tạo link mua…", "Creating buy link…");
 
       try {
         const preview = await postJson("/api/v1/products/preview", {
@@ -167,7 +170,7 @@
           previewId: preview.previewId,
         });
         if (!purchase.buyUrl) {
-          throw new Error("Chưa tạo được link mua hoàn tiền.");
+          throw new Error(T("Chưa tạo được link mua hoàn tiền.", "Could not create the cashback buy link."));
         }
 
         if (purchaseWindow) {
@@ -176,7 +179,7 @@
         } else {
           window.location.href = purchase.buyUrl;
         }
-        showToast("Đã tạo link mua hoàn tiền và mở sản phẩm trên sàn.");
+        showToast(T("Đã tạo link mua hoàn tiền và mở sản phẩm trên sàn.", "Cashback link created and product opened on the platform."));
       } catch (error) {
         if (purchaseWindow) purchaseWindow.close();
         // Khách (trang Khám phá mở cho người chưa đăng nhập) bấm Mua → sang
@@ -191,12 +194,12 @@
         showToast(
           error instanceof Error
             ? error.message
-            : "Không thể tạo link mua. Vui lòng thử lại.",
+            : T("Không thể tạo link mua. Vui lòng thử lại.", "Could not create the buy link. Please try again."),
           "error",
         );
       } finally {
         button.disabled = false;
-        if (label) label.textContent = "Mua & Nhận Hoàn Tiền";
+        if (label) label.textContent = T("Mua & Nhận Hoàn Tiền", "Buy & earn cashback");
       }
     }
   }

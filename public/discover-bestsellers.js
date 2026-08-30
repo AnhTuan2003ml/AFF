@@ -7,6 +7,9 @@
 (function () {
   "use strict";
 
+  var LANG = document.documentElement.lang === "en" ? "en" : "vi";
+  function T(vi, en) { return LANG === "en" ? en : vi; }
+
   var root = document.querySelector("[data-bestseller]");
   var page = document.querySelector("[data-discover-page]");
   if (!root || !page) return;
@@ -34,23 +37,23 @@
   var filterEmpty = page.querySelector("[data-discover-filter-empty]");
 
   var TITLE_SHOPEE = {
-    hot: "🔥 Deal Hot",
-    recommend: "Đề xuất",
-    best: "Bán chạy nhất",
-    exclusive: "Ưu đãi độc quyền",
+    hot: T("🔥 Deal Hot", "🔥 Hot Deals"),
+    recommend: T("Đề xuất", "Recommended"),
+    best: T("Bán chạy nhất", "Best sellers"),
+    exclusive: T("Ưu đãi độc quyền", "Exclusive deals"),
   };
   // Lazada: "hot" đóng vai "Hoa hồng cao" (feed sắp theo hoa hồng).
   var TITLE_LAZADA = {
-    hot: "🔥 Hoa hồng cao",
-    recommend: "Đề xuất",
-    best: "Bán chạy nhất",
+    hot: T("🔥 Hoa hồng cao", "🔥 High commission"),
+    recommend: T("Đề xuất", "Recommended"),
+    best: T("Bán chạy nhất", "Best sellers"),
   };
   function titleFor(listKey) {
     var platform = currentPlatform();
     var base =
       (platform === "lazada" ? TITLE_LAZADA : TITLE_SHOPEE)[listKey] ||
-      "Sản phẩm";
-    return base + " trên " + (PLATFORM_NAMES[platform] || "Shopee");
+      T("Sản phẩm", "Products");
+    return base + T(" trên ", " on ") + (PLATFORM_NAMES[platform] || "Shopee");
   }
 
   // Mỗi danh mục giữ trang riêng — quay lại vẫn ở đúng trang đang xem.
@@ -117,10 +120,10 @@
       if (img.naturalWidth && img.naturalWidth <= 170) toFallback();
     });
     media.appendChild(img);
-    var LABELS = { hot: "🔥 Hot", best: "Bán chạy", exclusive: "Độc quyền", recommend: "Đề xuất" };
+    var LABELS = { hot: "🔥 Hot", best: T("Bán chạy", "Best sellers"), exclusive: T("Độc quyền", "Exclusive"), recommend: T("Đề xuất", "Recommended") };
     var badges = el("div", "discover-card-badges");
     badges.appendChild(
-      el("span", "discover-category-badge", LABELS[listKey] || "Đề xuất")
+      el("span", "discover-category-badge", LABELS[listKey] || T("Đề xuất", "Recommended"))
     );
     var plat = currentPlatform();
     badges.appendChild(
@@ -139,7 +142,7 @@
     }
     if (product.cashbackRatePercent) {
       media.appendChild(
-        el("span", "discover-cashback-badge", "Hoàn +" + product.cashbackRatePercent + "%")
+        el("span", "discover-cashback-badge", T("Hoàn +", "+") + product.cashbackRatePercent + "%")
       );
     }
     card.appendChild(media);
@@ -152,7 +155,7 @@
     var priceBox = el("div", "discover-price-box px-price-box");
     var priceLine = el("div");
     priceLine.appendChild(
-      el("strong", "", product.priceVnd ? formatVnd(product.priceVnd) : "Xem giá trên sàn")
+      el("strong", "", product.priceVnd ? formatVnd(product.priceVnd) : T("Xem giá trên sàn", "See price on site"))
     );
     // Voucher/HOT: giá gốc gạch ngang để thấy giảm bao nhiêu.
     if (product.originalPriceVnd && product.originalPriceVnd > (product.priceVnd || 0)) {
@@ -160,9 +163,9 @@
     }
     priceBox.appendChild(priceLine);
     var refund = el("p");
-    refund.appendChild(el("span", "", "Hoàn về ví"));
+    refund.appendChild(el("span", "", T("Hoàn về ví", "Cashback")));
     refund.appendChild(
-      el("b", "", product.cashbackAmountVnd ? "+" + formatVnd(product.cashbackAmountVnd) : "Kiểm tra khi mua")
+      el("b", "", product.cashbackAmountVnd ? "+" + formatVnd(product.cashbackAmountVnd) : T("Kiểm tra khi mua", "Check at purchase"))
     );
     priceBox.appendChild(refund);
     body.appendChild(priceBox);
@@ -173,7 +176,7 @@
     buy.type = "button";
     buy.setAttribute("data-discover-buy", "");
     buy.setAttribute("data-product-url", product.productUrl);
-    var label = el("b", "", "Mua và nhận hoàn tiền");
+    var label = el("b", "", T("Mua và nhận hoàn tiền", "Buy & earn cashback"));
     label.setAttribute("data-buy-label", "");
     buy.appendChild(label);
     var arrow = el("span", "", "↗");
@@ -239,11 +242,11 @@
         { credentials: "same-origin", headers: { accept: "application/json" } }
       );
       data = await response.json();
-      if (!response.ok) throw new Error((data && data.error && data.error.message) || "Lỗi tải dữ liệu.");
+      if (!response.ok) throw new Error((data && data.error && data.error.message) || T("Lỗi tải dữ liệu.", "Failed to load data."));
     } catch (error) {
       if (seq !== requestSeq) return;
       setLoading(false);
-      setStatus("Không tải được dữ liệu. Kiểm tra mạng rồi thử lại.");
+      setStatus(T("Không tải được dữ liệu. Kiểm tra mạng rồi thử lại.", "Could not load data. Check your connection and try again."));
       return;
     }
     if (seq !== requestSeq || listKey !== activeList) return;
@@ -255,7 +258,7 @@
       if (!pollDeadline || !isPoll) pollDeadline = Date.now() + 90_000;
       if (Date.now() > pollDeadline) {
         setLoading(false);
-        setStatus("Chưa tải được trang này. Vui lòng thử lại sau ít phút.");
+        setStatus(T("Chưa tải được trang này. Vui lòng thử lại sau ít phút.", "This page isn’t ready yet. Please try again in a few minutes."));
         return;
       }
       setLoading(true);
@@ -268,7 +271,7 @@
     setLoading(false);
     if (data.status !== "READY") {
       grid.innerHTML = "";
-      setStatus(data.message || "Danh mục này đang tạm nghỉ. Vui lòng quay lại sau.");
+      setStatus(data.message || T("Danh mục này đang tạm nghỉ. Vui lòng quay lại sau.", "This category is taking a break. Please check back later."));
       pagination.hidden = true;
       return;
     }
@@ -278,7 +281,7 @@
     state.hasMore = data.products.length >= (data.pageSize || 20);
     grid.innerHTML = "";
     if (data.products.length === 0) {
-      setStatus("Đã hết danh sách.");
+      setStatus(T("Đã hết danh sách.", "End of list."));
     } else {
       setStatus("");
       data.products.forEach(function (product) {

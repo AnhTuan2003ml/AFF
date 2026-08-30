@@ -11,43 +11,43 @@
     <section class="px-discover-hero" aria-labelledby="discover-title">
       <div>
         <span class="px-eyebrow">SHOPPING DISCOVERY</span>
-        <h1 id="discover-title">Sản phẩm đáng để khám phá.</h1>
-        <p>Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.</p>
+        <h1 id="discover-title">{{ t('Sản phẩm đáng để khám phá.', 'Products worth discovering.') }}</h1>
+        <p>{{ t('Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.', 'Browse products, compare cashback and go straight to the platform you want.') }}</p>
       </div>
-      {% if maxCashbackRate > 0 %}<span class="px-rate-pill">Hoàn đến {{ maxCashbackRate }}%</span>{% endif %}
+      {% if maxCashbackRate > 0 %}<span class="px-rate-pill">{{ t('Hoàn đến', 'Up to') }} {{ maxCashbackRate }}%</span>{% endif %}
     </section>
 
     {% if items.length %}
-      <section class="discover-filters px-discover-filters" aria-label="Tìm kiếm và lọc nội dung">
+      <section class="discover-filters px-discover-filters" aria-label="{{ t('Tìm kiếm và lọc nội dung', 'Search and filter') }}">
         <label class="discover-search px-discover-search">
           <span aria-hidden="true">{{ icon('search') }}</span>
-          <span class="sr-only">Tìm nội dung</span>
-          <input type="search" placeholder="Tìm sản phẩm, thương hiệu hoặc voucher" autocomplete="off" data-discover-search>
+          <span class="sr-only">{{ t('Tìm nội dung', 'Search') }}</span>
+          <input type="search" placeholder="{{ t('Tìm sản phẩm, thương hiệu hoặc voucher', 'Search products, brands or vouchers') }}" autocomplete="off" data-discover-search>
         </label>
 
         <div class="discover-filter-buttons">
           {# Cấp 1 — CHỌN SÀN. Vào mặc định Shopee. #}
-          <div class="discover-platform-switch" role="group" aria-label="Chọn sàn" data-platform-switch>
+          <div class="discover-platform-switch" role="group" aria-label="{{ t('Chọn sàn', 'Choose platform') }}" data-platform-switch>
             <button type="button" class="active platform-shopee" data-platform-select="shopee" aria-pressed="true">Shopee</button>
             <button type="button" class="platform-lazada" data-platform-select="lazada" aria-pressed="false">Lazada</button>
           </div>
 
           {# Cấp 2a — Hạng mục Shopee #}
-          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Danh mục Shopee" data-platform-cats="shopee">
-            <button type="button" class="active" data-discover-category="all" aria-pressed="true">Tất cả</button>
+          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="{{ t('Danh mục Shopee', 'Shopee categories') }}" data-platform-cats="shopee">
+            <button type="button" class="active" data-discover-category="all" aria-pressed="true">{{ t('Tất cả', 'All') }}</button>
             <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 Hot</button>
             <button type="button" class="discover-tab-voucher" data-discover-voucher aria-pressed="false">🎟️ Voucher</button>
-            <button type="button" data-discover-livelist="recommend" aria-pressed="false">Đề xuất</button>
-            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
-            <button type="button" data-discover-livelist="exclusive" aria-pressed="false">Độc quyền</button>
+            <button type="button" data-discover-livelist="recommend" aria-pressed="false">{{ t('Đề xuất', 'Recommended') }}</button>
+            <button type="button" data-discover-livelist="best" aria-pressed="false">{{ t('Bán chạy', 'Best sellers') }}</button>
+            <button type="button" data-discover-livelist="exclusive" aria-pressed="false">{{ t('Độc quyền', 'Exclusive') }}</button>
             {% for category in categories %}<button type="button" data-discover-category="{{ category }}" aria-pressed="false">{{ category }}</button>{% endfor %}
           </div>
 
           {# Cấp 2b — Hạng mục Lazada (feed affiliate; ẩn tới khi chọn Lazada) #}
-          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="Danh mục Lazada" data-platform-cats="lazada" hidden>
-            <button type="button" class="active" data-discover-livelist="recommend" aria-pressed="true">Đề xuất</button>
-            <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 Hoa hồng cao</button>
-            <button type="button" data-discover-livelist="best" aria-pressed="false">Bán chạy</button>
+          <div class="discover-category-tabs px-filter-tabs px-category-tabs" role="group" aria-label="{{ t('Danh mục Lazada', 'Lazada categories') }}" data-platform-cats="lazada" hidden>
+            <button type="button" class="active" data-discover-livelist="recommend" aria-pressed="true">{{ t('Đề xuất', 'Recommended') }}</button>
+            <button type="button" class="discover-tab-hot" data-discover-livelist="hot" aria-pressed="false">🔥 {{ t('Hoa hồng cao', 'High commission') }}</button>
+            <button type="button" data-discover-livelist="best" aria-pressed="false">{{ t('Bán chạy', 'Best sellers') }}</button>
           </div>
         </div>
       </section>
@@ -67,36 +67,36 @@
               <h2>{{ item.title }}</h2>
               {% if item.isProduct %}
                 <div class="discover-price-box px-price-box">
-                  <div><strong>{% if item.salePrice is not none %}{{ item.salePrice | vnd }}{% else %}Xem giá trên sàn{% endif %}</strong>{% if item.originalPrice is not none %}<del>{{ item.originalPrice | vnd }}</del>{% endif %}</div>
-                  <p><span>Hoàn về ví</span><b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}Kiểm tra khi mua{% endif %}</b></p>
+                  <div><strong>{% if item.salePrice is not none %}{{ item.salePrice | vnd }}{% else %}{{ t('Xem giá trên sàn', 'See price on site') }}{% endif %}</strong>{% if item.originalPrice is not none %}<del>{{ item.originalPrice | vnd }}</del>{% endif %}</div>
+                  <p><span>{{ t('Hoàn về ví', 'Cashback') }}</span><b>{% if item.cashbackAmount is not none %}+{{ item.cashbackAmount | vnd }}{% else %}{{ t('Kiểm tra khi mua', 'Check at purchase') }}{% endif %}</b></p>
                 </div>
               {% elif item.description %}<p class="discover-card-description">{{ item.description }}</p>{% endif %}
             </div>
             <footer class="discover-card-footer px-product-footer">
-              {% if item.isProduct and item.target_url %}<button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}"><b data-buy-label>Mua qua ShopTik</b><span aria-hidden="true">→</span></button>
-              {% elif item.target_url %}<a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer"><b>Xem chi tiết</b><span aria-hidden="true">→</span></a>
-              {% else %}<span class="discover-static-action">Thông tin</span>{% endif %}
+              {% if item.isProduct and item.target_url %}<button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.target_url }}"><b data-buy-label>{{ t('Mua qua ShopTik', 'Buy via ShopTik') }}</b><span aria-hidden="true">→</span></button>
+              {% elif item.target_url %}<a class="discover-primary-action" href="{{ item.target_url }}" target="_blank" rel="noopener noreferrer"><b>{{ t('Xem chi tiết', 'View details') }}</b><span aria-hidden="true">→</span></a>
+              {% else %}<span class="discover-static-action">{{ t('Thông tin', 'Info') }}</span>{% endif %}
             </footer>
           </article>
         {% endfor %}
       </section>
 
-      <section class="discover-filter-empty" data-discover-filter-empty hidden><h2>Không tìm thấy sản phẩm phù hợp.</h2><p>Thử đổi từ khóa, sàn hoặc danh mục.</p></section>
+      <section class="discover-filter-empty" data-discover-filter-empty hidden><h2>{{ t('Không tìm thấy sản phẩm phù hợp.', 'No matching products found.') }}</h2><p>{{ t('Thử đổi từ khóa, sàn hoặc danh mục.', 'Try changing the keyword, platform or category.') }}</p></section>
     {% else %}
-      <section class="discover-database-empty"><h2>Chưa có nội dung để khám phá.</h2><p>Sản phẩm mới sẽ xuất hiện tại đây khi dữ liệu được cập nhật.</p></section>
+      <section class="discover-database-empty"><h2>{{ t('Chưa có nội dung để khám phá.', 'No content to explore yet.') }}</h2><p>{{ t('Sản phẩm mới sẽ xuất hiện tại đây khi dữ liệu được cập nhật.', 'New products will appear here as data is updated.') }}</p></section>
     {% endif %}
 
     <section class="bestseller-section" data-bestseller data-endpoint="/app/discover/offer-products" data-endpoint-lazada="/app/discover/lazada-offers" hidden aria-labelledby="bestseller-title">
-      <header class="px-section-head bestseller-head"><div><span class="px-eyebrow">LIVE CATALOG</span><h2 id="bestseller-title" data-bestseller-title>Bán chạy nhất trên Shopee.</h2></div><p>Mỗi trang 20 sản phẩm. Mua qua ShopTik để nhận hoàn tiền.</p></header>
+      <header class="px-section-head bestseller-head"><div><span class="px-eyebrow">LIVE CATALOG</span><h2 id="bestseller-title" data-bestseller-title>{{ t('Bán chạy nhất trên Shopee.', 'Best sellers on Shopee.') }}</h2></div><p>{{ t('Mỗi trang 20 sản phẩm. Mua qua ShopTik để nhận hoàn tiền.', '20 products per page. Buy via ShopTik to earn cashback.') }}</p></header>
       <div class="discover-grid px-product-grid" data-bestseller-grid aria-live="polite"></div>
       <div class="bestseller-loading" data-bestseller-loading hidden aria-hidden="true"><span class="bestseller-spinner"></span></div>
       <p class="bestseller-status" data-bestseller-status hidden></p>
-      <nav class="bestseller-pagination" data-bestseller-pagination aria-label="Chuyển trang" hidden></nav>
+      <nav class="bestseller-pagination" data-bestseller-pagination aria-label="{{ t('Chuyển trang', 'Pagination') }}" hidden></nav>
     </section>
 
     {# ── Tab Voucher: mã giảm giá theo sàn (Shopee có; Lazada đang cập nhật) ── #}
-    <section class="voucher-section" data-voucher-section hidden aria-label="Voucher hôm nay">
-      <header class="px-section-head"><div><span class="px-eyebrow">MÃ GIẢM GIÁ SHOPEE</span><h2>🎟️ Voucher hôm nay</h2></div><p>Bấm “Dùng ngay” để lưu mã và đi thẳng đến Shopee.</p></header>
+    <section class="voucher-section" data-voucher-section hidden aria-label="{{ t('Voucher hôm nay', 'Today’s vouchers') }}">
+      <header class="px-section-head"><div><span class="px-eyebrow">{{ t('MÃ GIẢM GIÁ SHOPEE', 'SHOPEE VOUCHERS') }}</span><h2>🎟️ {{ t('Voucher hôm nay', 'Today’s vouchers') }}</h2></div><p>{{ t('Bấm “Dùng ngay” để lưu mã và đi thẳng đến Shopee.', 'Tap “Use now” to save the code and go straight to Shopee.') }}</p></header>
       <div class="voucher-grid" data-voucher-grid aria-live="polite"></div>
       <p class="bestseller-status" data-voucher-status hidden></p>
     </section>
