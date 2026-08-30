@@ -39,9 +39,9 @@
             <a href="{{ item.href }}"{% if isActive %} class="active" aria-current="page"{% endif %}>{{ icon(item.icon) }}<span>{{ item.label }}</span></a>
           {% endfor %}
           {% if currentUser %}
-          <button type="button" class="px-nav-checkin" data-checkin-open aria-label="Điểm danh mỗi ngày">
+          <button type="button" class="px-nav-checkin" data-checkin-open aria-label="{{ t('Điểm danh mỗi ngày', 'Daily check-in') }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg>
-            <span>Điểm danh</span>
+            <span>{{ t('Điểm danh', 'Check-in') }}</span>
           </button>
           {% endif %}
         </nav>
@@ -52,7 +52,7 @@
           {% if currentUser %}
           <a class="px-head-icon" href="/app/discover" aria-label="Tìm kiếm">{{ icon('search') }}</a>
           {# Mobile: điểm danh là icon lịch cạnh chuông (desktop dùng nút ở nav). #}
-          <button type="button" class="px-head-icon px-head-checkin" data-checkin-open aria-label="Điểm danh mỗi ngày">
+          <button type="button" class="px-head-icon px-head-checkin" data-checkin-open aria-label="{{ t('Điểm danh mỗi ngày', 'Daily check-in') }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg>
           </button>
           {% endif %}
@@ -77,30 +77,30 @@
           <div class="notification-menu">
             {% set notifBase = unreadNotificationCount or 0 %}
             {% set badgeTotal = notifBase + (unreadSupportCount or 0) %}
-            <button type="button" class="px-head-icon notification-trigger" data-notification-trigger aria-expanded="false" aria-label="Thông báo">
+            <button type="button" class="px-head-icon notification-trigger" data-notification-trigger aria-expanded="false" aria-label="{{ t('Thông báo', 'Notifications') }}">
               {{ icon('bell') }}
               <b class="notification-badge" data-notification-badge data-notif-base="{{ notifBase }}"{% if not badgeTotal %} hidden{% endif %}>{{ badgeTotal if badgeTotal <= 9 else '9+' }}</b>
             </button>
             <div class="notification-dropdown" data-notification-panel>
-              <div class="notification-dropdown-head"><b>Thông báo</b></div>
+              <div class="notification-dropdown-head"><b>{{ t('Thông báo', 'Notifications') }}</b></div>
               <div class="notification-actions">
                 <button type="button" class="notification-action" data-checkin-open>
                   <span class="notification-action-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9.5h16M8 3v4M16 3v4"/><path d="m9 15 1.8 1.8 3.6-3.8"/></svg></span>
-                  <span class="notification-action-copy"><b>Điểm danh mỗi ngày</b><small>Điểm danh nhận thưởng · giữ chuỗi liên tiếp</small></span>
+                  <span class="notification-action-copy"><b>{{ t('Điểm danh mỗi ngày', 'Daily check-in') }}</b><small>{{ t('Điểm danh nhận thưởng · giữ chuỗi liên tiếp', 'Check in for rewards · keep your streak') }}</small></span>
                   <span class="notification-action-go" aria-hidden="true">→</span>
                 </button>
                 {% if not headerHasVerifiedBank %}
                 <a class="notification-action" href="/app/banks">
                   <span class="notification-action-ico">{{ icon('bank') }}</span>
-                  <span class="notification-action-copy"><b>Hoàn tất để nhận tiền</b><small>Thêm & xác minh ngân hàng để rút tiền hoàn</small></span>
+                  <span class="notification-action-copy"><b>{{ t('Hoàn tất để nhận tiền', 'Finish to get paid') }}</b><small>{{ t('Thêm & xác minh ngân hàng để rút tiền hoàn', 'Add & verify a bank to withdraw cashback') }}</small></span>
                   <span class="notification-action-go" aria-hidden="true">→</span>
                 </a>
                 {% endif %}
               </div>
               {% if unreadSupportCount %}
                 <a class="notification-support-item" href="/app/support" data-support-notice>
-                  <b>Đội ngũ chăm sóc đã phản hồi</b>
-                  <p>{{ unreadSupportCount }} tin nhắn mới từ hỗ trợ. Bấm để mở.</p>
+                  <b>{{ t('Đội ngũ chăm sóc đã phản hồi', 'Support has replied') }}</b>
+                  <p>{{ unreadSupportCount }} {{ t('tin nhắn mới từ hỗ trợ. Bấm để mở.', 'new support messages. Tap to open.') }}</p>
                 </a>
               {% endif %}
               {% if recentNotifications and recentNotifications.length %}
@@ -122,7 +122,7 @@
                   {% endfor %}
                 </ul>
               {% elif not unreadSupportCount %}
-                <p class="notification-empty">Bạn chưa có thông báo mới.</p>
+                <p class="notification-empty">{{ t('Bạn chưa có thông báo mới.', 'You have no new notifications.') }}</p>
               {% endif %}
             </div>
           </div>
@@ -135,15 +135,15 @@
           <div class="st-menu px-account-menu">
             <button type="button" class="px-account-trigger st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
               <span class="st-avatar" aria-hidden="true">{% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}{% endif %}</span>
-              <span class="px-account-name">{{ currentUser.fullName or 'Tài khoản' }}</span>
+              <span class="px-account-name">{{ currentUser.fullName or t('Tài khoản', 'Account') }}</span>
               {{ icon('chevron-down') }}
             </button>
             <div class="st-menu-panel" data-menu>
               {# Mã giới thiệu ngay dưới tên tài khoản — copy nhanh một chạm. #}
               <div class="st-menu-refcode copy-field">
-                <span class="st-refcode-copy"><small>Mã giới thiệu</small><b>{{ currentUser.referralCode }}</b></span>
+                <span class="st-refcode-copy"><small>{{ t('Mã giới thiệu', 'Referral code') }}</small><b>{{ currentUser.referralCode }}</b></span>
                 <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-hidden="true" tabindex="-1">
-                <button type="button" data-copy-button aria-label="Sao chép mã giới thiệu">Copy</button>
+                <button type="button" data-copy-button aria-label="{{ t('Sao chép mã giới thiệu', 'Copy referral code') }}">Copy</button>
               </div>
               <a href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
               <a href="/app/nhiem-vu">{{ icon('mission') }}<span>{{ t('Nhiệm vụ nhận thưởng', 'Rewards & missions') }}</span></a>
@@ -151,15 +151,15 @@
               <a href="/app/support">{{ icon('support') }}<span>{{ t('Hỗ trợ & khiếu nại', 'Support & complaints') }}</span></a>
               <a href="/app/settings">{{ icon('settings') }}<span>{{ t('Tất cả chức năng', 'All features') }}</span></a>
               {% if currentUser.isSpecialPartner %}
-                <a href="/app/dang-ky-kol">{{ icon('user') }}<span>Đối tác KOL/KOC ✓</span></a>
+                <a href="/app/dang-ky-kol">{{ icon('user') }}<span>{{ t('Đối tác KOL/KOC', 'KOL/KOC partner') }} ✓</span></a>
               {% else %}
-                <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>Đăng ký KOL/KOC</span></a>
+                <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>{{ t('Đăng ký KOL/KOC', 'Become a KOL/KOC') }}</span></a>
               {% endif %}
-              {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>Trang quản trị</span></a>{% endif %}
+              {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>{{ t('Trang quản trị', 'Admin console') }}</span></a>{% endif %}
               <div class="st-menu-divider" role="separator"></div>
               <form method="post" action="/dang-xuat">
                 <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
+                <button class="st-menu-logout button-ghost" type="submit">{{ icon('logout') }}<span>{{ t('Đăng xuất', 'Sign out') }}</span></button>
               </form>
             </div>
           </div>
@@ -172,14 +172,14 @@
       {% include "partials/flash.njk" %}
       {% if appSection in financeSections %}
         <section class="px-page-intro">
-          <span class="px-eyebrow">TÀI CHÍNH</span>
-          <h1>Tiền hoàn của bạn.</h1>
-          <p>Theo dõi số dư, tạo lệnh rút và quản lý tài khoản nhận tiền trong một nơi.</p>
+          <span class="px-eyebrow">{{ t('TÀI CHÍNH', 'FINANCE') }}</span>
+          <h1>{{ t('Tiền hoàn của bạn.', 'Your cashback.') }}</h1>
+          <p>{{ t('Theo dõi số dư, tạo lệnh rút và quản lý tài khoản nhận tiền trong một nơi.', 'Track your balance, request withdrawals and manage your payout account in one place.') }}</p>
         </section>
-        <nav class="st-subtabs px-subtabs" aria-label="Khu vực tài chính">
-          <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>Số dư</a>
-          <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>Rút tiền</a>
-          <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>Ngân hàng</a>
+        <nav class="st-subtabs px-subtabs" aria-label="{{ t('Khu vực tài chính', 'Finance area') }}">
+          <a href="/app/wallet" {% if appSection == 'wallet' %}class="active" aria-current="page"{% endif %}>{{ t('Số dư', 'Balance') }}</a>
+          <a href="/app/withdrawals" {% if appSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>{{ t('Rút tiền', 'Withdraw') }}</a>
+          <a href="/app/banks" {% if appSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ t('Ngân hàng', 'Bank') }}</a>
         </nav>
       {% endif %}
       {% block app_content %}{% endblock %}
@@ -189,11 +189,11 @@
       <div class="px-footer-top">
         <div class="px-footer-brand">
           <a href="/app"><img src="/assets/images/icon.png?v={{ assetVersion }}" alt=""><strong>ShopTik</strong></a>
-          <p><em>Mua sắm thông minh. Hoàn tiền tối ưu.</em></p>
+          <p><em>{{ t('Mua sắm thông minh. Hoàn tiền tối ưu.', 'Shop smarter. Maximize cashback.') }}</em></p>
           <ul class="px-footer-contactlines">
             <li>
               <svg viewBox="0 0 24 24" aria-hidden="true" class="px-cline-pin"><path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-              <span><b>Địa chỉ:</b> <a href="https://www.google.com/maps/search/?api=1&query=Vinhomes+Ocean+Park%2C+Gia+L%C3%A2m%2C+H%C3%A0+N%E1%BB%99i%2C+Vi%E1%BB%87t+Nam" target="_blank" rel="noopener noreferrer">Vinhomes Ocean Park, Xã Gia Lâm, Thành phố Hà Nội, Việt Nam</a></span>
+              <span><b>{{ t('Địa chỉ:', 'Address:') }}</b> <a href="https://www.google.com/maps/search/?api=1&query=Vinhomes+Ocean+Park%2C+Gia+L%C3%A2m%2C+H%C3%A0+N%E1%BB%99i%2C+Vi%E1%BB%87t+Nam" target="_blank" rel="noopener noreferrer">Vinhomes Ocean Park, Xã Gia Lâm, Thành phố Hà Nội, Việt Nam</a></span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" aria-hidden="true" class="px-cline-mail"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>
@@ -201,7 +201,7 @@
             </li>
           </ul>
           <div class="px-footer-connect">
-            <b>Kết nối với chúng tôi</b>
+            <b>{{ t('Kết nối với chúng tôi', 'Connect with us') }}</b>
             <div class="px-social-row">
               <a class="px-social px-social-fb" href="https://www.facebook.com/share/1BiXZDKdgj/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook ShopTik" title="Facebook ShopTik">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.4 21v-8.1h2.7l.4-3.1h-3.1V7.8c0-.9.3-1.5 1.6-1.5h1.7V3.5c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1v2.3H7.5v3.1h2.7V21h3.2z"/></svg>
@@ -215,26 +215,26 @@
             </div>
           </div>
         </div>
-        <div class="px-footer-col"><b>Mua sắm</b><a href="/app">Dán link sản phẩm</a><a href="/app/discover">Khám phá ưu đãi</a><a href="/app/orders">Đơn hàng</a></div>
-        <div class="px-footer-col"><b>Tài khoản</b><a href="/app/wallet">Ví hoàn tiền</a><a href="/app/banks">Ngân hàng</a><a href="/app/profile">Hồ sơ</a></div>
-        <div class="px-footer-col"><b>Hỗ trợ</b><a href="/app/support">Trung tâm hỗ trợ</a><a href="/chinh-sach-nguoi-dung" data-user-policy-link>Chính sách</a><a href="/dieu-khoan">Điều khoản</a></div>
+        <div class="px-footer-col"><b>{{ t('Mua sắm', 'Shopping') }}</b><a href="/app">{{ t('Dán link sản phẩm', 'Paste product link') }}</a><a href="/app/discover">{{ t('Khám phá ưu đãi', 'Explore deals') }}</a><a href="/app/orders">{{ t('Đơn hàng', 'Orders') }}</a></div>
+        <div class="px-footer-col"><b>{{ t('Tài khoản', 'Account') }}</b><a href="/app/wallet">{{ t('Ví hoàn tiền', 'Cashback wallet') }}</a><a href="/app/banks">{{ t('Ngân hàng', 'Bank') }}</a><a href="/app/profile">{{ t('Hồ sơ', 'Profile') }}</a></div>
+        <div class="px-footer-col"><b>{{ t('Hỗ trợ', 'Support') }}</b><a href="/app/support">{{ t('Trung tâm hỗ trợ', 'Help center') }}</a><a href="/chinh-sach-nguoi-dung" data-user-policy-link>{{ t('Chính sách', 'Policy') }}</a><a href="/dieu-khoan">{{ t('Điều khoản', 'Terms') }}</a></div>
       </div>
 
       <div class="px-footer-apps">
         <div class="px-footer-apps-copy">
-          <b>Tải ứng dụng ShopTik</b>
-          <small>Theo dõi đơn và nhận tiền hoàn ngay trên điện thoại.</small>
+          <b>{{ t('Tải ứng dụng ShopTik', 'Get the ShopTik app') }}</b>
+          <small>{{ t('Theo dõi đơn và nhận tiền hoàn ngay trên điện thoại.', 'Track orders and get cashback right on your phone.') }}</small>
         </div>
         <div class="px-stores">
-          <span class="px-store" role="img" aria-label="App Store — sắp ra mắt">
+          <span class="px-store" role="img" aria-label="App Store — {{ t('sắp ra mắt', 'coming soon') }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8s-1.6-.7-2.7-.7c-1.4 0-2.7.8-3.4 2-1.4 2.5-.4 6.2 1 8.2.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.2-.8-2.2-3.1z"/><path d="M14.6 6.3c.6-.7 1-1.6.9-2.6-.8 0-1.9.6-2.5 1.3-.5.6-1 1.6-.9 2.5.9.1 1.8-.5 2.5-1.2z"/></svg>
-            <span><small>Tải về trên</small><b>App Store</b></span>
+            <span><small>{{ t('Tải về trên', 'Download on') }}</small><b>App Store</b></span>
           </span>
-          <span class="px-store" role="img" aria-label="Google Play — sắp ra mắt">
+          <span class="px-store" role="img" aria-label="Google Play — {{ t('sắp ra mắt', 'coming soon') }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.2v17.6c0 .5.5.8.9.6l9.6-5.6-2.6-2.6z"/><path d="M4 3.2 11.9 11l2.6-2.6L4.9 2.6c-.4-.2-.9.1-.9.6z"/><path d="m17.6 9.9-3.1-1.5L11.9 11l2.6 2.6 3.1-1.8c.6-.4.6-1.5 0-1.9z"/></svg>
-            <span><small>Tải về trên</small><b>Google Play</b></span>
+            <span><small>{{ t('Tải về trên', 'Download on') }}</small><b>Google Play</b></span>
           </span>
-          <span class="px-store-soon">Sắp ra mắt</span>
+          <span class="px-store-soon">{{ t('Sắp ra mắt', 'Coming soon') }}</span>
         </div>
       </div>
 
@@ -250,21 +250,21 @@
     </nav>
 
     <a class="st-support-fab" href="/app/support" aria-label="Chăm sóc khách hàng">
-      <span class="st-fab-mascot" data-fab-mascot aria-hidden="true"></span><span class="st-fab-label">Hỏi Camio</span>
+      <span class="st-fab-mascot" data-fab-mascot aria-hidden="true"></span><span class="st-fab-label">{{ t('Hỏi Camio', 'Ask Camio') }}</span>
     </a>
 
     {# Modal xác nhận có linh vật — dùng chung cho đăng xuất và các thao tác
        nhạy cảm (form gắn data-blob-confirm). #}
     <div class="blob-modal-scrim" data-confirm-modal hidden inert>
       <div class="blob-modal" role="dialog" aria-modal="true" aria-labelledby="blob-confirm-title">
-        <button class="blob-modal-close" type="button" data-confirm-cancel aria-label="Đóng">×</button>
+        <button class="blob-modal-close" type="button" data-confirm-cancel aria-label="{{ t('Đóng', 'Close') }}">×</button>
         <div class="blob-modal-mascot" data-confirm-mascot></div>
-        <span class="blob-modal-eyebrow" data-confirm-eyebrow>Sắp đi đâu à?</span>
-        <h2 id="blob-confirm-title" data-confirm-title>Đăng xuất?</h2>
-        <p class="blob-modal-copy" data-confirm-copy>Bạn sẽ cần đăng nhập lại để vào tài khoản.</p>
+        <span class="blob-modal-eyebrow" data-confirm-eyebrow>{{ t('Sắp đi đâu à?', 'Leaving already?') }}</span>
+        <h2 id="blob-confirm-title" data-confirm-title>{{ t('Đăng xuất?', 'Sign out?') }}</h2>
+        <p class="blob-modal-copy" data-confirm-copy>{{ t('Bạn sẽ cần đăng nhập lại để vào tài khoản.', 'You’ll need to sign in again to access your account.') }}</p>
         <div class="blob-modal-actions">
-          <button class="blob-btn-stay" type="button" data-confirm-cancel>Ở lại</button>
-          <button class="blob-btn-out" type="button" data-confirm-ok>Đăng xuất</button>
+          <button class="blob-btn-stay" type="button" data-confirm-cancel>{{ t('Ở lại', 'Stay') }}</button>
+          <button class="blob-btn-out" type="button" data-confirm-ok>{{ t('Đăng xuất', 'Sign out') }}</button>
         </div>
       </div>
     </div>
@@ -283,8 +283,8 @@
           <div class="entry-promo-card">
             <a class="entry-promo-visual" href="#" data-entry-promo-image-link target="_blank" rel="noopener noreferrer" hidden><img src="" alt="" data-entry-promo-image hidden></a>
             <div class="entry-promo-visual" data-entry-promo-visual-static hidden><img src="" alt="" data-entry-promo-image-static hidden></div>
-            <div class="entry-promo-placeholder" data-entry-promo-placeholder hidden><span data-entry-promo-badge hidden></span><strong data-entry-promo-type></strong><h2 id="entry-promo-title" data-entry-promo-title>Ưu đãi mới từ ShopTik</h2><p data-entry-promo-description>Khám phá nội dung vừa được quản trị đăng lên.</p></div>
-            <div class="entry-promo-body"><div class="entry-promo-copy"><span class="entry-promo-chip" data-entry-promo-type-label hidden></span><b data-entry-promo-badge-inline hidden></b><h2 id="entry-promo-title-copy" data-entry-promo-title-copy></h2><p data-entry-promo-description-copy></p></div><a class="button button-primary entry-promo-cta" href="#" data-entry-promo-cta target="_blank" rel="noopener noreferrer" hidden>Xem chi tiết</a></div>
+            <div class="entry-promo-placeholder" data-entry-promo-placeholder hidden><span data-entry-promo-badge hidden></span><strong data-entry-promo-type></strong><h2 id="entry-promo-title" data-entry-promo-title>{{ t('Ưu đãi mới từ ShopTik', 'New offer from ShopTik') }}</h2><p data-entry-promo-description>{{ t('Khám phá nội dung vừa được quản trị đăng lên.', 'Discover the latest content just posted by the team.') }}</p></div>
+            <div class="entry-promo-body"><div class="entry-promo-copy"><span class="entry-promo-chip" data-entry-promo-type-label hidden></span><b data-entry-promo-badge-inline hidden></b><h2 id="entry-promo-title-copy" data-entry-promo-title-copy></h2><p data-entry-promo-description-copy></p></div><a class="button button-primary entry-promo-cta" href="#" data-entry-promo-cta target="_blank" rel="noopener noreferrer" hidden>{{ t('Xem chi tiết', 'View details') }}</a></div>
           </div>
         </div>
       </section>

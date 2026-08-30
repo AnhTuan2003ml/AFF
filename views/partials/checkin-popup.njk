@@ -3,13 +3,13 @@
 <div class="checkin-scrim" data-checkin-scrim hidden inert>
   <section class="checkin-modal" role="dialog" aria-modal="true" aria-labelledby="checkin-title">
     <header class="checkin-modal-head">
-      <div><span class="eyebrow">🔥 ĐIỂM DANH</span><h2 id="checkin-title">Điểm danh mỗi ngày</h2></div>
-      <button type="button" class="checkin-close" data-checkin-close aria-label="Đóng">×</button>
+      <div><span class="eyebrow">🔥 {{ t('ĐIỂM DANH', 'CHECK-IN') }}</span><h2 id="checkin-title">{{ t('Điểm danh mỗi ngày', 'Daily check-in') }}</h2></div>
+      <button type="button" class="checkin-close" data-checkin-close aria-label="{{ t('Đóng', 'Close') }}">×</button>
     </header>
 
     <div class="checkin-stats">
-      <div><b data-checkin-streak>–</b><small>Chuỗi ngày liên tiếp</small></div>
-      <div><b data-checkin-total>–</b><small>Tổng ngày đã điểm danh</small></div>
+      <div><b data-checkin-streak>–</b><small>{{ t('Chuỗi ngày liên tiếp', 'Current streak') }}</small></div>
+      <div><b data-checkin-total>–</b><small>{{ t('Tổng ngày đã điểm danh', 'Total check-ins') }}</small></div>
     </div>
 
     <div class="checkin-progress-wrap">
@@ -20,14 +20,14 @@
     {# Dải tuần này (T2–CN) kiểu điểm danh của các sàn — trạng thái thật. #}
     <div class="checkin-week" data-checkin-week></div>
 
-    <button type="button" class="checkin-cal-toggle" data-checkin-cal-toggle aria-expanded="false">Xem lịch tháng ▾</button>
+    <button type="button" class="checkin-cal-toggle" data-checkin-cal-toggle aria-expanded="false">{{ t('Xem lịch tháng', 'View monthly calendar') }} ▾</button>
     <div class="checkin-calwrap" data-checkin-calwrap hidden>
       <div class="checkin-cal-head" data-checkin-month></div>
-      <div class="checkin-weekdays"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+      <div class="checkin-weekdays"><span>{{ t('T2','Mon') }}</span><span>{{ t('T3','Tue') }}</span><span>{{ t('T4','Wed') }}</span><span>{{ t('T5','Thu') }}</span><span>{{ t('T6','Fri') }}</span><span>{{ t('T7','Sat') }}</span><span>{{ t('CN','Sun') }}</span></div>
       <div class="checkin-cal" data-checkin-cal></div>
     </div>
 
-    <button type="button" class="button button-primary button-block checkin-do" data-checkin-do disabled>Đang tải…</button>
-    <p class="checkin-note" data-checkin-note>Điểm danh mỗi ngày để giữ chuỗi. Bấm vào ô hôm nay hoặc nút bên trên.</p>
+    <button type="button" class="button button-primary button-block checkin-do" data-checkin-do disabled>{{ t('Đang tải…', 'Loading…') }}</button>
+    <p class="checkin-note" data-checkin-note>{{ t('Điểm danh mỗi ngày để giữ chuỗi. Bấm vào ô hôm nay hoặc nút bên trên.', 'Check in daily to keep your streak. Tap today’s cell or the button above.') }}</p>
   </section>
 </div>

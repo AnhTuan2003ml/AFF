@@ -26,7 +26,7 @@
   {% block page_scripts %}{% endblock %}
 </head>
 <body class="{{ bodyClass or '' }}">
-  <a class="skip-link" href="#main-content">Bỏ qua menu</a>
+  <a class="skip-link" href="#main-content">{{ t('Bỏ qua menu', 'Skip to content') }}</a>
   {% block body %}
     {# Khung cho các trang công khai ngoài app: điều khoản, quyền riêng tư,
        chính sách người dùng, trang lỗi. Header và footer lấy nguyên từ partial

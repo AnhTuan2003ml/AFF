@@ -8,19 +8,19 @@
 
 {% macro order_status(order) %}
   {% if order.status == 'AWAITING' %}
-    <span class="orders-history-status is-pending">{{ icon('refresh') }} Chờ sàn xác nhận</span>
+    <span class="orders-history-status is-pending">{{ icon('refresh') }} {{ t('Chờ sàn xác nhận', 'Awaiting platform') }}</span>
   {% elif order.status == 'UNTRACKED' %}
-    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Không ghi nhận</span>
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} {{ t('Không ghi nhận', 'Not tracked') }}</span>
   {% elif order.status == 'APPROVED' and order.cashback_released_at %}
-    <span class="orders-history-status is-paid">{{ icon('orders') }} Đã về ví</span>
+    <span class="orders-history-status is-paid">{{ icon('orders') }} {{ t('Đã về ví', 'In wallet') }}</span>
   {% elif order.status == 'APPROVED' %}
-    <span class="orders-history-status is-approved">{{ icon('orders') }} Hoàn thành, chờ về ví</span>
+    <span class="orders-history-status is-approved">{{ icon('orders') }} {{ t('Hoàn thành, chờ về ví', 'Done, pending payout') }}</span>
   {% elif order.status == 'PENDING' %}
-    <span class="orders-history-status is-pending">{{ icon('orders') }} Đang duyệt</span>
+    <span class="orders-history-status is-pending">{{ icon('orders') }} {{ t('Đang duyệt', 'Under review') }}</span>
   {% elif order.status == 'CANCELLED' %}
-    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Đã hủy</span>
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} {{ t('Đã hủy', 'Cancelled') }}</span>
   {% elif order.status in ['INVALID', 'REVERSED'] %}
-    <span class="orders-history-status is-cancelled">{{ icon('warning') }} Không hợp lệ</span>
+    <span class="orders-history-status is-cancelled">{{ icon('warning') }} {{ t('Không hợp lệ', 'Invalid') }}</span>
   {% else %}
     <span class="orders-history-status is-pending">{{ order.status }}</span>
   {% endif %}
@@ -32,8 +32,8 @@
       <div class="orders-history-title">
         <span class="orders-history-icon" aria-hidden="true">{{ icon('orders') }}</span>
         <div>
-          <h1>Đơn hàng</h1>
-          <p>{{ orders.length }} đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik Affiliate</p>
+          <h1>{{ t('Đơn hàng', 'Orders') }}</h1>
+          <p>{{ orders.length }} {{ t('đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik Affiliate', 'orders in current filter · bought via ShopTik Affiliate links') }}</p>
         </div>
       </div>
 
@@ -41,20 +41,20 @@
         {% if selectedStatus != 'VIEWED' %}
           <form class="orders-history-search" method="get" action="/app/orders">
             <input type="hidden" name="status" value="{{ selectedStatus }}">
-            <label class="sr-only" for="orders-search-input">Tìm đơn hàng theo mã đơn hoặc tên sản phẩm</label>
+            <label class="sr-only" for="orders-search-input">{{ t('Tìm đơn hàng theo mã đơn hoặc tên sản phẩm', 'Search orders by order code or product name') }}</label>
             <span aria-hidden="true">{{ icon('search') }}</span>
-            <input id="orders-search-input" type="search" name="q" value="{{ searchTerm or '' }}" placeholder="Tìm theo mã đơn, tên sản phẩm" autocomplete="off">
+            <input id="orders-search-input" type="search" name="q" value="{{ searchTerm or '' }}" placeholder="{{ t('Tìm theo mã đơn, tên sản phẩm', 'Search by order code, product') }}" autocomplete="off">
           </form>
         {% endif %}
 
-        <nav class="orders-history-tabs" aria-label="Lọc trạng thái đơn">
-          {{ order_tab('ALL', 'Tất cả') }}
-          {{ order_tab('PENDING', 'Đang chờ') }}
-          {{ order_tab('APPROVED', 'Đã duyệt') }}
-          {{ order_tab('PAID', 'Đã về ví') }}
+        <nav class="orders-history-tabs" aria-label="{{ t('Lọc trạng thái đơn', 'Filter by status') }}">
+          {{ order_tab('ALL', t('Tất cả', 'All')) }}
+          {{ order_tab('PENDING', t('Đang chờ', 'Pending')) }}
+          {{ order_tab('APPROVED', t('Đã duyệt', 'Approved')) }}
+          {{ order_tab('PAID', t('Đã về ví', 'In wallet')) }}
           {# "Sản phẩm đã xem" là một tab ngay tại đây (cạnh "Đã về ví") — hàng
              tab luôn hiện nên chuyển qua lại các lựa chọn không bị lạc trang. #}
-          {{ order_tab('VIEWED', 'Sản phẩm đã xem') }}
+          {{ order_tab('VIEWED', t('Sản phẩm đã xem', 'Viewed products')) }}
         </nav>
       </div>
     </header>
@@ -80,7 +80,7 @@
                   </div>
                 </div>
                 <div class="discover-card-body">
-                  <div class="discover-card-meta"><time>Đã xem {{ item.archivedAt | date }}</time></div>
+                  <div class="discover-card-meta"><time>{{ t('Đã xem', 'Viewed') }} {{ item.archivedAt | date }}</time></div>
                   <h2>{{ item.productName }}</h2>
                   {% if item.productPriceVnd %}
                     <div class="discover-price-box"><div><strong>{{ item.productPriceVnd | vnd }}</strong></div></div>
@@ -88,9 +88,9 @@
                 </div>
                 <footer class="discover-card-footer">
                   {% if item.productUrl %}
-                    <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.productUrl }}"><b>Mua lại</b><span aria-hidden="true">↗</span></button>
+                    <button class="discover-primary-action" type="button" data-discover-buy data-product-url="{{ item.productUrl }}"><b>{{ t('Mua lại', 'Buy again') }}</b><span aria-hidden="true">↗</span></button>
                   {% else %}
-                    <span class="discover-static-action">Không còn liên kết sản phẩm</span>
+                    <span class="discover-static-action">{{ t('Không còn liên kết sản phẩm', 'Product link no longer available') }}</span>
                   {% endif %}
                 </footer>
               </article>
@@ -98,7 +98,7 @@
           </section>
         {% else %}
           <section class="orders-history-empty">
-            {{ empty_state("🛒 Chiếc giỏ này đang hơi cô đơn…", "Bấm “Mua ngay” ở trang chủ, sản phẩm sẽ nằm đây để bạn xem và mua lại.", "/app", "Có link? Đưa Camio!") }}
+            {{ empty_state(t("🛒 Chiếc giỏ này đang hơi cô đơn…", "🛒 This cart is a little lonely…"), t("Bấm “Mua ngay” ở trang chủ, sản phẩm sẽ nằm đây để bạn xem và mua lại.", "Tap “Buy now” on the home page and products will appear here to review and rebuy."), "/app", t("Có link? Đưa Camio!", "Got a link? Give it to Camio!")) }}
           </section>
         {% endif %}
         <div class="discover-toast" role="status" aria-live="polite" data-discover-toast hidden></div>
@@ -120,42 +120,42 @@
                 <div class="orders-history-meta">
                   <span class="orders-history-platform platform-{{ order.platform | lower }}">{% if order.platform == 'TIKTOK' %}TikTok{% elif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
                   {{ order_status(order) }}
-                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}Chưa có mã đơn{% endif %}</span>
+                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}{{ t('Chưa có mã đơn', 'No order code yet') }}{% endif %}</span>
                 </div>
 
                 {% if order.reference_code %}
                   <button type="button" class="orders-history-ref" data-copy-ref="{{ order.reference_code }}"
-                    title="Mã đối chiếu của ShopTik — dùng để đối chiếu với đơn trên sàn. Bấm để sao chép.">
-                    <span>Mã đối chiếu</span>
+                    title="{{ t('Mã đối chiếu của ShopTik — dùng để đối chiếu với đơn trên sàn. Bấm để sao chép.', 'ShopTik reference code — used to reconcile with the platform order. Tap to copy.') }}">
+                    <span>{{ t('Mã đối chiếu', 'Ref code') }}</span>
                     <code>{{ order.reference_code }}</code>
                     <i aria-hidden="true">⧉</i>
                   </button>
                 {% endif %}
 
-                <h2>{{ order.product_name or "Sản phẩm đã mua" }}</h2>
+                <h2>{{ order.product_name or t('Sản phẩm đã mua', 'Purchased product') }}</h2>
 
                 <div class="orders-history-dates">
                   <span>{{ (order.purchased_at or order.created_at) | date }}</span>
                   {% if order.status == 'AWAITING' %}
                     <i aria-hidden="true">•</i>
-                    <span>Sàn thường gửi dữ liệu sau vài giờ tới 24 giờ</span>
+                    <span>{{ t('Sàn thường gửi dữ liệu sau vài giờ tới 24 giờ', 'Platforms usually send data within a few hours to 24h') }}</span>
                   {% elif order.status == 'UNTRACKED' %}
                     <i aria-hidden="true">•</i>
-                    <span>Sàn chưa ghi nhận đơn nào cho lượt mua này</span>
+                    <span>{{ t('Sàn chưa ghi nhận đơn nào cho lượt mua này', 'The platform has not recorded any order for this click') }}</span>
                   {% elif order.status in ['CANCELLED', 'INVALID', 'REVERSED'] %}
                     {% if order.cancel_reason %}
                       <i aria-hidden="true">•</i>
-                      <span>Lý do: <b>{{ order.cancel_reason }}</b></span>
+                      <span>{{ t('Lý do', 'Reason') }}: <b>{{ order.cancel_reason }}</b></span>
                     {% endif %}
                   {% elif order.cashback_released_at %}
                     <i aria-hidden="true">•</i>
-                    <span>Đã về ví: <b>{{ order.cashback_released_at | date }}</b></span>
+                    <span>{{ t('Đã về ví', 'In wallet') }}: <b>{{ order.cashback_released_at | date }}</b></span>
                   {% elif order.status == 'APPROVED' %}
                     <i aria-hidden="true">•</i>
-                    <span>Về ví: <b>{{ order.estimated_payout_at | date }}</b>{% if order.hold_days_left %} (còn {{ order.hold_days_left }} ngày){% endif %}</span>
+                    <span>{{ t('Về ví', 'Payout') }}: <b>{{ order.estimated_payout_at | date }}</b>{% if order.hold_days_left %} ({{ t('còn', 'in') }} {{ order.hold_days_left }} {{ t('ngày', 'days') }}){% endif %}</span>
                   {% else %}
                     <i aria-hidden="true">•</i>
-                    <span>Dự kiến về ví: <b>{{ (order.estimated_payout_at or order.purchased_at or order.created_at) | date }}</b></span>
+                    <span>{{ t('Dự kiến về ví', 'Est. payout') }}: <b>{{ (order.estimated_payout_at or order.purchased_at or order.created_at) | date }}</b></span>
                   {% endif %}
                 </div>
 
@@ -170,17 +170,17 @@
 
             <aside class="orders-history-payout">
               <div>
-                <small>{% if order.record_kind == 'INTENT' %}Hoàn tiền dự kiến{% else %}Hoàn tiền{% endif %}{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
+                <small>{% if order.record_kind == 'INTENT' %}{{ t('Hoàn tiền dự kiến', 'Est. cashback') }}{% else %}{{ t('Hoàn tiền', 'Cashback') }}{% endif %}{% if order.cashback_rate_percent %} (+{{ order.cashback_rate_percent }}%){% endif %}</small>
                 <strong>+{{ order.cashback_vnd | vnd }}</strong>
               </div>
-              <a class="button button-small button-ghost" href="/app/support?platform={{ order.platform }}{% if order.platform_order_id %}&orderId={{ order.platform_order_id }}{% endif %}">Hỗ trợ</a>
+              <a class="button button-small button-ghost" href="/app/support?platform={{ order.platform }}{% if order.platform_order_id %}&orderId={{ order.platform_order_id }}{% endif %}">{{ t('Hỗ trợ', 'Support') }}</a>
             </aside>
           </article>
         {% endfor %}
       </div>
     {% else %}
       <section class="orders-history-empty">
-        {{ empty_state("Camio chưa thấy đơn nào 👀", "Đổi bộ lọc thử, hoặc dán một chiếc link và bắt đầu thôi 🧡", "/app", "Đi săn hoàn thôi") }}
+        {{ empty_state(t("Camio chưa thấy đơn nào 👀", "Camio sees no orders yet 👀"), t("Đổi bộ lọc thử, hoặc dán một chiếc link và bắt đầu thôi 🧡", "Try another filter, or paste a link to get started 🧡"), "/app", t("Đi săn hoàn thôi", "Start earning cashback")) }}
       </section>
     {% endif %}
   </section>

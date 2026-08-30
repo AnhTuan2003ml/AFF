@@ -5,17 +5,17 @@
   <section class="policy-modal" role="dialog" aria-modal="true" aria-labelledby="policy-modal-title">
     <header class="policy-modal-head">
       <div>
-        <span class="eyebrow">CHÍNH SÁCH ĐANG CÓ HIỆU LỰC</span>
-        <h2 id="policy-modal-title">Chính sách người dùng</h2>
+        <span class="eyebrow">{{ t('CHÍNH SÁCH ĐANG CÓ HIỆU LỰC', 'POLICY IN EFFECT') }}</span>
+        <h2 id="policy-modal-title">{{ t('Chính sách người dùng', 'User Policy') }}</h2>
       </div>
-      <button type="button" class="policy-modal-close" data-policy-modal-close aria-label="Đóng chính sách">×</button>
+      <button type="button" class="policy-modal-close" data-policy-modal-close aria-label="{{ t('Đóng chính sách', 'Close policy') }}">×</button>
     </header>
     <div class="policy-modal-body" data-policy-modal-body tabindex="0">
-      <p class="policy-modal-state" data-policy-modal-state>Đang tải nội dung chính sách…</p>
+      <p class="policy-modal-state" data-policy-modal-state>{{ t('Đang tải nội dung chính sách…', 'Loading policy content…') }}</p>
     </div>
     <footer class="policy-modal-foot">
-      <a href="/chinh-sach-nguoi-dung" target="_blank" rel="noopener">Mở trang đầy đủ</a>
-      <button type="button" class="button button-primary button-small" data-policy-modal-close>Đã hiểu</button>
+      <a href="/chinh-sach-nguoi-dung" target="_blank" rel="noopener">{{ t('Mở trang đầy đủ', 'Open full page') }}</a>
+      <button type="button" class="button button-primary button-small" data-policy-modal-close>{{ t('Đã hiểu', 'Got it') }}</button>
     </footer>
   </section>
 </div>
