@@ -10,9 +10,9 @@
 <div class="buy-error" data-product-error hidden role="alert">
   <img class="buy-error-mascot" src="/assets/images/mascot/camio-ngacnhien.png" alt="" width="40" height="43" aria-hidden="true">
   <div>
-    <b data-product-error-title>😵 Camio vừa vấp một chút…</b>
+    <b data-product-error-title>{{ t('😵 Camio vừa vấp một chút…', '😵 Camio hit a snag…') }}</b>
     <p data-product-error-message id="product-error-message"></p>
-    <button type="button" class="buy-retry-button" data-product-retry>Thử lại</button>
+    <button type="button" class="buy-retry-button" data-product-retry>{{ t('Thử lại', 'Retry') }}</button>
   </div>
 </div>
 
@@ -22,37 +22,37 @@
     <span class="product-platform-badge" data-product-platform>Shopee</span>
   </div>
   <div class="product-info">
-    <small class="product-shop" data-product-shop>Gian hàng</small>
+    <small class="product-shop" data-product-shop>{{ t('Gian hàng', 'Store') }}</small>
     <h2 class="product-name" data-product-name></h2>
     <p class="product-status" data-product-status></p>
     <div class="receipt receipt-cashback-only" data-receipt>
       <div class="receipt-row receipt-row-price">
-        <span>Giá sản phẩm</span>
+        <span>{{ t('Giá sản phẩm', 'Product price') }}</span>
         <span class="receipt-product-pricing">
           <span class="receipt-current-price">
-            <small data-receipt-price-label>Giá hiện tại</small>
+            <small data-receipt-price-label>{{ t('Giá hiện tại', 'Current price') }}</small>
             <strong data-receipt-price>—</strong>
           </span>
           <span class="receipt-original-line" data-receipt-original-line hidden>
-            <small>Giá gốc</small>
+            <small>{{ t('Giá gốc', 'Original price') }}</small>
             <s class="receipt-original-price" data-receipt-original-price></s>
             <b class="receipt-discount-badge" data-receipt-discount></b>
           </span>
           <span class="receipt-saving-line" data-receipt-saving hidden>
-            Tiết kiệm <strong data-receipt-saving-value></strong>
+            {{ t('Tiết kiệm', 'Save') }} <strong data-receipt-saving-value></strong>
           </span>
         </span>
       </div>
       <div class="receipt-tear" aria-hidden="true"></div>
       <div class="receipt-row receipt-total">
-        <span>Tiền hoàn <b class="receipt-rate-badge" data-receipt-rate hidden></b></span>
+        <span>{{ t('Tiền hoàn', 'Cashback') }} <b class="receipt-rate-badge" data-receipt-rate hidden></b></span>
         <strong data-receipt-total>—</strong>
       </div>
     </div>
     <p class="product-note" data-product-source-note></p>
     <div class="product-actions">
-      <button type="button" class="buy-now-button" data-product-buy>Mua ngay <span aria-hidden="true">↗</span></button>
-      <button type="button" class="buy-reset-button" data-product-reset>Đổi sản phẩm</button>
+      <button type="button" class="buy-now-button" data-product-buy>{{ t('Mua ngay', 'Buy now') }} <span aria-hidden="true">↗</span></button>
+      <button type="button" class="buy-reset-button" data-product-reset>{{ t('Đổi sản phẩm', 'Change product') }}</button>
     </div>
     <p class="product-note" data-product-cashback-note></p>
   </div>

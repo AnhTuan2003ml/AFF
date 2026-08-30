@@ -8,6 +8,10 @@
 (function () {
   "use strict";
 
+  // Ngôn ngữ hiển thị lấy từ thuộc tính lang của <html> (server đặt theo cookie).
+  var LANG = document.documentElement.lang === "en" ? "en" : "vi";
+  function T(vi, en) { return LANG === "en" ? en : vi; }
+
   function formatVnd(value) {
     return new Intl.NumberFormat("vi-VN").format(value) + " ₫";
   }
@@ -52,7 +56,7 @@
     var purchaseWindow = isMobile ? null : window.open("about:blank", "_blank");
     buy.disabled = true;
     var original = label.textContent;
-    label.textContent = "Đang tạo link mua…";
+    label.textContent = T("Đang tạo link mua…", "Creating buy link…");
     try {
       var preview = await postJson("/api/v1/products/preview", { productUrl: product.productUrl });
       var purchase = await postJson("/api/v1/products/purchase", { previewId: preview.previewId });
@@ -67,7 +71,7 @@
         window.location.assign("/dang-nhap?next=" + encodeURIComponent("/app"));
         return;
       }
-      label.textContent = "Thử lại";
+      label.textContent = T("Thử lại", "Retry");
       window.setTimeout(function () { label.textContent = original; }, 2500);
     } finally {
       buy.disabled = false;
@@ -105,7 +109,7 @@
       });
       media.appendChild(img);
       if (product.cashbackRatePercent) {
-        media.appendChild(el("span", "promo-card-badge", "Hoàn +" + product.cashbackRatePercent + "%"));
+        media.appendChild(el("span", "promo-card-badge", T("Hoàn +", "+") + product.cashbackRatePercent + "%"));
       }
       card.appendChild(media);
 
@@ -118,7 +122,7 @@
 
       var buy = el("button", "promo-card-buy");
       buy.type = "button";
-      var label = el("b", "", "Mua và nhận hoàn tiền");
+      var label = el("b", "", T("Mua và nhận hoàn tiền", "Buy & earn cashback"));
       var arrow = el("span", "", "↗");
       arrow.setAttribute("aria-hidden", "true");
       buy.appendChild(label);

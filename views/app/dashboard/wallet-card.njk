@@ -10,49 +10,49 @@
 {% set progressStep = ((progressRaw / 10) | round | int) * 10 %}
 
 {% if not currentUser %}
-<section class="mb-points mb-points-guest" aria-label="Ví hoàn tiền">
+<section class="mb-points mb-points-guest" aria-label="{{ t('Ví hoàn tiền', 'Cashback wallet') }}">
   <div>
-    <span class="mb-points-label">Ví hoàn tiền</span>
-    <b class="mb-points-value">Đăng nhập để nhận</b>
+    <span class="mb-points-label">{{ t('Ví hoàn tiền', 'Cashback wallet') }}</span>
+    <b class="mb-points-value">{{ t('Đăng nhập để nhận', 'Sign in to earn') }}</b>
   </div>
-  <p class="mb-points-guest-copy">Có link? Đưa Camio! Xem trước tiền hoàn ngay — đăng nhập để mua qua ShopTik và nhận tiền về ví.</p>
+  <p class="mb-points-guest-copy">{{ t('Có link? Đưa Camio! Xem trước tiền hoàn ngay — đăng nhập để mua qua ShopTik và nhận tiền về ví.', 'Got a link? Give it to Camio! Preview your cashback now — sign in to buy via ShopTik and get money to your wallet.') }}</p>
   <div class="mb-points-actions">
-    <a class="is-primary" href="/dang-nhap">Đăng nhập</a>
-    <a href="/dang-ky">Tạo tài khoản</a>
+    <a class="is-primary" href="/dang-nhap">{{ t('Đăng nhập', 'Sign in') }}</a>
+    <a href="/dang-ky">{{ t('Tạo tài khoản', 'Create account') }}</a>
   </div>
 </section>
 {% else %}
-<section class="mb-points" aria-label="Ví hoàn tiền">
+<section class="mb-points" aria-label="{{ t('Ví hoàn tiền', 'Cashback wallet') }}">
   <div class="mb-points-top">
     <div>
-      <span class="mb-points-label">Số dư khả dụng</span>
+      <span class="mb-points-label">{{ t('Số dư khả dụng', 'Available balance') }}</span>
       <b class="mb-points-value">{{ available | vnd }}</b>
     </div>
     <div class="mb-points-side">
-      <span class="mb-chip-glass">Hoàn tới {{ cashbackRate }}%</span>
+      <span class="mb-chip-glass">{{ t('Hoàn tới', 'Up to') }} {{ cashbackRate }}%</span>
       <a class="mb-points-pending" href="/app/orders">
-        Đang chờ: <strong>{{ balances.pending | vnd }}</strong> ›
+        {{ t('Đang chờ:', 'Pending:') }} <strong>{{ balances.pending | vnd }}</strong> ›
       </a>
     </div>
   </div>
 
   <div class="mb-points-bar">
     <div>
-      <span>Đã mua qua ShopTik</span>
-      <b>{{ purchaseStats.products or 0 }} sản phẩm</b>
+      <span>{{ t('Đã mua qua ShopTik', 'Bought via ShopTik') }}</span>
+      <b>{{ purchaseStats.products or 0 }} {{ t('sản phẩm', 'products') }}</b>
     </div>
     <div class="mb-points-actions">
-      <a href="/app/wallet">Xem ví</a>
-      <a class="is-primary" href="/app/withdrawals">Rút tiền ›</a>
+      <a href="/app/wallet">{{ t('Xem ví', 'View wallet') }}</a>
+      <a class="is-primary" href="/app/withdrawals">{{ t('Rút tiền', 'Withdraw') }} ›</a>
     </div>
   </div>
 
   <div class="mb-points-progress">
     <div class="mb-points-progress-copy">
       {% if reachedWithdraw %}
-        <p>Số dư đã đủ điều kiện rút về ngân hàng — tạo lệnh bất cứ lúc nào.</p>
+        <p>{{ t('Số dư đã đủ điều kiện rút về ngân hàng — tạo lệnh bất cứ lúc nào.', 'Your balance is eligible to withdraw to your bank — request anytime.') }}</p>
       {% else %}
-        <p>Thêm <strong>{{ (minWithdraw - available) | vnd }}</strong> nữa là đủ mức rút tối thiểu {{ minWithdraw | vnd }}.</p>
+        <p>{{ t('Thêm', 'Add') }} <strong>{{ (minWithdraw - available) | vnd }}</strong> {{ t('nữa là đủ mức rút tối thiểu', 'more to reach the minimum withdrawal of') }} {{ minWithdraw | vnd }}.</p>
       {% endif %}
       <em>{{ progressRaw }}%</em>
     </div>

@@ -6,20 +6,20 @@
   ui-motion.js tự luân phiên ba slide, tạm dừng khi tab không còn hiển thị và
   khi người dùng tự bấm vào ba vạch chỉ báo bên phải để chọn sàn.
 #}
-<div class="lux-platform-showcase" data-platform-showcase aria-label="ShopTik hỗ trợ Shopee, TikTok Shop và Lazada">
+<div class="lux-platform-showcase" data-platform-showcase aria-label="{{ t('ShopTik hỗ trợ Shopee, TikTok Shop và Lazada', 'ShopTik supports Shopee, TikTok Shop and Lazada') }}">
   <article class="lux-platform-slide is-active" data-platform-ad="SHOPEE" aria-hidden="false">
     <span class="lux-platform-logo">{{ platform_logo('SHOPEE') }}</span>
-    <span class="lux-platform-copy"><small>✓ ĐÃ HỖ TRỢ</small><strong>Shopee</strong><span>Dán link Shopee, ShopTik tự nhận diện và kiểm tra hoàn tiền.</span></span>
+    <span class="lux-platform-copy"><small>✓ {{ t('ĐÃ HỖ TRỢ', 'SUPPORTED') }}</small><strong>Shopee</strong><span>{{ t('Dán link Shopee, ShopTik tự nhận diện và kiểm tra hoàn tiền.', 'Paste a Shopee link — ShopTik auto-detects it and checks your cashback.') }}</span></span>
   </article>
   <article class="lux-platform-slide" data-platform-ad="TIKTOK" aria-hidden="true">
     <span class="lux-platform-logo">{{ platform_logo('TIKTOK') }}</span>
-    <span class="lux-platform-copy"><small>✓ ĐÃ HỖ TRỢ</small><strong>TikTok Shop</strong><span>Từ video đến giỏ hàng — link được xử lý tự động trong cùng một luồng.</span></span>
+    <span class="lux-platform-copy"><small>✓ {{ t('ĐÃ HỖ TRỢ', 'SUPPORTED') }}</small><strong>TikTok Shop</strong><span>{{ t('Từ video đến giỏ hàng — link được xử lý tự động trong cùng một luồng.', 'From video to cart — links are processed automatically in one flow.') }}</span></span>
   </article>
   <article class="lux-platform-slide" data-platform-ad="LAZADA" aria-hidden="true">
     <span class="lux-platform-logo">{{ platform_logo('LAZADA') }}</span>
-    <span class="lux-platform-copy"><small>✓ ĐÃ HỖ TRỢ</small><strong>Lazada</strong><span>Tra cứu sản phẩm và khoản hoàn dự kiến mà không cần đổi chế độ.</span></span>
+    <span class="lux-platform-copy"><small>✓ {{ t('ĐÃ HỖ TRỢ', 'SUPPORTED') }}</small><strong>Lazada</strong><span>{{ t('Tra cứu sản phẩm và khoản hoàn dự kiến mà không cần đổi chế độ.', 'Look up products and estimated cashback with no mode switching.') }}</span></span>
   </article>
-  <div class="lux-platform-dots" role="tablist" aria-label="Chọn sàn để xem">
+  <div class="lux-platform-dots" role="tablist" aria-label="{{ t('Chọn sàn để xem', 'Choose a platform') }}">
     <button class="lux-platform-dot is-active" type="button" role="tab" aria-selected="true" aria-label="Shopee" data-platform-go="0"></button>
     <button class="lux-platform-dot" type="button" role="tab" aria-selected="false" aria-label="TikTok Shop" data-platform-go="1"></button>
     <button class="lux-platform-dot" type="button" role="tab" aria-selected="false" aria-label="Lazada" data-platform-go="2"></button>
