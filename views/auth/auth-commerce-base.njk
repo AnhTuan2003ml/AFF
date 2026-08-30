@@ -24,13 +24,13 @@
         </a>
 
         <div class="axs-copy">
-          <span class="axs-kicker">HOÀN TIỀN ĐA SÀN</span>
-          <h1><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part">Hoàn tiền tối ưu.</span></h1>
-          <p>Dán link sản phẩm bất kỳ — ShopTik tự tính và trả lại tiền hoàn vào ví.</p>
+          <span class="axs-kicker">{{ t('HOÀN TIỀN ĐA SÀN', 'MULTI-PLATFORM CASHBACK') }}</span>
+          <h1><span class="lh-part">{{ t('Mua sắm thông minh.', 'Shop smarter.') }}</span> <span class="lh-part">{{ t('Hoàn tiền tối ưu.', 'Maximize cashback.') }}</span></h1>
+          <p>{{ t('Dán link sản phẩm bất kỳ — ShopTik tự tính và trả lại tiền hoàn vào ví.', 'Paste any product link — ShopTik calculates and returns cashback to your wallet.') }}</p>
         </div>
 
         <div class="axs-fanwrap">
-          <span class="axs-show-tag"><b aria-hidden="true">🔥</b> Đang hoàn tiền</span>
+          <span class="axs-show-tag"><b aria-hidden="true">🔥</b> {{ t('Đang hoàn tiền', 'Cashback now') }}</span>
           <div class="axf" data-axf data-endpoint="/app/promo-products?list=best" aria-label="Sản phẩm nổi bật đang hoàn tiền">
             <button type="button" class="axf-nav axf-prev" data-axf-prev aria-label="Sản phẩm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
             <div class="axf-stage" data-axf-stage></div>
@@ -60,10 +60,10 @@
             </span>
             <div class="auth-card-header-copy">
               <div class="auth-card-header-line">
-                <h1>{% block auth_head_title %}Tài khoản hoàn tiền{% endblock %}</h1>
+                <h1>{% block auth_head_title %}{{ t('Tài khoản hoàn tiền', 'Cashback account') }}{% endblock %}</h1>
                 
               </div>
-              <p>{% block auth_head_sub %}Đăng nhập để nhận hoàn tiền và theo dõi đơn{% endblock %}</p>
+              <p>{% block auth_head_sub %}{{ t('Đăng nhập để nhận hoàn tiền và theo dõi đơn', 'Sign in to earn cashback and track orders') }}{% endblock %}</p>
             </div>
           </div>
         </header>
@@ -76,7 +76,7 @@
 
         <div class="auth-card-secure">
           <span class="auth-secure-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg></span>
-          <span>Kết nối bảo mật · ShopTik không lưu mật khẩu tài khoản sàn của bạn</span>
+          <span>{{ t('Kết nối bảo mật · ShopTik không lưu mật khẩu tài khoản sàn của bạn', 'Secure connection · ShopTik never stores your marketplace passwords') }}</span>
         </div>
       </div>
     </section>

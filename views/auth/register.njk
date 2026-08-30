@@ -1,19 +1,19 @@
 {% extends "auth/auth-commerce-base.njk" %}
 
-{% block auth_head_title %}Tạo tài khoản{% endblock %}
-{% block auth_head_sub %}Bước 1/2 — nhập email đang hoạt động để nhận mã OTP{% endblock %}
+{% block auth_head_title %}{{ t('Tạo tài khoản', 'Create account') }}{% endblock %}
+{% block auth_head_sub %}{{ t('Bước 1/2 — nhập email đang hoạt động để nhận mã OTP', 'Step 1/2 — enter an active email to receive an OTP') }}{% endblock %}
 
 {% block auth_content %}
   <form method="post" action="/dang-ky" class="stack-form login-form" data-validate-form novalidate>
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
 
     <label class="login-field" for="register-fullname-input">
-      <span class="auth-field-label">Họ và tên</span>
+      <span class="auth-field-label">{{ t('Họ và tên', 'Full name') }}</span>
       <span class="auth-input-shell">
         <span class="login-field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 20c1-3.6 4-5.5 6.5-5.5s5.5 1.9 6.5 5.5"></path></svg>
         </span>
-        <input id="register-fullname-input" type="text" name="fullName" autocomplete="name" minlength="2" maxlength="100" placeholder="Nguyễn Văn A" value="{{ values.fullName or '' }}" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">
+        <input id="register-fullname-input" type="text" name="fullName" autocomplete="name" minlength="2" maxlength="100" placeholder="Nguyễn Văn A" value="{{ values.fullName or '' }}" required data-required-message="{{ t('Vui lòng nhập họ và tên.', 'Please enter your full name.') }}" data-minlength-message="{{ t('Họ và tên cần ít nhất 2 ký tự.', 'Your full name needs at least 2 characters.') }}">
       </span>
       <small class="field-error" id="register-fullname-input-error" hidden></small>
     </label>
@@ -24,67 +24,67 @@
         <span class="login-field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"></path><path d="m5.5 7 6.5 5 6.5-5"></path></svg>
         </span>
-        <input id="register-email-input" type="email" name="email" autocomplete="email" maxlength="254" placeholder="ten@email.com" value="{{ values.email or '' }}" required data-required-message="Vui lòng nhập email." data-pattern-message="Email chưa đúng định dạng.">
+        <input id="register-email-input" type="email" name="email" autocomplete="email" maxlength="254" placeholder="ten@email.com" value="{{ values.email or '' }}" required data-required-message="{{ t('Vui lòng nhập email.', 'Please enter your email.') }}" data-pattern-message="{{ t('Email chưa đúng định dạng.', 'Invalid email format.') }}">
       </span>
       <small class="field-error" id="register-email-input-error" hidden></small>
     </label>
 
     <label class="login-field" for="register-password-input">
-      <span class="auth-field-label">Mật khẩu</span>
+      <span class="auth-field-label">{{ t('Mật khẩu', 'Password') }}</span>
       <span class="auth-input-shell password-field">
         <span class="login-field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
         </span>
-        <input id="register-password-input" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Ít nhất 10 ký tự" data-password required data-required-message="Vui lòng nhập mật khẩu." data-minlength-message="Mật khẩu cần ít nhất 10 ký tự.">
-        <button type="button" data-toggle-password aria-pressed="false" aria-label="Hiện mật khẩu"><svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 5.8A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.9M6.4 7.6A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1 0 1.9-.2 2.8-.5"/><path d="M10 10a3.2 3.2 0 0 0 4.3 4.3"/><path d="m4 4 16 16"/></svg></button>
+        <input id="register-password-input" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="{{ t('Ít nhất 10 ký tự', 'At least 10 characters') }}" data-password required data-required-message="{{ t('Vui lòng nhập mật khẩu.', 'Please enter a password.') }}" data-minlength-message="{{ t('Mật khẩu cần ít nhất 10 ký tự.', 'Password needs at least 10 characters.') }}">
+        <button type="button" data-toggle-password aria-pressed="false" aria-label="{{ t('Hiện mật khẩu', 'Show password') }}"><svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 5.8A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.9M6.4 7.6A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1 0 1.9-.2 2.8-.5"/><path d="M10 10a3.2 3.2 0 0 0 4.3 4.3"/><path d="m4 4 16 16"/></svg></button>
       </span>
-      <small>Ít nhất 10 ký tự, có chữ hoa, chữ thường và số.</small>
+      <small>{{ t('Ít nhất 10 ký tự, có chữ hoa, chữ thường và số.', 'At least 10 characters, with uppercase, lowercase and a number.') }}</small>
       <small class="field-error" id="register-password-input-error" hidden></small>
     </label>
 
     <label class="login-field" for="register-password-confirm-input">
-      <span class="auth-field-label">Nhập lại mật khẩu</span>
+      <span class="auth-field-label">{{ t('Nhập lại mật khẩu', 'Confirm password') }}</span>
       <span class="auth-input-shell">
         <span class="login-field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><circle cx="12" cy="15" r="1"></circle></svg>
         </span>
-        <input id="register-password-confirm-input" type="password" name="passwordConfirm" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Nhập lại mật khẩu" required data-required-message="Vui lòng nhập lại mật khẩu.">
+        <input id="register-password-confirm-input" type="password" name="passwordConfirm" autocomplete="new-password" minlength="10" maxlength="128" placeholder="{{ t('Nhập lại mật khẩu', 'Re-enter password') }}" required data-required-message="{{ t('Vui lòng nhập lại mật khẩu.', 'Please re-enter your password.') }}">
       </span>
       <small class="field-error" id="register-password-confirm-input-error" hidden></small>
     </label>
 
     <label class="login-field" for="register-referral-input">
-      <span class="auth-field-label">Mã giới thiệu <span class="optional">(không bắt buộc)</span></span>
+      <span class="auth-field-label">{{ t('Mã giới thiệu', 'Referral code') }} <span class="optional">{{ t('(không bắt buộc)', '(optional)') }}</span></span>
       <span class="auth-input-shell">
         <span class="login-field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M12.5 4h5.5a1 1 0 0 1 1 1v5.5a1 1 0 0 1-.3.7l-8.5 8.5a1 1 0 0 1-1.4 0l-5.5-5.5a1 1 0 0 1 0-1.4l8.5-8.5a1 1 0 0 1 .7-.3z"></path><circle cx="16.2" cy="7.8" r="1.3"></circle></svg>
         </span>
-        <input id="register-referral-input" type="text" name="referralCode" maxlength="30" placeholder="Nếu có" value="{{ values.referralCode or referralCode or '' }}"{% if referralError %} aria-invalid="true"{% endif %}>
+        <input id="register-referral-input" type="text" name="referralCode" maxlength="30" placeholder="{{ t('Nếu có', 'If any') }}" value="{{ values.referralCode or referralCode or '' }}"{% if referralError %} aria-invalid="true"{% endif %}>
       </span>
-      {% if referralError %}<small class="field-error" id="register-referral-input-error">Mã giới thiệu không tồn tại. Kiểm tra lại hoặc để trống nếu không có.</small>{% endif %}
+      {% if referralError %}<small class="field-error" id="register-referral-input-error">{{ t('Mã giới thiệu không tồn tại. Kiểm tra lại hoặc để trống nếu không có.', 'Referral code not found. Please check again or leave it blank.') }}</small>{% endif %}
     </label>
 
     <label class="check-row" for="register-accept-input">
-      <input id="register-accept-input" type="checkbox" name="acceptPolicies" required data-required-message="Bạn cần đồng ý Điều khoản và Chính sách quyền riêng tư trước khi tiếp tục.">
-      <span>Tôi đồng ý với <a href="/dieu-khoan" target="_blank" rel="noopener">Điều khoản</a>, <a href="/quyen-rieng-tu" target="_blank" rel="noopener">Chính sách quyền riêng tư</a> và <a href="/chinh-sach-nguoi-dung" target="_blank" rel="noopener">Chính sách người dùng</a>.</span>
+      <input id="register-accept-input" type="checkbox" name="acceptPolicies" required data-required-message="{{ t('Bạn cần đồng ý Điều khoản và Chính sách quyền riêng tư trước khi tiếp tục.', 'You must agree to the Terms and Privacy Policy before continuing.') }}">
+      <span>{{ t('Tôi đồng ý với', 'I agree to the') }} <a href="/dieu-khoan" target="_blank" rel="noopener">{{ t('Điều khoản', 'Terms') }}</a>, <a href="/quyen-rieng-tu" target="_blank" rel="noopener">{{ t('Chính sách quyền riêng tư', 'Privacy Policy') }}</a> {{ t('và', 'and') }} <a href="/chinh-sach-nguoi-dung" target="_blank" rel="noopener">{{ t('Chính sách người dùng', 'User Policy') }}</a>.</span>
     </label>
     <small class="field-error" id="register-accept-input-error" hidden></small>
 
     <button class="button button-primary button-block button-large login-submit" type="submit" data-submit-button>
-      <span>Gửi mã OTP</span>
+      <span>{{ t('Gửi mã OTP', 'Send OTP') }}</span>
       <span aria-hidden="true">→</span>
     </button>
   </form>
 
   {% if googleEnabled %}
-    <div class="auth-divider"><span>hoặc</span></div>
+    <div class="auth-divider"><span>{{ t('hoặc', 'or') }}</span></div>
     {# Mang mã giới thiệu (từ ?ref= hoặc ô đã nhập) theo luồng Google. #}
     {% set googleRef = (values.referralCode or referralCode or '') | trim %}
     <a class="button button-block button-large button-google" href="/auth/google{% if googleRef %}?ref={{ googleRef | urlencode }}{% endif %}">
       {% include "partials/google-logo.njk" %}
-      <span>Đăng ký nhanh với Google</span>
+      <span>{{ t('Đăng ký nhanh với Google', 'Quick sign-up with Google') }}</span>
     </a>
   {% endif %}
 
-  <p class="auth-switch login-register-link">Đã có tài khoản? <a href="/dang-nhap">Đăng nhập</a></p>
+  <p class="auth-switch login-register-link">{{ t('Đã có tài khoản?', 'Already have an account?') }} <a href="/dang-nhap">{{ t('Đăng nhập', 'Sign in') }}</a></p>
 {% endblock %}
