@@ -14,14 +14,14 @@
 
   {% set persistentBalances = headerBalances or balances %}
   {% set navItems = [
-    { href: '/app', section: 'dashboard', label: 'Trang chủ', icon: 'dashboard' },
-    { href: '/app/discover', section: 'discover', label: 'Khám phá', icon: 'compass' },
-    { href: '/app/orders', section: 'orders', label: 'Đơn hàng', icon: 'orders' },
-    { href: '/app/wallet', section: 'wallet', label: 'Ví', icon: 'wallet' },
-    { href: '/app/nhiem-vu', section: 'missions', label: 'Nhiệm vụ', icon: 'mission' },
-    { href: '/app/links', section: 'links', label: 'Chia sẻ', icon: 'link' },
-    { href: '/app/referrals', section: 'referrals', label: 'Giới thiệu', icon: 'referral' },
-    { href: '/app/support', section: 'support', label: 'Hỗ trợ', icon: 'support' }
+    { href: '/app', section: 'dashboard', label: t('Trang chủ', 'Home'), icon: 'dashboard' },
+    { href: '/app/discover', section: 'discover', label: t('Khám phá', 'Explore'), icon: 'compass' },
+    { href: '/app/orders', section: 'orders', label: t('Đơn hàng', 'Orders'), icon: 'orders' },
+    { href: '/app/wallet', section: 'wallet', label: t('Ví', 'Wallet'), icon: 'wallet' },
+    { href: '/app/nhiem-vu', section: 'missions', label: t('Nhiệm vụ', 'Missions'), icon: 'mission' },
+    { href: '/app/links', section: 'links', label: t('Chia sẻ', 'Share'), icon: 'link' },
+    { href: '/app/referrals', section: 'referrals', label: t('Giới thiệu', 'Refer'), icon: 'referral' },
+    { href: '/app/support', section: 'support', label: t('Hỗ trợ', 'Support'), icon: 'support' }
   ] %}
   {% set financeSections = ['wallet', 'withdrawals', 'banks'] %}
 
@@ -132,11 +132,12 @@
                 <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-hidden="true" tabindex="-1">
                 <button type="button" data-copy-button aria-label="Sao chép mã giới thiệu">Copy</button>
               </div>
-              <a href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
-              <a href="/app/nhiem-vu">{{ icon('mission') }}<span>Nhiệm vụ nhận thưởng</span></a>
-              <a href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
-              <a href="/app/support">{{ icon('support') }}<span>Hỗ trợ &amp; khiếu nại</span></a>
-              <a href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
+              <div class="st-menu-lang"><span>{{ t('Ngôn ngữ', 'Language') }}</span>{% include "partials/lang-switch.njk" %}</div>
+              <a href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
+              <a href="/app/nhiem-vu">{{ icon('mission') }}<span>{{ t('Nhiệm vụ nhận thưởng', 'Rewards & missions') }}</span></a>
+              <a href="/app/links">{{ icon('link') }}<span>{{ t('Link chia sẻ', 'Share links') }}</span></a>
+              <a href="/app/support">{{ icon('support') }}<span>{{ t('Hỗ trợ & khiếu nại', 'Support & complaints') }}</span></a>
+              <a href="/app/settings">{{ icon('settings') }}<span>{{ t('Tất cả chức năng', 'All features') }}</span></a>
               {% if currentUser.isSpecialPartner %}
                 <a href="/app/dang-ky-kol">{{ icon('user') }}<span>Đối tác KOL/KOC ✓</span></a>
               {% else %}

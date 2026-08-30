@@ -2769,6 +2769,46 @@ label small {
   color: #55606e
 }
 
+/* Nút chọn ngôn ngữ VI/EN — dùng trong menu avatar và chân trang. */
+.lang-switch {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--lx-paper-2, #f4ece6)
+}
+
+.lang-switch a {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--lx-muted);
+  text-decoration: none;
+  line-height: 1.4
+}
+
+.lang-switch a.active {
+  background: var(--lx-orange);
+  color: #fff
+}
+
+.st-menu-lang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 2px 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--lx-line)
+}
+
+.st-menu-lang > span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lx-muted)
+}
+
 /* Danh sách người đã mời trong màn Nhiệm vụ. */
 .mission-people {
   margin-top: 20px;

@@ -28,6 +28,27 @@ export async function registerPublicRoutes(
     reply.redirect("/assets/images/icon.png"),
   );
 
+  // Đổi ngôn ngữ hiển thị: đặt cookie `lang` rồi quay lại trang trước. Chỉ nhận
+  // 'vi'/'en'; chỉ redirect nội bộ (bắt đầu "/") để tránh open-redirect.
+  app.get<{ Params: { code: string }; Querystring: { next?: string } }>(
+    "/lang/:code",
+    { config: { csrf: false } },
+    (request, reply) => {
+      const lang = request.params.code === "en" ? "en" : "vi";
+      reply.setCookie("lang", lang, {
+        path: "/",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+      const next = request.query.next;
+      const safe =
+        typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : "/app";
+      return reply.redirect(safe);
+    },
+  );
+
   app.get("/dieu-khoan", async (_request, reply) =>
     reply.view("legal/terms.njk", {
       pageTitle: "Điều khoản sử dụng",

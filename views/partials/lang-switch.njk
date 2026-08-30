@@ -1,0 +1,6 @@
+{# Nút chọn ngôn ngữ hiển thị (VI/EN). Đặt cookie qua /lang/:code rồi quay lại
+   đúng trang hiện tại. Dùng `lang` + `currentPath` từ locals chung. #}
+<div class="lang-switch" role="group" aria-label="{{ t('Ngôn ngữ', 'Language') }}">
+  <a href="/lang/vi?next={{ currentPath | urlencode }}"{% if lang == 'vi' %} class="active" aria-current="true"{% endif %}>VI</a>
+  <a href="/lang/en?next={{ currentPath | urlencode }}"{% if lang == 'en' %} class="active" aria-current="true"{% endif %}>EN</a>
+</div>

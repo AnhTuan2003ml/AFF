@@ -264,9 +264,14 @@ app.addHook("preHandler", async (request, reply) => {
     ]);
   }
 
+  // Ngôn ngữ hiển thị: cookie `lang` ('vi' mặc định | 'en'). `t(vi, en)` là hàm
+  // dịch nội tuyến dùng trong mọi template: {{ t('Tiếng Việt', 'English') }}.
+  const lang = request.cookies?.lang === "en" ? "en" : "vi";
   Object.assign(target.locals, {
     appName: config.APP_NAME,
     assetVersion,
+    lang,
+    t: (vi: string, en: string) => (lang === "en" ? en : vi),
     backofficeOrdersPendingCount,
     backofficeWithdrawalsPendingCount,
     backofficeMissionsPendingCount,
