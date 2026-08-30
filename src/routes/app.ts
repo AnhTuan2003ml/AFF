@@ -7,6 +7,7 @@ import { query, type Database } from "../db.js";
 import { decryptField, sha256 } from "../lib/crypto.js";
 import { AppError, asAppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
+import { localizeLedgerDescription } from "../lib/ledger-i18n.js";
 import { parseInput } from "../lib/validation.js";
 import {
   confirmBankChange,
@@ -482,11 +483,15 @@ export async function registerAppRoutes(
         [id],
       ),
     ]);
+    const lang = request.cookies?.lang === "en" ? "en" : "vi";
     return reply.view("app/wallet.njk", {
       pageTitle: "Số dư hoàn tiền",
       appSection: "wallet",
       balances,
-      entries: entries.rows,
+      entries: entries.rows.map((e) => ({
+        ...e,
+        description: localizeLedgerDescription(e.description, lang),
+      })),
     });
   });
 

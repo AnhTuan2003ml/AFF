@@ -2,55 +2,55 @@
 {% from "partials/macros.njk" import empty_state %}
 
 {% block app_content %}
-  <section class="wallet-hero wallet-hero-wallet" aria-label="Số dư có thể rút">
+  <section class="wallet-hero wallet-hero-wallet" aria-label="{{ t('Số dư có thể rút', 'Withdrawable balance') }}">
     <div>
-      <span>Có thể rút</span>
+      <span>{{ t('Có thể rút', 'Withdrawable') }}</span>
       <strong>{{ balances.available | vnd }}</strong>
-      <small>Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.</small>
+      <small>{{ t('Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.', 'Approved by partners and not held for any withdrawal.') }}</small>
     </div>
     {% if balances.available > 0 %}
-      <a class="button button-primary" href="/app/withdrawals">Rút tiền <span aria-hidden="true">→</span></a>
+      <a class="button button-primary" href="/app/withdrawals">{{ t('Rút tiền', 'Withdraw') }} <span aria-hidden="true">→</span></a>
     {% else %}
-      <a class="button" href="/app/withdrawals">Xem điều kiện rút tiền</a>
+      <a class="button" href="/app/withdrawals">{{ t('Xem điều kiện rút tiền', 'See withdrawal terms') }}</a>
     {% endif %}
   </section>
 
   {# Dòng tiền hoàn trình bày theo tiến trình thay vì 3 card trắng lặp
      nhau: Đang chờ → Có thể rút → Đã nhận, mỗi bước một màu ngữ nghĩa. #}
-  <section class="st-money-flow" aria-label="Dòng tiền hoàn">
+  <section class="st-money-flow" aria-label="{{ t('Dòng tiền hoàn', 'Cashback flow') }}">
     <article class="st-flow-step st-flow-wait">
-      <span>Đang chờ đối soát</span>
+      <span>{{ t('Đang chờ đối soát', 'Awaiting reconciliation') }}</span>
       <strong>{{ balances.pending | vnd }}</strong>
-      <small>Đơn chưa được sàn duyệt</small>
+      <small>{{ t('Đơn chưa được sàn duyệt', 'Orders not yet approved by the platform') }}</small>
     </article>
     <i class="st-flow-arrow" aria-hidden="true">→</i>
     <article class="st-flow-step st-flow-ready">
-      <span>Có thể rút</span>
+      <span>{{ t('Có thể rút', 'Withdrawable') }}</span>
       <strong>{{ balances.available | vnd }}</strong>
-      <small>{% if balances.held > 0 %}Lệnh rút đang xử lý: {{ balances.held | vnd }}{% else %}Sẵn sàng tạo lệnh rút{% endif %}</small>
+      <small>{% if balances.held > 0 %}{{ t('Lệnh rút đang xử lý:', 'Withdrawal in progress:') }} {{ balances.held | vnd }}{% else %}{{ t('Sẵn sàng tạo lệnh rút', 'Ready to withdraw') }}{% endif %}</small>
     </article>
     <i class="st-flow-arrow" aria-hidden="true">→</i>
     <article class="st-flow-step st-flow-paid">
-      <span>Đã nhận</span>
+      <span>{{ t('Đã nhận', 'Received') }}</span>
       <strong>{{ balances.paid | vnd }}</strong>
-      <small>Tổng đã chuyển vào ngân hàng</small>
+      <small>{{ t('Tổng đã chuyển vào ngân hàng', 'Total transferred to bank') }}</small>
     </article>
   </section>
 
   <section class="panel wallet-ledger-panel">
     <header class="panel-heading panel-heading-refined">
       <div>
-        <span class="eyebrow">NHẬT KÝ</span>
-        <h2>Lịch sử biến động</h2>
-        <p>Mọi khoản cộng trừ đều được lưu để đối soát minh bạch.</p>
+        <span class="eyebrow">{{ t('NHẬT KÝ', 'LEDGER') }}</span>
+        <h2>{{ t('Lịch sử biến động', 'Transaction history') }}</h2>
+        <p>{{ t('Mọi khoản cộng trừ đều được lưu để đối soát minh bạch.', 'Every credit and debit is recorded for transparent reconciliation.') }}</p>
       </div>
     </header>
     {% if entries.length %}
       <div class="ledger-table-wrap">
         <div class="ledger-table-head" aria-hidden="true">
-          <span>Loại</span>
-          <span>Nội dung</span>
-          <span>Số tiền</span>
+          <span>{{ t('Loại', 'Type') }}</span>
+          <span>{{ t('Nội dung', 'Description') }}</span>
+          <span>{{ t('Số tiền', 'Amount') }}</span>
         </div>
         <div class="ledger-list">
         {% for entry in entries %}
@@ -63,7 +63,7 @@
         </div>
       </div>
     {% else %}
-      {{ empty_state("💰 Ví đang chờ đồng đầu tiên.", "Lịch sử hiện khi đơn đầu tiên được ghi nhận hoặc khi bạn rút tiền. Bắt đầu bằng một link nhé!") }}
+      {{ empty_state(t("💰 Ví đang chờ đồng đầu tiên.", "💰 Your wallet is waiting for its first coin."), t("Lịch sử hiện khi đơn đầu tiên được ghi nhận hoặc khi bạn rút tiền. Bắt đầu bằng một link nhé!", "History appears when your first order is recorded or when you withdraw. Start with a link!")) }}
     {% endif %}
   </section>
 {% endblock %}
