@@ -8,6 +8,7 @@ import { decryptField, sha256 } from "../lib/crypto.js";
 import { AppError, asAppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { localizeLedgerDescription } from "../lib/ledger-i18n.js";
+import { localizeMissionTitle } from "../lib/mission-i18n.js";
 import { parseInput } from "../lib/validation.js";
 import {
   confirmBankChange,
@@ -1345,11 +1346,22 @@ export async function registerAppRoutes(
       getUserMissionOverview(deps.db, id),
       listMissionReferralPeople(deps.db, id),
     ]);
+    const lang = request.cookies?.lang === "en" ? "en" : "vi";
+    const localizeGroup = (g: (typeof missions)["REFERRAL_MILESTONE"]) => ({
+      ...g,
+      items: g.items.map((it) => ({
+        ...it,
+        definition: {
+          ...it.definition,
+          title: localizeMissionTitle(it.definition.title, lang),
+        },
+      })),
+    });
     return reply.view("app/missions.njk", {
       pageTitle: "Nhiệm vụ",
       appSection: "missions",
-      referralGroup: missions.REFERRAL_MILESTONE,
-      purchaseGroup: missions.PURCHASE_MILESTONE,
+      referralGroup: localizeGroup(missions.REFERRAL_MILESTONE),
+      purchaseGroup: localizeGroup(missions.PURCHASE_MILESTONE),
       referralPeople,
     });
   });

@@ -24,7 +24,7 @@
 
     <div class="mission-row-reward">
       <span class="mission-reward-gift" aria-hidden="true">{{ icon('gift') }}</span>
-      <span>Thưởng</span>
+      <span>{{ t('Thưởng', 'Reward') }}</span>
       <b>{{ item.definition.rewardAmountVnd | vnd }}</b>
     </div>
 
@@ -39,10 +39,10 @@
         <form method="post" action="/app/nhiem-vu/claim">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
           <input type="hidden" name="missionDefinitionId" value="{{ item.definition.id }}">
-          <button type="submit" class="button button-primary button-small">Nhận thưởng</button>
+          <button type="submit" class="button button-primary button-small">{{ t('Nhận thưởng', 'Claim') }}</button>
         </form>
       {% else %}
-        <span class="status-badge status-neutral">Chưa đạt mốc</span>
+        <span class="status-badge status-neutral">{{ t('Chưa đạt mốc', 'Not reached') }}</span>
       {% endif %}
     </div>
   </div>
@@ -65,9 +65,9 @@
         {% endfor %}
       </div>
       {% if group.currentProgress < group.maxThreshold %}
-        <p class="mission-meter-note">Còn {{ group.maxThreshold - group.currentProgress }} {{ unitLabel }} nữa để đạt mốc cao nhất.</p>
+        <p class="mission-meter-note">{{ t('Còn', '') }} {{ group.maxThreshold - group.currentProgress }} {{ unitLabel }} {{ t('nữa để đạt mốc cao nhất.', 'to go to the top tier.') }}</p>
       {% else %}
-        <p class="mission-meter-note mission-meter-note-done">Bạn đã đạt mốc cao nhất!</p>
+        <p class="mission-meter-note mission-meter-note-done">{{ t('Bạn đã đạt mốc cao nhất!', 'You’ve reached the top tier!') }}</p>
       {% endif %}
     {% endif %}
   </div>
@@ -79,29 +79,29 @@
       </div>
     </div>
   {% else %}
-    {{ empty_state("Chưa có mốc nào", "Admin chưa thiết lập mốc thưởng cho mục này.", compact=true) }}
+    {{ empty_state(t("Chưa có mốc nào", "No tiers yet"), t("Admin chưa thiết lập mốc thưởng cho mục này.", "The admin hasn’t set up reward tiers for this section yet."), compact=true) }}
   {% endif %}
 {% endmacro %}
 
 {% block app_content %}
   <header class="page-head">
     <div>
-      <h1>Nhiệm vụ và <em>phần thưởng</em></h1>
+      <h1>{{ t('Nhiệm vụ và', 'Missions &') }} <em>{{ t('phần thưởng', 'rewards') }}</em></h1>
     </div>
   </header>
 
-  <div class="mission-tabs" role="tablist" aria-label="Loại nhiệm vụ">
-    <button type="button" class="active" data-mission-tab="referral" aria-pressed="true">{{ icon('referral') }} Mời người</button>
-    <button type="button" data-mission-tab="purchase" aria-pressed="false">{{ icon('orders') }} Mua hàng</button>
+  <div class="mission-tabs" role="tablist" aria-label="{{ t('Loại nhiệm vụ', 'Mission type') }}">
+    <button type="button" class="active" data-mission-tab="referral" aria-pressed="true">{{ icon('referral') }} {{ t('Mời người', 'Invite') }}</button>
+    <button type="button" data-mission-tab="purchase" aria-pressed="false">{{ icon('orders') }} {{ t('Mua hàng', 'Shopping') }}</button>
   </div>
 
   <section class="mission-panel" data-mission-panel="referral">
-    {{ mission_group(referralGroup, 'người') }}
+    {{ mission_group(referralGroup, t('người', 'people')) }}
 
     <div class="mission-people">
       <div class="mission-people-head">
-        <b>Người bạn đã mời</b>
-        <span class="mission-people-count">{{ referralPeople | length }} người</span>
+        <b>{{ t('Người bạn đã mời', 'People you invited') }}</b>
+        <span class="mission-people-count">{{ referralPeople | length }} {{ t('người', 'people') }}</span>
       </div>
       {% if referralPeople | length %}
         <ul class="mission-people-list">
@@ -110,30 +110,30 @@
               <span class="mission-person-avatar" aria-hidden="true">{{ p.fullName | first | upper }}</span>
               <span class="mission-person-main">
                 <b>{{ p.fullName }}</b>
-                <small>Tham gia {{ p.joinedAt | date }}{% if p.approvedOrders %} · {{ p.approvedOrders }} đơn đã duyệt{% endif %}</small>
+                <small>{{ t('Tham gia', 'Joined') }} {{ p.joinedAt | date }}{% if p.approvedOrders %} · {{ p.approvedOrders }} {{ t('đơn đã duyệt', 'approved orders') }}{% endif %}</small>
               </span>
               {% if p.qualified %}
-                <span class="status-badge status-positive">Đã tính</span>
+                <span class="status-badge status-positive">{{ t('Đã tính', 'Counted') }}</span>
               {% else %}
-                <span class="status-badge status-pending">Chờ xác nhận</span>
+                <span class="status-badge status-pending">{{ t('Chờ xác nhận', 'Pending') }}</span>
               {% endif %}
             </li>
           {% endfor %}
         </ul>
       {% else %}
-        {{ empty_state("Chưa mời ai", "Gửi mã giới thiệu cho bạn bè để bắt đầu tích lũy mốc thưởng.", compact=true) }}
+        {{ empty_state(t("Chưa mời ai", "No invites yet"), t("Gửi mã giới thiệu cho bạn bè để bắt đầu tích lũy mốc thưởng.", "Share your referral code with friends to start earning reward tiers."), compact=true) }}
       {% endif %}
     </div>
 
     <div class="st-mission-cta">
-      <a class="button button-primary" href="/app/referrals">Mời bạn bè ngay</a>
+      <a class="button button-primary" href="/app/referrals">{{ t('Mời bạn bè ngay', 'Invite friends now') }}</a>
     </div>
   </section>
 
   <section class="mission-panel" data-mission-panel="purchase" hidden>
-    {{ mission_group(purchaseGroup, 'đơn') }}
+    {{ mission_group(purchaseGroup, t('đơn', 'orders')) }}
     <div class="st-mission-cta">
-      <a class="button button-primary" href="/app">Tìm sản phẩm để mua</a>
+      <a class="button button-primary" href="/app">{{ t('Tìm sản phẩm để mua', 'Find products to buy') }}</a>
     </div>
   </section>
 {% endblock %}
