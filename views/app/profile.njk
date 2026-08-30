@@ -11,22 +11,22 @@
 
 {% block app_content %}
   {% set profileBalances = headerBalances or balances %}
-  <section class="mb-profile" aria-label="Tài khoản của bạn">
+  <section class="mb-profile" aria-label="{{ t('Tài khoản của bạn', 'Your account') }}">
     <span class="mb-profile-avatar" aria-hidden="true">
       {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
     </span>
     <div class="mb-profile-copy">
-      <b>{{ currentUser.fullName or 'Tài khoản ShopTik' }}</b>
+      <b>{{ currentUser.fullName or t('Tài khoản ShopTik', 'ShopTik account') }}</b>
       <small>{{ currentUser.email }}</small>
     </div>
     {% if profileBalances %}
       <div class="mb-profile-stats">
         <div class="is-pending">
-          <span>Đang chờ</span>
+          <span>{{ t('Đang chờ', 'Pending') }}</span>
           <b>{{ profileBalances.pending | vnd }}</b>
         </div>
         <div>
-          <span>Khả dụng</span>
+          <span>{{ t('Khả dụng', 'Available') }}</span>
           <b>{{ profileBalances.available | vnd }}</b>
         </div>
       </div>
@@ -35,67 +35,67 @@
 
   <div class="settings-grid">
     <section class="panel">
-      <header class="panel-heading"><div><span class="eyebrow">HỒ SƠ</span><h2>Thông tin cá nhân</h2></div></header>
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('HỒ SƠ', 'PROFILE') }}</span><h2>{{ t('Thông tin cá nhân', 'Personal info') }}</h2></div></header>
       <form method="post" action="/app/settings/profile" class="stack-form" data-validate-form data-disable-until-dirty novalidate>
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label for="settings-fullname-input">Họ và tên
-          <input id="settings-fullname-input" type="text" name="fullName" value="{{ currentUser.fullName }}" minlength="2" maxlength="100" required data-required-message="Vui lòng nhập họ và tên." data-minlength-message="Họ và tên cần ít nhất 2 ký tự.">
+        <label for="settings-fullname-input">{{ t('Họ và tên', 'Full name') }}
+          <input id="settings-fullname-input" type="text" name="fullName" value="{{ currentUser.fullName }}" minlength="2" maxlength="100" required data-required-message="{{ t('Vui lòng nhập họ và tên.', 'Please enter your full name.') }}" data-minlength-message="{{ t('Họ và tên cần ít nhất 2 ký tự.', 'Your full name needs at least 2 characters.') }}">
           <small class="field-error" id="settings-fullname-input-error" hidden></small>
         </label>
         <label>Email
           <input type="email" value="{{ currentUser.email }}" readonly disabled>
-          <small>Email đã xác nhận và dùng để nhận OTP.</small>
+          <small>{{ t('Email đã xác nhận và dùng để nhận OTP.', 'Your confirmed email, used to receive OTP codes.') }}</small>
         </label>
-        <button class="button button-primary" type="submit" data-submit-button>Lưu thay đổi</button>
+        <button class="button button-primary" type="submit" data-submit-button>{{ t('Lưu thay đổi', 'Save changes') }}</button>
       </form>
     </section>
 
     <section class="panel settings-security-panel">
-      <header class="panel-heading"><div><span class="eyebrow">BẢO MẬT</span><h2>Bảo vệ tài khoản</h2></div></header>
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('BẢO MẬT', 'SECURITY') }}</span><h2>{{ t('Bảo vệ tài khoản', 'Protect your account') }}</h2></div></header>
       <div class="security-checklist">
-        <div><span>1</span><p>Dùng mật khẩu riêng, không trùng với email hoặc mạng xã hội.</p></div>
-        <div><span>2</span><p>Chỉ nhập OTP ShopTik trên đúng tên miền của ứng dụng.</p></div>
-        <div><span>3</span><p>ShopTik không bao giờ hỏi OTP, PIN hay mật khẩu Internet Banking.</p></div>
+        <div><span>1</span><p>{{ t('Dùng mật khẩu riêng, không trùng với email hoặc mạng xã hội.', 'Use a unique password, not the same as your email or social media.') }}</p></div>
+        <div><span>2</span><p>{{ t('Chỉ nhập OTP ShopTik trên đúng tên miền của ứng dụng.', 'Only enter ShopTik OTP on the app’s correct domain.') }}</p></div>
+        <div><span>3</span><p>{{ t('ShopTik không bao giờ hỏi OTP, PIN hay mật khẩu Internet Banking.', 'ShopTik never asks for your Internet Banking OTP, PIN or password.') }}</p></div>
       </div>
       <form method="post" action="/app/settings/revoke-all" class="danger-zone"
-        data-blob-confirm="Bạn sẽ đăng xuất khỏi TẤT CẢ thiết bị, kể cả thiết bị này. Sau đó cần đăng nhập lại."
-        data-confirm-title="Đăng xuất mọi thiết bị?"
-        data-confirm-eyebrow="Xác nhận thao tác"
-        data-confirm-label="Đăng xuất tất cả">
+        data-blob-confirm="{{ t('Bạn sẽ đăng xuất khỏi TẤT CẢ thiết bị, kể cả thiết bị này. Sau đó cần đăng nhập lại.', 'You’ll be signed out of ALL devices, including this one. You’ll need to sign in again.') }}"
+        data-confirm-title="{{ t('Đăng xuất mọi thiết bị?', 'Sign out of all devices?') }}"
+        data-confirm-eyebrow="{{ t('Xác nhận thao tác', 'Confirm action') }}"
+        data-confirm-label="{{ t('Đăng xuất tất cả', 'Sign out all') }}">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <div class="danger-zone-copy"><b>Đăng xuất mọi nơi</b><p>Dùng khi bạn nghi ngờ tài khoản bị truy cập trái phép.</p></div>
-        <button class="button button-danger" type="submit">Đăng xuất tất cả thiết bị</button>
+        <div class="danger-zone-copy"><b>{{ t('Đăng xuất mọi nơi', 'Sign out everywhere') }}</b><p>{{ t('Dùng khi bạn nghi ngờ tài khoản bị truy cập trái phép.', 'Use this if you suspect unauthorized access to your account.') }}</p></div>
+        <button class="button button-danger" type="submit">{{ t('Đăng xuất tất cả thiết bị', 'Sign out all devices') }}</button>
       </form>
     </section>
 
     <section class="panel settings-sessions-panel">
-      <header class="panel-heading"><div><span class="eyebrow">PHIÊN ĐĂNG NHẬP</span><h2>Thiết bị đã đăng nhập</h2></div></header>
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('PHIÊN ĐĂNG NHẬP', 'SESSIONS') }}</span><h2>{{ t('Thiết bị đã đăng nhập', 'Signed-in devices') }}</h2></div></header>
       {% if sessions.length %}
         <div class="session-list">
           {% for session in sessions %}
             <div>
               <span class="session-dot{% if session.is_current %} is-current{% endif %}"></span>
               <span>
-                <b>{% if session.is_current %}Phiên hiện tại{% else %}Phiên web{% endif %}</b>
-                <small>Hoạt động {{ session.last_seen_at | datetime }} · Hết hạn {{ session.expires_at | datetime }}</small>
+                <b>{% if session.is_current %}{{ t('Phiên hiện tại', 'Current session') }}{% else %}{{ t('Phiên web', 'Web session') }}{% endif %}</b>
+                <small>{{ t('Hoạt động', 'Active') }} {{ session.last_seen_at | datetime }} · {{ t('Hết hạn', 'Expires') }} {{ session.expires_at | datetime }}</small>
               </span>
-              {% if session.is_current %}<span class="session-current-badge">Đang dùng</span>{% endif %}
+              {% if session.is_current %}<span class="session-current-badge">{{ t('Đang dùng', 'In use') }}</span>{% endif %}
             </div>
           {% endfor %}
         </div>
       {% else %}
-        {{ empty_state("Không có phiên hoạt động", "Không tìm thấy thiết bị nào đang đăng nhập.") }}
+        {{ empty_state(t("Không có phiên hoạt động", "No active sessions"), t("Không tìm thấy thiết bị nào đang đăng nhập.", "No signed-in devices found.")) }}
       {% endif %}
     </section>
   </div>
 
-  <section class="mb-panel" aria-label="Lối tắt liên quan">
+  <section class="mb-panel" aria-label="{{ t('Lối tắt liên quan', 'Related shortcuts') }}">
     <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Liên quan</h2>
+      <h2 class="mb-panel-title">{{ t('Liên quan', 'Related') }}</h2>
     </div>
     <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>Tài khoản nhận tiền</span></a>
-      <a class="mb-linkrow" href="/app/settings">{{ icon('settings') }}<span>Tất cả chức năng</span></a>
+      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>{{ t('Tài khoản nhận tiền', 'Payout account') }}</span></a>
+      <a class="mb-linkrow" href="/app/settings">{{ icon('settings') }}<span>{{ t('Tất cả chức năng', 'All features') }}</span></a>
     </div>
   </section>
 {% endblock %}

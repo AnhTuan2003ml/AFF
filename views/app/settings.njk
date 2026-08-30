@@ -10,22 +10,22 @@
 
 {% block app_content %}
   {% set profileBalances = headerBalances or balances %}
-  <a class="mb-profile mb-profile-link" href="/app/profile" aria-label="Xem thông tin cá nhân">
+  <a class="mb-profile mb-profile-link" href="/app/profile" aria-label="{{ t('Xem thông tin cá nhân', 'View personal info') }}">
     <span class="mb-profile-avatar" aria-hidden="true">
       {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
     </span>
     <span class="mb-profile-copy">
-      <b>{{ currentUser.fullName or 'Tài khoản ShopTik' }}</b>
+      <b>{{ currentUser.fullName or t('Tài khoản ShopTik', 'ShopTik account') }}</b>
       <small>{{ currentUser.email }}</small>
     </span>
     {% if profileBalances %}
       <span class="mb-profile-stats">
         <span class="is-pending">
-          <span>Đang chờ</span>
+          <span>{{ t('Đang chờ', 'Pending') }}</span>
           <b>{{ profileBalances.pending | vnd }}</b>
         </span>
         <span>
-          <span>Khả dụng</span>
+          <span>{{ t('Khả dụng', 'Available') }}</span>
           <b>{{ profileBalances.available | vnd }}</b>
         </span>
       </span>
@@ -33,68 +33,68 @@
     <span class="mb-profile-go" aria-hidden="true">›</span>
   </a>
 
-  <section class="mb-panel mb-refcode" aria-label="Mã giới thiệu">
+  <section class="mb-panel mb-refcode" aria-label="{{ t('Mã giới thiệu', 'Referral code') }}">
     <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Mã giới thiệu của bạn</h2>
+      <h2 class="mb-panel-title">{{ t('Mã giới thiệu của bạn', 'Your referral code') }}</h2>
     </div>
     <div class="copy-field mb-refcode-code">
-      <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-label="Mã giới thiệu">
-      <button class="button button-light" type="button" data-copy-button>Sao chép mã</button>
+      <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-label="{{ t('Mã giới thiệu', 'Referral code') }}">
+      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép mã', 'Copy code') }}</button>
     </div>
     <div class="copy-field mb-refcode-link">
-      <input type="text" readonly value="{{ appOrigin or 'https://shoptikvn.com' }}/dang-ky?ref={{ currentUser.referralCode }}" data-copy-source aria-label="Link đăng ký kèm mã giới thiệu">
-      <button class="button button-light" type="button" data-copy-button>Sao chép link đăng ký</button>
+      <input type="text" readonly value="{{ appOrigin or 'https://shoptikvn.com' }}/dang-ky?ref={{ currentUser.referralCode }}" data-copy-source aria-label="{{ t('Link đăng ký kèm mã giới thiệu', 'Sign-up link with referral code') }}">
+      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép link đăng ký', 'Copy sign-up link') }}</button>
     </div>
-    <p class="mb-refcode-note">Gửi mã hoặc link cho bạn bè — họ đăng ký (web hoặc tải app đăng nhập cùng tài khoản) là mạng lưới ghi nhận về bạn. Link tải app trên App Store/Google Play sẽ bổ sung khi app phát hành.</p>
+    <p class="mb-refcode-note">{{ t('Gửi mã hoặc link cho bạn bè — họ đăng ký (web hoặc tải app đăng nhập cùng tài khoản) là mạng lưới ghi nhận về bạn. Link tải app trên App Store/Google Play sẽ bổ sung khi app phát hành.', 'Send the code or link to friends — when they sign up (on web or the app with the same account), your network gets the credit. App Store/Google Play download links will be added when the app launches.') }}</p>
   </section>
 
-  <section class="mb-panel" aria-label="Tài khoản">
+  <section class="mb-panel" aria-label="{{ t('Tài khoản', 'Account') }}">
     <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Tài khoản</h2>
+      <h2 class="mb-panel-title">{{ t('Tài khoản', 'Account') }}</h2>
     </div>
     <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/profile">{{ icon('user') }}<span>Thông tin cá nhân</span></a>
-      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>Tài khoản nhận tiền</span></a>
-    </div>
-  </section>
-
-  <section class="mb-panel" aria-label="Tiền và đơn hàng">
-    <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Tiền và đơn hàng</h2>
-    </div>
-    <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/wallet">{{ icon('wallet') }}<span>Số dư &amp; lịch sử ví</span></a>
-      <a class="mb-linkrow" href="/app/withdrawals">{{ icon('withdraw') }}<span>Rút tiền về ngân hàng</span></a>
-      <a class="mb-linkrow" href="/app/orders">{{ icon('orders') }}<span>Đơn hàng &amp; đối soát</span></a>
-      <a class="mb-linkrow" href="/app/nhiem-vu">{{ icon('mission') }}<span>Nhiệm vụ nhận thưởng</span></a>
+      <a class="mb-linkrow" href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
+      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>{{ t('Tài khoản nhận tiền', 'Payout account') }}</span></a>
     </div>
   </section>
 
-  <section class="mb-panel" aria-label="Kiếm thêm">
+  <section class="mb-panel" aria-label="{{ t('Tiền và đơn hàng', 'Money & orders') }}">
     <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Kiếm thêm</h2>
+      <h2 class="mb-panel-title">{{ t('Tiền và đơn hàng', 'Money & orders') }}</h2>
     </div>
     <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/links">{{ icon('link') }}<span>Link chia sẻ</span></a>
-      <a class="mb-linkrow" href="/app/referrals">{{ icon('referral') }}<span>Giới thiệu bạn bè</span></a>
-      <a class="mb-linkrow" href="/app/discover">{{ icon('compass') }}<span>Khám phá ưu đãi</span></a>
+      <a class="mb-linkrow" href="/app/wallet">{{ icon('wallet') }}<span>{{ t('Số dư & lịch sử ví', 'Balance & wallet history') }}</span></a>
+      <a class="mb-linkrow" href="/app/withdrawals">{{ icon('withdraw') }}<span>{{ t('Rút tiền về ngân hàng', 'Withdraw to bank') }}</span></a>
+      <a class="mb-linkrow" href="/app/orders">{{ icon('orders') }}<span>{{ t('Đơn hàng & đối soát', 'Orders & reconciliation') }}</span></a>
+      <a class="mb-linkrow" href="/app/nhiem-vu">{{ icon('mission') }}<span>{{ t('Nhiệm vụ nhận thưởng', 'Rewards & missions') }}</span></a>
     </div>
   </section>
 
-  <section class="mb-panel" aria-label="Khác">
+  <section class="mb-panel" aria-label="{{ t('Kiếm thêm', 'Earn more') }}">
     <div class="mb-panel-head">
-      <h2 class="mb-panel-title">Khác</h2>
+      <h2 class="mb-panel-title">{{ t('Kiếm thêm', 'Earn more') }}</h2>
     </div>
     <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/support">{{ icon('support') }}<span>Hỗ trợ &amp; khiếu nại</span></a>
-      <a class="mb-linkrow" href="/chinh-sach-nguoi-dung" data-user-policy-link>{{ icon('audit') }}<span>Chính sách người dùng</span></a>
+      <a class="mb-linkrow" href="/app/links">{{ icon('link') }}<span>{{ t('Link chia sẻ', 'Share links') }}</span></a>
+      <a class="mb-linkrow" href="/app/referrals">{{ icon('referral') }}<span>{{ t('Giới thiệu bạn bè', 'Refer friends') }}</span></a>
+      <a class="mb-linkrow" href="/app/discover">{{ icon('compass') }}<span>{{ t('Khám phá ưu đãi', 'Explore deals') }}</span></a>
+    </div>
+  </section>
+
+  <section class="mb-panel" aria-label="{{ t('Khác', 'More') }}">
+    <div class="mb-panel-head">
+      <h2 class="mb-panel-title">{{ t('Khác', 'More') }}</h2>
+    </div>
+    <div class="mb-linklist">
+      <a class="mb-linkrow" href="/app/support">{{ icon('support') }}<span>{{ t('Hỗ trợ & khiếu nại', 'Support & complaints') }}</span></a>
+      <a class="mb-linkrow" href="/chinh-sach-nguoi-dung" data-user-policy-link>{{ icon('audit') }}<span>{{ t('Chính sách người dùng', 'User Policy') }}</span></a>
       {% if currentUser.role != 'USER' %}
-        <a class="mb-linkrow" href="/backoffice/console">{{ icon('ops') }}<span>Mở trang quản trị</span></a>
+        <a class="mb-linkrow" href="/backoffice/console">{{ icon('ops') }}<span>{{ t('Mở trang quản trị', 'Open admin console') }}</span></a>
       {% endif %}
       <form method="post" action="/dang-xuat">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         {# class button-ghost để rule CTA đỏ của dv13 tự loại trừ nút này #}
-        <button class="mb-linkrow is-danger button-ghost" type="submit">{{ icon('logout') }}<span>Đăng xuất</span></button>
+        <button class="mb-linkrow is-danger button-ghost" type="submit">{{ icon('logout') }}<span>{{ t('Đăng xuất', 'Sign out') }}</span></button>
       </form>
     </div>
   </section>
