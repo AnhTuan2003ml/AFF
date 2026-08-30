@@ -31,24 +31,24 @@
     <div class="px-home-hero-shade" aria-hidden="true"></div>
     <div class="px-home-hero-copy">
       <span>SHOP · TRACK · CASHBACK</span>
-      <h1 id="px-home-title"><span class="lh-part">Mua sắm thông minh.</span> <span class="lh-part">Hoàn tiền tối ưu.</span></h1>
+      <h1 id="px-home-title"><span class="lh-part">{{ t('Mua sắm thông minh.', 'Shop smarter.') }}</span> <span class="lh-part">{{ t('Hoàn tiền tối ưu.', 'Maximize cashback.') }}</span></h1>
       <div class="px-home-hero-actions">
-        <a class="px-btn px-btn-light" href="#shop-search">Kiểm tra hoàn tiền</a>
-        <a class="px-text-link px-text-link-light" href="/app/discover">Khám phá sản phẩm <span>→</span></a>
+        <a class="px-btn px-btn-light" href="#shop-search">{{ t('Kiểm tra hoàn tiền', 'Check cashback') }}</a>
+        <a class="px-text-link px-text-link-light" href="/app/discover">{{ t('Khám phá sản phẩm', 'Explore products') }} <span>→</span></a>
       </div>
     </div>
     {# Đăng nhập: số liệu ví thật. Khách: số liệu giới thiệu. #}
     {% if currentUser %}
     <div class="px-home-hero-meta">
-      <span><b>{{ (balances.available or 0) | vnd }}</b><small>Số dư khả dụng</small></span>
-      <span><b>{{ (balances.pending or 0) | vnd }}</b><small>Đang chờ về ví</small></span>
-      <span><b>Hoàn tới {{ cashbackRate }}%</b><small>Đã mua {{ purchaseStats.products or 0 }} sản phẩm</small></span>
+      <span><b>{{ (balances.available or 0) | vnd }}</b><small>{{ t('Số dư khả dụng', 'Available balance') }}</small></span>
+      <span><b>{{ (balances.pending or 0) | vnd }}</b><small>{{ t('Đang chờ về ví', 'Pending to wallet') }}</small></span>
+      <span><b>{{ t('Hoàn tới', 'Up to') }} {{ cashbackRate }}%</b><small>{{ t('Đã mua', 'Bought') }} {{ purchaseStats.products or 0 }} {{ t('sản phẩm', 'products') }}</small></span>
     </div>
     {% else %}
     <div class="px-home-hero-meta">
-      <span><b>3 sàn</b><small>Shopee · TikTok · Lazada</small></span>
-      <span><b>Hoàn tới {{ cashbackRate }}%</b><small>Về ví minh bạch</small></span>
-      <span><b>Miễn phí</b><small>Không phí ẩn</small></span>
+      <span><b>{{ t('3 sàn', '3 platforms') }}</b><small>Shopee · TikTok · Lazada</small></span>
+      <span><b>{{ t('Hoàn tới', 'Up to') }} {{ cashbackRate }}%</b><small>{{ t('Về ví minh bạch', 'Transparent to wallet') }}</small></span>
+      <span><b>{{ t('Miễn phí', 'Free') }}</b><small>{{ t('Không phí ẩn', 'No hidden fees') }}</small></span>
     </div>
     {% endif %}
   </section>

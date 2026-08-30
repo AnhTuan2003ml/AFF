@@ -11,17 +11,17 @@
     <div>
       <span class="mb-converter-icon" aria-hidden="true">{{ icon('discover') }}</span>
       <div>
-        <h2>Khoan mua! Để Camio kiểm tra đã.</h2>
-        <p>Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn</p>
+        <h2>{{ t('Khoan mua! Để Camio kiểm tra đã.', 'Wait! Let Camio check first.') }}</h2>
+        <p>{{ t('Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn', 'Paste a Shopee, TikTok Shop or Lazada link — Camio estimates your cashback') }}</p>
       </div>
     </div>
-    <span class="mb-pill-note">Hoàn tiền tự động</span>
+    <span class="mb-pill-note">{{ t('Hoàn tiền tự động', 'Auto cashback') }}</span>
   </header>
 
   <form class="buy-form" data-product-finder novalidate>
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
     <input type="hidden" name="platform" value="{{ defaultPlatform }}" data-platform-input>
-    <label class="buy-input-label" for="product-url">Link sản phẩm</label>
+    <label class="buy-input-label" for="product-url">{{ t('Link sản phẩm', 'Product link') }}</label>
     {# Nhập/dán là MỘT nhóm (icon dán nằm trong ô nhập); Tra cứu là CTA
        chính đứng riêng bên phải. #}
     <div class="buy-input-row buy-input-row-emphasis">
@@ -33,7 +33,7 @@
           inputmode="url"
           autocomplete="off"
           maxlength="2048"
-          placeholder="Dán link sản phẩm vào đây..."
+          placeholder="{{ t('Dán link sản phẩm vào đây...', 'Paste a product link here...') }}"
           required
           aria-describedby="product-url-hint"
           data-product-url
@@ -41,7 +41,7 @@
         <button type="button" class="buy-paste-button" data-product-paste hidden aria-label="Dán từ bộ nhớ tạm" title="Dán từ bộ nhớ tạm">{{ icon('paste') }}</button>
         <span class="buy-paste-mascot" data-paste-mascot aria-hidden="true"></span>
       </div>
-      <button type="submit" data-product-submit><span data-product-submit-text>Tra cứu</span></button>
+      <button type="submit" data-product-submit><span data-product-submit-text>{{ t('Tra cứu', 'Check') }}</span></button>
     </div>
     {# Câu thoại Camio đổi theo trạng thái (purchase.js cập nhật: chưa dán → đang soi → có/không hoàn → lỗi). #}
     <span class="buy-form-hint camio-line" id="product-url-hint" data-camio-line>Copy link → dán vào đây → xem hoàn tiền. Dễ thôi!</span>

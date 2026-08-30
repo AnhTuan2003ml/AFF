@@ -2809,6 +2809,76 @@ label small {
   color: var(--lx-muted)
 }
 
+/* Globe chọn ngôn ngữ ở header (dropdown <details>). */
+.px-lang-menu {
+  position: relative
+}
+
+.px-lang-trigger {
+  list-style: none;
+  cursor: pointer;
+  gap: 5px
+}
+
+.px-lang-trigger::-webkit-details-marker {
+  display: none
+}
+
+.px-lang-trigger svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round
+}
+
+.px-lang-code {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .3px
+}
+
+.px-lang-menu[open] .px-lang-trigger {
+  color: var(--lx-orange);
+  background: var(--lx-orange-soft)
+}
+
+.px-lang-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--lx-line);
+  box-shadow: var(--lx-shadow, 0 24px 60px rgba(77, 49, 34, .12));
+  display: flex;
+  flex-direction: column;
+  gap: 2px
+}
+
+.px-lang-panel a {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--lx-ink);
+  text-decoration: none;
+  white-space: nowrap
+}
+
+.px-lang-panel a:hover {
+  background: var(--lx-paper-2, #f4ece6)
+}
+
+.px-lang-panel a.active {
+  background: var(--lx-orange-soft);
+  color: var(--lx-orange)
+}
+
 /* Danh sách người đã mời trong màn Nhiệm vụ. */
 .mission-people {
   margin-top: 20px;

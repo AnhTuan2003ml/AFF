@@ -57,6 +57,19 @@
           </button>
           {% endif %}
 
+          {# Chọn ngôn ngữ: icon quả cầu cạnh chuông → dropdown VI/EN, đổi cả web.
+             Dùng <details> native nên không cần JS. #}
+          <details class="px-lang-menu">
+            <summary class="px-head-icon px-lang-trigger" aria-label="{{ t('Ngôn ngữ', 'Language') }}" title="{{ t('Ngôn ngữ', 'Language') }}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>
+              <span class="px-lang-code">{{ 'VI' if lang == 'vi' else 'EN' }}</span>
+            </summary>
+            <div class="px-lang-panel" role="menu">
+              <a href="/lang/vi?next={{ currentPath | urlencode }}" role="menuitem"{% if lang == 'vi' %} class="active" aria-current="true"{% endif %}>🇻🇳 Tiếng Việt</a>
+              <a href="/lang/en?next={{ currentPath | urlencode }}" role="menuitem"{% if lang == 'en' %} class="active" aria-current="true"{% endif %}>🇬🇧 English</a>
+            </div>
+          </details>
+
           {% if not currentUser %}
           <a class="px-btn px-btn-ghost px-guest-login" href="/dang-nhap">Đăng nhập</a>
           <a class="px-btn px-btn-dark px-guest-register" href="/dang-ky">Đăng ký</a>
@@ -132,7 +145,6 @@
                 <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-hidden="true" tabindex="-1">
                 <button type="button" data-copy-button aria-label="Sao chép mã giới thiệu">Copy</button>
               </div>
-              <div class="st-menu-lang"><span>{{ t('Ngôn ngữ', 'Language') }}</span>{% include "partials/lang-switch.njk" %}</div>
               <a href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
               <a href="/app/nhiem-vu">{{ icon('mission') }}<span>{{ t('Nhiệm vụ nhận thưởng', 'Rewards & missions') }}</span></a>
               <a href="/app/links">{{ icon('link') }}<span>{{ t('Link chia sẻ', 'Share links') }}</span></a>
@@ -229,12 +241,12 @@
       <div class="px-footer-bottom"><span>© 2026 ShopTik</span><span>Shopee · TikTok Shop · Lazada</span></div>
     </footer>
 
-    <nav class="mb-bottomnav px-bottomnav" aria-label="Điều hướng di động">
-      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>Trang chủ</b></a>
-      <a href="/app/discover" {% if appSection == 'discover' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<b>Khám phá</b></a>
-      <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>Đơn hàng</b></a>
-      <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>Ví</b></a>
-      <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<b>Tài khoản</b></a>
+    <nav class="mb-bottomnav px-bottomnav" aria-label="{{ t('Điều hướng di động', 'Mobile navigation') }}">
+      <a href="/app" {% if appSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<b>{{ t('Trang chủ', 'Home') }}</b></a>
+      <a href="/app/discover" {% if appSection == 'discover' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<b>{{ t('Khám phá', 'Explore') }}</b></a>
+      <a href="/app/orders" {% if appSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<b>{{ t('Đơn hàng', 'Orders') }}</b></a>
+      <a href="/app/wallet" {% if appSection in financeSections %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<b>{{ t('Ví', 'Wallet') }}</b></a>
+      <a href="/app/settings" {% if appSection in ['settings', 'profile'] %}class="active" aria-current="page"{% endif %}>{{ icon('user') }}<b>{{ t('Tài khoản', 'Account') }}</b></a>
     </nav>
 
     <a class="st-support-fab" href="/app/support" aria-label="Chăm sóc khách hàng">
