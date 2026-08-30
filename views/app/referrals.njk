@@ -5,49 +5,49 @@
 {% block app_content %}
   <header class="page-head">
     <div>
-      <span class="eyebrow">MẠNG LƯỚI CỦA TÔI</span>
-      <h1>Giới thiệu bạn bè, <em>nhận thưởng minh bạch</em></h1>
+      <span class="eyebrow">{{ t('MẠNG LƯỚI CỦA TÔI', 'MY NETWORK') }}</span>
+      <h1>{{ t('Giới thiệu bạn bè,', 'Refer friends,') }} <em>{{ t('nhận thưởng minh bạch', 'earn transparent rewards') }}</em></h1>
       <p>
         {% if referredByName %}
-          Bạn tham gia qua giới thiệu của <b>{{ referredByName }}</b>.
+          {{ t('Bạn tham gia qua giới thiệu của', 'You joined via a referral from') }} <b>{{ referredByName }}</b>.
         {% else %}
-          Bạn tự tham gia, không qua giới thiệu.
+          {{ t('Bạn tự tham gia, không qua giới thiệu.', 'You joined on your own, without a referral.') }}
         {% endif %}
-        Thưởng giới thiệu được ghi nhận một lần khi người bạn mời có đơn hợp lệ đầu tiên được duyệt; số tiền áp dụng theo cấu hình tại thời điểm duyệt.
+        {{ t('Thưởng giới thiệu được ghi nhận một lần khi người bạn mời có đơn hợp lệ đầu tiên được duyệt; số tiền áp dụng theo cấu hình tại thời điểm duyệt.', 'The referral reward is recorded once when your invitee’s first valid order is approved; the amount follows the configuration at approval time.') }}
       </p>
     </div>
   </header>
 
   <section class="referral-hero">
     <div>
-      <span class="eyebrow">MÃ CỦA BẠN</span>
+      <span class="eyebrow">{{ t('MÃ CỦA BẠN', 'YOUR CODE') }}</span>
       <strong>{{ referralCode }}</strong>
-      <p>Gửi link này cho người bạn muốn giới thiệu.</p>
+      <p>{{ t('Gửi link này cho người bạn muốn giới thiệu.', 'Send this link to friends you want to refer.') }}</p>
     </div>
     <div class="copy-field copy-field-light">
-      <input type="text" readonly value="{{ referralUrl }}" data-copy-source aria-label="Link giới thiệu của bạn">
-      <button class="button button-light" type="button" data-copy-button>Sao chép link</button>
+      <input type="text" readonly value="{{ referralUrl }}" data-copy-source aria-label="{{ t('Link giới thiệu của bạn', 'Your referral link') }}">
+      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép link', 'Copy link') }}</button>
     </div>
   </section>
 
   {% if not (refCodeState and refCodeState.isPartner) %}
     <section class="panel kol-cta">
       <div class="kol-cta-copy">
-        <span class="eyebrow">DÀNH CHO NGƯỜI SÁNG TẠO</span>
-        <h2>Trở thành đối tác KOL/KOC</h2>
+        <span class="eyebrow">{{ t('DÀNH CHO NGƯỜI SÁNG TẠO', 'FOR CREATORS') }}</span>
+        <h2>{{ t('Trở thành đối tác KOL/KOC', 'Become a KOL/KOC partner') }}</h2>
         {% if kolStatus and kolStatus.status == 'PENDING' %}
-          <p>Hồ sơ của bạn đang được đội ngũ xét duyệt. Bạn sẽ nhận thông báo ngay khi có kết quả.</p>
+          <p>{{ t('Hồ sơ của bạn đang được đội ngũ xét duyệt. Bạn sẽ nhận thông báo ngay khi có kết quả.', 'Your application is under review. You’ll be notified as soon as there’s a result.') }}</p>
         {% elif kolStatus and kolStatus.status == 'REJECTED' %}
-          <p>Hồ sơ trước chưa đạt. Bạn có thể chỉnh sửa thông tin và gửi lại để được duyệt.</p>
+          <p>{{ t('Hồ sơ trước chưa đạt. Bạn có thể chỉnh sửa thông tin và gửi lại để được duyệt.', 'Your previous application didn’t pass. You can edit and resubmit for review.') }}</p>
         {% else %}
-          <p>Xác minh danh tính để nhận hoa hồng cao hơn và quyền tự chọn mã giới thiệu riêng.</p>
+          <p>{{ t('Xác minh danh tính để nhận hoa hồng cao hơn và quyền tự chọn mã giới thiệu riêng.', 'Verify your identity for higher commissions and a custom referral code.') }}</p>
         {% endif %}
       </div>
       {% if kolStatus and kolStatus.status == 'PENDING' %}
-        <span class="badge badge-pending">Đang chờ duyệt</span>
+        <span class="badge badge-pending">{{ t('Đang chờ duyệt', 'Under review') }}</span>
       {% else %}
         <a class="button button-primary" href="/app/dang-ky-kol">
-          {% if kolStatus and kolStatus.status == 'REJECTED' %}Gửi lại hồ sơ{% else %}Đăng ký ngay{% endif %}
+          {% if kolStatus and kolStatus.status == 'REJECTED' %}{{ t('Gửi lại hồ sơ', 'Resubmit') }}{% else %}{{ t('Đăng ký ngay', 'Apply now') }}{% endif %}
         </a>
       {% endif %}
     </section>
@@ -56,56 +56,56 @@
   {% if refCodeState and refCodeState.isPartner %}
     <section class="panel referral-code-panel">
       <header class="panel-heading">
-        <div><span class="eyebrow">QUYỀN CỦA ĐỐI TÁC</span><h2>Đổi mã giới thiệu tự chọn</h2></div>
+        <div><span class="eyebrow">{{ t('QUYỀN CỦA ĐỐI TÁC', 'PARTNER PERK') }}</span><h2>{{ t('Đổi mã giới thiệu tự chọn', 'Set a custom referral code') }}</h2></div>
       </header>
       {% if refCodeState.pendingCode %}
-        <aside class="info-strip"><span>⏳</span><div><b>Đang chờ duyệt</b><p>Yêu cầu đổi sang mã <b>{{ refCodeState.pendingCode }}</b> đã gửi tới admin. Được duyệt bạn sẽ nhận thông báo ngay.</p></div></aside>
+        <aside class="info-strip"><span>⏳</span><div><b>{{ t('Đang chờ duyệt', 'Under review') }}</b><p>{{ t('Yêu cầu đổi sang mã', 'Your request to change to code') }} <b>{{ refCodeState.pendingCode }}</b> {{ t('đã gửi tới admin. Được duyệt bạn sẽ nhận thông báo ngay.', 'has been sent to the admin. You’ll be notified once approved.') }}</p></div></aside>
       {% elif refCodeState.customizedAt %}
-        <aside class="info-strip"><span>✓</span><div><b>Đã dùng quyền đổi mã</b><p>Mỗi đối tác được đổi mã một lần. Mã hiện tại của bạn là <b>{{ referralCode }}</b>; dữ liệu và link cũ vẫn quy về bạn.</p></div></aside>
+        <aside class="info-strip"><span>✓</span><div><b>{{ t('Đã dùng quyền đổi mã', 'Code change used') }}</b><p>{{ t('Mỗi đối tác được đổi mã một lần. Mã hiện tại của bạn là', 'Each partner may change the code once. Your current code is') }} <b>{{ referralCode }}</b>; {{ t('dữ liệu và link cũ vẫn quy về bạn.', 'old data and links still attribute to you.') }}</p></div></aside>
       {% else %}
-        <p class="panel-note">Bạn được đổi mã <b>một lần duy nhất</b>: 3–9 ký tự gồm chữ và số (VD: NamDong). Mã mới có hiệu lực sau khi admin phê duyệt; toàn bộ dữ liệu giới thiệu cũ giữ nguyên.</p>
+        <p class="panel-note">{{ t('Bạn được đổi mã', 'You can change your code') }} <b>{{ t('một lần duy nhất', 'only once') }}</b>: {{ t('3–9 ký tự gồm chữ và số (VD: NamDong). Mã mới có hiệu lực sau khi admin phê duyệt; toàn bộ dữ liệu giới thiệu cũ giữ nguyên.', '3–9 letters and numbers (e.g. NamDong). The new code takes effect after admin approval; all existing referral data is preserved.') }}</p>
         <form method="post" action="/app/referrals/doi-ma" class="referral-code-form">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
           <input type="text" name="newCode" maxlength="9" minlength="3" required
-                 pattern="[A-Za-z0-9]{3,9}" placeholder="Mã mới (3–9 chữ/số)"
-                 aria-label="Mã giới thiệu mới">
-          <button class="button button-primary" type="submit">Gửi admin duyệt</button>
+                 pattern="[A-Za-z0-9]{3,9}" placeholder="{{ t('Mã mới (3–9 chữ/số)', 'New code (3–9 chars)') }}"
+                 aria-label="{{ t('Mã giới thiệu mới', 'New referral code') }}">
+          <button class="button button-primary" type="submit">{{ t('Gửi admin duyệt', 'Send for approval') }}</button>
         </form>
       {% endif %}
     </section>
   {% endif %}
 
-  <section class="stat-grid" aria-label="Hiệu quả mạng lưới">
+  <section class="stat-grid" aria-label="{{ t('Hiệu quả mạng lưới', 'Network performance') }}">
     <div class="stat-card">
       <span class="stat-icon" aria-hidden="true">{{ icon('referral') }}</span>
       <span class="stat-copy">
-        <small>Đã mời</small>
+        <small>{{ t('Đã mời', 'Invited') }}</small>
         <strong>{{ referrals.length }}</strong>
-        <b>người tham gia</b>
+        <b>{{ t('người tham gia', 'people joined') }}</b>
       </span>
     </div>
     <div class="stat-card">
       <span class="stat-icon" aria-hidden="true">{{ icon('users') }}</span>
       <span class="stat-copy">
-        <small>Đang mang về thưởng</small>
+        <small>{{ t('Đang mang về thưởng', 'Earning rewards') }}</small>
         <strong>{{ networkEarnings.rewarded_count }}</strong>
-        <b>người đã phát sinh đơn</b>
+        <b>{{ t('người đã phát sinh đơn', 'people with orders') }}</b>
       </span>
     </div>
     <div class="stat-card">
       <span class="stat-icon" aria-hidden="true">{{ icon('wallet') }}</span>
       <span class="stat-copy">
-        <small>Tổng thưởng từ mạng lưới</small>
+        <small>{{ t('Tổng thưởng từ mạng lưới', 'Total network reward') }}</small>
         <strong>{{ networkEarnings.total_vnd | vnd }}</strong>
-        <b>đã cộng vào ví</b>
+        <b>{{ t('đã cộng vào ví', 'added to wallet') }}</b>
       </span>
     </div>
     <a class="stat-card" href="/app/orders">
       <span class="stat-icon" aria-hidden="true">{{ icon('orders') }}</span>
       <span class="stat-copy">
-        <small>Mua sắm của bạn</small>
-        <strong>{{ myShopping.orders_count }} đơn</strong>
-        <b>{{ myShopping.cashback_vnd | vnd }} đã hoàn · xem lịch sử →</b>
+        <small>{{ t('Mua sắm của bạn', 'Your shopping') }}</small>
+        <strong>{{ myShopping.orders_count }} {{ t('đơn', 'orders') }}</strong>
+        <b>{{ myShopping.cashback_vnd | vnd }} {{ t('đã hoàn · xem lịch sử →', 'cashed back · view history →') }}</b>
       </span>
     </a>
   </section>
@@ -113,31 +113,31 @@
   <aside class="info-strip">
     <span>i</span>
     <div>
-      <b>Điều kiện ghi nhận</b>
-      <p>Thưởng chỉ áp dụng cho đơn hợp lệ đầu tiên đã được duyệt của người được giới thiệu. Tiền được cộng theo cấu hình hiện hành và có thể cần chờ đối soát.</p>
+      <b>{{ t('Điều kiện ghi nhận', 'Reward conditions') }}</b>
+      <p>{{ t('Thưởng chỉ áp dụng cho đơn hợp lệ đầu tiên đã được duyệt của người được giới thiệu. Tiền được cộng theo cấu hình hiện hành và có thể cần chờ đối soát.', 'The reward applies only to the referred person’s first valid approved order. It is credited per the current configuration and may require reconciliation.') }}</p>
     </div>
   </aside>
 
   <section class="panel">
     <header class="panel-heading">
-      <div><span class="eyebrow">TỪNG NGƯỜI MANG VỀ BAO NHIÊU</span><h2>Người bạn đã mời</h2></div>
-      <span>{{ referrals.length }} người</span>
+      <div><span class="eyebrow">{{ t('TỪNG NGƯỜI MANG VỀ BAO NHIÊU', 'WHAT EACH PERSON BRINGS') }}</span><h2>{{ t('Người bạn đã mời', 'People you invited') }}</h2></div>
+      <span>{{ referrals.length }} {{ t('người', 'people') }}</span>
     </header>
     {% if referrals.length %}
       <div class="compact-list">
         {% for referral in referrals %}
           <div class="compact-row referral-row">
             <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
-            <span><b>{{ referral.full_name }}</b><small>Tham gia {{ referral.created_at | date }} · {{ referral.approved_orders }} đơn đã duyệt</small></span>
-            <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>bạn nhận được</small></span>
+            <span><b>{{ referral.full_name }}</b><small>{{ t('Tham gia', 'Joined') }} {{ referral.created_at | date }} · {{ referral.approved_orders }} {{ t('đơn đã duyệt', 'approved orders') }}</small></span>
+            <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>{{ t('bạn nhận được', 'you earned') }}</small></span>
             {{ status_badge(referral.status, lang) }}
           </div>
         {% endfor %}
       </div>
     {% else %}
-      {{ empty_state("Chưa có người được giới thiệu", "Sao chép link phía trên và gửi cho bạn bè quan tâm.") }}
+      {{ empty_state(t("Chưa có người được giới thiệu", "No referrals yet"), t("Sao chép link phía trên và gửi cho bạn bè quan tâm.", "Copy the link above and send it to interested friends.")) }}
     {% endif %}
   </section>
 
-  <aside class="info-strip"><span>i</span><div><b>Không tự tạo nhiều tài khoản</b><p>Referral vòng lặp, tự mua hoặc hành vi gian lận có thể bị loại và khóa rút tiền.</p></div></aside>
+  <aside class="info-strip"><span>i</span><div><b>{{ t('Không tự tạo nhiều tài khoản', 'Don’t create fake accounts') }}</b><p>{{ t('Referral vòng lặp, tự mua hoặc hành vi gian lận có thể bị loại và khóa rút tiền.', 'Circular referrals, self-buying or fraud may be voided and can lock withdrawals.') }}</p></div></aside>
 {% endblock %}
