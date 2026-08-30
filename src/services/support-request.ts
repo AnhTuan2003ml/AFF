@@ -69,6 +69,24 @@ export const SUPPORT_TOPICS: readonly SupportTopic[] = [
   },
 ];
 
+/** Nhãn tiếng Anh cho từng chủ đề — dịch khi hiển thị song ngữ. */
+const SUPPORT_TOPIC_EN: Record<string, string> = {
+  ORDER_NOT_RECORDED: "Order bought but not recorded",
+  CASHBACK_ISSUE: "Wrong cashback or not received",
+  ORDER_CANCELLED: "Order cancelled, need the reason",
+  WITHDRAWAL: "Withdrawals, bank account",
+  ACCOUNT: "Account, security",
+  OTHER: "Other issue",
+};
+
+export function localizeSupportTopics(lang: string): readonly SupportTopic[] {
+  if (lang !== "en") return SUPPORT_TOPICS;
+  return SUPPORT_TOPICS.map((topic) => ({
+    ...topic,
+    label: SUPPORT_TOPIC_EN[topic.value] ?? topic.label,
+  }));
+}
+
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ duyệt",
   APPROVED: "Đã duyệt",

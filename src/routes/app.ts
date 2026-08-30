@@ -69,6 +69,7 @@ import {
 } from "../services/support-chat.js";
 import {
   SUPPORT_TOPICS,
+  localizeSupportTopics,
   platformDisplayName,
   submitSupportRequest,
   toSupportOrderOption,
@@ -1404,7 +1405,7 @@ export async function registerAppRoutes(
         latestRequest: null,
         latestReply: null,
         chatOnline: isSlackSupportEnabled(deps.config),
-        supportTopics: SUPPORT_TOPICS,
+        supportTopics: localizeSupportTopics(request.cookies?.lang === "en" ? "en" : "vi"),
         orderOptions: [],
         notifyEmail: "",
         preselectOrderKey: "",
@@ -1457,7 +1458,7 @@ export async function registerAppRoutes(
       latestRequest: latestExchange.request,
       latestReply: latestExchange.reply,
       chatOnline: isSlackSupportEnabled(deps.config),
-      supportTopics: SUPPORT_TOPICS,
+      supportTopics: localizeSupportTopics(request.cookies?.lang === "en" ? "en" : "vi"),
       orderOptions,
       notifyEmail:
         conversationRow.rows[0]?.notify_email ||

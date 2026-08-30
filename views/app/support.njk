@@ -4,8 +4,8 @@
 
   <section class="page-heading">
     <div>
-      <h1>Hỗ trợ</h1>
-      <p>Gửi yêu cầu theo mẫu cho từng vấn đề. Đội CSKH xử lý riêng từng yêu cầu và phản hồi qua email cùng thông báo trên ứng dụng.</p>
+      <h1>{{ t('Hỗ trợ', 'Support') }}</h1>
+      <p>{{ t('Gửi yêu cầu theo mẫu cho từng vấn đề. Đội CSKH xử lý riêng từng yêu cầu và phản hồi qua email cùng thông báo trên ứng dụng.', 'Submit a request form for each issue. Our support team handles each request and replies by email and in-app notification.') }}</p>
     </div>
   </section>
 
@@ -13,8 +13,8 @@
     <section class="panel support-request-panel">
       <header class="panel-heading">
         <div>
-          <h2>Gửi yêu cầu theo mẫu</h2>
-          <p>Chọn đúng vấn đề và đơn hàng để được xử lý nhanh hơn.</p>
+          <h2>{{ t('Gửi yêu cầu theo mẫu', 'Submit a request') }}</h2>
+          <p>{{ t('Chọn đúng vấn đề và đơn hàng để được xử lý nhanh hơn.', 'Pick the right issue and order for faster handling.') }}</p>
         </div>
       </header>
 
@@ -23,15 +23,15 @@
            cần biết tài khoản/đơn hàng để đối soát, và phản hồi về đúng hộp thư. #}
         <div class="px-alert support-guest-alert" role="status">
           <span class="mb-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
-          <div class="mb-alert-copy"><b>Đăng nhập để gửi yêu cầu hỗ trợ</b><small>Đội CSKH cần biết tài khoản và đơn hàng của bạn để đối soát; phản hồi về đúng hộp thư và thông báo trong ứng dụng.</small></div>
-          <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">Đăng nhập</a>
+          <div class="mb-alert-copy"><b>{{ t('Đăng nhập để gửi yêu cầu hỗ trợ', 'Sign in to submit a support request') }}</b><small>{{ t('Đội CSKH cần biết tài khoản và đơn hàng của bạn để đối soát; phản hồi về đúng hộp thư và thông báo trong ứng dụng.', 'Support needs your account and orders to reconcile; replies go to your inbox and in-app notifications.') }}</small></div>
+          <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập', 'Sign in') }}</a>
         </div>
       {% endif %}
       <form class="stack-form support-request-form"{% if not guest %} data-support-form{% endif %}
         data-endpoint="/app/support/requests" data-csrf="{{ csrfToken }}" novalidate{% if guest %} aria-disabled="true"{% endif %}>
-        <label for="support-topic-input">Vấn đề cần hỗ trợ
+        <label for="support-topic-input">{{ t('Vấn đề cần hỗ trợ', 'Issue to get help with') }}
           <select id="support-topic-input" data-topic-select required{% if guest %} disabled{% endif %}>
-            <option value="" selected disabled>Chọn vấn đề…</option>
+            <option value="" selected disabled>{{ t('Chọn vấn đề…', 'Choose an issue…') }}</option>
             {% for topic in supportTopics %}
               <option value="{{ topic.value }}"
                 data-order-mode="{{ topic.orderMode }}"
@@ -41,64 +41,64 @@
           <small class="field-error" id="support-topic-input-error" hidden></small>
         </label>
 
-        <label for="support-order-input" data-order-block="list" hidden>Đơn hàng liên quan
+        <label for="support-order-input" data-order-block="list" hidden>{{ t('Đơn hàng liên quan', 'Related order') }}
           <select id="support-order-input" data-order-select>
-            <option value="">— Chọn đơn hàng —</option>
+            <option value="">{{ t('— Chọn đơn hàng —', '— Choose an order —') }}</option>
             {% for option in orderOptions %}
               <option value="{{ option.key }}" {% if option.key == preselectOrderKey %}selected{% endif %}>{{ option.label }}</option>
             {% endfor %}
           </select>
           {% if not orderOptions.length %}
-            <small>Tài khoản của bạn chưa có đơn nào trong lịch sử.</small>
+            <small>{{ t('Tài khoản của bạn chưa có đơn nào trong lịch sử.', 'Your account has no orders in history yet.') }}</small>
           {% endif %}
           <small class="field-error" id="support-order-input-error" hidden></small>
         </label>
 
-        <label for="support-order-code-input" data-order-block="code" hidden>Mã đơn hàng trên sàn
+        <label for="support-order-code-input" data-order-block="code" hidden>{{ t('Mã đơn hàng trên sàn', 'Platform order code') }}
           <input id="support-order-code-input" data-order-code type="text" maxlength="100"
-            autocomplete="off" placeholder="Ví dụ: 2508ABCXYZ123">
-          <small>Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.</small>
+            autocomplete="off" placeholder="{{ t('Ví dụ: 2508ABCXYZ123', 'e.g. 2508ABCXYZ123') }}">
+          <small>{{ t('Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.', 'Find it in your Shopee / TikTok Shop / Lazada order history.') }}</small>
           <small class="field-error" id="support-order-code-input-error" hidden></small>
         </label>
 
-        <label for="support-description-input">Mô tả chi tiết
+        <label for="support-description-input">{{ t('Mô tả chi tiết', 'Details') }}
           <textarea id="support-description-input" data-description rows="4" maxlength="2000"
-            placeholder="Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)"{% if guest %} disabled{% endif %}></textarea>
+            placeholder="{{ t('Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)', 'What’s the issue? (at least 10 characters)') }}"{% if guest %} disabled{% endif %}></textarea>
           <small class="field-error" id="support-description-input-error" hidden></small>
         </label>
 
-        <label for="support-email-input">Email nhận phản hồi
+        <label for="support-email-input">{{ t('Email nhận phản hồi', 'Email for replies') }}
           <input id="support-email-input" data-notify-email type="email" maxlength="254"
             autocomplete="email" value="{{ notifyEmail }}"{% if guest %} disabled{% endif %}>
-          <small>Phản hồi của đội hỗ trợ cũng được gửi về email này.</small>
+          <small>{{ t('Phản hồi của đội hỗ trợ cũng được gửi về email này.', 'Support replies are also sent to this email.') }}</small>
           <small class="field-error" id="support-email-input-error" hidden></small>
         </label>
 
         <p class="support-request-success" data-support-success hidden role="status">
-          Đã gửi yêu cầu. Đội CSKH sẽ xử lý và phản hồi qua email cùng thông báo trên ứng dụng.
+          {{ t('Đã gửi yêu cầu. Đội CSKH sẽ xử lý và phản hồi qua email cùng thông báo trên ứng dụng.', 'Request sent. Support will handle it and reply by email and in-app notification.') }}
         </p>
         <p class="field-error" data-support-error hidden role="alert"></p>
 
         {% if guest %}
-          <a class="button button-primary" href="/dang-nhap?next=%2Fapp%2Fsupport">Đăng nhập để gửi yêu cầu</a>
+          <a class="button button-primary" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập để gửi yêu cầu', 'Sign in to submit') }}</a>
         {% else %}
-          <button class="button button-primary" type="submit" data-support-submit>Gửi yêu cầu</button>
+          <button class="button button-primary" type="submit" data-support-submit>{{ t('Gửi yêu cầu', 'Send request') }}</button>
         {% endif %}
       </form>
     </section>
 
     {% if not guest %}
       <button type="button" class="support-reply-trigger" data-reply-open>
-        Nhắn CSKH{% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
+        {{ t('Nhắn CSKH', 'Message support') }}{% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
       </button>
       <aside class="panel support-thread-panel" data-reply-panel
-        data-has-reply="{{ '1' if latestReply else '' }}" aria-label="Phản Hồi">
+        data-has-reply="{{ '1' if latestReply else '' }}" aria-label="{{ t('Phản Hồi', 'Replies') }}">
         <header class="panel-heading support-thread-head">
           <div>
-            <h2>Nhắn với CSKH</h2>
-            <p>Chat trực tiếp — đội CSKH trả lời ngay tại đây.</p>
+            <h2>{{ t('Nhắn với CSKH', 'Chat with support') }}</h2>
+            <p>{{ t('Chat trực tiếp — đội CSKH trả lời ngay tại đây.', 'Live chat — the support team replies right here.') }}</p>
           </div>
-          <button type="button" class="support-reply-close" data-reply-close aria-label="Đóng">×</button>
+          <button type="button" class="support-reply-close" data-reply-close aria-label="{{ t('Đóng', 'Close') }}">×</button>
         </header>
 
         <div class="support-thread" data-support-thread>
@@ -106,20 +106,20 @@
             <div class="support-msg is-{{ 'user' if m.authorRole == 'USER' else 'agent' }}" data-message-id="{{ m.id }}">
               {% if m.authorRole != 'USER' %}<span class="support-msg-avatar" data-agent-mascot aria-hidden="true"></span>{% endif %}
               <div class="support-msg-bubble">
-                <b>{{ 'Bạn' if m.authorRole == 'USER' else 'Đội CSKH' }}</b>
+                <b>{{ t('Bạn', 'You') if m.authorRole == 'USER' else t('Đội CSKH', 'Support team') }}</b>
                 <p>{{ m.body }}</p>
                 <time datetime="{{ m.createdAt.toISOString() }}">{{ m.createdAt | datetime }}</time>
               </div>
             </div>
           {% else %}
-            <p class="support-thread-waiting" data-thread-empty>Chưa có trao đổi nào — nhắn cho đội CSKH ngay bên dưới 👇</p>
+            <p class="support-thread-waiting" data-thread-empty>{{ t('Chưa có trao đổi nào — nhắn cho đội CSKH ngay bên dưới 👇', 'No messages yet — message support below 👇') }}</p>
           {% endfor %}
         </div>
 
         {# Ô nhắn trực tiếp: Enter gửi, Shift+Enter xuống dòng (support-reply.js). #}
         <form class="support-chatbar" data-support-chatbar data-csrf="{{ csrfToken }}" novalidate>
-          <textarea data-chatbar-input rows="1" maxlength="3000" placeholder="Nhắn trực tiếp cho đội CSKH…" aria-label="Nội dung tin nhắn"></textarea>
-          <button type="submit" data-chatbar-send aria-label="Gửi tin">
+          <textarea data-chatbar-input rows="1" maxlength="3000" placeholder="{{ t('Nhắn trực tiếp cho đội CSKH…', 'Message the support team…') }}" aria-label="{{ t('Nội dung tin nhắn', 'Message content') }}"></textarea>
+          <button type="submit" data-chatbar-send aria-label="{{ t('Gửi tin', 'Send') }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 20 4l-7.2 16.5-2.1-7.2z"/></svg>
           </button>
         </form>
@@ -129,7 +129,7 @@
           <span class="support-thread-foot-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
           </span>
-          <span>Đội CSKH thường phản hồi trong vòng 24 giờ. Bạn sẽ nhận thông báo trên ứng dụng và email khi có phản hồi mới.</span>
+          <span>{{ t('Đội CSKH thường phản hồi trong vòng 24 giờ. Bạn sẽ nhận thông báo trên ứng dụng và email khi có phản hồi mới.', 'Support usually replies within 24 hours. You’ll get an in-app and email notification when there’s a new reply.') }}</span>
         </div>
       </aside>
     {% endif %}
