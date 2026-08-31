@@ -20,7 +20,7 @@
         </label>
         <label for="account-name-input">{{ t('Tên chủ tài khoản', 'Account holder name') }}
           <input id="account-name-input" class="account-name-input" type="text" name="accountName" autocomplete="off" minlength="3" maxlength="100" placeholder="NGUYEN VAN A" required data-required-message="{{ t('Vui lòng nhập tên chủ tài khoản.', 'Please enter the account holder name.') }}" data-minlength-message="{{ t('Tên chủ tài khoản cần ít nhất 3 ký tự.', 'The account holder name needs at least 3 characters.') }}">
-          <small>{{ t('Nhập đúng tên hiển thị tại ngân hàng — hệ thống sẽ tự chuẩn hóa thành chữ in hoa.', 'Enter the exact name shown at your bank — the system normalizes it to uppercase.') }}</small>
+          <small>{{ t('Đúng tên tại ngân hàng — tự chuẩn hóa thành chữ in hoa.', 'Exact name at your bank — auto-normalized to uppercase.') }}</small>
           <small class="field-error" id="account-name-input-error" hidden></small>
         </label>
         <button class="button button-primary button-block" type="submit" data-submit-button>{{ t('Gửi OTP xác nhận', 'Send confirmation OTP') }}</button>

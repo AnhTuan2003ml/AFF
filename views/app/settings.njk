@@ -39,13 +39,12 @@
     </div>
     <div class="copy-field mb-refcode-code">
       <input type="text" readonly value="{{ currentUser.referralCode }}" data-copy-source aria-label="{{ t('Mã giới thiệu', 'Referral code') }}">
-      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép mã', 'Copy code') }}</button>
+      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép', 'Copy') }}</button>
     </div>
     <div class="copy-field mb-refcode-link">
       <input type="text" readonly value="{{ appOrigin or 'https://shoptikvn.com' }}/dang-ky?ref={{ currentUser.referralCode }}" data-copy-source aria-label="{{ t('Link đăng ký kèm mã giới thiệu', 'Sign-up link with referral code') }}">
-      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép link đăng ký', 'Copy sign-up link') }}</button>
+      <button class="button button-light" type="button" data-copy-button>{{ t('Sao chép', 'Copy') }}</button>
     </div>
-    <p class="mb-refcode-note">{{ t('Gửi mã hoặc link cho bạn bè — họ đăng ký (web hoặc tải app đăng nhập cùng tài khoản) là mạng lưới ghi nhận về bạn. Link tải app trên App Store/Google Play sẽ bổ sung khi app phát hành.', 'Send the code or link to friends — when they sign up (on web or the app with the same account), your network gets the credit. App Store/Google Play download links will be added when the app launches.') }}</p>
   </section>
 
   <section class="mb-panel" aria-label="{{ t('Tài khoản', 'Account') }}">

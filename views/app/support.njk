@@ -5,7 +5,7 @@
   <section class="page-heading">
     <div>
       <h1>{{ t('Hỗ trợ', 'Support') }}</h1>
-      <p>{{ t('Gửi yêu cầu theo mẫu cho từng vấn đề. Đội CSKH xử lý riêng từng yêu cầu và phản hồi qua email cùng thông báo trên ứng dụng.', 'Submit a request form for each issue. Our support team handles each request and replies by email and in-app notification.') }}</p>
+      <p>{{ t('Gửi yêu cầu theo mẫu. CSKH phản hồi qua email và thông báo.', 'Submit a request form. Support replies by email and notification.') }}</p>
     </div>
   </section>
 
@@ -23,7 +23,7 @@
            cần biết tài khoản/đơn hàng để đối soát, và phản hồi về đúng hộp thư. #}
         <div class="px-alert support-guest-alert" role="status">
           <span class="mb-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
-          <div class="mb-alert-copy"><b>{{ t('Đăng nhập để gửi yêu cầu hỗ trợ', 'Sign in to submit a support request') }}</b><small>{{ t('Đội CSKH cần biết tài khoản và đơn hàng của bạn để đối soát; phản hồi về đúng hộp thư và thông báo trong ứng dụng.', 'Support needs your account and orders to reconcile; replies go to your inbox and in-app notifications.') }}</small></div>
+          <div class="mb-alert-copy"><b>{{ t('Đăng nhập để gửi yêu cầu hỗ trợ', 'Sign in to submit a support request') }}</b><small>{{ t('Cần tài khoản và đơn của bạn để đối soát; phản hồi qua email và thông báo.', 'We need your account and orders to reconcile; replies go by email and notification.') }}</small></div>
           <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập', 'Sign in') }}</a>
         </div>
       {% endif %}
@@ -75,7 +75,7 @@
         </label>
 
         <p class="support-request-success" data-support-success hidden role="status">
-          {{ t('Đã gửi yêu cầu. Đội CSKH sẽ xử lý và phản hồi qua email cùng thông báo trên ứng dụng.', 'Request sent. Support will handle it and reply by email and in-app notification.') }}
+          {{ t('Đã gửi. CSKH sẽ phản hồi qua email và thông báo.', 'Sent. Support will reply by email and notification.') }}
         </p>
         <p class="field-error" data-support-error hidden role="alert"></p>
 
@@ -129,7 +129,7 @@
           <span class="support-thread-foot-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
           </span>
-          <span>{{ t('Đội CSKH thường phản hồi trong vòng 24 giờ. Bạn sẽ nhận thông báo trên ứng dụng và email khi có phản hồi mới.', 'Support usually replies within 24 hours. You’ll get an in-app and email notification when there’s a new reply.') }}</span>
+          <span>{{ t('CSKH thường phản hồi trong 24 giờ. Bạn sẽ nhận thông báo và email.', 'Support usually replies within 24 hours. You’ll get a notification and email.') }}</span>
         </div>
       </aside>
     {% endif %}

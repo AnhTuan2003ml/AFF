@@ -9658,10 +9658,10 @@ button.cal-cell.is-today:hover:not(:disabled) {
   margin: 10px 0 0;
 }
 
-.mb-refcode-note {
-  margin: 10px 2px 0;
-  font-size: 12.5px;
-  color: var(--lx-ink-2);
+/* Hai nút Sao chép cùng bề rộng để ô mã và ô link bằng nhau. */
+.mb-refcode .copy-field .button {
+  flex: 0 0 auto;
+  min-width: 92px;
 }
 
 .referral-code-panel .panel-note {
