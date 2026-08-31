@@ -9908,27 +9908,76 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .discover-card-media > img.is-placeholder { object-fit: contain; padding: 22px; opacity: .85; }
 
 /* ============================================================
-   ĐƠN HÀNG — cụm 4 danh mục gọn, KHÔNG cuộn ngang.
-   Ghi đè các rule flex-wrap:nowrap / overflow-x:auto ở trên
-   (đặt cuối file nên thắng mọi rule cùng độ đặc hiệu).
-   Desktop: hàng pill tự xuống dòng. Mobile: lưới 2×2 cân đối.
+   ĐƠN HÀNG — chuẩn hoá như trang thương mại chuyên nghiệp.
+   (đặt cuối file nên thắng mọi rule cùng độ đặc hiệu ở trên)
    ============================================================ */
+
+/* Hàng đầu thẻ: nhãn sàn sát TRÁI, trạng thái sát PHẢI cùng hàng — có chủ
+   đích, không còn lơ lửng giữa. Mã đơn xuống dòng riêng ngay dưới. */
+.orders-history-meta {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: space-between !important;
+  gap: 10px;
+  width: 100%;
+}
+.orders-history-meta .orders-history-status {
+  margin: 0 0 0 auto !important;
+  flex: 0 0 auto;
+}
+.orders-history-info > .orders-history-code {
+  display: inline-flex;
+  margin: 2px 0 0;
+}
+
+/* Thanh danh mục: MỘT hàng 4 tab đều nhau, kiểu gạch chân (underline) như
+   Shopee/Lazada — không pill, không cuộn ngang, không xuống dòng. */
 .orders-history-tabs,
 .orders-history-controls .orders-history-tabs {
   display: flex !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
   overflow: visible !important;
+  gap: 0 !important;
+  width: 100%;
+  border-bottom: 1px solid var(--lx-line);
 }
-@media (max-width: 640px) {
-  .orders-history-tabs,
-  .orders-history-controls .orders-history-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
+.orders-history-tabs a {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 6px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--lx-muted) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  position: relative;
+  box-shadow: none !important;
+}
+.orders-history-tabs a:hover {
+  color: var(--lx-ink-2) !important;
+}
+.orders-history-tabs a.active {
+  color: var(--lx-orange) !important;
+  background: transparent !important;
+}
+.orders-history-tabs a.active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2.5px;
+  border-radius: 3px;
+  background: var(--lx-orange);
+}
+@media (max-width: 380px) {
   .orders-history-tabs a {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
+    font-size: 12px !important;
+    padding: 11px 3px !important;
   }
 }

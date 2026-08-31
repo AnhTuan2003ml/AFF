@@ -120,8 +120,8 @@
                 <div class="orders-history-meta">
                   <span class="orders-history-platform platform-{{ order.platform | lower }}">{% if order.platform == 'TIKTOK' %}TikTok{% elif order.platform == 'LAZADA' %}Lazada{% else %}Shopee{% endif %}</span>
                   {{ order_status(order) }}
-                  <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}{{ t('Chưa có mã đơn', 'No order code yet') }}{% endif %}</span>
                 </div>
+                <span class="orders-history-code">{% if order.platform_order_id %}#{{ order.platform_order_id }}{% else %}{{ t('Chưa có mã đơn', 'No order code yet') }}{% endif %}</span>
 
                 {% if order.reference_code %}
                   <button type="button" class="orders-history-ref" data-copy-ref="{{ order.reference_code }}"
