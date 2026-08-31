@@ -9916,14 +9916,14 @@ button.cal-cell.is-today:hover:not(:disabled) {
    đích, không còn lơ lửng giữa. Mã đơn xuống dòng riêng ngay dưới. */
 .orders-history-meta {
   display: flex !important;
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
   align-items: center;
-  justify-content: space-between !important;
-  gap: 10px;
+  justify-content: flex-start !important;
+  gap: 8px;
   width: 100%;
 }
 .orders-history-meta .orders-history-status {
-  margin: 0 0 0 auto !important;
+  margin: 0 !important;
   flex: 0 0 auto;
 }
 .orders-history-info > .orders-history-code {
