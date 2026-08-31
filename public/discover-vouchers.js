@@ -19,6 +19,19 @@
   var loaded = false;
   var active = false;
 
+  // Tab sản phẩm không liên quan tới voucher: ẩn khi mở Voucher, hiện lại khi rời.
+  var IRRELEVANT_LISTS = ["recommend", "best", "exclusive"];
+  var irrelevantTabs = [].slice
+    .call(page.querySelectorAll("[data-discover-livelist]"))
+    .filter(function (b) {
+      return IRRELEVANT_LISTS.indexOf(b.getAttribute("data-discover-livelist")) !== -1;
+    });
+  function toggleIrrelevantTabs(hidden) {
+    irrelevantTabs.forEach(function (b) {
+      b.hidden = hidden;
+    });
+  }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -150,6 +163,7 @@
     if (normalGrid) normalGrid.hidden = true;
     if (live) live.hidden = true;
     if (filterEmpty) filterEmpty.hidden = true;
+    toggleIrrelevantTabs(true);
     section.hidden = false;
     try {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -162,6 +176,7 @@
     active = false;
     voucherBtn.classList.remove("active");
     voucherBtn.setAttribute("aria-pressed", "false");
+    toggleIrrelevantTabs(false);
     section.hidden = true;
   }
 
