@@ -398,6 +398,7 @@ export async function registerAppRoutes(
     const queryParams = request.query as Record<string, unknown>;
     const allowedStatuses = [
       "ALL",
+      "WAITING",
       "PENDING",
       "APPROVED",
       "PAID",
@@ -428,10 +429,10 @@ export async function registerAppRoutes(
     }
 
     const filterStatus = status === "PAID" ? "APPROVED" : status;
-    // Tab "Đã về ví" chỉ gồm đơn đã hết thời gian giữ tiền và đã cộng vào
-    // số dư khả dụng; tab "Đã duyệt" là đơn hoàn thành còn đang chờ.
-    const releasedFilter =
-      status === "PAID" ? "RELEASED" : status === "APPROVED" ? "HELD" : "ALL";
+    // Tab "Đã duyệt" gồm TẤT CẢ đơn đã duyệt (đơn thành công) — cả đơn còn chờ
+    // về ví lẫn đơn đã về ví — nên đơn cũ không "biến mất" khi tiền đã về ví.
+    // Tab "Đã về ví" chỉ là nhóm con: đơn duyệt đã hết hạn giữ và đã cộng số dư.
+    const releasedFilter = status === "PAID" ? "RELEASED" : "ALL";
     // Bấm "Mua ngay" tạo ngay một bản ghi affiliate_links. Trước khi báo cáo
     // sàn trả về mã đơn thật, bản ghi đó hiện trong lịch sử dưới dạng lượt mua
     // "chờ sàn xác nhận" và tự biến mất khi đồng bộ gán được đơn cho link.

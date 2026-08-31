@@ -9906,3 +9906,29 @@ button.cal-cell.is-today:hover:not(:disabled) {
 /* Logo ShopTik thay ảnh placeholder — không cắt, có đệm. */
 .voucher-logo.is-placeholder { object-fit: contain; padding: 12px; background: #fff7f2; }
 .discover-card-media > img.is-placeholder { object-fit: contain; padding: 22px; opacity: .85; }
+
+/* ============================================================
+   ĐƠN HÀNG — cụm 4 danh mục gọn, KHÔNG cuộn ngang.
+   Ghi đè các rule flex-wrap:nowrap / overflow-x:auto ở trên
+   (đặt cuối file nên thắng mọi rule cùng độ đặc hiệu).
+   Desktop: hàng pill tự xuống dòng. Mobile: lưới 2×2 cân đối.
+   ============================================================ */
+.orders-history-tabs,
+.orders-history-controls .orders-history-tabs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+}
+@media (max-width: 640px) {
+  .orders-history-tabs,
+  .orders-history-controls .orders-history-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .orders-history-tabs a {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}

@@ -9,6 +9,11 @@ import { query, type Database } from "../db.js";
  *   bấm mua để họ thấy giao dịch, và tự biến mất khi lượt đồng bộ gán được
  *   đơn thật cho link đó.
  *
+ * Ba giai đoạn tách bạch theo tab (tránh lẫn "chờ" và "duyệt"):
+ * - `WAITING`  (Đang chờ)  — INTENT: đã mua nhưng sàn chưa trả mã đơn.
+ * - `PENDING`  (Đang duyệt) — ORDER: sàn đã có đơn, đang chờ duyệt.
+ * - `APPROVED` (Đã duyệt)  — ORDER: đơn thành công (gồm cả chờ về ví và đã về ví).
+ *
  * Trạng thái riêng của INTENT:
  * - `AWAITING`  — còn trong hạn ghi nhận (`affiliate_attribution_days`).
  * - `UNTRACKED` — quá hạn mà sàn vẫn không trả đơn nào.
@@ -150,8 +155,9 @@ const HISTORY_SQL = `
     FROM affiliate_links il
     WHERE il.user_id = $1
       AND il.campaign = 'instantbuy'
-      -- Lượt mua chưa có đơn chỉ nằm ở nhóm "đang chờ".
-      AND $2 IN ('ALL', 'PENDING')
+      -- Lượt mua chưa có đơn thật chỉ nằm ở tab "Đang chờ" (WAITING) — tách
+      -- khỏi tab "Đang duyệt" (PENDING) vốn chỉ dành cho đơn thật đã về.
+      AND $2 IN ('ALL', 'WAITING')
       AND $4 <> 'RELEASED'
       AND NOT EXISTS (
         SELECT 1 FROM orders mo WHERE mo.affiliate_link_id = il.id

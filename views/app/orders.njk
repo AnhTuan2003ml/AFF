@@ -48,13 +48,13 @@
         {% endif %}
 
         <nav class="orders-history-tabs" aria-label="{{ t('Lọc trạng thái đơn', 'Filter by status') }}">
+          {# Bốn danh mục gọn cho mobile (không cuộn ngang). "Đã về ví" gộp vào
+             "Đã duyệt" (đơn đã về ví có nhãn riêng trong thẻ); bỏ tab "Sản phẩm
+             đã xem" trùng ý với "Đang chờ". #}
           {{ order_tab('ALL', t('Tất cả', 'All')) }}
-          {{ order_tab('PENDING', t('Đang chờ', 'Pending')) }}
+          {{ order_tab('WAITING', t('Đang chờ', 'Waiting')) }}
+          {{ order_tab('PENDING', t('Đang duyệt', 'Under review')) }}
           {{ order_tab('APPROVED', t('Đã duyệt', 'Approved')) }}
-          {{ order_tab('PAID', t('Đã về ví', 'In wallet')) }}
-          {# "Sản phẩm đã xem" là một tab ngay tại đây (cạnh "Đã về ví") — hàng
-             tab luôn hiện nên chuyển qua lại các lựa chọn không bị lạc trang. #}
-          {{ order_tab('VIEWED', t('Sản phẩm đã xem', 'Viewed products')) }}
         </nav>
       </div>
     </header>

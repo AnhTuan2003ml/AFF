@@ -73,24 +73,19 @@ describe("listOrderHistory — lượt bấm mua hiện ngay trong lịch sử",
       product_original_price_vnd: "650000",
     });
 
-    // Vẫn thấy khi lọc tab "Đang chờ", nhưng không lọt vào tab đã duyệt/đã về ví.
+    // Hiện ở tab "Đang chờ" (WAITING), KHÔNG lọt vào "Đang duyệt" (PENDING)
+    // — vốn chỉ dành cho đơn thật — cũng không vào tab đã duyệt/đã về ví.
     expect(
-      await listOrderHistory(db, { ...baseParams, userId, status: "PENDING" }),
+      await listOrderHistory(db, { ...baseParams, userId, status: "WAITING" }),
     ).toHaveLength(1);
     expect(
-      await listOrderHistory(db, {
-        ...baseParams,
-        userId,
-        status: "APPROVED",
-        released: "HELD",
-      }),
+      await listOrderHistory(db, { ...baseParams, userId, status: "PENDING" }),
     ).toHaveLength(0);
     expect(
       await listOrderHistory(db, {
         ...baseParams,
         userId,
         status: "APPROVED",
-        released: "RELEASED",
       }),
     ).toHaveLength(0);
   });
