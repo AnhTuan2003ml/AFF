@@ -63,10 +63,17 @@ export async function registerPublicRoutes(
     }),
   );
 
+  // Nội dung tĩnh, công khai, chỉ đổi khi admin sửa cấu hình/tăng version →
+  // cho Cloudflare cache ở edge (gần người dùng) để tải nguội tức thì; TTL ngắn
+  // + stale-while-revalidate nên số liệu nghiệp vụ vẫn tươi trong vài phút.
+  const POLICY_CACHE =
+    "public, max-age=120, s-maxage=300, stale-while-revalidate=600";
+
   app.get("/chinh-sach-nguoi-dung", async (_request, reply) => {
     const policy = buildUserPolicy(
       await loadUserPolicyFacts(deps.db, deps.config),
     );
+    reply.header("cache-control", POLICY_CACHE);
     return reply.view("legal/user-policy.njk", {
       pageTitle: policy.title,
       policy,
@@ -78,6 +85,7 @@ export async function registerPublicRoutes(
     const policy = buildUserPolicy(
       await loadUserPolicyFacts(deps.db, deps.config),
     );
+    reply.header("cache-control", POLICY_CACHE);
     return reply
       .type("text/html; charset=utf-8")
       .view("legal/user-policy-body.njk", { policy });
