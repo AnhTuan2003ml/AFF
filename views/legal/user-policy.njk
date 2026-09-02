@@ -2,7 +2,7 @@
 
 {% block content %}
   <article class="legal-page policy-page">
-    <span class="eyebrow">PHIÊN BẢN {{ policy.version }}</span>
+    <span class="eyebrow">{{ t('PHIÊN BẢN', 'VERSION') }} {{ policy.version }}</span>
     <h1>{{ policy.title }}</h1>
     {% include "legal/user-policy-body.njk" %}
   </article>
