@@ -138,7 +138,7 @@
       .catch(function () { el.doBtn.disabled = false; el.doBtn.textContent = "Thử lại"; });
   }
 
-  function open() {
+  function open(preloaded) {
     lastFocused = document.activeElement;
     // đóng menu tài khoản nếu đang mở
     Array.prototype.forEach.call(document.querySelectorAll(".open"), function (n) {
@@ -152,7 +152,9 @@
       [{ transform: "translateY(16px) scale(.97)", opacity: 0 }, { transform: "none", opacity: 1 }],
       { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" },
     );
-    load();
+    // Auto-mở đã có sẵn state (preloaded) → chỉ vẽ, khỏi gọi lại API.
+    if (preloaded && state) render();
+    else load();
     var c = scrim.querySelector("[data-checkin-close]");
     if (c) c.focus();
   }
@@ -180,4 +182,23 @@
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !scrim.hidden) close(); });
   if (el.doBtn) el.doBtn.addEventListener("click", checkIn);
+
+  // Tự bật popup điểm danh khi VÀO trang nếu hôm nay CHƯA điểm danh; đã điểm
+  // danh thì không hiện (vẫn mở tay được qua nút "Điểm danh"). Chờ quảng cáo vào
+  // trang xong (sự kiện entry-promo-done) để hai popup không chồng nhau; có
+  // timeout dự phòng phòng khi quảng cáo không phát sự kiện.
+  var autoEvaluated = false;
+  function autoEval() {
+    if (autoEvaluated) return;
+    autoEvaluated = true;
+    fetch("/app/checkin", { credentials: "same-origin", headers: { accept: "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d && !d.checkedInToday) { state = d; open(true); } })
+      .catch(function () {});
+  }
+  document.addEventListener("entry-promo-done", autoEval);
+  window.setTimeout(function () {
+    var promo = document.querySelector("[data-entry-promo]");
+    if (!(promo && !promo.hidden)) autoEval();
+  }, 3000);
 })();

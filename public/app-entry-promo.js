@@ -1,8 +1,21 @@
 (() => {
   "use strict";
 
+  // Báo cho checkin.js biết "quảng cáo vào trang đã xong lượt" (đã đóng, hoặc
+  // không hiện) để nó tự mở popup điểm danh nếu hôm nay chưa điểm danh. Phát
+  // đúng MỘT lần ở mọi nhánh kết thúc để hai popup không chồng lên nhau.
+  let doneSignaled = false;
+  const signalDone = () => {
+    if (doneSignaled) return;
+    doneSignaled = true;
+    document.dispatchEvent(new CustomEvent("entry-promo-done"));
+  };
+
   const root = document.querySelector("[data-entry-promo]");
-  if (!(root instanceof HTMLElement)) return;
+  if (!(root instanceof HTMLElement)) {
+    signalDone();
+    return;
+  }
 
   // Hiện MỘT LẦN mỗi lần mở web (theo phiên trình duyệt): đánh dấu ngay khi
   // hiện nên đóng xong, chuyển trang/tab menu trong cùng phiên không hiện lại;
@@ -12,7 +25,10 @@
   try {
     daHien = sessionStorage.getItem(SEEN_KEY) === "1";
   } catch (e) {}
-  if (daHien) return;
+  if (daHien) {
+    signalDone();
+    return;
+  }
 
   const closeButton = root.querySelector("[data-entry-promo-close]");
   const imageLink = root.querySelector("[data-entry-promo-image-link]");
@@ -44,7 +60,10 @@
       !(badgeInline instanceof HTMLElement) ||
       !(titleCopy instanceof HTMLElement) ||
       !(descriptionCopy instanceof HTMLElement) ||
-      !(cta instanceof HTMLAnchorElement)) return;
+      !(cta instanceof HTMLAnchorElement)) {
+    signalDone();
+    return;
+  }
 
   const body = document.body;
   let previousFocus = null;
@@ -83,12 +102,10 @@
     root.hidden = true;
     body.classList.remove("is-entry-promo-open");
 
-    // Sau khi đóng quảng cáo: tự mở popup điểm danh. Quảng cáo chỉ hiện một lần
-    // mỗi ngày (skipKey) nên việc này cũng chỉ xảy ra một lần khi vào trang.
-    window.setTimeout(() => {
-      const checkinTrigger = document.querySelector("[data-checkin-open]");
-      if (checkinTrigger instanceof HTMLElement) checkinTrigger.click();
-    }, 320);
+    // Đóng quảng cáo xong mới tới lượt popup điểm danh: báo checkin.js tự quyết
+    // (chỉ mở nếu hôm nay CHƯA điểm danh). Không tự click cứng như trước để đã
+    // điểm danh thì không bị bật popup.
+    signalDone();
   };
 
   closeButton.addEventListener("click", close);
@@ -204,12 +221,18 @@
     })
     .then((payload) => {
       const promo = payload && typeof payload === "object" ? payload.promo : null;
-      if (!promo || typeof promo.id !== "string") return;
+      if (!promo || typeof promo.id !== "string") {
+        signalDone();
+        return;
+      }
 
       // Quảng cáo chỉ hiển thị dưới dạng ảnh — bỏ qua nếu chưa có ảnh, tránh
       // hiện popup chỉ toàn chữ. Đã bấm "Bỏ qua" hôm nay thì đã return từ đầu
       // file (skipKey), nên tới đây là còn phép hiện quảng cáo.
-      if (typeof promo.imageUrl !== "string" || promo.imageUrl.trim().length === 0) return;
+      if (typeof promo.imageUrl !== "string" || promo.imageUrl.trim().length === 0) {
+        signalDone();
+        return;
+      }
 
       bindPromo(promo);
       // Hiện thẳng overlay giữa màn hình khi vào trang — không cần nút "Ưu đãi"
@@ -218,5 +241,6 @@
     })
     .catch(() => {
       // Không chặn giao diện chính nếu tải quảng cáo thất bại.
+      signalDone();
     });
 })();
