@@ -213,6 +213,12 @@ export default function AccountScreen() {
             divider
           />
           <MenuRow
+            icon="ribbon-outline"
+            label={t('Đăng ký KOL/KOC', 'Become a KOL/KOC')}
+            onPress={() => router.push('/kol')}
+            divider
+          />
+          <MenuRow
             icon="compass-outline"
             label={t('Khám phá ưu đãi', 'Explore deals')}
             onPress={() => router.push('/(tabs)/discover')}
