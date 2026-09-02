@@ -404,16 +404,21 @@ export default function KolScreen() {
         )}
       </ScrollView>
 
-      {/* Mũi tên xuống: bấm là cuộn thẳng tới cuối điều khoản (chỗ checkbox).
-          Hiện khi chưa tới cuối; cuộn tới cuối thì ẩn, cuộn lên lại hiện. */}
+      {/* Mũi tên xuống + nhãn "Kéo xuống": bấm là cuộn tới cuối điều khoản (chỗ
+          checkbox). Hiện khi chưa tới cuối; cuộn tới cuối thì ẩn, cuộn lên lại hiện. */}
       {buoc === 'dieu-khoan' && !daDuyet && !daNop && !ganCuoi ? (
-        <Pressable
-          onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
-          style={styles.jump}
-          hitSlop={8}
-          accessibilityLabel={t('Xuống cuối điều khoản để xác nhận', 'Go to the end of the terms to confirm')}>
-          <Ionicons name="chevron-down" size={24} color={colors.onBrand} />
-        </Pressable>
+        <View style={styles.jumpWrap} pointerEvents="box-none">
+          <View style={styles.jumpLabel}>
+            <Text style={styles.jumpLabelText}>{t('Kéo xuống', 'Scroll down')}</Text>
+          </View>
+          <Pressable
+            onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
+            style={styles.jump}
+            hitSlop={8}
+            accessibilityLabel={t('Xuống cuối điều khoản để xác nhận', 'Go to the end of the terms to confirm')}>
+            <Ionicons name="chevron-down" size={24} color={colors.onBrand} />
+          </Pressable>
+        </View>
       ) : null}
     </View>
   );
@@ -481,11 +486,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
   },
-  jump: {
+  jumpWrap: {
     position: 'absolute',
     bottom: 28,
-    left: '50%',
-    marginLeft: -23,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    gap: 7,
+  },
+  jumpLabel: {
+    backgroundColor: colors.text,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  jumpLabelText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
+  jump: {
     width: 46,
     height: 46,
     borderRadius: 23,
