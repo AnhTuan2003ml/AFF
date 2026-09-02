@@ -99,14 +99,10 @@ export default function DiscoverScreen() {
   const [page, setPage] = useState(1);
   const listRef = useRef<FlatList<DiscoverProduct>>(null);
   const laVoucher = platform === 'shopee' && list === 'voucher';
-  const tabsAll = platform === 'lazada' ? LAZADA_TABS : SHOPEE_TABS;
-  // Voucher là danh sách riêng, không liên quan các list sản phẩm → khi đang ở
-  // tab Voucher thì ẩn Đề xuất/Bán chạy/Độc quyền (giữ Hot + Voucher).
-  const tabs = laVoucher
-    ? tabsAll.filter(
-        (t) => t.key !== 'recommend' && t.key !== 'best' && t.key !== 'exclusive',
-      )
-    : tabsAll;
+  // Luôn hiện đủ hàng tab (Hot/Voucher/Đề xuất/Bán chạy/Độc quyền) kể cả khi
+  // đang xem Voucher — để không "mất" các đề xuất sản phẩm; bấm tab sản phẩm là
+  // quay lại lưới ngay. `laVoucher` vẫn quyết định hiển thị voucher hay lưới.
+  const tabs = platform === 'lazada' ? LAZADA_TABS : SHOPEE_TABS;
 
   // "Xem thêm" ở Trang chủ điều hướng kèm ?list=... → chọn đúng hạng mục.
   useEffect(() => {
