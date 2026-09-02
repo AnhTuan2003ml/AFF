@@ -27,6 +27,7 @@ import {
 } from '@/api/features';
 import { BrandHeader } from '@/components/BrandHeader';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { moLinkMua } from '@/lib/mua';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -72,6 +73,26 @@ function pageWindow(cur: number, total: number): number[] {
 }
 
 export default function DiscoverScreen() {
+  const t = useT();
+  // Dịch nhãn tab: tra theo chuỗi nhãn tiếng Việt gốc trong SHOPEE_TABS/LAZADA_TABS.
+  const dichNhan = (nhan: string): string => {
+    switch (nhan) {
+      case '🔥 Hot':
+        return t('🔥 Hot', '🔥 Hot');
+      case '🎟️ Voucher':
+        return t('🎟️ Voucher', '🎟️ Voucher');
+      case 'Đề xuất':
+        return t('Đề xuất', 'Recommended');
+      case 'Bán chạy':
+        return t('Bán chạy', 'Best sellers');
+      case 'Độc quyền':
+        return t('Độc quyền', 'Exclusive');
+      case '🔥 Hoa hồng cao':
+        return t('🔥 Hoa hồng cao', '🔥 High commission');
+      default:
+        return nhan;
+    }
+  };
   const params = useLocalSearchParams<{ list?: string }>();
   const [platform, setPlatform] = useState<Platform>('shopee');
   const [list, setList] = useState<TabKey>('best');
@@ -133,9 +154,12 @@ export default function DiscoverScreen() {
   const header = (
     <View style={styles.head}>
       <Text style={styles.eyebrow}>SHOPPING DISCOVERY</Text>
-      <Text style={styles.h1}>Sản phẩm đáng để khám phá.</Text>
+      <Text style={styles.h1}>{t('Sản phẩm đáng để khám phá.', 'Products worth discovering.')}</Text>
       <Text style={styles.sub}>
-        Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.
+        {t(
+          'Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.',
+          'Browse products, compare cashback and head straight to the store you want to buy from.',
+        )}
       </Text>
       {/* CẤP 1 — chọn sàn (mặc định Shopee). */}
       <View style={styles.platSwitch}>
@@ -172,7 +196,7 @@ export default function DiscoverScreen() {
                 on && noiBat && styles.tabHotOn,
               ]}>
               <Text style={[styles.tabText, noiBat && styles.tabHotText, on && styles.tabTextOn]}>
-                {t.nhan}
+                {dichNhan(t.nhan)}
               </Text>
             </Pressable>
           );
@@ -207,8 +231,13 @@ export default function DiscoverScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyTitle}>Chưa có voucher</Text>
-              <Text style={styles.emptyNote}>Mã giảm giá được làm mới mỗi ngày. Quay lại sau nhé.</Text>
+              <Text style={styles.emptyTitle}>{t('Chưa có voucher', 'No vouchers yet')}</Text>
+              <Text style={styles.emptyNote}>
+                {t(
+                  'Mã giảm giá được làm mới mỗi ngày. Quay lại sau nhé.',
+                  'Discount codes refresh every day. Check back soon.',
+                )}
+              </Text>
             </View>
           }
           renderItem={({ item }) => <TheVoucher v={item} />}
@@ -229,10 +258,12 @@ export default function DiscoverScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="cube-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyTitle}>Kho sản phẩm đang trống</Text>
+              <Text style={styles.emptyTitle}>{t('Kho sản phẩm đang trống', 'The product catalog is empty')}</Text>
               <Text style={styles.emptyNote}>
-                Danh sách này do tiến trình thu thập nền đổ về theo lịch. Quản trị
-                viên bật lịch ở trang vận hành là sản phẩm sẽ hiện ra đây.
+                {t(
+                  'Danh sách này do tiến trình thu thập nền đổ về theo lịch. Quản trị viên bật lịch ở trang vận hành là sản phẩm sẽ hiện ra đây.',
+                  'This list is populated by a scheduled background harvester. Once an admin enables the schedule in the operations page, products will appear here.',
+                )}
               </Text>
             </View>
           }
@@ -270,9 +301,13 @@ export default function DiscoverScreen() {
 }
 
 function TheVoucher({ v }: { v: ShopeeVoucher }) {
+  const t = useT();
   async function chep() {
     await Clipboard.setStringAsync(v.code);
-    Alert.alert('Đã chép mã', v.code + ' — dán vào Shopee khi thanh toán.');
+    Alert.alert(
+      t('Đã chép mã', 'Code copied'),
+      v.code + t(' — dán vào Shopee khi thanh toán.', ' — paste it in Shopee at checkout.'),
+    );
   }
   async function dungNgay() {
     await Clipboard.setStringAsync(v.code); // chép sẵn để dán ở Shopee
@@ -308,10 +343,10 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
         {v.expiry_text ? <Text style={styles.vExpiry}>{v.expiry_text}</Text> : null}
         <View style={styles.vActions}>
           <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, pressed && { opacity: 0.7 }]}>
-            <Text style={styles.vBtnCopyText} numberOfLines={1}>Mã: {v.code}</Text>
+            <Text style={styles.vBtnCopyText} numberOfLines={1}>{t('Mã:', 'Code:')} {v.code}</Text>
           </Pressable>
           <Pressable onPress={dungNgay} style={({ pressed }) => [styles.vBtnUse, pressed && { opacity: 0.7 }]}>
-            <Text style={styles.vBtnUseText}>Dùng ngay ↗</Text>
+            <Text style={styles.vBtnUseText}>{t('Dùng ngay ↗', 'Use now ↗')}</Text>
           </Pressable>
         </View>
       </View>
@@ -320,6 +355,7 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
 }
 
 function TheSanPham({ p }: { p: DiscoverProduct }) {
+  const t = useT();
   const { user } = useSession();
   const [dang, setDang] = useState(false);
   const gia = p.price_vnd ? Number(p.price_vnd) : null;
@@ -341,8 +377,8 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
       await moLinkMua(p.product_url);
     } catch (e) {
       Alert.alert(
-        'Chưa mở được',
-        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+        t('Chưa mở được', 'Could not open'),
+        e instanceof Error && e.message ? e.message : t('Thử lại sau ít phút.', 'Please try again in a few minutes.'),
       );
     } finally {
       setDang(false);
@@ -390,14 +426,14 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
           {p.name}
         </Text>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{gia !== null ? vnd(gia) : 'Đang cập nhật'}</Text>
+          <Text style={styles.price}>{gia !== null ? vnd(gia) : t('Đang cập nhật', 'Updating')}</Text>
           {giaGoc !== null && gia !== null && giaGoc > gia && (
             <Text style={styles.priceOld}>{vnd(giaGoc)}</Text>
           )}
         </View>
         {hoaHong !== null && (
           <View style={styles.cashPill}>
-            <Text style={styles.cashText}>Hoàn tới {vnd(hoaHong)}</Text>
+            <Text style={styles.cashText}>{t('Hoàn tới', 'Up to')} {vnd(hoaHong)}</Text>
           </View>
         )}
         <Pressable
@@ -409,7 +445,7 @@ function TheSanPham({ p }: { p: DiscoverProduct }) {
           ) : (
             <>
               <Ionicons name="cart-outline" size={14} color={colors.onBrand} />
-              <Text style={styles.buyText}>Mua nhận hoàn tiền</Text>
+              <Text style={styles.buyText}>{t('Mua nhận hoàn tiền', 'Buy & get cashback')}</Text>
             </>
           )}
         </Pressable>

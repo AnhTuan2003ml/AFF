@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -28,6 +29,7 @@ export function AuthCard({
   children: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <KeyboardAvoidingView
@@ -54,7 +56,10 @@ export function AuthCard({
           <View style={styles.secure}>
             <Ionicons name="lock-closed" size={13} color={colors.muted} />
             <Text style={styles.secureText}>
-              Kết nối bảo mật · ShopTik không lưu mật khẩu tài khoản sàn của bạn
+              {t(
+                'Kết nối bảo mật · ShopTik không lưu mật khẩu tài khoản sàn của bạn',
+                'Secure connection · ShopTik never stores your marketplace account password',
+              )}
             </Text>
           </View>
         </View>

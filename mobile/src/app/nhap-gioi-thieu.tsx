@@ -15,6 +15,7 @@ import {
 
 import { guiMaNguoiGioiThieu } from '@/api/features';
 import { Mascot, type CamioMood } from '@/components/Mascot';
+import { useT } from '@/i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -23,6 +24,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
  * chưa gõ → hào hứng khi đang gõ → ngạc nhiên nếu mã sai → tự tin khi xong.
  */
 export default function NhapGioiThieuScreen() {
+  const t = useT();
   const qc = useQueryClient();
   const [ma, setMa] = useState('');
   const [trangThai, setTrangThai] = useState<'cho' | 'loi' | 'xong'>('cho');
@@ -70,11 +72,13 @@ export default function NhapGioiThieuScreen() {
             <View style={styles.giftBadge}>
               <Ionicons name="gift" size={17} color={colors.onBrand} />
             </View>
-            <Text style={styles.title}>Bạn có mã giới thiệu?</Text>
+            <Text style={styles.title}>{t('Bạn có mã giới thiệu?', 'Have a referral code?')}</Text>
           </View>
           <Text style={styles.subtitle}>
-            Nhập mã của bạn bè/đối tác để cả hai cùng nhận quyền lợi. Không có thì bỏ qua —
-            sau vẫn nhập bù được ở mục Giới thiệu.
+            {t(
+              'Nhập mã của bạn bè/đối tác để cả hai cùng nhận quyền lợi. Không có thì bỏ qua — sau vẫn nhập bù được ở mục Giới thiệu.',
+              'Enter a friend or partner code so both of you get benefits. No code? Skip it — you can still add one later under Referrals.',
+            )}
           </Text>
 
           <TextInput
@@ -83,7 +87,7 @@ export default function NhapGioiThieuScreen() {
               setMa(v);
               if (trangThai === 'loi') setTrangThai('cho');
             }}
-            placeholder="VD: 557922 hoặc NamDong"
+            placeholder={t('VD: 557922 hoặc NamDong', 'e.g. 557922 or NamDong')}
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -111,7 +115,7 @@ export default function NhapGioiThieuScreen() {
               color={colors.onBrand}
             />
             <Text style={styles.submitText}>
-              {trangThai === 'xong' ? 'Đã ghi nhận!' : gui.isPending ? 'Đang gửi…' : 'Xác nhận mã'}
+              {trangThai === 'xong' ? t('Đã ghi nhận!', 'Recorded!') : gui.isPending ? t('Đang gửi…', 'Sending…') : t('Xác nhận mã', 'Confirm code')}
             </Text>
           </Pressable>
         </View>
@@ -120,7 +124,7 @@ export default function NhapGioiThieuScreen() {
           <Pressable
             onPress={thoat}
             style={({ pressed }) => [styles.skip, pressed && { opacity: 0.7 }]}>
-            <Text style={styles.skipText}>Không có mã — bỏ qua bước này</Text>
+            <Text style={styles.skipText}>{t('Không có mã — bỏ qua bước này', 'No code — skip this step')}</Text>
           </Pressable>
         )}
       </ScrollView>

@@ -7,6 +7,7 @@ import { AuthCard } from '@/components/AuthCard';
 import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
 import { GoogleButton } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -18,6 +19,7 @@ import { colors } from '@/theme/tokens';
  */
 export default function RegisterScreen() {
   const { lamMoiHoSo } = useSession();
+  const t = useT();
   const [buoc, setBuoc] = useState<1 | 2>(1);
 
   const [hoTen, setHoTen] = useState('');
@@ -35,11 +37,16 @@ export default function RegisterScreen() {
   async function guiBuoc1() {
     setLoi(null);
     if (matKhau !== nhapLai) {
-      setLoi('Hai lần nhập mật khẩu chưa khớp nhau.');
+      setLoi(t('Hai lần nhập mật khẩu chưa khớp nhau.', 'The two passwords do not match.'));
       return;
     }
     if (!dongY) {
-      setLoi('Bạn cần đồng ý với các chính sách để tạo tài khoản.');
+      setLoi(
+        t(
+          'Bạn cần đồng ý với các chính sách để tạo tài khoản.',
+          'You must accept the policies to create an account.',
+        ),
+      );
       return;
     }
     setDangGui(true);
@@ -52,10 +59,16 @@ export default function RegisterScreen() {
         referralCode: gioiThieu.trim() || undefined,
         acceptPolicies: dongY,
       });
-      setTin(`Đã gửi mã 6 số tới ${email.trim()}. Mã có hiệu lực 10 phút.`);
+      setTin(
+        `${t('Đã gửi mã 6 số tới', 'Sent a 6-digit code to')} ${email.trim()}. ${t('Mã có hiệu lực 10 phút.', 'The code is valid for 10 minutes.')}`,
+      );
       setBuoc(2);
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Không tạo được tài khoản.');
+      setLoi(
+        e instanceof Error && e.message
+          ? e.message
+          : t('Không tạo được tài khoản.', 'Could not create the account.'),
+      );
     } finally {
       setDangGui(false);
     }
@@ -70,7 +83,11 @@ export default function RegisterScreen() {
       // Đóng cả màn đăng ký lẫn màn đăng nhập phía dưới nếu có.
       router.dismissAll();
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Mã xác nhận chưa đúng.');
+      setLoi(
+        e instanceof Error && e.message
+          ? e.message
+          : t('Mã xác nhận chưa đúng.', 'The verification code is incorrect.'),
+      );
     } finally {
       setDangGui(false);
     }
@@ -79,27 +96,27 @@ export default function RegisterScreen() {
   if (buoc === 2) {
     return (
       <AuthCard
-        title="Nhập mã OTP"
-        subtitle="Bước 2/2 — mở email và nhập mã 6 số vừa nhận.">
+        title={t('Nhập mã OTP', 'Enter OTP code')}
+        subtitle={t('Bước 2/2 — mở email và nhập mã 6 số vừa nhận.', 'Step 2/2 — open your email and enter the 6-digit code.')}>
         <ErrorBox message={loi} />
         <InfoBox message={tin} />
         <Field
-          label="Mã xác nhận"
+          label={t('Mã xác nhận', 'Verification code')}
           icon="key-outline"
           value={ma}
           onChangeText={setMa}
-          placeholder="6 số"
+          placeholder={t('6 số', '6 digits')}
           inputMode="numeric"
           maxLength={6}
         />
         <PrimaryButton
-          label="Xác nhận và vào app"
+          label={t('Xác nhận và vào app', 'Confirm and enter app')}
           onPress={guiBuoc2}
           loading={dangGui}
           disabled={ma.trim().length !== 6}
         />
         <Pressable onPress={() => setBuoc(1)} style={styles.link} hitSlop={8}>
-          <Text style={styles.linkText}>Nhập sai email? Quay lại bước 1</Text>
+          <Text style={styles.linkText}>{t('Nhập sai email? Quay lại bước 1', 'Wrong email? Back to step 1')}</Text>
         </Pressable>
       </AuthCard>
     );
@@ -107,58 +124,58 @@ export default function RegisterScreen() {
 
   return (
     <AuthCard
-      title="Tạo tài khoản"
-      subtitle="Bước 1/2 — nhập email đang hoạt động để nhận mã OTP">
+      title={t('Tạo tài khoản', 'Create account')}
+      subtitle={t('Bước 1/2 — nhập email đang hoạt động để nhận mã OTP', 'Step 1/2 — enter an active email to receive the OTP code')}>
       <ErrorBox message={loi} />
       <Field
-        label="Họ và tên"
+        label={t('Họ và tên', 'Full name')}
         icon="person-outline"
         value={hoTen}
         onChangeText={setHoTen}
-        placeholder="Nguyễn Văn A"
+        placeholder={t('Nguyễn Văn A', 'John Doe')}
         autoCapitalize="words"
       />
       <Field
-        label="Email"
+        label={t('Email', 'Email')}
         icon="mail-outline"
         value={email}
         onChangeText={setEmail}
-        placeholder="ten@email.com"
+        placeholder={t('ten@email.com', 'you@email.com')}
         inputMode="email"
       />
       <Field
-        label="Mật khẩu"
+        label={t('Mật khẩu', 'Password')}
         icon="lock-closed-outline"
         value={matKhau}
         onChangeText={setMatKhau}
-        placeholder="Ít nhất 10 ký tự"
+        placeholder={t('Ít nhất 10 ký tự', 'At least 10 characters')}
         secureTextEntry
-        hint="Ít nhất 10 ký tự, có chữ hoa, chữ thường và số."
+        hint={t('Ít nhất 10 ký tự, có chữ hoa, chữ thường và số.', 'At least 10 characters with uppercase, lowercase and a number.')}
       />
       <Field
-        label="Nhập lại mật khẩu"
+        label={t('Nhập lại mật khẩu', 'Confirm password')}
         icon="lock-closed-outline"
         value={nhapLai}
         onChangeText={setNhapLai}
-        placeholder="Nhập lại mật khẩu"
+        placeholder={t('Nhập lại mật khẩu', 'Re-enter your password')}
         secureTextEntry
       />
       <Field
-        label="Mã giới thiệu (không bắt buộc)"
+        label={t('Mã giới thiệu (không bắt buộc)', 'Referral code (optional)')}
         icon="pricetag-outline"
         value={gioiThieu}
         onChangeText={setGioiThieu}
-        placeholder="Nếu có"
+        placeholder={t('Nếu có', 'If any')}
       />
       <View style={styles.policyRow}>
         <Checkbox checked={dongY} onToggle={() => setDongY((v) => !v)}>
-          Tôi đồng ý với <Text style={styles.policyLink}>Điều khoản</Text>,{' '}
-          <Text style={styles.policyLink}>Chính sách quyền riêng tư</Text> và{' '}
-          <Text style={styles.policyLink}>Chính sách người dùng</Text>.
+          {t('Tôi đồng ý với', 'I agree to the')} <Text style={styles.policyLink}>{t('Điều khoản', 'Terms')}</Text>,{' '}
+          <Text style={styles.policyLink}>{t('Chính sách quyền riêng tư', 'Privacy Policy')}</Text> {t('và', 'and')}{' '}
+          <Text style={styles.policyLink}>{t('Chính sách người dùng', 'User Policy')}</Text>.
         </Checkbox>
       </View>
       <PrimaryButton
-        label="Gửi mã OTP  →"
+        label={t('Gửi mã OTP  →', 'Send OTP code  →')}
         onPress={guiBuoc1}
         loading={dangGui}
         disabled={
@@ -170,7 +187,7 @@ export default function RegisterScreen() {
       />
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>hoặc</Text>
+        <Text style={styles.dividerText}>{t('hoặc', 'or')}</Text>
         <View style={styles.dividerLine} />
       </View>
       <GoogleButton onError={setLoi} />

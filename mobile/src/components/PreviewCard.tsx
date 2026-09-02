@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ProductPreview } from '@/api/products';
+import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
@@ -25,6 +26,7 @@ export function PreviewCard({
   onMua: () => void;
   daDangNhap: boolean;
 }) {
+  const t = useT();
   const coHoan = product.buyerCashbackVnd !== null && product.buyerCashbackVnd > 0;
 
   return (
@@ -53,22 +55,24 @@ export function PreviewCard({
               )}
             </View>
           ) : (
-            <Text style={styles.priceUnknown}>Chưa lấy được giá</Text>
+            <Text style={styles.priceUnknown}>{t('Chưa lấy được giá', 'Price unavailable')}</Text>
           )}
         </View>
       </View>
 
       <View style={styles.cashbackBox}>
-        <Text style={styles.cashbackLabel}>Tiền hoàn dự kiến</Text>
+        <Text style={styles.cashbackLabel}>{t('Tiền hoàn dự kiến', 'Estimated cashback')}</Text>
         <Text style={[styles.cashbackValue, !coHoan && styles.cashbackPending]}>
-          {coHoan ? vnd(product.buyerCashbackVnd) : 'Đang cập nhật'}
+          {coHoan ? vnd(product.buyerCashbackVnd) : t('Đang cập nhật', 'Updating')}
         </Text>
       </View>
 
       {!product.dataVerified && (
         <Text style={styles.warn}>
-          Sàn chưa trả dữ liệu cho sản phẩm này — thông tin trên thẻ dựng từ đường
-          dẫn, số tiền hoàn có thể đổi sau khi đơn được ghi nhận.
+          {t(
+            'Sàn chưa trả dữ liệu cho sản phẩm này — thông tin trên thẻ dựng từ đường dẫn, số tiền hoàn có thể đổi sau khi đơn được ghi nhận.',
+            'The store has not returned data for this product — the details shown are built from the link, and the cashback amount may change after the order is recorded.',
+          )}
         </Text>
       )}
 
@@ -84,13 +88,16 @@ export function PreviewCard({
           <ActivityIndicator color={colors.onBrand} />
         ) : (
           <Text style={styles.buyText}>
-            {daDangNhap ? 'Mua ngay  →' : 'Đăng nhập để mua'}
+            {daDangNhap ? t('Mua ngay  →', 'Buy now  →') : t('Đăng nhập để mua', 'Sign in to buy')}
           </Text>
         )}
       </Pressable>
 
       <Text style={styles.note}>
-        Bấm Mua ngay sẽ mở sàn bằng trình duyệt hệ thống để giữ mã theo dõi đơn.
+        {t(
+          'Bấm Mua ngay sẽ mở sàn bằng trình duyệt hệ thống để giữ mã theo dõi đơn.',
+          'Tapping Buy now opens the store in your system browser to keep the order tracking code.',
+        )}
       </Text>
     </View>
   );

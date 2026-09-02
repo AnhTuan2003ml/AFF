@@ -24,11 +24,13 @@ import {
 } from '@/api/kol';
 import { ApiError } from '@/api/client';
 import { Checkbox, ErrorBox, Field, PrimaryButton } from '@/components/form';
+import { useT } from '@/i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 type KieuTep = 'cccdFront' | 'cccdBack' | 'faceVideo';
 
 export default function KolScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const [dongY, setDongY] = useState(false);
   const [buoc, setBuoc] = useState<'dieu-khoan' | 'form'>('dieu-khoan');
@@ -61,18 +63,18 @@ export default function KolScreen() {
   async function chonTep(kind: KieuTep) {
     const anh = kind !== 'faceVideo';
     Alert.alert(
-      anh ? 'Ảnh CCCD' : 'Video khuôn mặt',
+      anh ? t('Ảnh CCCD', 'ID card photo') : t('Video khuôn mặt', 'Face video'),
       undefined,
       [
         {
-          text: anh ? 'Chụp ảnh' : 'Quay video',
+          text: anh ? t('Chụp ảnh', 'Take photo') : t('Quay video', 'Record video'),
           onPress: () => moPicker(kind, 'camera'),
         },
         {
-          text: 'Chọn từ thư viện',
+          text: t('Chọn từ thư viện', 'Choose from library'),
           onPress: () => moPicker(kind, 'thu-vien'),
         },
-        { text: 'Hủy', style: 'cancel' },
+        { text: t('Hủy', 'Cancel'), style: 'cancel' },
       ],
     );
   }
@@ -84,13 +86,13 @@ export default function KolScreen() {
       if (nguon === 'camera') {
         const quyen = await ImagePicker.requestCameraPermissionsAsync();
         if (!quyen.granted) {
-          Alert.alert('Cần quyền máy ảnh', 'Vui lòng cấp quyền để chụp/quay.');
+          Alert.alert(t('Cần quyền máy ảnh', 'Camera permission needed'), t('Vui lòng cấp quyền để chụp/quay.', 'Please grant permission to take photos/videos.'));
           return;
         }
       } else {
         const quyen = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!quyen.granted) {
-          Alert.alert('Cần quyền thư viện', 'Vui lòng cấp quyền để chọn tệp.');
+          Alert.alert(t('Cần quyền thư viện', 'Library permission needed'), t('Vui lòng cấp quyền để chọn tệp.', 'Please grant permission to select files.'));
           return;
         }
       }
@@ -110,18 +112,18 @@ export default function KolScreen() {
         a.fileName ?? (anh ? `${kind}.jpg` : 'face.mp4');
       setTep((cu) => ({ ...cu, [kind]: { uri: a.uri, name, type } }));
     } catch {
-      Alert.alert('Không mở được', 'Có lỗi khi chọn tệp. Vui lòng thử lại.');
+      Alert.alert(t('Không mở được', "Couldn't open"), t('Có lỗi khi chọn tệp. Vui lòng thử lại.', 'An error occurred selecting the file. Please try again.'));
     }
   }
 
   async function gui() {
     setLoi(null);
     if (!info.fullName.trim() || !info.cccdNumber.trim() || !info.phone.trim()) {
-      setLoi('Vui lòng điền Họ tên, Số CCCD và Số điện thoại.');
+      setLoi(t('Vui lòng điền Họ tên, Số CCCD và Số điện thoại.', 'Please fill in your name, ID number and phone number.'));
       return;
     }
     if (!tep.cccdFront || !tep.cccdBack || !tep.faceVideo) {
-      setLoi('Vui lòng tải đủ ảnh CCCD 2 mặt và video khuôn mặt.');
+      setLoi(t('Vui lòng tải đủ ảnh CCCD 2 mặt và video khuôn mặt.', 'Please upload both sides of your ID and a face video.'));
       return;
     }
     setDangGui(true);
@@ -134,7 +136,7 @@ export default function KolScreen() {
       setXong(true);
     } catch (e) {
       setLoi(
-        e instanceof ApiError ? e.message : 'Gửi hồ sơ chưa thành công. Thử lại.',
+        e instanceof ApiError ? e.message : t('Gửi hồ sơ chưa thành công. Thử lại.', 'Submission failed. Please try again.'),
       );
     } finally {
       setDangGui(false);
@@ -169,49 +171,53 @@ export default function KolScreen() {
         }}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
-          <Text style={styles.backText}>Quay lại</Text>
+          <Text style={styles.backText}>{t('Quay lại', 'Back')}</Text>
         </Pressable>
 
         <Text style={styles.eyebrow}>
-          {daDuyet ? 'ĐỐI TÁC KOL/KOC' : 'ĐĂNG KÝ ĐỐI TÁC'}
+          {daDuyet ? t('ĐỐI TÁC KOL/KOC', 'KOL/KOC PARTNER') : t('ĐĂNG KÝ ĐỐI TÁC', 'PARTNER REGISTRATION')}
         </Text>
         <Text style={styles.h1}>
-          {daDuyet ? 'Đối tác chính thức' : 'Đăng ký KOL/KOC'}
+          {daDuyet ? t('Đối tác chính thức', 'Official partner') : t('Đăng ký KOL/KOC', 'Register as KOL/KOC')}
         </Text>
 
         {daDuyet ? (
           <>
             <View style={styles.card}>
               <Ionicons name="ribbon" size={40} color={colors.success} />
-              <Text style={styles.doneTitle}>Bạn đã là đối tác chính thức</Text>
+              <Text style={styles.doneTitle}>{t('Bạn đã là đối tác chính thức', 'You are an official partner')}</Text>
               <Text style={styles.doneSub}>
-                Hồ sơ đã được duyệt. Hợp đồng đã gửi tới email của bạn. Bạn không
-                cần đăng ký lại.
+                {t(
+                  'Hồ sơ đã được duyệt. Hợp đồng đã gửi tới email của bạn. Bạn không cần đăng ký lại.',
+                  'Your application was approved. The contract has been sent to your email. You do not need to register again.',
+                )}
               </Text>
             </View>
             {app ? (
               <View style={[styles.card, { alignItems: 'stretch', marginTop: 12 }]}>
-                <Text style={styles.section}>Thông tin đã đăng ký</Text>
-                <InfoRow label="Họ và tên" value={app.fullName} />
-                <InfoRow label="Số CCCD" value={app.cccdNumber} />
-                <InfoRow label="Ngày cấp / Nơi cấp" value={app.cccdIssue ?? '—'} />
-                <InfoRow label="Điện thoại" value={app.phone} />
-                <InfoRow label="Email" value={app.email ?? '—'} />
+                <Text style={styles.section}>{t('Thông tin đã đăng ký', 'Registered information')}</Text>
+                <InfoRow label={t('Họ và tên', 'Full name')} value={app.fullName} />
+                <InfoRow label={t('Số CCCD', 'ID number')} value={app.cccdNumber} />
+                <InfoRow label={t('Ngày cấp / Nơi cấp', 'Issue date / Issued by')} value={app.cccdIssue ?? '—'} />
+                <InfoRow label={t('Điện thoại', 'Phone')} value={app.phone} />
+                <InfoRow label={t('Email', 'Email')} value={app.email ?? '—'} />
                 <InfoRow
-                  label="Ngân hàng"
+                  label={t('Ngân hàng', 'Bank')}
                   value={`${app.bankAccount ?? '—'} ${app.bankName ?? ''}`.trim()}
                 />
-                <InfoRow label="Địa chỉ" value={app.address ?? '—'} />
+                <InfoRow label={t('Địa chỉ', 'Address')} value={app.address ?? '—'} />
               </View>
             ) : null}
           </>
         ) : daNop ? (
           <View style={styles.card}>
             <Ionicons name="checkmark-circle" size={40} color={colors.success} />
-            <Text style={styles.doneTitle}>Đã gửi hồ sơ</Text>
+            <Text style={styles.doneTitle}>{t('Đã gửi hồ sơ', 'Application submitted')}</Text>
             <Text style={styles.doneSub}>
-              Đội ngũ đang xét duyệt hồ sơ của bạn. Bạn sẽ nhận thông báo và hợp
-              đồng qua email khi được duyệt.
+              {t(
+                'Đội ngũ đang xét duyệt hồ sơ của bạn. Bạn sẽ nhận thông báo và hợp đồng qua email khi được duyệt.',
+                'Our team is reviewing your application. You will receive a notification and contract by email once approved.',
+              )}
             </Text>
           </View>
         ) : buoc === 'dieu-khoan' ? (
@@ -221,13 +227,15 @@ export default function KolScreen() {
             return (
               <>
                 <Text style={styles.lead}>
-                  Đọc toàn bộ thỏa thuận. Cuộn tới cuối rồi tích xác nhận để tiếp
-                  tục điền hồ sơ.
+                  {t(
+                    'Đọc toàn bộ thỏa thuận. Cuộn tới cuối rồi tích xác nhận để tiếp tục điền hồ sơ.',
+                    'Read the entire agreement. Scroll to the end, then check the box to continue filling in your application.',
+                  )}
                 </Text>
 
                 {/* Điều khoản đọc bằng cách cuộn CẢ MÀN HÌNH (không hộp cuộn lồng). */}
                 <View style={styles.termsBox}>
-                  {(paras.length ? paras : ['Đang tải điều khoản…']).map(
+                  {(paras.length ? paras : [t('Đang tải điều khoản…', 'Loading terms…')]).map(
                     (p, i) => {
                       const upper = p.toUpperCase();
                       const isDieu = p.toLowerCase().startsWith('điều ');
@@ -252,7 +260,7 @@ export default function KolScreen() {
 
                 {!daDoc ? (
                   <Text style={styles.scrollHint}>
-                    ↓ Cuộn đọc hết thỏa thuận để tích xác nhận
+                    {t('↓ Cuộn đọc hết thỏa thuận để tích xác nhận', '↓ Scroll through the whole agreement to check the box')}
                   </Text>
                 ) : null}
                 <View
@@ -262,12 +270,14 @@ export default function KolScreen() {
                     onToggle={() => {
                       if (daDoc) setDongY((v) => !v);
                     }}>
-                    Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam
-                    kết bảo mật thông tin.
+                    {t(
+                      'Tôi đã đọc và đồng ý toàn bộ Thỏa thuận hợp tác KOL/KOC và Cam kết bảo mật thông tin.',
+                      'I have read and agree to the entire KOL/KOC Cooperation Agreement and Information Confidentiality Commitment.',
+                    )}
                   </Checkbox>
                 </View>
                 <PrimaryButton
-                  label="Tiếp tục điền hồ sơ"
+                  label={t('Tiếp tục điền hồ sơ', 'Continue to application')}
                   disabled={!dongY}
                   onPress={() => setBuoc('form')}
                 />
@@ -278,98 +288,100 @@ export default function KolScreen() {
           <>
             <ErrorBox message={loi} />
             <Field
-              label="Họ và tên *"
-              placeholder="Nguyễn Văn A"
+              label={t('Họ và tên *', 'Full name *')}
+              placeholder={t('Nguyễn Văn A', 'John Doe')}
               autoCapitalize="words"
               value={info.fullName}
               onChangeText={(v) => dat('fullName', v)}
             />
             <Field
-              label="Số điện thoại *"
+              label={t('Số điện thoại *', 'Phone number *')}
               placeholder="09xxxxxxxx"
               keyboardType="phone-pad"
               value={info.phone}
               onChangeText={(v) => dat('phone', v)}
             />
             <Field
-              label="Số CCCD/Căn cước *"
+              label={t('Số CCCD/Căn cước *', 'ID/Citizen number *')}
               placeholder="0xxxxxxxxxxx"
               keyboardType="number-pad"
               value={info.cccdNumber}
               onChangeText={(v) => dat('cccdNumber', v)}
             />
             <Field
-              label="Ngày cấp"
+              label={t('Ngày cấp', 'Issue date')}
               placeholder="01/01/2021"
               value={info.cccdIssueDate ?? ''}
               onChangeText={(v) => dat('cccdIssueDate', v)}
             />
             <Field
-              label="Nơi cấp"
+              label={t('Nơi cấp', 'Issued by')}
               placeholder="Cục CSQLHC về TTXH"
               value={info.cccdIssuePlace ?? ''}
               onChangeText={(v) => dat('cccdIssuePlace', v)}
             />
             <Field
-              label="Địa chỉ liên hệ"
-              placeholder="Số nhà, đường, phường/xã, tỉnh/thành"
+              label={t('Địa chỉ liên hệ', 'Contact address')}
+              placeholder={t('Số nhà, đường, phường/xã, tỉnh/thành', 'House no., street, ward, province/city')}
               value={info.address ?? ''}
               onChangeText={(v) => dat('address', v)}
             />
             <Field
-              label="Email"
+              label={t('Email', 'Email')}
               placeholder="ban@email.com"
               keyboardType="email-address"
               value={info.email ?? ''}
               onChangeText={(v) => dat('email', v)}
             />
             <Field
-              label="Số tài khoản ngân hàng"
-              placeholder="Số tài khoản nhận hoa hồng"
+              label={t('Số tài khoản ngân hàng', 'Bank account number')}
+              placeholder={t('Số tài khoản nhận hoa hồng', 'Account to receive commission')}
               keyboardType="number-pad"
               value={info.bankAccount ?? ''}
               onChangeText={(v) => dat('bankAccount', v)}
             />
             <Field
-              label="Tên chủ tài khoản"
+              label={t('Tên chủ tài khoản', 'Account holder name')}
               placeholder="NGUYEN VAN A"
               autoCapitalize="characters"
               value={info.bankHolder ?? ''}
               onChangeText={(v) => dat('bankHolder', v)}
             />
             <Field
-              label="Ngân hàng"
+              label={t('Ngân hàng', 'Bank')}
               placeholder="Vietcombank / Techcombank / MB…"
               value={info.bankName ?? ''}
               onChangeText={(v) => dat('bankName', v)}
             />
             <Field
-              label="Kênh mạng xã hội (link)"
+              label={t('Kênh mạng xã hội (link)', 'Social media channel (link)')}
               placeholder="TikTok / Facebook / Instagram…"
               value={info.socialLinks ?? ''}
               onChangeText={(v) => dat('socialLinks', v)}
             />
 
-            <Text style={styles.section}>Xác minh danh tính</Text>
+            <Text style={styles.section}>{t('Xác minh danh tính', 'Identity verification')}</Text>
             <Text style={styles.note}>
-              Ảnh CCCD rõ nét. Video quay chính diện khuôn mặt 3–5 giây để đối
-              chiếu.
+              {t(
+                'Ảnh CCCD rõ nét. Video quay chính diện khuôn mặt 3–5 giây để đối chiếu.',
+                'Clear ID photos. Record a 3–5 second front-facing face video for verification.',
+              )}
             </Text>
             <View style={styles.uploads}>
               <UploadTile
-                label="CCCD mặt trước"
+                label={t('CCCD mặt trước', 'ID front')}
                 icon="card-outline"
                 asset={tep.cccdFront}
                 onPress={() => chonTep('cccdFront')}
               />
               <UploadTile
-                label="CCCD mặt sau"
+                label={t('CCCD mặt sau', 'ID back')}
                 icon="card-outline"
                 asset={tep.cccdBack}
                 onPress={() => chonTep('cccdBack')}
               />
               <UploadTile
-                label="Video khuôn mặt"
+                label={t('Video khuôn mặt', 'Face video')}
                 icon="videocam-outline"
                 asset={tep.faceVideo}
                 isVideo
@@ -379,14 +391,14 @@ export default function KolScreen() {
 
             <View style={{ height: 8 }} />
             <PrimaryButton
-              label="Gửi hồ sơ"
+              label={t('Gửi hồ sơ', 'Submit application')}
               loading={dangGui}
               onPress={gui}
             />
             <Pressable
               onPress={() => setBuoc('dieu-khoan')}
               style={styles.backLink}>
-              <Text style={styles.backLinkText}>← Xem lại điều khoản</Text>
+              <Text style={styles.backLinkText}>{t('← Xem lại điều khoản', '← Review terms')}</Text>
             </Pressable>
           </>
         )}
@@ -399,7 +411,7 @@ export default function KolScreen() {
           onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
           style={styles.jump}
           hitSlop={8}
-          accessibilityLabel="Xuống cuối điều khoản để xác nhận">
+          accessibilityLabel={t('Xuống cuối điều khoản để xác nhận', 'Go to the end of the terms to confirm')}>
           <Ionicons name="chevron-down" size={24} color={colors.onBrand} />
         </Pressable>
       ) : null}
@@ -429,6 +441,7 @@ function UploadTile({
   isVideo?: boolean;
   onPress: () => void;
 }) {
+  const t = useT();
   return (
     <Pressable
       onPress={onPress}
@@ -444,7 +457,7 @@ function UploadTile({
           />
           <Text style={styles.tileLabel}>{label}</Text>
           <Text style={styles.tileHint}>
-            {asset ? 'Đã chọn' : 'Chạm để tải lên'}
+            {asset ? t('Đã chọn', 'Selected') : t('Chạm để tải lên', 'Tap to upload')}
           </Text>
         </View>
       )}

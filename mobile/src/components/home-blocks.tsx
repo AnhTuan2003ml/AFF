@@ -8,8 +8,9 @@ import { CheckinModal } from '@/components/CheckinModal';
 import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
-import { layKhamPha, type DiscoverProduct } from '@/api/features';
+import { layDiemDanh, layKhamPha, type DiscoverProduct } from '@/api/features';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { moLinkMua } from '@/lib/mua';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
@@ -38,8 +39,22 @@ const LOGO_SAN = {
  * chuyển, giống hệt web sau lần sửa gần đây.
  */
 export function PlatformShowcase() {
+  const t = useT();
   const [i, setI] = useState(0);
   const tamDung = useRef(0);
+  // Mô tả từng sàn (dữ liệu tĩnh SAN ở scope module nên dịch tại đây theo mã).
+  const moSan = (ma: (typeof SAN)[number]['ma'], mo: string): string => {
+    switch (ma) {
+      case 'SHOPEE':
+        return t(mo, 'Paste a Shopee link — ShopTik detects it and checks cashback automatically.');
+      case 'TIKTOK':
+        return t(mo, 'From video to cart — links are handled automatically in a single flow.');
+      case 'LAZADA':
+        return t(mo, 'Look up products and estimated cashback without switching modes.');
+      default:
+        return mo;
+    }
+  };
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -56,9 +71,9 @@ export function PlatformShowcase() {
         <Image source={LOGO_SAN[s.ma]} style={ss.showcaseLogoImg} contentFit="contain" />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={ss.showcaseTag}>✓ ĐÃ HỖ TRỢ</Text>
+        <Text style={ss.showcaseTag}>{t('✓ ĐÃ HỖ TRỢ', '✓ SUPPORTED')}</Text>
         <Text style={ss.showcaseName}>{s.ten}</Text>
-        <Text style={ss.showcaseDesc}>{s.mo}</Text>
+        <Text style={ss.showcaseDesc}>{moSan(s.ma, s.mo)}</Text>
       </View>
       <View style={ss.dots}>
         {SAN.map((x, k) => (
@@ -82,6 +97,7 @@ export function PlatformShowcase() {
 
 /** Dựng lại `.mb-points` của web: số dư, chip %, đang chờ, tiến độ tới mức rút. */
 export function WalletPanel({ me }: { me: Me }) {
+  const t = useT();
   const toiThieu = me.minWithdrawalVnd ?? 0;
   const conThieu = Math.max(0, toiThieu - me.balances.available);
   const phanTram = toiThieu > 0 ? Math.min(100, Math.round((me.balances.available / toiThieu) * 100)) : 100;
@@ -90,30 +106,30 @@ export function WalletPanel({ me }: { me: Me }) {
     <View style={ss.wallet}>
       <View style={ss.walletTop}>
         <View>
-          <Text style={ss.walletLabel}>Số dư khả dụng</Text>
+          <Text style={ss.walletLabel}>{t('Số dư khả dụng', 'Available balance')}</Text>
           <Text style={ss.walletValue}>{vnd(me.balances.available)}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 6 }}>
           <View style={ss.chip}>
-            <Text style={ss.chipText}>Hoàn tới {me.cashbackPercent ?? 0}%</Text>
+            <Text style={ss.chipText}>{t('Hoàn tới', 'Up to')} {me.cashbackPercent ?? 0}%</Text>
           </View>
           <Pressable onPress={() => router.push('/(tabs)/orders')}>
-            <Text style={ss.pending}>Đang chờ: {vnd(me.balances.pending)} ›</Text>
+            <Text style={ss.pending}>{t('Đang chờ:', 'Pending:')} {vnd(me.balances.pending)} ›</Text>
           </Pressable>
         </View>
       </View>
 
       <View style={ss.walletBar}>
         <View>
-          <Text style={ss.walletBarLabel}>Đã mua qua ShopTik</Text>
-          <Text style={ss.walletBarValue}>{me.purchasedProducts ?? 0} sản phẩm</Text>
+          <Text style={ss.walletBarLabel}>{t('Đã mua qua ShopTik', 'Bought through ShopTik')}</Text>
+          <Text style={ss.walletBarValue}>{me.purchasedProducts ?? 0} {t('sản phẩm', 'products')}</Text>
         </View>
         <View style={ss.walletActions}>
           <Pressable onPress={() => router.push('/(tabs)/wallet')} style={ss.ghost}>
-            <Text style={ss.ghostText}>Xem ví</Text>
+            <Text style={ss.ghostText}>{t('Xem ví', 'View wallet')}</Text>
           </Pressable>
           <Pressable onPress={() => router.push('/withdraw')} style={ss.primary}>
-            <Text style={ss.primaryText}>Rút tiền ›</Text>
+            <Text style={ss.primaryText}>{t('Rút tiền ›', 'Withdraw ›')}</Text>
           </Pressable>
         </View>
       </View>
@@ -121,7 +137,8 @@ export function WalletPanel({ me }: { me: Me }) {
       {conThieu > 0 && (
         <View style={ss.progressWrap}>
           <Text style={ss.progressCopy}>
-            Thêm <Text style={ss.bold}>{vnd(conThieu)}</Text> nữa là đủ mức rút tối thiểu{' '}
+            {t('Thêm', 'Add')} <Text style={ss.bold}>{vnd(conThieu)}</Text>{' '}
+            {t('nữa là đủ mức rút tối thiểu', 'more to reach the minimum withdrawal of')}{' '}
             <Text style={ss.bold}>{vnd(toiThieu)}</Text>.
           </Text>
           <View style={ss.progressBar}>
@@ -136,7 +153,24 @@ export function WalletPanel({ me }: { me: Me }) {
 /* ==================== Điểm danh & cảnh báo ngân hàng ==================== */
 
 export function CheckinEntry() {
+  const t = useT();
+  const { user } = useSession();
   const [mo, setMo] = useState(false);
+  // Tự bật popup điểm danh khi VÀO app nếu hôm nay CHƯA điểm danh (giống web).
+  // Đã điểm danh thì không hiện; vẫn mở tay được bằng nút bên dưới. Chỉ tự mở
+  // một lần mỗi phiên màn hình để không lặp lại sau khi người dùng đóng.
+  const { data: diemDanhData } = useQuery({
+    queryKey: ['checkin'],
+    queryFn: layDiemDanh,
+    enabled: !!user,
+  });
+  const daTuMo = useRef(false);
+  useEffect(() => {
+    if (user && diemDanhData && !diemDanhData.checkedInToday && !daTuMo.current) {
+      daTuMo.current = true;
+      setMo(true);
+    }
+  }, [user, diemDanhData]);
   return (
     <Pressable
       onPress={() => setMo(true)}
@@ -145,11 +179,11 @@ export function CheckinEntry() {
         <Ionicons name="calendar-outline" size={19} color={colors.brand} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={ss.entryTitle}>Điểm danh mỗi ngày</Text>
-        <Text style={ss.entryDesc}>Điểm danh nhận thưởng — đừng để mất chuỗi</Text>
+        <Text style={ss.entryTitle}>{t('Điểm danh mỗi ngày', 'Daily check-in')}</Text>
+        <Text style={ss.entryDesc}>{t('Điểm danh nhận thưởng — đừng để mất chuỗi', 'Check in for rewards — keep your streak')}</Text>
       </View>
       <View style={ss.entryBtn}>
-        <Text style={ss.entryBtnText}>Điểm danh</Text>
+        <Text style={ss.entryBtnText}>{t('Điểm danh', 'Check in')}</Text>
       </View>
       {/* Popup đè lên trang, nút ✕ để đóng — không chuyển màn. */}
       <CheckinModal mo={mo} dong={() => setMo(false)} />
@@ -158,6 +192,7 @@ export function CheckinEntry() {
 }
 
 export function BankAlert() {
+  const t = useT();
   return (
     <Pressable
       onPress={() => router.push('/bank')}
@@ -166,9 +201,12 @@ export function BankAlert() {
         <Ionicons name="card-outline" size={18} color={colors.brand} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={ss.alertTitle}>Hoàn tất tài khoản nhận tiền.</Text>
+        <Text style={ss.alertTitle}>{t('Hoàn tất tài khoản nhận tiền.', 'Complete your payout account.')}</Text>
         <Text style={ss.alertDesc}>
-          Thêm và xác minh ngân hàng để có thể rút tiền hoàn khi đủ điều kiện.
+          {t(
+            'Thêm và xác minh ngân hàng để có thể rút tiền hoàn khi đủ điều kiện.',
+            'Add and verify a bank account so you can withdraw cashback when eligible.',
+          )}
         </Text>
       </View>
       <Ionicons name="arrow-forward" size={18} color={colors.brand} />
@@ -186,6 +224,7 @@ export function ProductStrip({
   tieuDe: string;
   list: 'best' | 'recommend' | 'exclusive';
 }) {
+  const t = useT();
   // Nạp DẦN tất cả sản phẩm theo trang (20/trang) khi người dùng lướt tới cuối,
   // hết trang thì chạm cuối sẽ VÒNG LẠI đầu — như web yêu cầu.
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -214,7 +253,7 @@ export function ProductStrip({
         <Pressable
           onPress={() => router.push({ pathname: '/(tabs)/discover', params: { list } })}
           hitSlop={8}>
-          <Text style={ss.stripMore}>Xem thêm ›</Text>
+          <Text style={ss.stripMore}>{t('Xem thêm ›', 'See more ›')}</Text>
         </Pressable>
       </View>
       <FlatList
@@ -253,6 +292,7 @@ export function ProductStrip({
 }
 
 function TheSP({ p }: { p: DiscoverProduct }) {
+  const t = useT();
   const { user } = useSession();
   const [dang, setDang] = useState(false);
   const gia = p.price_vnd ? Number(p.price_vnd) : null;
@@ -272,8 +312,8 @@ function TheSP({ p }: { p: DiscoverProduct }) {
       await moLinkMua(p.product_url);
     } catch (e) {
       Alert.alert(
-        'Chưa mở được',
-        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+        t('Chưa mở được', 'Could not open'),
+        e instanceof Error && e.message ? e.message : t('Thử lại sau ít phút.', 'Please try again in a few minutes.'),
       );
     } finally {
       setDang(false);
@@ -296,9 +336,9 @@ function TheSP({ p }: { p: DiscoverProduct }) {
         <Text style={ss.spName} numberOfLines={2}>
           {p.name}
         </Text>
-        <Text style={ss.spPrice}>{gia !== null ? vnd(gia) : 'Đang cập nhật'}</Text>
+        <Text style={ss.spPrice}>{gia !== null ? vnd(gia) : t('Đang cập nhật', 'Updating')}</Text>
         {hoan !== null && (
-          <Text style={ss.spCash}>{dang ? 'Đang mở…' : `Hoàn tới ${vnd(hoan)}`}</Text>
+          <Text style={ss.spCash}>{dang ? t('Đang mở…', 'Opening…') : `${t('Hoàn tới', 'Up to')} ${vnd(hoan)}`}</Text>
         )}
       </View>
     </Pressable>
@@ -308,6 +348,7 @@ function TheSP({ p }: { p: DiscoverProduct }) {
 /* ==================== Chân trang ==================== */
 
 export function AppFooter() {
+  const t = useT();
   return (
     <View style={ss.footer}>
       <View style={ss.footerBrand}>
@@ -319,8 +360,10 @@ export function AppFooter() {
         <Text style={ss.footerBrandText}>ShopTik</Text>
       </View>
       <Text style={ss.footerCopy}>
-        Một trải nghiệm mua sắm gọn hơn: kiểm tra hoàn tiền, mua qua liên kết và
-        theo dõi ví minh bạch.
+        {t(
+          'Một trải nghiệm mua sắm gọn hơn: kiểm tra hoàn tiền, mua qua liên kết và theo dõi ví minh bạch.',
+          'A cleaner shopping experience: check cashback, buy through links and track your wallet transparently.',
+        )}
       </Text>
       <View style={ss.footerLine} />
       <View style={ss.footerBottom}>

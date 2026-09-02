@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { apiFetch } from '@/api/client';
+import { useT } from '@/i18n';
 import { colors, shadow } from '@/theme/tokens';
 
 /**
@@ -31,6 +32,7 @@ interface EntryPromo {
 let daHienTrongPhien = false;
 
 export function EntryPromoModal() {
+  const t = useT();
   const [promo, setPromo] = useState<EntryPromo | null>(null);
   const [mo, setMo] = useState(false);
 
@@ -81,7 +83,7 @@ export function EntryPromoModal() {
         </Pressable>
         {/* Nút ✕ TÁCH RIÊNG dưới thẻ quảng cáo — nổi trên nền mờ trong suốt. */}
         <View style={styles.closebar}>
-          <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel="Đóng quảng cáo">
+          <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel={t('Đóng quảng cáo', 'Close ad')}>
             <Ionicons name="close" size={20} color={colors.text} />
           </Pressable>
         </View>

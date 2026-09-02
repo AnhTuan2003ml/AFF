@@ -12,6 +12,7 @@ import { layDiemDanh, layThongBao } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { CheckinModal } from '@/components/CheckinModal';
 import { useSession } from '@/hooks/useSession';
+import { useLang, useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
@@ -27,8 +28,11 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
 export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
   const insets = useSafeAreaInsets();
   const { user, dangXuat } = useSession();
+  const { lang, setLang } = useLang();
+  const t = useT();
   const [moMenu, setMoMenu] = useState(false);
   const [moDiemDanh, setMoDiemDanh] = useState(false);
+  const [moNgonNgu, setMoNgonNgu] = useState(false);
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
   const { data: tb } = useQuery({
@@ -61,10 +65,19 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
 
       {user ? (
         <View style={styles.right}>
+          {/* Đổi ngôn ngữ toàn app — quả cầu ngay cạnh lịch điểm danh. */}
           <Pressable
             style={styles.iconBtn}
             hitSlop={6}
-            accessibilityLabel="Điểm danh mỗi ngày"
+            accessibilityLabel={lang === 'vi' ? 'Đổi ngôn ngữ' : 'Change language'}
+            onPress={() => setMoNgonNgu(true)}>
+            <Ionicons name="globe-outline" size={22} color={colors.inkSoft} />
+          </Pressable>
+
+          <Pressable
+            style={styles.iconBtn}
+            hitSlop={6}
+            accessibilityLabel={t('Điểm danh mỗi ngày', 'Daily check-in')}
             onPress={() => setMoDiemDanh(true)}>
             <Ionicons name="calendar-outline" size={22} color={colors.inkSoft} />
             {chuaDiemDanh && <View style={styles.dot} />}
@@ -104,12 +117,43 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
         <Pressable
           onPress={onRegister ?? (() => router.push('/login'))}
           style={({ pressed }) => [styles.cta, pressed && { backgroundColor: colors.brandStrong }]}>
-          <Text style={styles.ctaText}>Đăng nhập</Text>
+          <Text style={styles.ctaText}>{t('Đăng nhập', 'Sign in')}</Text>
         </Pressable>
       )}
 
       {/* Popup điểm danh đè lên màn hình hiện tại, có nút ✕ (giống web). */}
       <CheckinModal mo={moDiemDanh} dong={() => setMoDiemDanh(false)} />
+
+      {/* Menu chọn ngôn ngữ thả xuống từ nút quả cầu. */}
+      <Modal
+        visible={moNgonNgu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoNgonNgu(false)}>
+        <Pressable style={styles.scrim} onPress={() => setMoNgonNgu(false)}>
+          <Pressable
+            style={[styles.langMenu, { top: insets.top + 52 }]}
+            onPress={(e) => e.stopPropagation()}>
+            <LangOpt
+              co="Tiếng Việt"
+              chon={lang === 'vi'}
+              onPress={() => {
+                setLang('vi');
+                setMoNgonNgu(false);
+              }}
+            />
+            <View style={styles.divider} />
+            <LangOpt
+              co="English"
+              chon={lang === 'en'}
+              onPress={() => {
+                setLang('en');
+                setMoNgonNgu(false);
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <MenuTaiKhoan
         mo={moMenu}
@@ -133,6 +177,7 @@ function MenuTaiKhoan({
   onDangXuat: () => Promise<void>;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   function di(duong: Parameters<typeof router.push>[0]) {
     dong();
@@ -145,16 +190,18 @@ function MenuTaiKhoan({
         <Pressable
           style={[styles.menu, { top: insets.top + 56 }]}
           onPress={(e) => e.stopPropagation()}>
-          <Muc icon="person-outline" nhan="Thông tin cá nhân" onPress={() => di('/(tabs)/account')} />
-          <Muc icon="card-outline" nhan="Tài khoản ngân hàng" onPress={() => di('/bank')} />
-          <Muc icon="share-social-outline" nhan="Chia sẻ nhận hoa hồng" onPress={() => di('/chia-se')} />
-          <Muc icon="link-outline" nhan="Giới thiệu bạn bè" onPress={() => di('/referrals')} />
-          <Muc icon="flag-outline" nhan="Nhiệm vụ" onPress={() => di('/missions')} />
+          <Muc icon="person-outline" nhan={t('Thông tin cá nhân', 'Personal information')} onPress={() => di('/(tabs)/account')} />
+          <Muc icon="flag-outline" nhan={t('Nhiệm vụ nhận thưởng', 'Reward missions')} onPress={() => di('/missions')} />
+          <Muc icon="share-social-outline" nhan={t('Chia sẻ nhận hoa hồng', 'Share to earn commission')} onPress={() => di('/chia-se')} />
+          <Muc icon="link-outline" nhan={t('Giới thiệu bạn bè', 'Refer friends')} onPress={() => di('/referrals')} />
+          <Muc icon="ribbon-outline" nhan={t('Đăng ký KOL/KOC', 'Register as KOL/KOC')} onPress={() => di('/kol')} />
+          <Muc icon="card-outline" nhan={t('Tài khoản ngân hàng', 'Bank account')} onPress={() => di('/bank')} />
+          <Muc icon="chatbubbles-outline" nhan={t('Hỗ trợ & khiếu nại', 'Support & complaints')} onPress={() => di('/support')} />
 
           {laQuanTri && (
             <Muc
               icon="shield-checkmark-outline"
-              nhan="Trang quản trị"
+              nhan={t('Trang quản trị', 'Admin console')}
               /*
                * Trung tâm vận hành là giao diện web dày đặc bảng dữ liệu, cố ý
                * không có bản app (xem CLAUDE.md). Mở bằng trình duyệt hệ thống
@@ -171,7 +218,7 @@ function MenuTaiKhoan({
           <View style={styles.divider} />
           <Muc
             icon="log-out-outline"
-            nhan="Đăng xuất"
+            nhan={t('Đăng xuất', 'Sign out')}
             mauDo
             onPress={() => {
               dong();
@@ -181,6 +228,17 @@ function MenuTaiKhoan({
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+function LangOpt({ co, chon, onPress }: { co: string; chon: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.langOpt, pressed && { backgroundColor: colors.surfaceMuted }]}>
+      <Text style={[styles.langOptText, chon && { color: colors.brand, fontWeight: '900' }]}>{co}</Text>
+      {chon && <Ionicons name="checkmark" size={18} color={colors.brand} />}
+    </Pressable>
   );
 }
 
@@ -285,4 +343,24 @@ const styles = StyleSheet.create({
   muc: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, paddingVertical: 12 },
   mucText: { fontSize: 13.5, fontWeight: '700' },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginVertical: 4 },
+
+  langMenu: {
+    position: 'absolute',
+    right: spacing.md,
+    width: 190,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    ...shadow.card,
+  },
+  langOpt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  langOptText: { fontSize: 14, fontWeight: '700', color: colors.text },
 });

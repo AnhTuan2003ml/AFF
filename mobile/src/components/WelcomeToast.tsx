@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { camio } from '@/lib/camio-voice';
 import { colors, radius, shadow } from '@/theme/tokens';
 
@@ -13,6 +14,7 @@ import { colors, radius, shadow } from '@/theme/tokens';
  */
 export function WelcomeToast() {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const { chaoMung, xoaChaoMung } = useSession();
   const loiChao = useRef(camio('welcome')).current;
 
@@ -31,7 +33,7 @@ export function WelcomeToast() {
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{loiChao}</Text>
           <Text style={styles.sub} numberOfLines={1}>
-            Đi săn hoàn tiếp thôi, {chaoMung}!
+            {t('Đi săn hoàn tiếp thôi', 'Back to cashback hunting')}, {chaoMung}!
           </Text>
         </View>
       </View>

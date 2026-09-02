@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Mascot, type CamioMood } from '@/components/Mascot';
+import { useT } from '@/i18n';
 import { colors, radius } from '@/theme/tokens';
 
 /**
@@ -16,6 +17,7 @@ const CYCLE: CamioMood[] = ['haohung', 'vuive', 'thichthu', 'baocao', 'haohung',
 
 export function MascotFab() {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [i, setI] = useState(0);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function MascotFab() {
   return (
     <Pressable
       onPress={() => router.push('/support')}
-      accessibilityLabel="Mở hỗ trợ"
+      accessibilityLabel={t('Mở hỗ trợ', 'Open support')}
       style={({ pressed }) => [
         styles.fab,
         { bottom: insets.bottom + 62 + 14 },

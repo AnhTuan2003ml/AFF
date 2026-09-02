@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -28,6 +29,7 @@ export function FormScreen({
   children: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <KeyboardAvoidingView
@@ -38,7 +40,7 @@ export function FormScreen({
         keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
-          <Text style={styles.backText}>Quay lại</Text>
+          <Text style={styles.backText}>{t('Quay lại', 'Back')}</Text>
         </Pressable>
 
         <View style={styles.card}>

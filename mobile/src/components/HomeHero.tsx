@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
+import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -10,20 +11,19 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * Ba ô số liệu chân hero — `.px-home-hero-meta` của web ĐỔI NỘI DUNG theo trạng
  * thái đăng nhập: khách thấy lời giới thiệu, người đã đăng nhập thấy số dư thật.
  */
-const SO_LIEU_KHACH = [
-  { chinh: '3 sàn', phu: 'Shopee · TikTok · Lazada' },
-  { chinh: 'Hoàn tới 80%', phu: 'Về ví minh bạch' },
-  { chinh: 'Miễn phí', phu: 'Không phí ẩn' },
-];
-
-function soLieu(me?: Me | null) {
-  if (!me) return SO_LIEU_KHACH;
+function soLieu(t: (vi: string, en: string) => string, me?: Me | null) {
+  if (!me)
+    return [
+      { chinh: t('3 sàn', '3 stores'), phu: 'Shopee · TikTok · Lazada' },
+      { chinh: t('Hoàn tới 80%', 'Up to 80%'), phu: t('Về ví minh bạch', 'To a transparent wallet') },
+      { chinh: t('Miễn phí', 'Free'), phu: t('Không phí ẩn', 'No hidden fees') },
+    ];
   return [
-    { chinh: vnd(me.balances.available), phu: 'Số dư khả dụng' },
-    { chinh: vnd(me.balances.pending), phu: 'Đang chờ về ví' },
+    { chinh: vnd(me.balances.available), phu: t('Số dư khả dụng', 'Available balance') },
+    { chinh: vnd(me.balances.pending), phu: t('Đang chờ về ví', 'Pending to wallet') },
     {
-      chinh: `Hoàn tới ${me.cashbackPercent ?? 0}%`,
-      phu: `Đã mua ${me.purchasedProducts ?? 0} sản phẩm`,
+      chinh: `${t('Hoàn tới', 'Up to')} ${me.cashbackPercent ?? 0}%`,
+      phu: `${t('Đã mua', 'Bought')} ${me.purchasedProducts ?? 0} ${t('sản phẩm', 'products')}`,
     },
   ];
 }
@@ -37,7 +37,8 @@ function soLieu(me?: Me | null) {
  * khổ hẹp nên chỉ dựng bản dọc.
  */
 export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null }) {
-  const SO_LIEU = soLieu(me);
+  const t = useT();
+  const SO_LIEU = soLieu(t, me);
   return (
     <View style={styles.hero}>
       <Image
@@ -55,16 +56,18 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
 
       <View style={styles.copy}>
         <Text style={styles.eyebrow}>SHOP · TRACK · CASHBACK</Text>
-        <Text style={styles.title}>Mua sắm thông minh.{'\n'}Hoàn tiền tối ưu.</Text>
+        <Text style={styles.title}>
+          {t('Mua sắm thông minh.', 'Shop smarter.')}{'\n'}{t('Hoàn tiền tối ưu.', 'Maximize cashback.')}
+        </Text>
 
         <View style={styles.actions}>
           <Pressable
             onPress={onCheck}
             style={({ pressed }) => [styles.btnLight, pressed && { opacity: 0.85 }]}>
-            <Text style={styles.btnLightText}>Kiểm tra hoàn tiền</Text>
+            <Text style={styles.btnLightText}>{t('Kiểm tra hoàn tiền', 'Check cashback')}</Text>
           </Pressable>
           <Pressable style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
-            <Text style={styles.linkLight}>Khám phá sản phẩm  →</Text>
+            <Text style={styles.linkLight}>{t('Khám phá sản phẩm  →', 'Explore products  →')}</Text>
           </Pressable>
         </View>
       </View>

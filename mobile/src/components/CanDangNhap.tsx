@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useT } from '@/i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -12,17 +13,18 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * hiểu app có những gì.
  */
 export function CanDangNhap({ mo_ta }: { mo_ta: string }) {
+  const t = useT();
   return (
     <View style={styles.wrap}>
       <View style={styles.icon}>
         <Ionicons name="lock-closed-outline" size={26} color={colors.brand} />
       </View>
-      <Text style={styles.title}>Cần đăng nhập</Text>
+      <Text style={styles.title}>{t('Cần đăng nhập', 'Sign-in required')}</Text>
       <Text style={styles.note}>{mo_ta}</Text>
       <Pressable
         onPress={() => router.push('/login')}
         style={({ pressed }) => [styles.btn, pressed && { backgroundColor: colors.brandStrong }]}>
-        <Text style={styles.btnText}>Đăng nhập</Text>
+        <Text style={styles.btnText}>{t('Đăng nhập', 'Sign in')}</Text>
       </Pressable>
     </View>
   );

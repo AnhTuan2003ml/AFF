@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { dangXuatMoiThietBi, doiTen, layPhien, xoaTaiKhoan } from '@/api/bank';
+import { useT } from '@/i18n';
 import { ngayGio } from '@/lib/format';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Field } from '@/components/form';
@@ -17,6 +18,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * cả thiết bị, và xóa tài khoản (xóa mềm — bắt buộc để lên App Store/CH Play).
  */
 export default function ProfileScreen() {
+  const t = useT();
   const { user, dangXuat, lamMoiHoSo } = useSession();
   const [ten, setTen] = useState(user?.fullName ?? '');
   const [dangLuu, setDangLuu] = useState(false);
@@ -29,22 +31,22 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <FormScreen title="Thông tin cá nhân">
-        <CanDangNhap mo_ta="Đăng nhập để xem và chỉnh sửa hồ sơ." />
+      <FormScreen title={t('Thông tin cá nhân', 'Personal information')}>
+        <CanDangNhap mo_ta={t('Đăng nhập để xem và chỉnh sửa hồ sơ.', 'Log in to view and edit your profile.')} />
       </FormScreen>
     );
   }
 
   async function luuTen() {
-    const t = ten.trim();
-    if (t.length < 2 || dangLuu) return;
+    const tenTrim = ten.trim();
+    if (tenTrim.length < 2 || dangLuu) return;
     setDangLuu(true);
     try {
-      await doiTen(t);
+      await doiTen(tenTrim);
       await lamMoiHoSo();
-      Alert.alert('Đã lưu', 'Cập nhật họ tên thành công.');
+      Alert.alert(t('Đã lưu', 'Saved'), t('Cập nhật họ tên thành công.', 'Your name has been updated.'));
     } catch (e) {
-      Alert.alert('Chưa lưu được', e instanceof Error ? e.message : 'Thử lại sau.');
+      Alert.alert(t('Chưa lưu được', "Couldn't save"), e instanceof Error ? e.message : t('Thử lại sau.', 'Please try again later.'));
     } finally {
       setDangLuu(false);
     }
@@ -52,12 +54,15 @@ export default function ProfileScreen() {
 
   function hoiDangXuatAll() {
     Alert.alert(
-      'Đăng xuất tất cả thiết bị?',
-      'Mọi phiên đăng nhập (kể cả web) sẽ bị thu hồi. Bạn cần đăng nhập lại.',
+      t('Đăng xuất tất cả thiết bị?', 'Log out of all devices?'),
+      t(
+        'Mọi phiên đăng nhập (kể cả web) sẽ bị thu hồi. Bạn cần đăng nhập lại.',
+        'All sessions (including web) will be revoked. You will need to log in again.',
+      ),
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: t('Hủy', 'Cancel'), style: 'cancel' },
         {
-          text: 'Đăng xuất tất cả',
+          text: t('Đăng xuất tất cả', 'Log out all'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -78,21 +83,21 @@ export default function ProfileScreen() {
       await xoaTaiKhoan(forfeit);
       await dangXuat();
       router.dismissAll();
-      Alert.alert('Đã xóa tài khoản', 'Tài khoản của bạn đã được xóa.');
+      Alert.alert(t('Đã xóa tài khoản', 'Account deleted'), t('Tài khoản của bạn đã được xóa.', 'Your account has been deleted.'));
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
       // Còn số dư/lệnh rút → backend chặn; hỏi lại để bỏ số dư.
       if (!forfeit && /số dư|lệnh rút|balance|withdraw/i.test(msg)) {
         Alert.alert(
-          'Còn số dư/lệnh rút',
-          `${msg}\n\nBạn vẫn muốn xóa và BỎ LẠI số dư?`,
+          t('Còn số dư/lệnh rút', 'Remaining balance/withdrawal'),
+          `${msg}\n\n${t('Bạn vẫn muốn xóa và BỎ LẠI số dư?', 'Do you still want to delete and FORFEIT the balance?')}`,
           [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Xóa & bỏ số dư', style: 'destructive', onPress: () => void xoa(true) },
+            { text: t('Hủy', 'Cancel'), style: 'cancel' },
+            { text: t('Xóa & bỏ số dư', 'Delete & forfeit balance'), style: 'destructive', onPress: () => void xoa(true) },
           ],
         );
       } else {
-        Alert.alert('Chưa xóa được', msg || 'Thử lại sau.');
+        Alert.alert(t('Chưa xóa được', "Couldn't delete"), msg || t('Thử lại sau.', 'Please try again later.'));
       }
     } finally {
       setDangXL(false);
@@ -101,23 +106,26 @@ export default function ProfileScreen() {
 
   function hoiXoa() {
     Alert.alert(
-      'Xóa tài khoản?',
-      'Hành động này không thể hoàn tác. Toàn bộ dữ liệu tài khoản sẽ bị xóa.',
+      t('Xóa tài khoản?', 'Delete account?'),
+      t(
+        'Hành động này không thể hoàn tác. Toàn bộ dữ liệu tài khoản sẽ bị xóa.',
+        'This action cannot be undone. All account data will be deleted.',
+      ),
       [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Xóa tài khoản', style: 'destructive', onPress: () => void xoa(false) },
+        { text: t('Hủy', 'Cancel'), style: 'cancel' },
+        { text: t('Xóa tài khoản', 'Delete account'), style: 'destructive', onPress: () => void xoa(false) },
       ],
     );
   }
 
   return (
-    <FormScreen title="Thông tin cá nhân" subtitle="Chỉnh sửa hồ sơ và bảo mật tài khoản.">
+    <FormScreen title={t('Thông tin cá nhân', 'Personal information')} subtitle={t('Chỉnh sửa hồ sơ và bảo mật tài khoản.', 'Edit your profile and account security.')}>
       <Field
-        label="Họ và tên"
+        label={t('Họ và tên', 'Full name')}
         icon="person-outline"
         value={ten}
         onChangeText={setTen}
-        placeholder="Nguyễn Văn A"
+        placeholder={t('Nguyễn Văn A', 'John Doe')}
         autoCapitalize="words"
       />
       <Field label="Email" icon="mail-outline" value={user.email} editable={false} />
@@ -128,11 +136,11 @@ export default function ProfileScreen() {
         {dangLuu ? (
           <ActivityIndicator color={colors.onBrand} />
         ) : (
-          <Text style={styles.saveText}>Lưu thay đổi</Text>
+          <Text style={styles.saveText}>{t('Lưu thay đổi', 'Save changes')}</Text>
         )}
       </Pressable>
 
-      <Text style={styles.section}>Phiên đăng nhập</Text>
+      <Text style={styles.section}>{t('Phiên đăng nhập', 'Login sessions')}</Text>
       {(phien ?? []).map((p) => (
         <View key={p.id} style={styles.phienRow}>
           <Ionicons
@@ -142,29 +150,29 @@ export default function ProfileScreen() {
           />
           <View style={{ flex: 1 }}>
             <Text style={styles.phienTitle}>
-              {p.client === 'mobile' ? 'Ứng dụng di động' : 'Trình duyệt web'}
-              {p.is_current ? ' · phiên hiện tại' : ''}
+              {p.client === 'mobile' ? t('Ứng dụng di động', 'Mobile app') : t('Trình duyệt web', 'Web browser')}
+              {p.is_current ? t(' · phiên hiện tại', ' · current session') : ''}
             </Text>
-            <Text style={styles.phienTime}>Hoạt động: {ngayGio(p.last_seen_at)}</Text>
+            <Text style={styles.phienTime}>{t('Hoạt động', 'Last active')}: {ngayGio(p.last_seen_at)}</Text>
           </View>
         </View>
       ))}
 
-      <Text style={styles.section}>Bảo mật</Text>
+      <Text style={styles.section}>{t('Bảo mật', 'Security')}</Text>
       <Pressable onPress={hoiDangXuatAll} style={styles.row}>
         <Ionicons name="log-out-outline" size={19} color={colors.text} />
-        <Text style={styles.rowText}>Đăng xuất tất cả thiết bị</Text>
+        <Text style={styles.rowText}>{t('Đăng xuất tất cả thiết bị', 'Log out of all devices')}</Text>
         <Ionicons name="chevron-forward" size={17} color={colors.muted} />
       </Pressable>
 
-      <Text style={styles.section}>Vùng nguy hiểm</Text>
+      <Text style={styles.section}>{t('Vùng nguy hiểm', 'Danger zone')}</Text>
       <Pressable onPress={hoiXoa} disabled={dangXL} style={[styles.row, dangXL && { opacity: 0.6 }]}>
         {dangXL ? (
           <ActivityIndicator color={colors.danger} />
         ) : (
           <Ionicons name="trash-outline" size={19} color={colors.danger} />
         )}
-        <Text style={[styles.rowText, { color: colors.danger }]}>Xóa tài khoản</Text>
+        <Text style={[styles.rowText, { color: colors.danger }]}>{t('Xóa tài khoản', 'Delete account')}</Text>
         <Ionicons name="chevron-forward" size={17} color={colors.danger} />
       </Pressable>
     </FormScreen>

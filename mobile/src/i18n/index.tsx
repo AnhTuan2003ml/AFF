@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
 
+import { setCamioLang } from '@/lib/camio-voice';
+
 export type Lang = 'vi' | 'en';
 
 const LANG_KEY = 'shoptik.lang';
@@ -22,7 +24,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     let alive = true;
     void SecureStore.getItemAsync(LANG_KEY)
       .then((v) => {
-        if (alive && (v === 'vi' || v === 'en')) setLangState(v);
+        if (alive && (v === 'vi' || v === 'en')) {
+          setLangState(v);
+          setCamioLang(v);
+        }
       })
       .finally(() => {
         if (alive) setReady(true);
@@ -34,6 +39,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   function setLang(l: Lang) {
     setLangState(l);
+    setCamioLang(l);
     void SecureStore.setItemAsync(LANG_KEY, l);
   }
 

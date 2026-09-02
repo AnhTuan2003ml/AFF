@@ -11,6 +11,7 @@ import { traCuu } from '@/api/products';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { ngay } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -20,6 +21,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * chế với trang /app/links trên web (campaign 'sharelink').
  */
 export default function ChiaSeScreen() {
+  const t = useT();
   const { user } = useSession();
   const qc = useQueryClient();
   const [url, setUrl] = useState('');
@@ -40,31 +42,31 @@ export default function ChiaSeScreen() {
       void qc.invalidateQueries({ queryKey: ['share-links'] });
       await Clipboard.setStringAsync(r.shareUrl);
       Alert.alert(
-        'Đã tạo link chia sẻ',
-        `Link cho "${r.productName}" đã sao chép. Gửi cho người mua để nhận ${r.sharerSharePercent}% hoa hồng sàn.`,
+        t('Đã tạo link chia sẻ', 'Share link created'),
+        `${t('Link cho', 'Link for')} "${r.productName}" ${t('đã sao chép. Gửi cho người mua để nhận', 'copied. Send it to buyers to earn')} ${r.sharerSharePercent}% ${t('hoa hồng sàn.', 'platform commission.')}`,
       );
     },
     onError: (e) =>
-      Alert.alert('Chưa tạo được', e instanceof Error ? e.message : 'Kiểm tra lại link nhé.'),
+      Alert.alert(t('Chưa tạo được', "Couldn't create"), e instanceof Error ? e.message : t('Kiểm tra lại link nhé.', 'Please check the link.')),
   });
 
-  if (!user) return <CanDangNhap mo_ta="Đăng nhập để tạo link chia sẻ và nhận hoa hồng." />;
+  if (!user) return <CanDangNhap mo_ta={t('Đăng nhập để tạo link chia sẻ và nhận hoa hồng.', 'Log in to create share links and earn commission.')} />;
 
   const percent = data?.sharerSharePercent ?? 6;
 
   async function chep(link: string) {
     await Clipboard.setStringAsync(link);
-    Alert.alert('Đã sao chép', 'Gửi link cho người mua nhé.');
+    Alert.alert(t('Đã sao chép', 'Copied'), t('Gửi link cho người mua nhé.', 'Send the link to buyers.'));
   }
 
   return (
     <FormScreen
-      title="Chia sẻ nhận hoa hồng"
-      subtitle={`Dán link sản phẩm bất kỳ (Shopee/TikTok/Lazada) để tạo link chia sẻ. Có người mua qua link, bạn nhận ${percent}% hoa hồng sàn của sản phẩm đó.`}>
+      title={t('Chia sẻ nhận hoa hồng', 'Share to earn commission')}
+      subtitle={`${t('Dán link sản phẩm bất kỳ (Shopee/TikTok/Lazada) để tạo link chia sẻ. Có người mua qua link, bạn nhận', 'Paste any product link (Shopee/TikTok/Lazada) to create a share link. When someone buys through it, you earn')} ${percent}% ${t('hoa hồng sàn của sản phẩm đó.', "of that product's platform commission.")}`}>
       <TextInput
         value={url}
         onChangeText={setUrl}
-        placeholder="Dán link sản phẩm vào đây…"
+        placeholder={t('Dán link sản phẩm vào đây…', 'Paste a product link here…')}
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -79,28 +81,28 @@ export default function ChiaSeScreen() {
           (pressed || tao.isPending || !url.trim()) && { opacity: 0.7 },
         ]}>
         <Ionicons name="link" size={17} color={colors.onBrand} />
-        <Text style={styles.submitText}>{tao.isPending ? 'Đang tạo…' : 'Tạo link chia sẻ'}</Text>
+        <Text style={styles.submitText}>{tao.isPending ? t('Đang tạo…', 'Creating…') : t('Tạo link chia sẻ', 'Create share link')}</Text>
       </Pressable>
 
       <View style={styles.earnBox}>
-        <Text style={styles.earnLabel}>Hoa hồng chia sẻ đã nhận</Text>
+        <Text style={styles.earnLabel}>{t('Hoa hồng chia sẻ đã nhận', 'Share commission earned')}</Text>
         <Text style={styles.earnValue}>
           {(data?.totalEarnedVnd ?? 0).toLocaleString('vi-VN')} đ
         </Text>
       </View>
 
-      <Text style={styles.h2}>Link đã tạo ({data?.links.length ?? 0})</Text>
+      <Text style={styles.h2}>{t('Link đã tạo', 'Links created')} ({data?.links.length ?? 0})</Text>
       {(data?.links.length ?? 0) === 0 ? (
-        <Text style={styles.empty}>Chưa có link nào. Dán link sản phẩm phía trên để bắt đầu.</Text>
+        <Text style={styles.empty}>{t('Chưa có link nào. Dán link sản phẩm phía trên để bắt đầu.', 'No links yet. Paste a product link above to get started.')}</Text>
       ) : (
         data!.links.map((l, i) => (
           <View key={l.shareUrl} style={[styles.row, i > 0 && styles.rowDivider]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.name} numberOfLines={2}>
-                {l.productName || 'Sản phẩm'}
+                {l.productName || t('Sản phẩm', 'Product')}
               </Text>
               <Text style={styles.meta}>
-                {l.clickCount} lượt mở · {l.ordersCount} đơn · {ngay(l.createdAt)}
+                {l.clickCount} {t('lượt mở', 'opens')} · {l.ordersCount} {t('đơn', 'orders')} · {ngay(l.createdAt)}
               </Text>
             </View>
             <View style={styles.rowActions}>

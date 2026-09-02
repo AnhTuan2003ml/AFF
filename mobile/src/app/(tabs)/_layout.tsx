@@ -7,6 +7,7 @@ import { EntryPromoModal } from '@/components/EntryPromoModal';
 import { MascotFab } from '@/components/MascotFab';
 import { PushRegistrar } from '@/components/PushRegistrar';
 import { WelcomeToast } from '@/components/WelcomeToast';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -21,6 +22,7 @@ export default function TabsLayout() {
   // Máy Android dùng cử chỉ vuốt có thanh gạch ngang chiếm chỗ ở đáy. Cộng
   // thêm phần đó vào chiều cao, nếu không nhãn tab bị thanh gạch đè lên.
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <View style={{ flex: 1 }}>
@@ -41,7 +43,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
+          title: t('Trang chủ', 'Home'),
           tabBarIcon: ({ color }) => (
             <Ionicons name="search-outline" size={26} color={color} />
           ),
@@ -50,7 +52,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Khám phá',
+          title: t('Khám phá', 'Discover'),
           tabBarIcon: ({ color }) => (
             <Ionicons name="compass-outline" size={26} color={color} />
           ),
@@ -59,7 +61,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Đơn hàng',
+          title: t('Đơn hàng', 'Orders'),
           tabBarIcon: ({ color }) => (
             <Ionicons name="receipt-outline" size={26} color={color} />
           ),
@@ -68,7 +70,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="wallet"
         options={{
-          title: 'Ví',
+          title: t('Ví', 'Wallet'),
           tabBarIcon: ({ color }) => (
             <Ionicons name="wallet-outline" size={26} color={color} />
           ),
@@ -79,7 +81,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Tài khoản',
+          title: t('Tài khoản', 'Account'),
           tabBarIcon: ({ color }) => (
             <Ionicons name="person-circle-outline" size={26} color={color} />
           ),

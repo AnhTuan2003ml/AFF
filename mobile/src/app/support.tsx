@@ -30,7 +30,8 @@ import {
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
-import { CAMIO_VOICE, camio } from '@/lib/camio-voice';
+import { useT } from '@/i18n';
+import { camio, camioAt } from '@/lib/camio-voice';
 import { ngayGio } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -46,26 +47,32 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const CAU_HOI_THUONG_GAP = [
-  'Đơn đã mua nhưng chưa thấy ghi nhận?',
-  'Bao lâu thì tiền hoàn về ví?',
-  'Cách rút tiền về ngân hàng?',
-  'Vì sao đơn của tôi bị hủy hoàn?',
-  'Link sản phẩm không tra cứu được?',
-  'Tiền hoàn được tính như thế nào?',
+const CAU_HOI_THUONG_GAP: { vi: string; en: string }[] = [
+  { vi: 'Đơn đã mua nhưng chưa thấy ghi nhận?', en: 'Ordered but not recorded yet?' },
+  { vi: 'Bao lâu thì tiền hoàn về ví?', en: 'How long until cashback reaches my wallet?' },
+  { vi: 'Cách rút tiền về ngân hàng?', en: 'How do I withdraw to my bank?' },
+  { vi: 'Vì sao đơn của tôi bị hủy hoàn?', en: 'Why was my order cashback cancelled?' },
+  { vi: 'Link sản phẩm không tra cứu được?', en: "Can't look up the product link?" },
+  { vi: 'Tiền hoàn được tính như thế nào?', en: 'How is cashback calculated?' },
 ];
 
 type FieldErrors = Partial<Record<'topic' | 'order' | 'code' | 'description' | 'email', string>>;
 
 export default function SupportScreen() {
   const { user } = useSession();
+  const t = useT();
   const [cheDo, setCheDo] = useState<'chat' | 'form'>('chat');
 
   if (!user) {
     return (
       <View style={styles.screen}>
         <Header />
-        <CanDangNhap mo_ta="Đăng nhập để chat với tư vấn viên và xem lại trao đổi." />
+        <CanDangNhap
+          mo_ta={t(
+            'Đăng nhập để chat với tư vấn viên và xem lại trao đổi.',
+            'Sign in to chat with an advisor and review your conversations.',
+          )}
+        />
       </View>
     );
   }
@@ -82,6 +89,7 @@ export default function SupportScreen() {
 
 function ChatHoTro({ moForm }: { moForm: () => void }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const qc = useQueryClient();
   const listRef = useRef<FlatList<SupportMessage>>(null);
   const inputRef = useRef<TextInput>(null);
@@ -118,14 +126,14 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
 
   const tin = data ?? [];
   const coDon = (form?.orderOptions.length ?? 0) > 0;
-  const loiChao = useMemo(() => CAMIO_VOICE.supportIntro[0], []);
+  const loiChao = camioAt('supportIntro', 0);
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={insets.top}>
-      <Header nutPhai={{ nhan: 'Theo mẫu', onPress: moForm }} />
+      <Header nutPhai={{ nhan: t('Theo mẫu', 'Use form'), onPress: moForm }} />
 
       {isPending ? (
         <View style={styles.center}>
@@ -141,7 +149,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
           ListEmptyComponent={
             <View style={styles.intro2}>
               <Mascot mood="haohung" size={72} />
-              <Text style={styles.introTitle}>Tư vấn viên đang trực</Text>
+              <Text style={styles.introTitle}>{t('Tư vấn viên đang trực', 'An advisor is online')}</Text>
               <Text style={styles.introSub}>{loiChao}</Text>
               <Pressable
                 onPress={() => inputRef.current?.focus()}
@@ -150,7 +158,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
                   pressed && { backgroundColor: colors.brandStrong },
                 ]}>
                 <Ionicons name="chatbubble-ellipses" size={16} color={colors.onBrand} />
-                <Text style={styles.ctaChatText}>Nhắn tư vấn viên</Text>
+                <Text style={styles.ctaChatText}>{t('Nhắn tư vấn viên', 'Message an advisor')}</Text>
               </Pressable>
             </View>
           }
@@ -160,19 +168,22 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
 
       {/* Gợi ý câu hỏi thường gặp — bấm là điền vào ô nhập, sửa rồi gửi. */}
       <View style={styles.faqWrap}>
-        <Text style={styles.faqLabel}>Câu hỏi thường gặp</Text>
+        <Text style={styles.faqLabel}>{t('Câu hỏi thường gặp', 'Frequently asked')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.faqRow}>
-          {CAU_HOI_THUONG_GAP.map((q) => (
-            <Pressable
-              key={q}
-              onPress={() => {
-                setNoiDung(q);
-                inputRef.current?.focus();
-              }}
-              style={({ pressed }) => [styles.faqChip, pressed && { opacity: 0.8 }]}>
-              <Text style={styles.faqChipText}>{q}</Text>
-            </Pressable>
-          ))}
+          {CAU_HOI_THUONG_GAP.map((q) => {
+            const cauHoi = t(q.vi, q.en);
+            return (
+              <Pressable
+                key={q.vi}
+                onPress={() => {
+                  setNoiDung(cauHoi);
+                  inputRef.current?.focus();
+                }}
+                style={({ pressed }) => [styles.faqChip, pressed && { opacity: 0.8 }]}>
+                <Text style={styles.faqChipText}>{cauHoi}</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       </View>
 
@@ -182,7 +193,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
           <Pressable style={styles.attachChip} onPress={() => setMoChonDon(true)}>
             <Ionicons name="cube-outline" size={14} color={colors.brand} />
             <Text style={styles.attachText} numberOfLines={1}>
-              Đang hỏi về: {donDangHoi.label}
+              {t('Đang hỏi về', 'Asking about')}: {donDangHoi.label}
             </Text>
             <Ionicons name="chevron-down" size={14} color={colors.brand} />
           </Pressable>
@@ -197,7 +208,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
         <Pressable
           onPress={() => coDon && setMoChonDon(true)}
           hitSlop={6}
-          accessibilityLabel="Chọn đơn hàng cần hỏi"
+          accessibilityLabel={t('Chọn đơn hàng cần hỏi', 'Select the order to ask about')}
           style={[styles.attachBtn, !coDon && { opacity: 0.4 }]}>
           <Ionicons name="cube-outline" size={20} color={colors.brand} />
         </Pressable>
@@ -205,7 +216,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
           ref={inputRef}
           value={noiDung}
           onChangeText={setNoiDung}
-          placeholder="Nhắn tư vấn viên…"
+          placeholder={t('Nhắn tư vấn viên…', 'Message an advisor…')}
           placeholderTextColor={colors.muted}
           style={styles.chatInput}
           multiline
@@ -234,8 +245,13 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
         onRequestClose={() => setMoChonDon(false)}>
         <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Đơn hàng cần hỏi</Text>
-            <Text style={styles.sheetSub}>Đơn được gắn vào tin nhắn để tư vấn viên nắm ngay.</Text>
+            <Text style={styles.sheetTitle}>{t('Đơn hàng cần hỏi', 'Order to ask about')}</Text>
+            <Text style={styles.sheetSub}>
+              {t(
+                'Đơn được gắn vào tin nhắn để tư vấn viên nắm ngay.',
+                'The order is attached to your message so the advisor sees the context right away.',
+              )}
+            </Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {(form?.orderOptions ?? []).map((o) => (
                 <Pressable
@@ -264,11 +280,11 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
                   setDonDangHoi(null);
                   setMoChonDon(false);
                 }}>
-                <Text style={styles.ghostText}>Bỏ gắn đơn</Text>
+                <Text style={styles.ghostText}>{t('Bỏ gắn đơn', 'Remove order')}</Text>
               </Pressable>
             ) : null}
             <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -302,6 +318,7 @@ function TinNhan({ m }: { m: SupportMessage }) {
 
 function SupportForm({ veChat }: { veChat: () => void }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const qc = useQueryClient();
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['support-form'],
@@ -348,20 +365,25 @@ function SupportForm({ veChat }: { veChat: () => void }) {
 
   const orderMode = topic?.orderMode ?? null;
   const coDon = (data?.orderOptions.length ?? 0) > 0;
-  const loiChao = useMemo(() => CAMIO_VOICE.supportIntro[0], []);
+  const loiChao = camioAt('supportIntro', 0);
 
   function validate(): boolean {
     const next: FieldErrors = {};
-    if (!topic) next.topic = 'Vui lòng chọn vấn đề cần hỗ trợ.';
+    if (!topic) next.topic = t('Vui lòng chọn vấn đề cần hỗ trợ.', 'Please choose an issue to get help with.');
     if (orderMode === 'list' && topic?.orderRequired && !order) {
-      next.order = 'Vui lòng chọn đơn hàng cần hỗ trợ.';
+      next.order = t('Vui lòng chọn đơn hàng cần hỗ trợ.', 'Please choose the order you need help with.');
     }
     if (orderMode === 'code' && orderCode.trim().length < 3) {
-      next.code = 'Vui lòng nhập mã đơn hàng trên sàn (tối thiểu 3 ký tự).';
+      next.code = t(
+        'Vui lòng nhập mã đơn hàng trên sàn (tối thiểu 3 ký tự).',
+        'Please enter the marketplace order code (at least 3 characters).',
+      );
     }
-    if (description.trim().length < 10) next.description = 'Mô tả cần tối thiểu 10 ký tự.';
+    if (description.trim().length < 10)
+      next.description = t('Mô tả cần tối thiểu 10 ký tự.', 'The description needs at least 10 characters.');
     const email = notifyEmail.trim();
-    if (email && !EMAIL_PATTERN.test(email)) next.email = 'Email nhận phản hồi chưa đúng định dạng.';
+    if (email && !EMAIL_PATTERN.test(email))
+      next.email = t('Email nhận phản hồi chưa đúng định dạng.', 'The reply email is not in a valid format.');
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -384,7 +406,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={insets.top}>
-      <Header nutPhai={{ nhan: '💬 Chat', onPress: veChat }} />
+      <Header nutPhai={{ nhan: t('💬 Chat', '💬 Chat'), onPress: veChat }} />
 
       {isPending ? (
         <View style={styles.center}>
@@ -395,7 +417,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
           <Mascot mood="ngacnhien" size={64} />
           <Text style={styles.loadErr}>{camio('error')}</Text>
           <Pressable style={styles.retry} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Thử lại</Text>
+            <Text style={styles.retryText}>{t('Thử lại', 'Try again')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -406,24 +428,24 @@ function SupportForm({ veChat }: { veChat: () => void }) {
           <View style={styles.intro}>
             <Mascot mood="haohung" size={56} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.introTitle}>Gửi yêu cầu theo mẫu</Text>
+              <Text style={styles.introTitle}>{t('Gửi yêu cầu theo mẫu', 'Send a request form')}</Text>
               <Text style={styles.introSub}>{loiChao}</Text>
             </View>
           </View>
 
           {(data.latestRequest || data.latestReply) && (
             <Pressable onPress={() => setMoPhanHoi(true)} style={styles.replyLink}>
-              <Text style={styles.replyBtnText}>Xem phản hồi mới nhất</Text>
+              <Text style={styles.replyBtnText}>{t('Xem phản hồi mới nhất', 'View latest reply')}</Text>
               {data.latestReply ? <View style={styles.replyDot} /> : null}
               <Ionicons name="chevron-forward" size={14} color={colors.brand} />
             </Pressable>
           )}
 
           {/* Vấn đề cần hỗ trợ — combobox mở danh sách, như ô chọn đơn hàng. */}
-          <Text style={styles.label}>Vấn đề cần hỗ trợ</Text>
+          <Text style={styles.label}>{t('Vấn đề cần hỗ trợ', 'Issue you need help with')}</Text>
           <Pressable onPress={() => setMoChonVanDe(true)} style={styles.select}>
             <Text style={[styles.selectText, !topic && { color: colors.muted }]}>
-              {topic ? topic.label : 'Chọn vấn đề…'}
+              {topic ? topic.label : t('Chọn vấn đề…', 'Choose an issue…')}
             </Text>
             <Ionicons name="chevron-down" size={18} color={colors.muted} />
           </Pressable>
@@ -433,13 +455,18 @@ function SupportForm({ veChat }: { veChat: () => void }) {
           {orderMode === 'list' && (
             <>
               <Text style={styles.label}>
-                Đơn hàng liên quan{topic?.orderRequired ? '' : ' (không bắt buộc)'}
+                {t('Đơn hàng liên quan', 'Related order')}
+                {topic?.orderRequired ? '' : t(' (không bắt buộc)', ' (optional)')}
               </Text>
               <Pressable
                 onPress={() => coDon && setMoChonDon(true)}
                 style={[styles.select, !coDon && { opacity: 0.6 }]}>
                 <Text style={[styles.selectText, !order && { color: colors.muted }]} numberOfLines={2}>
-                  {order ? order.label : coDon ? '— Chọn đơn hàng —' : 'Tài khoản của bạn chưa có đơn nào.'}
+                  {order
+                    ? order.label
+                    : coDon
+                      ? t('— Chọn đơn hàng —', '— Choose an order —')
+                      : t('Tài khoản của bạn chưa có đơn nào.', 'Your account has no orders yet.')}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color={colors.muted} />
               </Pressable>
@@ -450,34 +477,39 @@ function SupportForm({ veChat }: { veChat: () => void }) {
           {/* Mã đơn trên sàn */}
           {orderMode === 'code' && (
             <>
-              <Text style={styles.label}>Mã đơn hàng trên sàn</Text>
+              <Text style={styles.label}>{t('Mã đơn hàng trên sàn', 'Marketplace order code')}</Text>
               <TextInput
                 value={orderCode}
                 onChangeText={(v) => {
                   setOrderCode(v);
                   setErrors((e) => ({ ...e, code: undefined }));
                 }}
-                placeholder="Ví dụ: 2508ABCXYZ123"
+                placeholder={t('Ví dụ: 2508ABCXYZ123', 'e.g. 2508ABCXYZ123')}
                 placeholderTextColor={colors.muted}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 maxLength={100}
                 style={styles.input}
               />
-              <Text style={styles.help}>Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.</Text>
+              <Text style={styles.help}>
+                {t(
+                  'Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.',
+                  'Find it in your Shopee / TikTok Shop / Lazada purchase orders.',
+                )}
+              </Text>
               {errors.code ? <Text style={styles.fieldErr}>{errors.code}</Text> : null}
             </>
           )}
 
           {/* Mô tả */}
-          <Text style={styles.label}>Mô tả chi tiết</Text>
+          <Text style={styles.label}>{t('Mô tả chi tiết', 'Detailed description')}</Text>
           <TextInput
             value={description}
             onChangeText={(v) => {
               setDescription(v);
               setErrors((e) => ({ ...e, description: undefined }));
             }}
-            placeholder="Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)"
+            placeholder={t('Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)', 'What went wrong? (at least 10 characters)')}
             placeholderTextColor={colors.muted}
             multiline
             maxLength={2000}
@@ -487,7 +519,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
           {errors.description ? <Text style={styles.fieldErr}>{errors.description}</Text> : null}
 
           {/* Email nhận phản hồi */}
-          <Text style={styles.label}>Email nhận phản hồi</Text>
+          <Text style={styles.label}>{t('Email nhận phản hồi', 'Reply email')}</Text>
           <TextInput
             value={notifyEmail}
             onChangeText={(v) => {
@@ -495,7 +527,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
               setNotifyEmail(v);
               setErrors((e) => ({ ...e, email: undefined }));
             }}
-            placeholder="ban@email.com"
+            placeholder={t('ban@email.com', 'you@email.com')}
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -503,15 +535,22 @@ function SupportForm({ veChat }: { veChat: () => void }) {
             maxLength={254}
             style={styles.input}
           />
-          <Text style={styles.help}>Phản hồi của đội hỗ trợ cũng được gửi về email này.</Text>
+          <Text style={styles.help}>
+            {t(
+              'Phản hồi của đội hỗ trợ cũng được gửi về email này.',
+              'Replies from the support team are also sent to this email.',
+            )}
+          </Text>
           {errors.email ? <Text style={styles.fieldErr}>{errors.email}</Text> : null}
 
           {sentAt ? (
             <View style={styles.success}>
               <Mascot mood="thichthu" size={36} />
               <Text style={styles.successText}>
-                Đã gửi! Đội CSKH sẽ xử lý và phản hồi qua email cùng thông báo trên app. Camio
-                canh giúp bạn 👀
+                {t(
+                  'Đã gửi! Đội CSKH sẽ xử lý và phản hồi qua email cùng thông báo trên app. Camio canh giúp bạn 👀',
+                  'Sent! Our support team will handle it and reply via email and an in-app notification. Camio has your back 👀',
+                )}
               </Text>
             </View>
           ) : null}
@@ -528,15 +567,17 @@ function SupportForm({ veChat }: { veChat: () => void }) {
             {gui.isPending ? (
               <ActivityIndicator color={colors.onBrand} />
             ) : (
-              <Text style={styles.primaryText}>Gửi yêu cầu</Text>
+              <Text style={styles.primaryText}>{t('Gửi yêu cầu', 'Send request')}</Text>
             )}
           </Pressable>
 
           <View style={styles.foot}>
             <Ionicons name="time-outline" size={16} color={colors.muted} />
             <Text style={styles.footText}>
-              Đội CSKH thường phản hồi trong vòng 24 giờ. Bạn sẽ nhận thông báo trên app và
-              email khi có phản hồi mới.
+              {t(
+                'Đội CSKH thường phản hồi trong vòng 24 giờ. Bạn sẽ nhận thông báo trên app và email khi có phản hồi mới.',
+                'The support team usually replies within 24 hours. You will get an in-app and email notification when there is a new reply.',
+              )}
             </Text>
           </View>
         </ScrollView>
@@ -550,7 +591,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
         onRequestClose={() => setMoChonVanDe(false)}>
         <Pressable style={styles.scrim} onPress={() => setMoChonVanDe(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Chọn vấn đề cần hỗ trợ</Text>
+            <Text style={styles.sheetTitle}>{t('Chọn vấn đề cần hỗ trợ', 'Choose an issue')}</Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {(data?.topics ?? []).map((t) => (
                 <Pressable
@@ -576,7 +617,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
               ))}
             </ScrollView>
             <Pressable style={styles.ghost} onPress={() => setMoChonVanDe(false)}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -590,7 +631,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
         onRequestClose={() => setMoChonDon(false)}>
         <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Chọn đơn hàng</Text>
+            <Text style={styles.sheetTitle}>{t('Chọn đơn hàng', 'Choose an order')}</Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {(data?.orderOptions ?? []).map((o) => (
                 <Pressable
@@ -613,7 +654,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
               ))}
             </ScrollView>
             <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -627,11 +668,16 @@ function SupportForm({ veChat }: { veChat: () => void }) {
         onRequestClose={() => setMoPhanHoi(false)}>
         <Pressable style={styles.scrim} onPress={() => setMoPhanHoi(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Phản hồi</Text>
-            <Text style={styles.sheetSub}>Yêu cầu hiện tại và phản hồi mới nhất từ đội CSKH.</Text>
+            <Text style={styles.sheetTitle}>{t('Phản hồi', 'Reply')}</Text>
+            <Text style={styles.sheetSub}>
+              {t(
+                'Yêu cầu hiện tại và phản hồi mới nhất từ đội CSKH.',
+                'Your current request and the latest reply from the support team.',
+              )}
+            </Text>
             {data ? <PhanHoi data={data} /> : null}
             <Pressable style={styles.ghost} onPress={() => setMoPhanHoi(false)}>
-              <Text style={styles.ghostText}>Đóng</Text>
+              <Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -641,12 +687,13 @@ function SupportForm({ veChat }: { veChat: () => void }) {
 }
 
 function PhanHoi({ data }: { data: SupportFormData }) {
+  const t = useT();
   return (
     <View style={{ gap: 10, marginTop: 6 }}>
       {data.latestRequest ? (
         <View style={[styles.msgRow, styles.msgRight]}>
           <View style={[styles.bubble, styles.bubbleMe]}>
-            <Text style={styles.bubbleWho}>Yêu cầu của bạn</Text>
+            <Text style={styles.bubbleWho}>{t('Yêu cầu của bạn', 'Your request')}</Text>
             <Text style={[styles.bubbleText, { color: colors.onBrand }]}>{data.latestRequest.body}</Text>
             <Text style={[styles.bubbleTime, { color: 'rgba(255,255,255,0.75)' }]}>
               {ngayGio(data.latestRequest.createdAt)}
@@ -660,7 +707,7 @@ function PhanHoi({ data }: { data: SupportFormData }) {
             <Mascot mood="haohung" size={30} />
           </View>
           <View style={[styles.bubble, styles.bubbleAgent]}>
-            <Text style={[styles.bubbleWho, { color: colors.brand }]}>Đội CSKH</Text>
+            <Text style={[styles.bubbleWho, { color: colors.brand }]}>{t('Đội CSKH', 'Support team')}</Text>
             <Text style={styles.bubbleText}>{data.latestReply.body}</Text>
             <Text style={styles.bubbleTime}>{ngayGio(data.latestReply.createdAt)}</Text>
           </View>
@@ -669,7 +716,10 @@ function PhanHoi({ data }: { data: SupportFormData }) {
         <View style={styles.waiting}>
           <Mascot mood="baocao" size={32} />
           <Text style={styles.waitingText}>
-            Đội CSKH đang xử lý — phản hồi sẽ hiện ở đây và Camio báo bạn ngay 👀
+            {t(
+              'Đội CSKH đang xử lý — phản hồi sẽ hiện ở đây và Camio báo bạn ngay 👀',
+              'The support team is working on it — the reply will appear here and Camio will let you know 👀',
+            )}
           </Text>
         </View>
       )}
@@ -683,12 +733,13 @@ function Header({
   nutPhai?: { nhan: string; onPress: () => void; dot?: boolean };
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
       <Pressable onPress={() => router.back()} hitSlop={10} style={styles.back}>
         <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
-      <Text style={styles.headerTitle}>Hỗ trợ</Text>
+      <Text style={styles.headerTitle}>{t('Hỗ trợ', 'Support')}</Text>
       {nutPhai ? (
         <Pressable onPress={nutPhai.onPress} hitSlop={8} style={styles.replyBtn}>
           <Text style={styles.replyBtnText}>{nutPhai.nhan}</Text>

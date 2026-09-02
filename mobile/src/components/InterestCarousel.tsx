@@ -9,6 +9,7 @@ import { apiBaseUrl } from '@/api/client';
 import { layQuanTam, type InterestedProduct } from '@/api/features';
 import { taoLinkMua, traCuu } from '@/api/products';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -17,6 +18,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
  * thẳng luồng mua (tra cứu → tạo link affiliate → mở trình duyệt hệ thống).
  */
 export function InterestCarousel() {
+  const t = useT();
   const { user } = useSession();
   const { data } = useQuery({
     queryKey: ['interested'],
@@ -31,13 +33,17 @@ export function InterestCarousel() {
     <View style={s.section}>
       <View style={s.head}>
         <View style={{ flex: 1 }}>
-          <Text style={s.title}>Sản phẩm bạn quan tâm</Text>
+          <Text style={s.title}>{t('Sản phẩm bạn quan tâm', 'Products you like')}</Text>
           <Text style={s.sub}>
-            {sp.length} sản phẩm đã xem chưa mua — hoàn tất để nhận hoàn tiền.
+            {sp.length}{' '}
+            {t(
+              'sản phẩm đã xem chưa mua — hoàn tất để nhận hoàn tiền.',
+              'products viewed but not bought — complete the purchase to earn cashback.',
+            )}
           </Text>
         </View>
         <Pressable onPress={() => router.push('/(tabs)/orders')} hitSlop={8}>
-          <Text style={s.more}>Xem tất cả ›</Text>
+          <Text style={s.more}>{t('Xem tất cả ›', 'See all ›')}</Text>
         </Pressable>
       </View>
 
@@ -51,6 +57,7 @@ export function InterestCarousel() {
 }
 
 function Card({ p }: { p: InterestedProduct }) {
+  const t = useT();
   const [dang, setDang] = useState(false);
 
   async function mua() {
@@ -64,8 +71,8 @@ function Card({ p }: { p: InterestedProduct }) {
       );
     } catch (e) {
       Alert.alert(
-        'Chưa mua được',
-        e instanceof Error && e.message ? e.message : 'Thử lại sau ít phút.',
+        t('Chưa mua được', 'Could not purchase'),
+        e instanceof Error && e.message ? e.message : t('Thử lại sau ít phút.', 'Please try again in a few minutes.'),
       );
     } finally {
       setDang(false);
@@ -81,7 +88,7 @@ function Card({ p }: { p: InterestedProduct }) {
           <View style={[s.img, s.imgEmpty]} />
         )}
         <View style={s.badge}>
-          <Text style={s.badgeText}>Chưa mua</Text>
+          <Text style={s.badgeText}>{t('Chưa mua', 'Not bought')}</Text>
         </View>
       </View>
       <View style={s.body}>
@@ -92,7 +99,7 @@ function Card({ p }: { p: InterestedProduct }) {
           onPress={mua}
           disabled={dang || !p.productUrl}
           style={({ pressed }) => [s.cta, pressed && { opacity: 0.85 }]}>
-          <Text style={s.ctaText}>{dang ? 'Đang mở…' : 'Hoàn tất mua  →'}</Text>
+          <Text style={s.ctaText}>{dang ? t('Đang mở…', 'Opening…') : t('Hoàn tất mua  →', 'Complete purchase  →')}</Text>
         </Pressable>
       </View>
     </View>

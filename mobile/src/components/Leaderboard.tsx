@@ -10,6 +10,7 @@ import {
   type TopProduct,
 } from '@/api/features';
 import { Confetti } from '@/components/Confetti';
+import { useT } from '@/i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
@@ -28,12 +29,13 @@ const BLOCK_H = { 1: 78, 2: 60, 3: 48 } as const;
 type Item = TopBuyer | TopProduct;
 
 function Spot({ item, rank, product }: { item?: Item; rank: 1 | 2 | 3; product: boolean }) {
+  const t = useT();
   const anh = item
     ? product
       ? (item as TopProduct).imageUrl
       : (item as TopBuyer).avatarUrl
     : null;
-  const ten = item?.name ?? 'Chưa có';
+  const ten = item?.name ?? t('Chưa có', 'None yet');
   return (
     <View style={[s.spot, rank === 1 && s.spotCenter]}>
       <Text style={s.crown}>{rank === 1 ? '👑' : ' '}</Text>
@@ -52,7 +54,7 @@ function Spot({ item, rank, product }: { item?: Item; rank: 1 | 2 | 3; product: 
       <Text style={s.count}>
         {item ? (
           <>
-            <Text style={s.countB}>{item.count}</Text> đơn
+            <Text style={s.countB}>{item.count}</Text> {t('đơn', 'orders')}
           </>
         ) : (
           '—'
@@ -67,6 +69,7 @@ function Spot({ item, rank, product }: { item?: Item; rank: 1 | 2 | 3; product: 
 }
 
 export function Leaderboard() {
+  const t = useT();
   const { data } = useQuery({ queryKey: ['leaderboard'], queryFn: layBangXepHang });
   const [tab, setTab] = useState<0 | 1>(0);
 
@@ -84,20 +87,20 @@ export function Leaderboard() {
         end={{ x: 1, y: 1 }}
         style={s.card}>
         <Confetti />
-        <Text style={s.eyebrow}>🔥  SỰ KIỆN THÁNG</Text>
-        <Text style={s.title}>Bảng xếp hạng</Text>
+        <Text style={s.eyebrow}>{t('🔥  SỰ KIỆN THÁNG', '🔥  EVENT OF THE MONTH')}</Text>
+        <Text style={s.title}>{t('Bảng xếp hạng', 'Leaderboard')}</Text>
         <Text style={s.period}>{data.monthLabel}</Text>
 
         <View style={s.seg}>
           <Pressable
             onPress={() => setTab(0)}
             style={[s.segBtn, tab === 0 && s.segActive]}>
-            <Text style={[s.segText, tab === 0 && s.segTextActive]}>Người mua</Text>
+            <Text style={[s.segText, tab === 0 && s.segTextActive]}>{t('Người mua', 'Top buyers')}</Text>
           </Pressable>
           <Pressable
             onPress={() => setTab(1)}
             style={[s.segBtn, tab === 1 && s.segActive]}>
-            <Text style={[s.segText, tab === 1 && s.segTextActive]}>Bán chạy</Text>
+            <Text style={[s.segText, tab === 1 && s.segTextActive]}>{t('Bán chạy', 'Best sellers')}</Text>
           </Pressable>
         </View>
 

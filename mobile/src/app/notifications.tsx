@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,18 +11,22 @@ import { CanDangNhap } from '@/components/CanDangNhap';
 import { CAMIO, type CamioMood } from '@/components/Mascot';
 import { camio } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
+import { useLang, useT } from '@/i18n';
 import { ngayGio } from '@/lib/format';
+import { localizeNotification } from '@/lib/notification-i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
  * Thông báo — dựng lại danh sách thông báo của web. Mở màn này là đánh dấu đã
  * đọc tất cả (đồng bộ số badge ở chuông).
  */
-const EMPTY_NOTIF = camio('emptyNotif');
-
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
+  const t = useT();
+  const { lang } = useLang();
+  // Câu trống ổn định trong mỗi ngôn ngữ, đổi khi chuyển VI/EN.
+  const EMPTY_NOTIF = useMemo(() => camio('emptyNotif'), [lang]);
   const qc = useQueryClient();
 
   const { data, isPending } = useQuery({
@@ -48,12 +52,17 @@ export default function NotificationsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10} style={{ width: 22 }}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Thông báo</Text>
+        <Text style={styles.headerTitle}>{t('Thông báo', 'Notifications')}</Text>
         <View style={{ width: 22 }} />
       </View>
 
       {!user ? (
-        <CanDangNhap mo_ta="Đăng nhập để xem thông báo về đơn hàng, hoàn tiền và nhiệm vụ." />
+        <CanDangNhap
+          mo_ta={t(
+            'Đăng nhập để xem thông báo về đơn hàng, hoàn tiền và nhiệm vụ.',
+            'Sign in to see notifications about orders, cashback and tasks.',
+          )}
+        />
       ) : isPending ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.brand} />
@@ -69,7 +78,7 @@ export default function NotificationsScreen() {
               <Text style={styles.emptyText}>{EMPTY_NOTIF}</Text>
             </View>
           }
-          renderItem={({ item }) => <Dong n={item} />}
+          renderItem={({ item }) => <Dong n={item} lang={lang} />}
         />
       )}
     </View>
@@ -84,7 +93,7 @@ function moodCua(type: string): CamioMood {
   return 'vuive';
 }
 
-function Dong({ n }: { n: NotificationItem }) {
+function Dong({ n, lang }: { n: NotificationItem; lang: string }) {
   return (
     <View style={[styles.item, !n.isRead && styles.itemUnread]}>
       <View style={styles.avatar}>
@@ -92,8 +101,8 @@ function Dong({ n }: { n: NotificationItem }) {
         {!n.isRead && <View style={styles.dot} />}
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{n.title}</Text>
-        {n.body ? <Text style={styles.body}>{n.body}</Text> : null}
+        <Text style={styles.title}>{localizeNotification(n.title, lang)}</Text>
+        {n.body ? <Text style={styles.body}>{localizeNotification(n.body, lang)}</Text> : null}
         <Text style={styles.time}>{ngayGio(n.createdAt)}</Text>
       </View>
     </View>

@@ -14,6 +14,7 @@ import { AuthCard } from '@/components/AuthCard';
 import { Checkbox } from '@/components/form';
 import { GoogleButton } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors, radius } from '@/theme/tokens';
 
 /**
@@ -23,6 +24,7 @@ import { colors, radius } from '@/theme/tokens';
  */
 export default function LoginScreen() {
   const { dangNhap } = useSession();
+  const t = useT();
 
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
@@ -41,14 +43,20 @@ export default function LoginScreen() {
       await dangNhap(email.trim(), matKhau, ghiNho);
       router.back();
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Không đăng nhập được. Thử lại.');
+      setLoi(
+        e instanceof Error && e.message
+          ? e.message
+          : t('Không đăng nhập được. Thử lại.', 'Could not sign in. Please try again.'),
+      );
     } finally {
       setDangGui(false);
     }
   }
 
   return (
-    <AuthCard title="Đăng nhập" subtitle="Vào ví để xem tiền hoàn và tạo lệnh rút">
+    <AuthCard
+      title={t('Đăng nhập', 'Sign in')}
+      subtitle={t('Vào ví để xem tiền hoàn và tạo lệnh rút', 'Open your wallet to view cashback and request withdrawals')}>
       {loi ? (
         <View style={styles.errorBox}>
           <Ionicons name="alert-circle" size={16} color={colors.danger} />
@@ -56,13 +64,13 @@ export default function LoginScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.label}>Email</Text>
+      <Text style={styles.label}>{t('Email', 'Email')}</Text>
       <View style={styles.inputWrap}>
         <Ionicons name="mail-outline" size={17} color={colors.muted} />
         <TextInput
           value={email}
           onChangeText={setEmail}
-          placeholder="ten@email.com"
+          placeholder={t('ten@email.com', 'you@email.com')}
           placeholderTextColor={colors.muted}
           style={styles.input}
           autoCapitalize="none"
@@ -72,13 +80,13 @@ export default function LoginScreen() {
         />
       </View>
 
-      <Text style={styles.label}>Mật khẩu</Text>
+      <Text style={styles.label}>{t('Mật khẩu', 'Password')}</Text>
       <View style={styles.inputWrap}>
         <Ionicons name="lock-closed-outline" size={17} color={colors.muted} />
         <TextInput
           value={matKhau}
           onChangeText={setMatKhau}
-          placeholder="Nhập mật khẩu"
+          placeholder={t('Nhập mật khẩu', 'Enter your password')}
           placeholderTextColor={colors.muted}
           style={styles.input}
           secureTextEntry={!hienMatKhau}
@@ -99,11 +107,11 @@ export default function LoginScreen() {
       <View style={styles.inlineActions}>
         <View style={styles.rememberWrap}>
           <Checkbox checked={ghiNho} onToggle={() => setGhiNho((v) => !v)}>
-            Ghi nhớ đăng nhập
+            {t('Ghi nhớ đăng nhập', 'Remember me')}
           </Checkbox>
         </View>
         <Pressable onPress={() => router.push('/forgot-password')} hitSlop={8}>
-          <Text style={styles.linkStrong}>Quên mật khẩu?</Text>
+          <Text style={styles.linkStrong}>{t('Quên mật khẩu?', 'Forgot password?')}</Text>
         </Pressable>
       </View>
 
@@ -118,21 +126,21 @@ export default function LoginScreen() {
         {dangGui ? (
           <ActivityIndicator color={colors.onBrand} />
         ) : (
-          <Text style={styles.primaryBtnText}>Đăng nhập  →</Text>
+          <Text style={styles.primaryBtnText}>{t('Đăng nhập  →', 'Sign in  →')}</Text>
         )}
       </Pressable>
 
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>hoặc</Text>
+        <Text style={styles.dividerText}>{t('hoặc', 'or')}</Text>
         <View style={styles.dividerLine} />
       </View>
       <GoogleButton onError={setLoi} />
 
       <Text style={styles.switch}>
-        Chưa có tài khoản?{' '}
+        {t('Chưa có tài khoản?', "Don't have an account?")}{' '}
         <Text style={styles.switchLink} onPress={() => router.push('/register')}>
-          Tạo tài khoản
+          {t('Tạo tài khoản', 'Create account')}
         </Text>
       </Text>
     </AuthCard>

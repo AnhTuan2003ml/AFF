@@ -34,6 +34,7 @@ import { InterestCarousel } from '@/components/InterestCarousel';
 import { Leaderboard } from '@/components/Leaderboard';
 import { PreviewCard } from '@/components/PreviewCard';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -41,6 +42,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
  * trình tự khối của web: hero → thẻ dán link → kết quả → thẻ ví.
  */
 export default function HomeScreen() {
+  const t = useT();
   const { user } = useSession();
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
   const [link, setLink] = useState('');
@@ -122,7 +124,7 @@ export default function HomeScreen() {
     } catch (e) {
       Alert.alert(
         camio('error'),
-        e instanceof Error && e.message ? e.message : 'Thử lại giúp Camio nhé!',
+        e instanceof Error && e.message ? e.message : t('Thử lại giúp Camio nhé!', 'Please try again in a moment.'),
       );
     } finally {
       setDangMua(false);
@@ -142,19 +144,22 @@ export default function HomeScreen() {
               <Ionicons name="search" size={18} color={colors.brand} />
             </View>
             <View style={styles.cardHeadCopy}>
-              <Text style={styles.cardTitle}>Khoan mua! Để Camio kiểm tra đã.</Text>
+              <Text style={styles.cardTitle}>{t('Khoan mua! Để Camio kiểm tra đã.', 'Wait! Let Camio check first.')}</Text>
               <Text style={styles.cardSub}>
-                Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn
+                {t(
+                  'Dán link Shopee, TikTok Shop, Lazada — Camio tính tiền hoàn dự kiến cho bạn',
+                  'Paste a Shopee, TikTok Shop or Lazada link — Camio estimates your cashback',
+                )}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.label}>Link sản phẩm</Text>
+          <Text style={styles.label}>{t('Link sản phẩm', 'Product link')}</Text>
           <View style={styles.inputWrap}>
             <TextInput
               value={link}
               onChangeText={setLink}
-              placeholder="Dán link sản phẩm vào đây..."
+              placeholder={t('Dán link sản phẩm vào đây...', 'Paste the product link here...')}
               placeholderTextColor={colors.muted}
               style={styles.input}
               autoCapitalize="none"
@@ -171,7 +176,7 @@ export default function HomeScreen() {
             {/* Nút Dán: đọc bộ nhớ tạm mà KHÔNG focus ô → không bật bàn phím. */}
             <Pressable onPress={dan} hitSlop={8} style={styles.pasteBtn}>
               <Ionicons name="clipboard-outline" size={16} color={colors.brand} />
-              <Text style={styles.pasteText}>Dán</Text>
+              <Text style={styles.pasteText}>{t('Dán', 'Paste')}</Text>
             </Pressable>
           </View>
 
@@ -186,7 +191,7 @@ export default function HomeScreen() {
             {dangTra ? (
               <ActivityIndicator color={colors.onBrand} />
             ) : (
-              <Text style={styles.primaryBtnText}>Tra cứu</Text>
+              <Text style={styles.primaryBtnText}>{t('Tra cứu', 'Check cashback')}</Text>
             )}
           </Pressable>
 
@@ -220,9 +225,9 @@ export default function HomeScreen() {
 
         <Leaderboard />
 
-        <ProductStrip tieuDe="Đề xuất" list="recommend" />
-        <ProductStrip tieuDe="Bán chạy" list="best" />
-        <ProductStrip tieuDe="Ưu đãi độc quyền" list="exclusive" />
+        <ProductStrip tieuDe={t('Đề xuất', 'Recommended')} list="recommend" />
+        <ProductStrip tieuDe={t('Bán chạy', 'Best sellers')} list="best" />
+        <ProductStrip tieuDe={t('Ưu đãi độc quyền', 'Exclusive deals')} list="exclusive" />
 
       </ScrollView>
     </View>
@@ -231,16 +236,19 @@ export default function HomeScreen() {
 
 /** Thẻ ví — đổi mặt theo trạng thái đăng nhập, y như web. */
 function ViCard() {
+  const t = useT();
   const { user } = useSession();
 
   if (!user) {
     return (
       <View style={styles.walletCard}>
-        <Text style={styles.walletEyebrow}>Ví hoàn tiền</Text>
-        <Text style={styles.walletTitle}>Đăng nhập để nhận</Text>
+        <Text style={styles.walletEyebrow}>{t('Ví hoàn tiền', 'Cashback wallet')}</Text>
+        <Text style={styles.walletTitle}>{t('Đăng nhập để nhận', 'Sign in to earn')}</Text>
         <Text style={styles.walletCopy}>
-          Dán link sản phẩm để xem trước tiền hoàn ngay. Đăng nhập để mua qua
-          ShopTik và nhận tiền về ví.
+          {t(
+            'Dán link sản phẩm để xem trước tiền hoàn ngay. Đăng nhập để mua qua ShopTik và nhận tiền về ví.',
+            'Paste a product link to preview your cashback instantly. Sign in to buy through ShopTik and get money back to your wallet.',
+          )}
         </Text>
         <View style={styles.walletActions}>
           <Pressable
@@ -249,12 +257,12 @@ function ViCard() {
               styles.primaryBtnSm,
               pressed && { backgroundColor: colors.brandStrong },
             ]}>
-            <Text style={styles.primaryBtnText}>Đăng nhập</Text>
+            <Text style={styles.primaryBtnText}>{t('Đăng nhập', 'Sign in')}</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/login')}
             style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.7 }]}>
-            <Text style={styles.ghostBtnText}>Tạo tài khoản</Text>
+            <Text style={styles.ghostBtnText}>{t('Tạo tài khoản', 'Create account')}</Text>
           </Pressable>
         </View>
       </View>
@@ -263,8 +271,10 @@ function ViCard() {
 
   return (
     <View style={styles.walletCard}>
-      <Text style={styles.walletEyebrow}>Ví hoàn tiền</Text>
-      <Text style={styles.walletTitle}>Xin chào, {user.fullName || 'bạn'}</Text>
+      <Text style={styles.walletEyebrow}>{t('Ví hoàn tiền', 'Cashback wallet')}</Text>
+      <Text style={styles.walletTitle}>
+        {t('Xin chào,', 'Hi,')} {user.fullName || t('bạn', 'there')}
+      </Text>
       <Pressable
         onPress={() => router.push('/(tabs)/wallet')}
         style={({ pressed }) => [
@@ -272,7 +282,7 @@ function ViCard() {
           { alignSelf: 'flex-start', marginTop: 12 },
           pressed && { backgroundColor: colors.brandStrong },
         ]}>
-        <Text style={styles.primaryBtnText}>Mở ví</Text>
+        <Text style={styles.primaryBtnText}>{t('Mở ví', 'Open wallet')}</Text>
       </Pressable>
     </View>
   );

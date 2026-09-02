@@ -5,6 +5,7 @@ import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { diemDanh, layDiemDanh } from '@/api/features';
 import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -16,6 +17,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
  */
 export function CheckinModal({ mo, dong }: { mo: boolean; dong: () => void }) {
   const { user } = useSession();
+  const t = useT();
   const qc = useQueryClient();
   const { data, isPending } = useQuery({
     queryKey: ['checkin'],
@@ -28,11 +30,20 @@ export function CheckinModal({ mo, dong }: { mo: boolean; dong: () => void }) {
     onSuccess: async (r) => {
       await qc.invalidateQueries({ queryKey: ['checkin'] });
       if (r.justCheckedIn) {
-        Alert.alert('Đã điểm danh 🔥', `Chuỗi hiện tại: ${r.streak} ngày liên tiếp.`);
+        Alert.alert(
+          t('Đã điểm danh 🔥', 'Checked in 🔥'),
+          t(
+            `Chuỗi hiện tại: ${r.streak} ngày liên tiếp.`,
+            `Current streak: ${r.streak} days in a row.`,
+          ),
+        );
       }
     },
     onError: (e) =>
-      Alert.alert('Chưa điểm danh được', e instanceof Error ? e.message : 'Thử lại sau.'),
+      Alert.alert(
+        t('Chưa điểm danh được', 'Could not check in'),
+        e instanceof Error ? e.message : t('Thử lại sau.', 'Please try again later.'),
+      ),
   });
 
   const bayNgay = (() => {
@@ -52,30 +63,37 @@ export function CheckinModal({ mo, dong }: { mo: boolean; dong: () => void }) {
       {/* Bấm nền mờ hoặc nút ✕ đều đóng; bấm trong thẻ thì không. */}
       <Pressable style={styles.scrim} onPress={dong}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          <Pressable style={styles.close} hitSlop={8} onPress={dong} accessibilityLabel="Đóng">
+          <Pressable style={styles.close} hitSlop={8} onPress={dong} accessibilityLabel={t('Đóng', 'Close')}>
             <Ionicons name="close" size={20} color={colors.muted} />
           </Pressable>
 
           <View style={styles.head}>
             <Mascot mood="thichthu" size={44} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>Điểm danh mỗi ngày</Text>
-              <Text style={styles.sub}>Mở app mỗi ngày để giữ chuỗi liên tiếp.</Text>
+              <Text style={styles.title}>{t('Điểm danh mỗi ngày', 'Daily check-in')}</Text>
+              <Text style={styles.sub}>
+                {t('Mở app mỗi ngày để giữ chuỗi liên tiếp.', 'Open the app every day to keep your streak.')}
+              </Text>
             </View>
           </View>
 
           {!user ? (
-            <Text style={styles.loading}>Đăng nhập để điểm danh và giữ chuỗi nhé.</Text>
+            <Text style={styles.loading}>
+              {t('Đăng nhập để điểm danh và giữ chuỗi nhé.', 'Sign in to check in and keep your streak.')}
+            </Text>
           ) : isPending ? (
-            <Text style={styles.loading}>Đang tải…</Text>
+            <Text style={styles.loading}>{t('Đang tải…', 'Loading…')}</Text>
           ) : (
             <>
               <View style={styles.streakBox}>
                 <Ionicons name="flame" size={24} color={colors.brand} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.streakValue}>{data?.streak ?? 0} ngày</Text>
+                  <Text style={styles.streakValue}>
+                    {data?.streak ?? 0} {t('ngày', 'days')}
+                  </Text>
                   <Text style={styles.streakLabel}>
-                    liên tiếp · tổng {data?.totalDays ?? 0} ngày đã điểm danh
+                    {t('liên tiếp · tổng', 'in a row · total')} {data?.totalDays ?? 0}{' '}
+                    {t('ngày đã điểm danh', 'days checked in')}
                   </Text>
                 </View>
               </View>
@@ -109,7 +127,9 @@ export function CheckinModal({ mo, dong }: { mo: boolean; dong: () => void }) {
                   pressed && { backgroundColor: colors.brandStrong },
                 ]}>
                 <Text style={styles.btnText}>
-                  {data?.checkedInToday ? 'Hôm nay đã điểm danh ✓' : 'Điểm danh hôm nay'}
+                  {data?.checkedInToday
+                    ? t('Hôm nay đã điểm danh ✓', 'Checked in today ✓')
+                    : t('Điểm danh hôm nay', 'Check in today')}
                 </Text>
               </Pressable>
             </>

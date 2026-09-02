@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { layNganHang, themNganHang, xacNhanNganHang } from '@/api/bank';
+import { useT } from '@/i18n';
 import { ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
 import { FormScreen } from '@/components/FormScreen';
 import { ngay } from '@/lib/format';
@@ -16,6 +17,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * phiên mà đổi được số tài khoản là rút sạch ví. Backend giới hạn 5 lượt/giờ.
  */
 export default function BankScreen() {
+  const t = useT();
   const qc = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ['banks'], queryFn: layNganHang });
 
@@ -40,7 +42,7 @@ export default function BankScreen() {
       setRequestId(r.requestId);
       setTin(r.message);
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Không thêm được tài khoản.');
+      setLoi(e instanceof Error && e.message ? e.message : t('Không thêm được tài khoản.', "Couldn't add the account."));
     } finally {
       setDangGui(false);
     }
@@ -57,9 +59,9 @@ export default function BankScreen() {
       setMa('');
       setSoTK('');
       setTenTK('');
-      setTin('Đã xác minh tài khoản ngân hàng.');
+      setTin(t('Đã xác minh tài khoản ngân hàng.', 'Bank account verified.'));
     } catch (e) {
-      setLoi(e instanceof Error && e.message ? e.message : 'Mã chưa đúng.');
+      setLoi(e instanceof Error && e.message ? e.message : t('Mã chưa đúng.', 'Incorrect code.'));
     } finally {
       setDangGui(false);
     }
@@ -67,8 +69,11 @@ export default function BankScreen() {
 
   return (
     <FormScreen
-      title="Ngân hàng"
-      subtitle="Tài khoản nhận tiền phải là chính chủ, trùng họ tên với hồ sơ ShopTik.">
+      title={t('Ngân hàng', 'Bank')}
+      subtitle={t(
+        'Tài khoản nhận tiền phải là chính chủ, trùng họ tên với hồ sơ ShopTik.',
+        'The receiving account must be your own and match the name on your ShopTik profile.',
+      )}>
       <ErrorBox message={loi} />
       <InfoBox message={tin} />
 
@@ -86,7 +91,7 @@ export default function BankScreen() {
                 </Text>
                 <Text style={styles.itemMeta}>
                   {b.account_name_masked} ·{' '}
-                  {b.verified_at ? `xác minh ${ngay(b.verified_at)}` : 'chưa xác minh'}
+                  {b.verified_at ? `${t('xác minh', 'verified')} ${ngay(b.verified_at)}` : t('chưa xác minh', 'not verified')}
                 </Text>
               </View>
               {b.status === 'VERIFIED' && (
@@ -100,29 +105,29 @@ export default function BankScreen() {
       {requestId ? (
         <>
           <Field
-            label="Mã xác nhận trong email"
+            label={t('Mã xác nhận trong email', 'Verification code in email')}
             icon="key-outline"
             value={ma}
             onChangeText={setMa}
-            placeholder="6 số"
+            placeholder={t('6 số', '6 digits')}
             inputMode="numeric"
             maxLength={6}
           />
           <PrimaryButton
-            label="Xác nhận tài khoản"
+            label={t('Xác nhận tài khoản', 'Confirm account')}
             onPress={xacNhan}
             loading={dangGui}
             disabled={ma.trim().length !== 6}
           />
           <Pressable onPress={() => setRequestId(null)} style={styles.huy} hitSlop={8}>
-            <Text style={styles.huyText}>Nhập lại thông tin</Text>
+            <Text style={styles.huyText}>{t('Nhập lại thông tin', 'Re-enter details')}</Text>
           </Pressable>
         </>
       ) : (
         <>
-          <Text style={styles.h2}>Thêm tài khoản mới</Text>
+          <Text style={styles.h2}>{t('Thêm tài khoản mới', 'Add new account')}</Text>
           <Field
-            label="Mã ngân hàng"
+            label={t('Mã ngân hàng', 'Bank code')}
             icon="business-outline"
             value={maNH}
             onChangeText={setMaNH}
@@ -130,20 +135,20 @@ export default function BankScreen() {
             autoCapitalize="characters"
             hint={
               data?.supportedBanks?.length
-                ? `Hỗ trợ: ${data.supportedBanks.map((b) => b.code).slice(0, 8).join(', ')}…`
+                ? `${t('Hỗ trợ', 'Supported')}: ${data.supportedBanks.map((b) => b.code).slice(0, 8).join(', ')}…`
                 : undefined
             }
           />
           <Field
-            label="Số tài khoản"
+            label={t('Số tài khoản', 'Account number')}
             icon="keypad-outline"
             value={soTK}
             onChangeText={setSoTK}
-            placeholder="Chỉ gồm chữ số"
+            placeholder={t('Chỉ gồm chữ số', 'Digits only')}
             inputMode="numeric"
           />
           <Field
-            label="Tên chủ tài khoản"
+            label={t('Tên chủ tài khoản', 'Account holder name')}
             icon="person-outline"
             value={tenTK}
             onChangeText={setTenTK}
@@ -151,7 +156,7 @@ export default function BankScreen() {
             autoCapitalize="characters"
           />
           <PrimaryButton
-            label="Gửi mã xác nhận"
+            label={t('Gửi mã xác nhận', 'Send verification code')}
             onPress={them}
             loading={dangGui}
             disabled={maNH.trim().length < 2 || soTK.trim().length < 6 || tenTK.trim().length < 3}

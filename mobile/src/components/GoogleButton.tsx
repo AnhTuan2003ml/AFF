@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
 import { GoogleG } from '@/components/GoogleG';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { colors, radius } from '@/theme/tokens';
 
 /*
@@ -16,6 +17,7 @@ import { colors, radius } from '@/theme/tokens';
  */
 export function GoogleButton({ onError }: { onError?: (message: string) => void }) {
   const { dangNhapGoogle } = useSession();
+  const t = useT();
   const [dangChay, setDangChay] = useState(false);
 
   async function chay() {
@@ -30,7 +32,9 @@ export function GoogleButton({ onError }: { onError?: (message: string) => void 
     } catch (e) {
       // Người dùng tự đóng trình duyệt thì im lặng, còn lại mới báo lỗi.
       const msg =
-        e instanceof Error && e.message ? e.message : 'Không đăng nhập được bằng Google.';
+        e instanceof Error && e.message
+          ? e.message
+          : t('Không đăng nhập được bằng Google.', 'Could not sign in with Google.');
       if (!/hủy/i.test(msg)) onError?.(msg);
     } finally {
       setDangChay(false);
@@ -51,7 +55,7 @@ export function GoogleButton({ onError }: { onError?: (message: string) => void 
       ) : (
         <>
           <GoogleG size={18} />
-          <Text style={styles.text}>Tiếp tục với Google</Text>
+          <Text style={styles.text}>{t('Tiếp tục với Google', 'Continue with Google')}</Text>
         </>
       )}
     </Pressable>

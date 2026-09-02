@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -15,11 +16,11 @@ import { layVi, type LedgerRow } from '@/api/account';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
+import { useLang, useT } from '@/i18n';
 import { ngayGio, vnd } from '@/lib/format';
+import { localizeLedgerDescription } from '@/lib/ledger-i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { camio } from '@/lib/camio-voice';
-
-const EMPTY_WALLET = camio('emptyWallet');
 
 /**
  * Ví — hai số dư và sổ bút toán.
@@ -31,6 +32,10 @@ const EMPTY_WALLET = camio('emptyWallet');
  */
 export default function WalletScreen() {
   const { user } = useSession();
+  const t = useT();
+  const { lang } = useLang();
+  // Câu trống ổn định trong mỗi ngôn ngữ, đổi khi chuyển VI/EN.
+  const EMPTY_WALLET = useMemo(() => camio('emptyWallet'), [lang]);
 
   const { data, isPending, isRefetching, refetch } = useQuery({
     queryKey: ['wallet'],
@@ -42,7 +47,12 @@ export default function WalletScreen() {
     return (
       <View style={styles.screen}>
         <BrandHeader />
-        <CanDangNhap mo_ta="Đăng nhập để xem số dư hoàn tiền và lịch sử biến động ví." />
+        <CanDangNhap
+          mo_ta={t(
+            'Đăng nhập để xem số dư hoàn tiền và lịch sử biến động ví.',
+            'Sign in to see your cashback balance and wallet history.',
+          )}
+        />
       </View>
     );
   }
@@ -68,10 +78,13 @@ export default function WalletScreen() {
           ListHeaderComponent={
             <View style={{ gap: spacing.md }}>
               <View style={styles.hero}>
-                <Text style={styles.heroLabel}>Có thể rút</Text>
+                <Text style={styles.heroLabel}>{t('Có thể rút', 'Withdrawable')}</Text>
                 <Text style={styles.heroValue}>{vnd(data?.balances.available)}</Text>
                 <Text style={styles.heroNote}>
-                  Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.
+                  {t(
+                    'Khoản đã được đối tác duyệt và chưa giữ cho lệnh rút.',
+                    'Amount approved by the partner and not yet held for a withdrawal.',
+                  )}
                 </Text>
                 <Pressable
                   onPress={() => router.push('/withdraw')}
@@ -79,36 +92,36 @@ export default function WalletScreen() {
                     styles.heroBtn,
                     pressed && { opacity: 0.85 },
                   ]}>
-                  <Text style={styles.heroBtnText}>Rút tiền  →</Text>
+                  <Text style={styles.heroBtnText}>{t('Rút tiền  →', 'Withdraw  →')}</Text>
                 </Pressable>
               </View>
 
               {/* Dòng tiền hoàn: Đang chờ → Có thể rút → Đã nhận (như web). */}
               <View style={styles.flow}>
                 <View style={[styles.step, styles.stepWait]}>
-                  <Text style={styles.stepLabel}>Đang chờ đối soát</Text>
+                  <Text style={styles.stepLabel}>{t('Đang chờ đối soát', 'Pending reconciliation')}</Text>
                   <Text style={styles.stepValue}>{vnd(data?.balances.pending)}</Text>
-                  <Text style={styles.stepNote}>Đơn chưa được sàn duyệt</Text>
+                  <Text style={styles.stepNote}>{t('Đơn chưa được sàn duyệt', 'Order not yet approved by platform')}</Text>
                 </View>
                 <View style={[styles.step, styles.stepReady]}>
-                  <Text style={styles.stepLabel}>Có thể rút</Text>
+                  <Text style={styles.stepLabel}>{t('Có thể rút', 'Withdrawable')}</Text>
                   <Text style={styles.stepValue}>{vnd(data?.balances.available)}</Text>
                   <Text style={styles.stepNote}>
                     {(data?.balances.held ?? 0) > 0
-                      ? `Đang xử lý: ${vnd(data?.balances.held)}`
-                      : 'Sẵn sàng tạo lệnh rút'}
+                      ? `${t('Đang xử lý', 'Processing')}: ${vnd(data?.balances.held)}`
+                      : t('Sẵn sàng tạo lệnh rút', 'Ready to create a withdrawal')}
                   </Text>
                 </View>
                 <View style={[styles.step, styles.stepPaid]}>
-                  <Text style={styles.stepLabel}>Đã nhận</Text>
+                  <Text style={styles.stepLabel}>{t('Đã nhận', 'Received')}</Text>
                   <Text style={styles.stepValue}>{vnd(data?.balances.paid)}</Text>
-                  <Text style={styles.stepNote}>Đã chuyển về ngân hàng</Text>
+                  <Text style={styles.stepNote}>{t('Đã chuyển về ngân hàng', 'Transferred to bank')}</Text>
                 </View>
               </View>
 
               <View>
-                <Text style={styles.eyebrow}>NHẬT KÝ</Text>
-                <Text style={styles.h2}>Lịch sử biến động</Text>
+                <Text style={styles.eyebrow}>{t('NHẬT KÝ', 'ACTIVITY')}</Text>
+                <Text style={styles.h2}>{t('Lịch sử biến động', 'Transaction history')}</Text>
               </View>
             </View>
           }
@@ -125,6 +138,7 @@ export default function WalletScreen() {
 function DongSo({ row }: { row: LedgerRow }) {
   // CREDIT vào tài khoản người dùng = tiền vào. DEBIT = tiền ra (rút, đảo khoản).
   const vao = row.direction === 'CREDIT';
+  const { lang } = useLang();
   return (
     <View style={styles.entry}>
       <View style={[styles.entryIcon, { backgroundColor: vao ? colors.successSoft : colors.dangerSoft }]}>
@@ -136,7 +150,7 @@ function DongSo({ row }: { row: LedgerRow }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.entryTitle} numberOfLines={2}>
-          {row.description ?? row.type}
+          {row.description ? localizeLedgerDescription(row.description, lang) : row.type}
         </Text>
         <Text style={styles.entryTime}>{ngayGio(row.created_at)}</Text>
       </View>

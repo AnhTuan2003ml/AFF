@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,71 +19,88 @@ import { baoChuaGhiNhan } from '@/api/bank';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { useSession } from '@/hooks/useSession';
+import { useLang, useT } from '@/i18n';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { camio } from '@/lib/camio-voice';
-
-// Một câu cho cả phiên — không đổi câu mỗi lần render.
-const EMPTY_ORDERS = camio('emptyOrders');
 
 /**
  * Nhãn trạng thái đơn — dùng đúng bộ chữ của web để người dùng không phải học
  * hai bảng thuật ngữ. Ánh xạ trạng thái nằm ở src/services/order-import.ts:
  * COMPLETED→APPROVED, CANCEL→CANCELLED, còn lại→PENDING.
  */
-function nhan(o: Order): { chu: string; mau: string; nen: string } {
+function nhan(
+  o: Order,
+  t: ReturnType<typeof useT>,
+): { chu: string; mau: string; nen: string } {
   const cho = { mau: colors.warning, nen: colors.warningSoft };
   const xong = { mau: colors.success, nen: colors.successSoft };
   const huy = { mau: colors.danger, nen: colors.dangerSoft };
   switch (o.status) {
     case 'AWAITING':
-      return { chu: 'Chờ sàn xác nhận', ...cho };
+      return { chu: t('Chờ sàn xác nhận', 'Awaiting platform confirmation'), ...cho };
     case 'PENDING':
-      return { chu: 'Đang duyệt', ...cho };
+      return { chu: t('Đang duyệt', 'Under review'), ...cho };
     case 'APPROVED':
       return o.cashback_released_at
-        ? { chu: 'Đã về ví', ...xong }
-        : { chu: 'Hoàn thành, chờ về ví', ...xong };
+        ? { chu: t('Đã về ví', 'Added to wallet'), ...xong }
+        : { chu: t('Hoàn thành, chờ về ví', 'Completed, pending wallet'), ...xong };
     case 'PAID':
-      return { chu: 'Đã về ví', ...xong };
+      return { chu: t('Đã về ví', 'Added to wallet'), ...xong };
     case 'CANCELLED':
-      return { chu: 'Đã hủy', ...huy };
+      return { chu: t('Đã hủy', 'Cancelled'), ...huy };
     case 'UNTRACKED':
-      return { chu: 'Không ghi nhận', ...huy };
+      return { chu: t('Không ghi nhận', 'Not tracked'), ...huy };
     case 'INVALID':
     case 'REVERSED':
-      return { chu: 'Không hợp lệ', ...huy };
+      return { chu: t('Không hợp lệ', 'Invalid'), ...huy };
     default:
-      return { chu: 'Chờ sàn xác nhận', ...cho };
+      return { chu: t('Chờ sàn xác nhận', 'Awaiting platform confirmation'), ...cho };
   }
 }
 
+// Bốn giai đoạn tách bạch (đồng bộ với web — xem src/services/order-history.ts):
+// Đang chờ = lượt mua sàn chưa trả mã đơn · Đang duyệt = sàn đã có đơn, chờ
+// duyệt · Đã duyệt = đơn thành công · Đã về ví = nhóm con đã cộng vào ví.
 const TABS = [
-  { key: 'ALL', nhan: 'Tất cả' },
-  { key: 'PENDING', nhan: 'Đang chờ' },
-  { key: 'APPROVED', nhan: 'Đã duyệt' },
-  { key: 'PAID', nhan: 'Đã về ví' },
+  { key: 'ALL', nhan: 'Tất cả', nhanEn: 'All' },
+  { key: 'WAITING', nhan: 'Đang chờ', nhanEn: 'Waiting' },
+  { key: 'PENDING', nhan: 'Đang duyệt', nhanEn: 'Under review' },
+  { key: 'APPROVED', nhan: 'Đã duyệt', nhanEn: 'Approved' },
+  { key: 'PAID', nhan: 'Đã về ví', nhanEn: 'In wallet' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
 
-function baoDon(o: Order) {
+function baoDon(o: Order, t: ReturnType<typeof useT>) {
   Alert.alert(
-    'Báo đơn chưa ghi nhận?',
-    'Gửi yêu cầu để đội hỗ trợ kiểm tra đơn này. Phản hồi sẽ hiện ở mục Hỗ trợ.',
+    t('Báo đơn chưa ghi nhận?', 'Report an untracked order?'),
+    t(
+      'Gửi yêu cầu để đội hỗ trợ kiểm tra đơn này. Phản hồi sẽ hiện ở mục Hỗ trợ.',
+      'Send a request for the support team to check this order. The reply will appear in Support.',
+    ),
     [
-      { text: 'Hủy', style: 'cancel' },
+      { text: t('Hủy', 'Cancel'), style: 'cancel' },
       {
-        text: 'Gửi',
+        text: t('Gửi', 'Send'),
         onPress: async () => {
           try {
             await baoChuaGhiNhan(
               o.platform_order_id ?? o.id,
               'Đơn này tôi đã mua nhưng chưa thấy ghi nhận/hoàn tiền đúng. Nhờ đội hỗ trợ kiểm tra giúp.',
             );
-            Alert.alert('Đã gửi', 'Đội hỗ trợ sẽ kiểm tra và phản hồi ở mục Hỗ trợ.');
+            Alert.alert(
+              t('Đã gửi', 'Sent'),
+              t(
+                'Đội hỗ trợ sẽ kiểm tra và phản hồi ở mục Hỗ trợ.',
+                'The support team will check and reply in Support.',
+              ),
+            );
           } catch (e) {
-            Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại sau.');
+            Alert.alert(
+              t('Chưa gửi được', 'Could not send'),
+              e instanceof Error ? e.message : t('Thử lại sau.', 'Please try again later.'),
+            );
           }
         },
       },
@@ -93,14 +110,22 @@ function baoDon(o: Order) {
 
 function khopTab(o: Order, tab: TabKey): boolean {
   if (tab === 'ALL') return true;
-  if (tab === 'APPROVED') return o.status === 'APPROVED';
-  if (tab === 'PAID') return o.status === 'PAID' || !!o.cashback_released_at;
-  // Đang chờ: lượt bấm mua chờ sàn + đơn đang duyệt.
-  return ['AWAITING', 'PENDING'].includes(o.status);
+  // Đang chờ: lượt bấm mua chưa có đơn thật (còn hạn ghi nhận hoặc quá hạn).
+  if (tab === 'WAITING') return o.status === 'AWAITING' || o.status === 'UNTRACKED';
+  // Đang duyệt: sàn đã có đơn, đang chờ duyệt hoa hồng.
+  if (tab === 'PENDING') return o.status === 'PENDING';
+  // Đã duyệt: đơn thành công — gồm cả đơn còn chờ về ví lẫn đã về ví.
+  if (tab === 'APPROVED') return o.status === 'APPROVED' || o.status === 'PAID';
+  // Đã về ví: nhóm con của Đã duyệt — đã hết hạn giữ và cộng vào số dư.
+  return o.status === 'PAID' || !!o.cashback_released_at;
 }
 
 export default function OrdersScreen() {
   const { user } = useSession();
+  const t = useT();
+  const { lang } = useLang();
+  // Câu trống ổn định trong mỗi ngôn ngữ, đổi khi chuyển VI/EN.
+  const EMPTY_ORDERS = useMemo(() => camio('emptyOrders'), [lang]);
   const [tab, setTab] = useState<TabKey>('ALL');
 
   const { data, isPending, isRefetching, refetch } = useQuery({
@@ -115,7 +140,12 @@ export default function OrdersScreen() {
     return (
       <View style={styles.screen}>
         <BrandHeader />
-        <CanDangNhap mo_ta="Đăng nhập để xem đơn đã mua qua ShopTik và trạng thái đối soát của từng đơn." />
+        <CanDangNhap
+          mo_ta={t(
+            'Đăng nhập để xem đơn đã mua qua ShopTik và trạng thái đối soát của từng đơn.',
+            'Sign in to see orders bought through ShopTik and the reconciliation status of each one.',
+          )}
+        />
       </View>
     );
   }
@@ -141,23 +171,28 @@ export default function OrdersScreen() {
           }
           ListHeaderComponent={
             <View style={styles.head}>
-              <Text style={styles.h1}>Đơn hàng</Text>
+              <Text style={styles.h1}>{t('Đơn hàng', 'Orders')}</Text>
               <Text style={styles.sub}>
-                {loc.length} đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik
-                Affiliate
+                {loc.length}{' '}
+                {t(
+                  'đơn trong bộ lọc hiện tại · mua qua liên kết ShopTik Affiliate',
+                  'orders in this filter · bought via ShopTik Affiliate links',
+                )}
               </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.tabs}>
-                {TABS.map((t) => {
-                  const on = t.key === tab;
+                {TABS.map((tb) => {
+                  const on = tb.key === tab;
                   return (
                     <Pressable
-                      key={t.key}
-                      onPress={() => setTab(t.key)}
+                      key={tb.key}
+                      onPress={() => setTab(tb.key)}
                       style={[styles.tab, on && styles.tabOn]}>
-                      <Text style={[styles.tabText, on && styles.tabTextOn]}>{t.nhan}</Text>
+                      <Text style={[styles.tabText, on && styles.tabTextOn]}>
+                        {t(tb.nhan, tb.nhanEn)}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -168,13 +203,15 @@ export default function OrdersScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>{EMPTY_ORDERS}</Text>
               <Text style={styles.emptyNote}>
-                Dán link ở Trang chủ và bấm Mua ngay — đơn hiện ở đây ngay khi bạn
-                bấm, trước cả lúc sàn xác nhận. Đi săn hoàn thôi 🧡
+                {t(
+                  'Dán link ở Trang chủ và bấm Mua ngay — đơn hiện ở đây ngay khi bạn bấm, trước cả lúc sàn xác nhận. Đi săn hoàn thôi 🧡',
+                  'Paste a link on Home and tap Buy now — the order shows up here the moment you tap, even before the platform confirms it. Happy cashback hunting 🧡',
+                )}
               </Text>
             </View>
           }
           renderItem={({ item }) => {
-            const n = nhan(item);
+            const n = nhan(item, t);
             return (
               <View style={styles.card}>
                 <View style={styles.row}>
@@ -189,7 +226,7 @@ export default function OrdersScreen() {
                   )}
                   <View style={styles.info}>
                     <Text style={styles.name} numberOfLines={2}>
-                      {item.product_name ?? 'Sản phẩm không rõ tên'}
+                      {item.product_name ?? t('Sản phẩm không rõ tên', 'Unnamed product')}
                     </Text>
                     <Text style={styles.meta}>
                       {item.platform} · {ngay(item.purchased_at ?? item.created_at)}
@@ -202,26 +239,28 @@ export default function OrdersScreen() {
 
                 <View style={styles.amounts}>
                   <View>
-                    <Text style={styles.amountLabel}>Giá trị đơn</Text>
+                    <Text style={styles.amountLabel}>{t('Giá trị đơn', 'Order value')}</Text>
                     <Text style={styles.amountValue}>
                       {vnd(item.order_amount_vnd ?? item.product_price_vnd)}
                     </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.amountLabel}>Tiền hoàn</Text>
+                    <Text style={styles.amountLabel}>{t('Tiền hoàn', 'Cashback')}</Text>
                     <Text style={[styles.amountValue, { color: colors.success }]}>
-                      {item.cashback_vnd ? vnd(item.cashback_vnd) : 'Đang cập nhật'}
+                      {item.cashback_vnd ? vnd(item.cashback_vnd) : t('Đang cập nhật', 'Updating')}
                     </Text>
                   </View>
                 </View>
 
                 {item.status === 'CANCELLED' && item.cancel_reason ? (
-                  <Text style={styles.reason}>Lý do hủy: {item.cancel_reason}</Text>
+                  <Text style={styles.reason}>
+                    {t('Lý do hủy', 'Cancellation reason')}: {item.cancel_reason}
+                  </Text>
                 ) : null}
 
-                <Pressable onPress={() => baoDon(item)} hitSlop={6} style={styles.bao}>
+                <Pressable onPress={() => baoDon(item, t)} hitSlop={6} style={styles.bao}>
                   <Ionicons name="alert-circle-outline" size={15} color={colors.muted} />
-                  <Text style={styles.baoText}>Báo chưa ghi nhận</Text>
+                  <Text style={styles.baoText}>{t('Báo chưa ghi nhận', 'Report untracked')}</Text>
                 </Pressable>
               </View>
             );

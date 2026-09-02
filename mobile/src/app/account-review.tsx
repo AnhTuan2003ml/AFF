@@ -29,6 +29,7 @@ const T = {
     ],
     linkPrivacy: 'Quyền riêng tư',
     linkDelete: 'Xóa tài khoản',
+    loginPrompt: 'Đăng nhập để xem lại dữ liệu tài khoản.',
   },
   en: {
     back: 'Back',
@@ -48,6 +49,7 @@ const T = {
     ],
     linkPrivacy: 'Privacy Policy',
     linkDelete: 'Delete Account',
+    loginPrompt: 'Sign in to review your account data.',
   },
 } as const;
 
@@ -65,7 +67,7 @@ export default function AccountReviewScreen() {
   if (!user) {
     return (
       <View style={styles.screen}>
-        <CanDangNhap mo_ta="Đăng nhập để xem lại dữ liệu tài khoản." />
+        <CanDangNhap mo_ta={t.loginPrompt} />
       </View>
     );
   }

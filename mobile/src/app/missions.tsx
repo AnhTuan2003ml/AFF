@@ -15,7 +15,9 @@ import {
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
+import { useLang, useT } from '@/i18n';
 import { ngay, vnd } from '@/lib/format';
+import { localizeMissionTitle } from '@/lib/mission-i18n';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -26,6 +28,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
 type Tab = 'referral' | 'purchase';
 
 export default function MissionsScreen() {
+  const t = useT();
   const { user } = useSession();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('referral');
@@ -46,26 +49,26 @@ export default function MissionsScreen() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['missions'] });
       await qc.invalidateQueries({ queryKey: ['wallet'] });
-      Alert.alert('Đã nhận thưởng', 'Phần thưởng đã được cộng vào ví của bạn.');
+      Alert.alert(t('Đã nhận thưởng', 'Reward claimed'), t('Phần thưởng đã được cộng vào ví của bạn.', 'The reward has been added to your wallet.'));
     },
     onError: (e) =>
-      Alert.alert('Chưa nhận được', e instanceof Error ? e.message : 'Thử lại sau.'),
+      Alert.alert(t('Chưa nhận được', "Couldn't claim"), e instanceof Error ? e.message : t('Thử lại sau.', 'Please try again later.')),
   });
 
-  if (!user) return <CanDangNhap mo_ta="Đăng nhập để xem tiến độ nhiệm vụ và nhận thưởng." />;
+  if (!user) return <CanDangNhap mo_ta={t('Đăng nhập để xem tiến độ nhiệm vụ và nhận thưởng.', 'Log in to view mission progress and claim rewards.')} />;
 
   const nhom = tab === 'referral' ? data?.REFERRAL_MILESTONE : data?.PURCHASE_MILESTONE;
-  const donVi = tab === 'referral' ? 'người' : 'đơn';
+  const donVi = tab === 'referral' ? t('người', 'people') : t('đơn', 'orders');
 
   return (
-    <FormScreen title="Nhiệm vụ">
+    <FormScreen title={t('Nhiệm vụ', 'Missions')}>
       <View style={styles.tabs}>
-        <TabBtn icon="people" label="Mời người" active={tab === 'referral'} onPress={() => setTab('referral')} />
-        <TabBtn icon="receipt-outline" label="Mua hàng" active={tab === 'purchase'} onPress={() => setTab('purchase')} />
+        <TabBtn icon="people" label={t('Mời người', 'Invite people')} active={tab === 'referral'} onPress={() => setTab('referral')} />
+        <TabBtn icon="receipt-outline" label={t('Mua hàng', 'Purchases')} active={tab === 'purchase'} onPress={() => setTab('purchase')} />
       </View>
 
       {isPending || !nhom ? (
-        <Text style={styles.loading}>Đang tải…</Text>
+        <Text style={styles.loading}>{t('Đang tải…', 'Loading…')}</Text>
       ) : (
         <>
           <View style={styles.meterHead}>
@@ -78,10 +81,13 @@ export default function MissionsScreen() {
           </View>
           {nhom.currentProgress < nhom.maxThreshold ? (
             <Text style={styles.note}>
-              Còn {nhom.maxThreshold - nhom.currentProgress} {donVi} nữa để đạt mốc cao nhất.
+              {t(
+                `Còn ${nhom.maxThreshold - nhom.currentProgress} ${donVi} nữa để đạt mốc cao nhất.`,
+                `${nhom.maxThreshold - nhom.currentProgress} more ${donVi} to reach the highest milestone.`,
+              )}
             </Text>
           ) : (
-            <Text style={[styles.note, { color: colors.success }]}>Đã đạt mốc cao nhất!</Text>
+            <Text style={[styles.note, { color: colors.success }]}>{t('Đã đạt mốc cao nhất!', 'Highest milestone reached!')}</Text>
           )}
 
           <View style={styles.list}>
@@ -93,8 +99,8 @@ export default function MissionsScreen() {
           {tab === 'referral' && nguoiMoi && nguoiMoi.people.length > 0 && (
             <View style={styles.people}>
               <View style={styles.peopleHead}>
-                <Text style={styles.peopleTitle}>Người bạn đã mời</Text>
-                <Text style={styles.peopleCount}>{nguoiMoi.people.length} người</Text>
+                <Text style={styles.peopleTitle}>{t('Người bạn đã mời', 'People you invited')}</Text>
+                <Text style={styles.peopleCount}>{nguoiMoi.people.length} {t('người', 'people')}</Text>
               </View>
               {nguoiMoi.people.map((p, i) => (
                 <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} />
@@ -106,7 +112,7 @@ export default function MissionsScreen() {
             onPress={() => router.push(tab === 'referral' ? '/referrals' : '/')}
             style={({ pressed }) => [styles.cta, pressed && { backgroundColor: colors.brandStrong }]}>
             <Text style={styles.ctaText}>
-              {tab === 'referral' ? 'Mời bạn bè ngay' : 'Tìm sản phẩm để mua'}
+              {tab === 'referral' ? t('Mời bạn bè ngay', 'Invite friends now') : t('Tìm sản phẩm để mua', 'Find products to buy')}
             </Text>
           </Pressable>
         </>
@@ -147,6 +153,8 @@ function Moc({
   onNhan: (id: string) => void;
   dangNhan: boolean;
 }) {
+  const t = useT();
+  const { lang } = useLang();
   const daNhan = m.claimStatus === 'CLAIMED' || m.claimStatus === 'PAID';
   return (
     <View style={styles.item}>
@@ -158,19 +166,19 @@ function Moc({
         />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.itemTitle}>{m.definition.title}</Text>
-        <Text style={styles.itemReward}>Thưởng {vnd(m.definition.rewardAmountVnd)}</Text>
+        <Text style={styles.itemTitle}>{localizeMissionTitle(m.definition.title, lang)}</Text>
+        <Text style={styles.itemReward}>{t('Thưởng', 'Reward')} {vnd(m.definition.rewardAmountVnd)}</Text>
       </View>
       {m.claimable && !daNhan ? (
         <Pressable
           onPress={() => onNhan(m.definition.id)}
           disabled={dangNhan}
           style={({ pressed }) => [styles.claim, (dangNhan || pressed) && { backgroundColor: colors.brandStrong }]}>
-          <Text style={styles.claimText}>Nhận</Text>
+          <Text style={styles.claimText}>{t('Nhận', 'Claim')}</Text>
         </Pressable>
       ) : (
         <Text style={styles.itemState}>
-          {daNhan ? 'Đã nhận' : `${m.progress}/${m.definition.threshold}`}
+          {daNhan ? t('Đã nhận', 'Claimed') : `${m.progress}/${m.definition.threshold}`}
         </Text>
       )}
     </View>
@@ -178,6 +186,7 @@ function Moc({
 }
 
 function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
+  const t = useT();
   return (
     <View style={[styles.person, !dau && styles.personDivider]}>
       <View style={[styles.personAvatar, !p.qualified && styles.personAvatarOff]}>
@@ -188,13 +197,13 @@ function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
           {p.fullName}
         </Text>
         <Text style={styles.personMeta}>
-          Tham gia {ngay(p.joinedAt)}
-          {p.approvedOrders > 0 ? ` · ${p.approvedOrders} đơn đã duyệt` : ''}
+          {t('Tham gia', 'Joined')} {ngay(p.joinedAt)}
+          {p.approvedOrders > 0 ? ` · ${p.approvedOrders} ${t('đơn đã duyệt', 'approved orders')}` : ''}
         </Text>
       </View>
       <View style={[styles.badge, p.qualified ? styles.badgeOk : styles.badgeWait]}>
         <Text style={[styles.badgeText, p.qualified ? styles.badgeTextOk : styles.badgeTextWait]}>
-          {p.qualified ? 'Đã tính' : 'Chờ xác nhận'}
+          {p.qualified ? t('Đã tính', 'Counted') : t('Chờ xác nhận', 'Pending confirmation')}
         </Text>
       </View>
     </View>

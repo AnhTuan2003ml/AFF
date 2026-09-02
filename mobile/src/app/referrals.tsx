@@ -9,6 +9,7 @@ import { guiDoiMaGioiThieu, layGioiThieu } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
 import { useSession } from '@/hooks/useSession';
+import { useT } from '@/i18n';
 import { ngay, vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -21,6 +22,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * người giới thiệu bằng `referral_code`.
  */
 export default function ReferralsScreen() {
+  const t = useT();
   const { user } = useSession();
   const qc = useQueryClient();
   const [maMoi, setMaMoi] = useState('');
@@ -36,37 +38,37 @@ export default function ReferralsScreen() {
     onSuccess: () => {
       setMaMoi('');
       void qc.invalidateQueries({ queryKey: ['referrals'] });
-      Alert.alert('Đã gửi yêu cầu', 'Admin duyệt xong bạn sẽ nhận được thông báo.');
+      Alert.alert(t('Đã gửi yêu cầu', 'Request sent'), t('Admin duyệt xong bạn sẽ nhận được thông báo.', "You'll be notified once an admin approves it."));
     },
     onError: (e) => {
       // Refetch cả khi lỗi: nếu lỗi là "đã có yêu cầu đang chờ" thì màn hình
       // phải nhảy sang trạng thái ⏳ thay vì tiếp tục chìa form ra.
       void qc.invalidateQueries({ queryKey: ['referrals'] });
-      Alert.alert('Chưa gửi được', e instanceof Error ? e.message : 'Thử lại nhé.');
+      Alert.alert(t('Chưa gửi được', "Couldn't send"), e instanceof Error ? e.message : t('Thử lại nhé.', 'Please try again.'));
     },
   });
 
   async function chep() {
     if (!data?.referralCode) return;
     await Clipboard.setStringAsync(data.referralCode);
-    Alert.alert('Đã sao chép', 'Gửi mã này cho bạn bè để họ nhập lúc đăng ký.');
+    Alert.alert(t('Đã sao chép', 'Copied'), t('Gửi mã này cho bạn bè để họ nhập lúc đăng ký.', 'Share this code with friends to enter when they sign up.'));
   }
 
-  if (!user) return <CanDangNhap mo_ta="Đăng nhập để lấy mã mời và theo dõi thưởng giới thiệu." />;
+  if (!user) return <CanDangNhap mo_ta={t('Đăng nhập để lấy mã mời và theo dõi thưởng giới thiệu.', 'Log in to get your invite code and track referral rewards.')} />;
 
   return (
-    <FormScreen title="Giới thiệu" subtitle="Mời bạn bè dùng ShopTik để cùng nhận thưởng.">
+    <FormScreen title={t('Giới thiệu', 'Referrals')} subtitle={t('Mời bạn bè dùng ShopTik để cùng nhận thưởng.', 'Invite friends to use ShopTik and earn rewards together.')}>
       {isPending ? (
-        <Text style={styles.loading}>Đang tải…</Text>
+        <Text style={styles.loading}>{t('Đang tải…', 'Loading…')}</Text>
       ) : (
         <>
           <View style={styles.codeBox}>
             <View style={styles.codeHead}>
-              <Text style={styles.codeLabel}>Mã giới thiệu của bạn</Text>
+              <Text style={styles.codeLabel}>{t('Mã giới thiệu của bạn', 'Your referral code')}</Text>
               {data?.codeState?.isPartner && (
                 <View style={styles.partnerBadge}>
                   <Ionicons name="star" size={11} color={colors.onBrand} />
-                  <Text style={styles.partnerBadgeText}>Đối tác</Text>
+                  <Text style={styles.partnerBadgeText}>{t('Đối tác', 'Partner')}</Text>
                 </View>
               )}
             </View>
@@ -77,36 +79,45 @@ export default function ReferralsScreen() {
                 disabled={!data?.referralCode}
                 style={({ pressed }) => [styles.copy, pressed && { opacity: 0.7 }]}>
                 <Ionicons name="copy-outline" size={17} color={colors.onBrand} />
-                <Text style={styles.copyText}>Chép</Text>
+                <Text style={styles.copyText}>{t('Chép', 'Copy')}</Text>
               </Pressable>
             </View>
           </View>
 
           {data?.codeState?.isPartner && (
             <View style={styles.partnerBox}>
-              <Text style={styles.partnerTitle}>Đổi mã giới thiệu tự chọn</Text>
+              <Text style={styles.partnerTitle}>{t('Đổi mã giới thiệu tự chọn', 'Choose a custom referral code')}</Text>
               {data.codeState.pendingCode ? (
                 <Text style={styles.partnerNote}>
-                  ⏳ Yêu cầu đổi sang mã <Text style={styles.b}>{data.codeState.pendingCode}</Text> đang
-                  chờ admin duyệt. Có kết quả bạn sẽ nhận thông báo ngay.
+                  {t('⏳ Yêu cầu đổi sang mã ', '⏳ Your request to change to code ')}
+                  <Text style={styles.b}>{data.codeState.pendingCode}</Text>
+                  {t(
+                    ' đang chờ admin duyệt. Có kết quả bạn sẽ nhận thông báo ngay.',
+                    ' is pending admin approval. You will be notified as soon as there is a result.',
+                  )}
                 </Text>
               ) : data.codeState.customized ? (
                 <Text style={styles.partnerNote}>
-                  ✓ Bạn đã dùng quyền đổi mã (mỗi đối tác được đổi 1 lần). Dữ liệu và link cũ vẫn
-                  quy về bạn.
+                  {t(
+                    '✓ Bạn đã dùng quyền đổi mã (mỗi đối tác được đổi 1 lần). Dữ liệu và link cũ vẫn quy về bạn.',
+                    '✓ You have used your code-change right (each partner may change once). Your old data and links still credit to you.',
+                  )}
                 </Text>
               ) : (
                 <>
                   <Text style={styles.partnerNote}>
-                    Bạn được đổi mã <Text style={styles.b}>một lần duy nhất</Text>: 3–9 ký tự chữ và
-                    số (VD: NamDong). Mã có hiệu lực sau khi admin phê duyệt; dữ liệu giới thiệu cũ
-                    giữ nguyên.
+                    {t('Bạn được đổi mã ', 'You may change your code ')}
+                    <Text style={styles.b}>{t('một lần duy nhất', 'only once')}</Text>
+                    {t(
+                      ': 3–9 ký tự chữ và số (VD: NamDong). Mã có hiệu lực sau khi admin phê duyệt; dữ liệu giới thiệu cũ giữ nguyên.',
+                      ': 3–9 alphanumeric characters (e.g. NamDong). It takes effect after admin approval; your existing referral data is preserved.',
+                    )}
                   </Text>
                   <View style={styles.partnerForm}>
                     <TextInput
                       value={maMoi}
                       onChangeText={setMaMoi}
-                      placeholder="Mã mới (3–9 chữ/số)"
+                      placeholder={t('Mã mới (3–9 chữ/số)', 'New code (3–9 letters/digits)')}
                       placeholderTextColor={colors.muted}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -121,7 +132,7 @@ export default function ReferralsScreen() {
                         (pressed || doiMa.isPending) && { opacity: 0.7 },
                       ]}>
                       <Text style={styles.partnerSubmitText}>
-                        {doiMa.isPending ? 'Đang gửi…' : 'Gửi admin duyệt'}
+                        {doiMa.isPending ? t('Đang gửi…', 'Sending…') : t('Gửi admin duyệt', 'Submit for approval')}
                       </Text>
                     </Pressable>
                   </View>
@@ -136,20 +147,21 @@ export default function ReferralsScreen() {
               style={({ pressed }) => [styles.enterCodeRow, pressed && { opacity: 0.75 }]}>
               <Ionicons name="gift-outline" size={18} color={colors.brand} />
               <Text style={styles.enterCodeText}>
-                Bạn có mã giới thiệu? <Text style={styles.b}>Nhập tại đây</Text>
+                {t('Bạn có mã giới thiệu? ', 'Have a referral code? ')}
+                <Text style={styles.b}>{t('Nhập tại đây', 'Enter it here')}</Text>
               </Text>
             </Pressable>
           )}
 
           <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>Tổng thưởng đã nhận</Text>
+            <Text style={styles.totalLabel}>{t('Tổng thưởng đã nhận', 'Total rewards earned')}</Text>
             <Text style={styles.totalValue}>{vnd(data?.totalEarnedVnd)}</Text>
           </View>
 
-          <Text style={styles.h2}>Người bạn đã mời ({data?.data.length ?? 0})</Text>
+          <Text style={styles.h2}>{t('Người bạn đã mời', 'People you invited')} ({data?.data.length ?? 0})</Text>
           {(data?.data.length ?? 0) === 0 ? (
             <Text style={styles.empty}>
-              Chưa có ai dùng mã của bạn. Gửi mã cho bạn bè để bắt đầu.
+              {t('Chưa có ai dùng mã của bạn. Gửi mã cho bạn bè để bắt đầu.', 'No one has used your code yet. Share it with friends to get started.')}
             </Text>
           ) : (
             data!.data.map((r, i) => (
@@ -160,9 +172,9 @@ export default function ReferralsScreen() {
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{r.fullName || 'Người dùng'}</Text>
+                  <Text style={styles.name}>{r.fullName || t('Người dùng', 'User')}</Text>
                   <Text style={styles.meta}>
-                    {r.approvedOrders} đơn đã duyệt · từ {ngay(r.createdAt)}
+                    {r.approvedOrders} {t('đơn đã duyệt', 'approved orders')} · {t('từ', 'from')} {ngay(r.createdAt)}
                   </Text>
                 </View>
                 <Text style={styles.earned}>{vnd(r.earnedVnd)}</Text>
