@@ -66,7 +66,11 @@ function section(
   return { id, heading, paragraphs, items };
 }
 
-export function buildUserPolicy(facts: UserPolicyFacts): UserPolicyDocument {
+export function buildUserPolicy(
+  facts: UserPolicyFacts,
+  lang: string = "vi",
+): UserPolicyDocument {
+  if (lang === "en") return buildUserPolicyEn(facts);
   const app = facts.appName;
   const hold = facts.cashbackHoldDays;
   const holdText =
@@ -242,6 +246,200 @@ export function buildUserPolicy(facts: UserPolicyFacts): UserPolicyDocument {
             "thông báo trước khi áp dụng cho các đơn phát sinh sau đó.",
           "Các đơn đã phát sinh trước thời điểm áp dụng vẫn được tính theo chính sách " +
             "có hiệu lực lúc đặt hàng.",
+        ],
+      ),
+    ],
+  };
+}
+
+/** Bản tiếng Anh của chính sách người dùng — cùng cấu trúc, cùng số liệu. */
+function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
+  const app = facts.appName;
+  const hold = facts.cashbackHoldDays;
+  const holdText =
+    hold > 0
+      ? "Completed: cashback goes into your PENDING wallet and is held for an " +
+        `extra ${hold} days from the date the platform records the order as ` +
+        "Completed, then moves to your AVAILABLE balance for withdrawal. This " +
+        "wait covers cases where the platform claws back commission due to returns."
+      : "Completed: cashback moves straight to your AVAILABLE balance as soon as " +
+        "the platform records the order as Completed, with no waiting period.";
+  const threshold = facts.smallOrderThresholdVnd.toLocaleString("vi-VN");
+
+  return {
+    version: USER_POLICY_VERSION,
+    title: "User Policy",
+    url: `${facts.appOrigin.replace(/\/+$/, "")}${USER_POLICY_PATH}`,
+    lead:
+      `${app} is a cashback platform for shopping via Shopee, TikTok Shop and ` +
+      "Lazada affiliate links. This policy explains what you get, what you need " +
+      "to do for an order to be tracked, how cashback flows into your wallet, and " +
+      "when you can withdraw. Please read it before your first purchase.",
+    sections: [
+      section(
+        "dich-vu",
+        "1. What this service does and doesn't do",
+        [
+          `${app} creates a personal affiliate link for you, records your buy ` +
+            "clicks, reconciles orders from the platform's reports, and shares back " +
+            "the commission it receives.",
+          `${app} does NOT sell, hold or ship goods, and does not decide order ` +
+            "status. Pricing, promotions, shipping, returns and warranty belong " +
+            "entirely to the seller and the e-commerce platform.",
+        ],
+      ),
+      section(
+        "tai-khoan",
+        "2. Your account",
+        [
+          "Each person may use only one account, registered with an active email " +
+            "and verified by a 6-digit OTP sent to that email.",
+        ],
+        [
+          "Your full name must match the holder of the bank account used to receive money.",
+          "You are responsible for keeping your password and OTP secure. " +
+            `${app} will never ask for your password, PIN or bank OTP.`,
+          "Accounts showing signs of impersonation, sharing or trading will be " +
+            "temporarily locked for verification.",
+        ],
+      ),
+      section(
+        "ghi-nhan-don",
+        "3. Conditions for an order to be tracked",
+        [
+          `An order only qualifies for cashback when you tap Buy now on ${app} and ` +
+            "complete payment in the shopping session opened from that link. The " +
+            "link carries your personal tracking code; the platform uses this code " +
+            "to report the order back.",
+        ],
+        [
+          "Don't close the platform app and reopen it via a different link before " +
+            "placing the order.",
+          "Don't use another cashback link, marketing code or browser extension in " +
+            "the same purchase — a later click overrides the earlier one.",
+          `A buy click is valid for reconciliation for ${facts.affiliateAttributionDays} ` +
+            "days; past that, if the order hasn't arrived, the system stops waiting for it.",
+          "Orders placed by adding the product to your cart beforehand, buying " +
+            "during a seller's livestream, or via a third-party link may not be " +
+            "reported by the platform.",
+        ],
+      ),
+      section(
+        "tinh-tien",
+        "4. How cashback is calculated",
+        [
+          `The platform pays ${app} commission after a valid order. You receive ` +
+            `${facts.buyerCashbackPercent}% of the actual commission for that order ` +
+            `(for orders worth ${threshold}₫ or less: up to ` +
+            `${facts.smallOrderBuyerPercent}%); the rest is shared with the referrer ` +
+            "(if any) and platform operations.",
+          "The amount shown before purchase is an ESTIMATE, based on the commission " +
+            "rate the platform publishes at viewing time. The final amount follows " +
+            "the actual commission in the platform's report and may be lower than " +
+            "estimated if you use extra discount codes, partially refund the order, " +
+            "or the platform adjusts the rate.",
+          "Every recorded amount is a whole đồng, rounded down, and stored with " +
+            "double-entry bookkeeping so you can reconcile every đồng in the Balance section.",
+        ],
+      ),
+      section(
+        "trang-thai",
+        "5. Order status and when cashback reaches your wallet",
+        [
+          "As soon as you tap Buy now, the order appears in Order History as " +
+            "Awaiting platform confirmation. The system periodically reconciles with " +
+            "the platform's reports and updates to the status the platform returns.",
+        ],
+        [
+          "Under review: the platform hasn't finalized the order. The system keeps " +
+            "checking on later runs.",
+          holdText,
+          "Cancelled: the order was cancelled, returned or rejected by the platform. " +
+            "The corresponding cashback is reversed and you see the reason right in " +
+            "the order history.",
+          "If the platform changes commission while the order is pending, the system " +
+            "reverses the old entry and records a new one matching the platform's " +
+            "final figure.",
+        ],
+      ),
+      section(
+        "rut-tien",
+        "6. Withdrawals",
+        [
+          "You withdraw from your available balance to your own verified bank " +
+            `account, a minimum of ${formatVnd(facts.minWithdrawAmountVnd)} per request.`,
+        ],
+        [
+          "Account numbers and holder names are encrypted at rest; the interface " +
+            "only shows a masked form.",
+          "Withdrawal requests are risk-checked before money is sent; suspicious " +
+            "requests may be paused for additional verification.",
+          "Wrong bank details you entered leading to a misdirected transfer are your " +
+            "responsibility; please check carefully before confirming.",
+        ],
+      ),
+      section(
+        "gioi-thieu",
+        "7. Referrals and missions",
+        [
+          "You can invite friends with your personal referral code. Referral and " +
+            "mission rewards are only recorded when the corresponding conditions are " +
+            "met and the related order has been confirmed by the platform.",
+          "Inviting yourself, creating fake accounts, or mass-inviting with automated " +
+            "tools will forfeit all rewards.",
+        ],
+      ),
+      section(
+        "hanh-vi-cam",
+        "8. Prohibited behavior",
+        [
+          "The following distort reconciliation and may lead to cashback clawback, " +
+            "account lock or withdrawal refusal:",
+        ],
+        [
+          "Creating fake orders, placing then mass-cancelling, or buying on behalf " +
+            "to pocket a cashback margin.",
+          "Using automated tools to click links, faking clicks, or tampering with " +
+            "tracking parameters.",
+          "Using another person's identity, email or bank account.",
+          "Exploiting system bugs instead of reporting them to support.",
+        ],
+      ),
+      section(
+        "du-lieu",
+        "9. Personal data",
+        [
+          `${app} only collects data needed to authenticate accounts, track orders, ` +
+            "calculate cashback, transfer money and prevent fraud. Passwords are " +
+            "one-way hashed, bank data is encrypted, and OTPs are not stored in plain text.",
+          "Details on data types, how it's shared with partners, and your rights are " +
+            "in the Privacy Policy. Transaction and audit data must be retained per " +
+            "legal obligations even if you request account deletion.",
+        ],
+      ),
+      section(
+        "khieu-nai",
+        "10. Complaints and support",
+        [
+          "If an order bought through the correct link still hasn't appeared after " +
+            "72 hours, submit a request in Support with the platform order code and " +
+            "the purchase time. A complaint about an order must be submitted within " +
+            "30 days of the order date.",
+          facts.communityZaloUrl
+            ? `You can also reach us via the official community group: ${facts.communityZaloUrl}.`
+            : "All official contact goes through the Support section after signing in.",
+        ],
+      ),
+      section(
+        "thay-doi",
+        "11. Policy changes",
+        [
+          "This policy may be updated when platforms change their commission " +
+            "mechanics or when laws change. The latest version is always at the " +
+            "policy link in the footer, with a version number. Changes affecting your " +
+            "benefits will be announced before applying to orders placed afterward.",
+          "Orders placed before the effective date are still calculated under the " +
+            "policy in effect at the time of purchase.",
         ],
       ),
     ],

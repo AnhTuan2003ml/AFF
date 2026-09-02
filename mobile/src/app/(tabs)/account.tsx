@@ -13,7 +13,7 @@ import { layGioiThieu } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CanDangNhap } from '@/components/CanDangNhap';
-import { useT } from '@/i18n';
+import { useLang, useT } from '@/i18n';
 import { Mascot } from '@/components/Mascot';
 import { camioAt } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
@@ -29,6 +29,7 @@ import { colors, radius, shadow, spacing } from '@/theme/tokens';
 export default function AccountScreen() {
   const { user, dangXuat } = useSession();
   const t = useT();
+  const { lang } = useLang();
   const [hoiXuat, setHoiXuat] = useState(false);
   const laQuanTri = !!user && user.role !== 'USER';
 
@@ -54,7 +55,9 @@ export default function AccountScreen() {
   }
 
   function moChinhSach() {
-    void WebBrowser.openBrowserAsync(`${goc}/chinh-sach-nguoi-dung`);
+    // Đặt cookie ngôn ngữ theo app rồi mới vào trang chính sách để hiện đúng
+    // bản Việt/Anh trong WebBrowser (vốn không mang cookie của web).
+    void WebBrowser.openBrowserAsync(`${goc}/lang/${lang}?next=/chinh-sach-nguoi-dung`);
   }
 
   if (!user) {

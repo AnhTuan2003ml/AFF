@@ -63,15 +63,17 @@ export async function registerPublicRoutes(
     }),
   );
 
-  // Nội dung tĩnh, công khai, chỉ đổi khi admin sửa cấu hình/tăng version →
-  // cho Cloudflare cache ở edge (gần người dùng) để tải nguội tức thì; TTL ngắn
-  // + stale-while-revalidate nên số liệu nghiệp vụ vẫn tươi trong vài phút.
-  const POLICY_CACHE =
-    "public, max-age=120, s-maxage=300, stale-while-revalidate=600";
+  // Nội dung đổi theo ngôn ngữ (cookie `lang`) nên KHÔNG cache dùng chung ở edge
+  // (Cloudflare cache theo URL sẽ trả nhầm ngôn ngữ cho người khác). Chỉ cache
+  // riêng ở trình duyệt từng người trong thời gian ngắn.
+  const POLICY_CACHE = "private, max-age=60, stale-while-revalidate=300";
+  const policyLang = (request: { cookies?: Record<string, string | undefined> }) =>
+    request.cookies?.lang === "en" ? "en" : "vi";
 
-  app.get("/chinh-sach-nguoi-dung", async (_request, reply) => {
+  app.get("/chinh-sach-nguoi-dung", async (request, reply) => {
     const policy = buildUserPolicy(
       await loadUserPolicyFacts(deps.db, deps.config),
+      policyLang(request),
     );
     reply.header("cache-control", POLICY_CACHE);
     return reply.view("legal/user-policy.njk", {
@@ -81,9 +83,10 @@ export async function registerPublicRoutes(
   });
 
   // Mảnh HTML cho modal đọc nhanh mở từ hyperlink ở chân trang (không layout).
-  app.get("/chinh-sach-nguoi-dung/noi-dung", async (_request, reply) => {
+  app.get("/chinh-sach-nguoi-dung/noi-dung", async (request, reply) => {
     const policy = buildUserPolicy(
       await loadUserPolicyFacts(deps.db, deps.config),
+      policyLang(request),
     );
     reply.header("cache-control", POLICY_CACHE);
     return reply
