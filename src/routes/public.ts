@@ -63,10 +63,11 @@ export async function registerPublicRoutes(
     }),
   );
 
-  // Nội dung đổi theo ngôn ngữ (cookie `lang`) nên KHÔNG cache dùng chung ở edge
-  // (Cloudflare cache theo URL sẽ trả nhầm ngôn ngữ cho người khác). Chỉ cache
-  // riêng ở trình duyệt từng người trong thời gian ngắn.
-  const POLICY_CACHE = "private, max-age=60, stale-while-revalidate=300";
+  // Nội dung đổi theo ngôn ngữ (cookie `lang`). Cùng một URL nhưng khác nội dung
+  // theo cookie nên KHÔNG được để trình duyệt/CDN phục vụ lại bản đã cache: sau
+  // khi /lang/:code đổi cookie rồi quay về đây, nếu còn cache thì thấy ngôn ngữ
+  // cũ (phải reload cứng mới đổi). Dùng no-store để luôn tải đúng ngôn ngữ.
+  const POLICY_CACHE = "no-store";
   const policyLang = (request: { cookies?: Record<string, string | undefined> }) =>
     request.cookies?.lang === "en" ? "en" : "vi";
 
