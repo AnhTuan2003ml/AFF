@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -36,7 +36,14 @@ export default function KolScreen() {
   const [buoc, setBuoc] = useState<'dieu-khoan' | 'form'>('dieu-khoan');
   const [daDoc, setDaDoc] = useState(false);
   const [ganCuoi, setGanCuoi] = useState(false);
+  const [checkboxY, setCheckboxY] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Mở màn luôn bắt đầu từ đầu điều khoản (tránh khôi phục sai vị trí khiến
+  // mũi tên hiện nhầm khi đang ở đáy).
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []);
   const [info, setInfo] = useState<HoSoKolInput>({
     fullName: '',
     cccdNumber: '',
@@ -156,18 +163,19 @@ export default function KolScreen() {
           { paddingTop: insets.top + spacing.sm },
         ]}
         keyboardShouldPersistTaps="handled"
-        scrollEventThrottle={64}
+        scrollEventThrottle={16}
         onScroll={(e) => {
-          // Cuộn cả màn hình để đọc; tới gần cuối thì mở khóa + ẩn mũi tên.
+          if (buoc !== 'dieu-khoan') return;
           const { layoutMeasurement, contentOffset, contentSize } =
             e.nativeEvent;
-          const toiCuoi =
-            contentOffset.y + layoutMeasurement.height >=
-            contentSize.height - 60;
-          if (buoc === 'dieu-khoan') {
-            if (toiCuoi) setDaDoc(true);
-            setGanCuoi(toiCuoi); // mũi tên: tới cuối ẩn, cuộn lên lại hiện
-          }
+          const dayView = contentOffset.y + layoutMeasurement.height;
+          // "Đọc hết" = đã thấy ô xác nhận trong màn hình (hoặc chạm đáy thật).
+          const toiCheckbox = checkboxY != null && dayView >= checkboxY + 24;
+          const toiCuoi = dayView >= contentSize.height - 24;
+          const xong = toiCheckbox || toiCuoi;
+          if (xong) setDaDoc(true);
+          // Mũi tên + nhãn: ẩn khi ô xác nhận đã hiện; cuộn lên lại thì hiện lại.
+          setGanCuoi(xong);
         }}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
@@ -264,6 +272,7 @@ export default function KolScreen() {
                   </Text>
                 ) : null}
                 <View
+                  onLayout={(e) => setCheckboxY(e.nativeEvent.layout.y)}
                   style={{ marginTop: 14, marginBottom: 14, opacity: daDoc ? 1 : 0.5 }}>
                   <Checkbox
                     checked={dongY}
