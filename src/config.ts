@@ -164,8 +164,6 @@ const configSchema = z.object({
   SLACK_BOT_TOKEN: z.string().trim().default(""),
   SLACK_SUPPORT_CHANNEL: z.string().trim().default(""),
   SLACK_SIGNING_SECRET: z.string().trim().default(""),
-  COMMUNITY_ZALO_URL: httpsUrlOrEmpty,
-  COMMUNITY_TELEGRAM_URL: httpsUrlOrEmpty,
   MIN_WITHDRAWAL_VND: z.coerce.number().int().positive().default(50000),
   MAX_WITHDRAWAL_VND: z.coerce.number().int().positive().default(20000000),
   TERMS_VERSION: z.string().min(1),

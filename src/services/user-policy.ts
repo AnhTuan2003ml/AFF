@@ -21,7 +21,6 @@ export interface UserPolicyFacts {
   cashbackHoldDays: number;
   affiliateAttributionDays: number;
   minWithdrawAmountVnd: number;
-  communityZaloUrl?: string | undefined;
 }
 
 export async function loadUserPolicyFacts(
@@ -38,7 +37,6 @@ export async function loadUserPolicyFacts(
     cashbackHoldDays: business.cashbackHoldDays,
     affiliateAttributionDays: business.affiliateAttributionDays,
     minWithdrawAmountVnd: business.minWithdrawAmountVnd,
-    communityZaloUrl: config.COMMUNITY_ZALO_URL || undefined,
   };
 }
 

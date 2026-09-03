@@ -278,8 +278,6 @@ app.addHook("preHandler", async (request, reply) => {
     backofficeReferralCodesPendingCount,
     backofficeBanksPendingCount,
     backofficeKolPendingCount,
-    communityZaloUrl: config.COMMUNITY_ZALO_URL,
-    communityTelegramUrl: config.COMMUNITY_TELEGRAM_URL,
     currentUser: request.currentUser,
     currentPath: request.url.split("?")[0],
     flash: consumeFlash(request, reply),
