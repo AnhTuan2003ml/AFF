@@ -7,7 +7,8 @@ import { AuthCard } from '@/components/AuthCard';
 import { Checkbox, ErrorBox, Field, InfoBox, PrimaryButton } from '@/components/form';
 import { GoogleButton } from '@/components/GoogleButton';
 import { useSession } from '@/hooks/useSession';
-import { useT } from '@/i18n';
+import { useLang, useT } from '@/i18n';
+import { DUONG_DAN_PHAP_LY, moTrangPhapLy } from '@/lib/legal';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -20,6 +21,7 @@ import { colors } from '@/theme/tokens';
 export default function RegisterScreen() {
   const { lamMoiHoSo } = useSession();
   const t = useT();
+  const { lang } = useLang();
   const [buoc, setBuoc] = useState<1 | 2>(1);
 
   const [hoTen, setHoTen] = useState('');
@@ -169,9 +171,19 @@ export default function RegisterScreen() {
       />
       <View style={styles.policyRow}>
         <Checkbox checked={dongY} onToggle={() => setDongY((v) => !v)}>
-          {t('Tôi đồng ý với', 'I agree to the')} <Text style={styles.policyLink}>{t('Điều khoản', 'Terms')}</Text>,{' '}
-          <Text style={styles.policyLink}>{t('Chính sách quyền riêng tư', 'Privacy Policy')}</Text> {t('và', 'and')}{' '}
-          <Text style={styles.policyLink}>{t('Chính sách người dùng', 'User Policy')}</Text>.
+          {t('Tôi đồng ý với', 'I agree to the')}{' '}
+          <Text style={styles.policyLink} onPress={() => moTrangPhapLy(DUONG_DAN_PHAP_LY.dieuKhoan, lang)}>
+            {t('Điều khoản', 'Terms')}
+          </Text>
+          ,{' '}
+          <Text style={styles.policyLink} onPress={() => moTrangPhapLy(DUONG_DAN_PHAP_LY.quyenRiengTu, lang)}>
+            {t('Chính sách quyền riêng tư', 'Privacy Policy')}
+          </Text>{' '}
+          {t('và', 'and')}{' '}
+          <Text style={styles.policyLink} onPress={() => moTrangPhapLy(DUONG_DAN_PHAP_LY.chinhSachNguoiDung, lang)}>
+            {t('Chính sách người dùng', 'User Policy')}
+          </Text>
+          .
         </Checkbox>
       </View>
       <PrimaryButton

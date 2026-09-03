@@ -18,6 +18,7 @@ import { Mascot } from '@/components/Mascot';
 import { camioAt } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
 import { vnd } from '@/lib/format';
+import { DUONG_DAN_PHAP_LY, moTrangPhapLy } from '@/lib/legal';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -54,10 +55,15 @@ export default function AccountScreen() {
     void WebBrowser.openBrowserAsync(`${goc}/backoffice/console`);
   }
 
+  // Mở các trang pháp lý trên web (bản mới nhất) đúng ngôn ngữ đang chọn.
   function moChinhSach() {
-    // Đặt cookie ngôn ngữ theo app rồi mới vào trang chính sách để hiện đúng
-    // bản Việt/Anh trong WebBrowser (vốn không mang cookie của web).
-    void WebBrowser.openBrowserAsync(`${goc}/lang/${lang}?next=/chinh-sach-nguoi-dung`);
+    moTrangPhapLy(DUONG_DAN_PHAP_LY.chinhSachNguoiDung, lang);
+  }
+  function moDieuKhoan() {
+    moTrangPhapLy(DUONG_DAN_PHAP_LY.dieuKhoan, lang);
+  }
+  function moQuyenRiengTu() {
+    moTrangPhapLy(DUONG_DAN_PHAP_LY.quyenRiengTu, lang);
   }
 
   if (!user) {
@@ -242,6 +248,18 @@ export default function AccountScreen() {
             icon="document-text-outline"
             label={t('Chính sách người dùng', 'User Policy')}
             onPress={moChinhSach}
+            divider
+          />
+          <MenuRow
+            icon="reader-outline"
+            label={t('Điều khoản sử dụng', 'Terms of Use')}
+            onPress={moDieuKhoan}
+            divider
+          />
+          <MenuRow
+            icon="lock-closed-outline"
+            label={t('Chính sách quyền riêng tư', 'Privacy Policy')}
+            onPress={moQuyenRiengTu}
             divider
           />
           {laQuanTri ? (
