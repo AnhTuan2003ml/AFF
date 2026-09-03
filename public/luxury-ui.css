@@ -2689,7 +2689,8 @@ label small {
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px
+  gap: 16px;
+  margin-top: 18px
 }
 
 .stat-grid {
@@ -3154,6 +3155,11 @@ body.no-scroll {
   border-radius: 18px;
   background: #fff2ef;
   border: 1px solid #ffd5cc
+}
+
+/* Hai vùng nguy hiểm (Đăng xuất mọi nơi / Xóa tài khoản) không được dính nhau. */
+.danger-zone + .danger-zone {
+  margin-top: 14px
 }
 
 .danger-zone-copy {

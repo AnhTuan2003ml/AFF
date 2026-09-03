@@ -97,6 +97,11 @@ export default function DiscoverScreen() {
   const [platform, setPlatform] = useState<Platform>('shopee');
   const [list, setList] = useState<TabKey>('best');
   const [page, setPage] = useState(1);
+  // Theo dõi cuộn hàng tab để hiện mũi tên ">" khi còn tab bị khuất bên phải.
+  const [tabVienW, setTabVienW] = useState(0);
+  const [tabNoiDungW, setTabNoiDungW] = useState(0);
+  const [tabOffsetX, setTabOffsetX] = useState(0);
+  const conTabPhai = tabNoiDungW > tabVienW + 4 && tabOffsetX < tabNoiDungW - tabVienW - 4;
   const listRef = useRef<FlatList<DiscoverProduct>>(null);
   const laVoucher = platform === 'shopee' && list === 'voucher';
   // Luôn hiện đủ hàng tab (Hot/Voucher/Đề xuất/Bán chạy/Độc quyền) kể cả khi
@@ -174,9 +179,13 @@ export default function DiscoverScreen() {
           </Text>
         </Pressable>
       </View>
+      <View style={styles.tabsWrap} onLayout={(e) => setTabVienW(e.nativeEvent.layout.width)}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => setTabOffsetX(e.nativeEvent.contentOffset.x)}
+        onContentSizeChange={(w) => setTabNoiDungW(w)}
         contentContainerStyle={styles.tabs}>
         {tabs.map((t) => {
           const on = t.key === list;
@@ -198,6 +207,14 @@ export default function DiscoverScreen() {
           );
         })}
       </ScrollView>
+      {conTabPhai && (
+        <View pointerEvents="none" style={styles.tabsMore}>
+          <View style={styles.tabsMoreBadge}>
+            <Ionicons name="chevron-forward" size={16} color={colors.brand} />
+          </View>
+        </View>
+      )}
+      </View>
     </View>
   );
 
@@ -459,6 +476,27 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 10.5, fontWeight: '900', color: colors.brand, letterSpacing: 1.4 },
   h1: { fontSize: 27, fontWeight: '900', color: colors.text, letterSpacing: -1, marginTop: 6 },
   sub: { fontSize: 13, color: colors.muted, marginTop: 6, lineHeight: 19 },
+  tabsWrap: { position: 'relative' },
+  tabsMore: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    paddingLeft: 16,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+  },
+  tabsMoreBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   tabs: { gap: 8, paddingVertical: 14 },
   tab: {
     paddingHorizontal: 15,
