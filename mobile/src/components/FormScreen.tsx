@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,7 +33,7 @@ export function FormScreen({
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing.sm }]}
         keyboardShouldPersistTaps="handled">

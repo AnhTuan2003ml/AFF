@@ -131,8 +131,8 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top}>
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
       <Header nutPhai={{ nhan: t('Theo mẫu', 'Use form'), onPress: moForm }} />
 
       {isPending ? (
@@ -404,8 +404,8 @@ function SupportForm({ veChat }: { veChat: () => void }) {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top}>
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
       <Header nutPhai={{ nhan: t('💬 Chat', '💬 Chat'), onPress: veChat }} />
 
       {isPending ? (

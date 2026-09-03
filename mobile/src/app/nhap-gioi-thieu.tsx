@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -60,7 +59,7 @@ export default function NhapGioiThieuScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* CamiO dẫn chuyện — lơ lửng sẵn trong component Mascot. */}
         <View style={styles.hero}>
