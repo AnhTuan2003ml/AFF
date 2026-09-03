@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import * as Updates from 'expo-updates';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -17,7 +19,7 @@ import { useLang, useT } from '@/i18n';
 import { Mascot } from '@/components/Mascot';
 import { camioAt } from '@/lib/camio-voice';
 import { useSession } from '@/hooks/useSession';
-import { vnd } from '@/lib/format';
+import { ngayGio, vnd } from '@/lib/format';
 import { DUONG_DAN_PHAP_LY, moTrangPhapLy } from '@/lib/legal';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
@@ -278,6 +280,8 @@ export default function AccountScreen() {
             danger
           />
         </View>
+
+        <VersionFooter />
       </ScrollView>
 
       <Modal
@@ -339,9 +343,39 @@ function MenuRow({
   );
 }
 
+/**
+ * Chân trang hiển thị phiên bản. Vì mọi bản build đều versionName 1.0.0, chỗ
+ * phân biệt thực sự là THÔNG TIN OTA (kênh + mã bản cập nhật) — giúp kiểm tra
+ * app đã tự cập nhật qua EAS Update chưa.
+ */
+function VersionFooter() {
+  const t = useT();
+  const version = Constants.expoConfig?.version ?? '—';
+  const kenh = Updates.channel;
+  const idNgan = Updates.updateId ? Updates.updateId.slice(0, 8) : null;
+  const ngay = Updates.createdAt ? ngayGio(Updates.createdAt.toISOString()) : null;
+  const goc = Updates.isEmbeddedLaunch || !idNgan;
+  return (
+    <View style={styles.version}>
+      <Text style={styles.versionMain}>
+        {t('Phiên bản', 'Version')} {version}
+        {kenh ? ` · ${kenh}` : ''}
+      </Text>
+      <Text style={styles.versionSub}>
+        {goc
+          ? t('Bản gốc trong APK', 'Embedded in APK')
+          : `${t('Cập nhật OTA', 'OTA update')} ${idNgan}${ngay ? ` · ${ngay}` : ''}`}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
   content: { padding: spacing.md, paddingBottom: spacing.xl, gap: 14 },
+  version: { alignItems: 'center', paddingTop: 4, paddingBottom: 8, gap: 3 },
+  versionMain: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  versionSub: { fontSize: 11, color: colors.muted, opacity: 0.85 },
   h1: { fontSize: 25, fontWeight: '800', color: colors.text, letterSpacing: -0.6 },
   // Khoảng cách trên lớn hơn để các nhóm tách bạch, đỡ loạn mắt.
   h2: { fontSize: 13.5, fontWeight: '800', color: colors.inkSoft, marginTop: 20, marginBottom: 2, letterSpacing: 0.6, textTransform: 'uppercase' },
