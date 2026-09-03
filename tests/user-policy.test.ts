@@ -33,14 +33,15 @@ describe("Chính sách người dùng", () => {
     expect(text).toContain("100.000");
   });
 
-  it("nói rõ tiền vào ví ngay khi số ngày giữ bằng 0", () => {
-    const policy = buildUserPolicy(facts({ cashbackHoldDays: 0 }));
-    const text = policy.sections
-      .flatMap((section) => section.items)
-      .join("\n");
-    expect(text).toContain("ngay khi sàn ghi nhận đơn Hoàn thành");
-    expect(text).toContain("không có thời gian chờ");
-    expect(text).not.toContain("giữ thêm");
+  it("chỉ nhắc thời gian giữ khi số ngày giữ > 0", () => {
+    const flat = (f: UserPolicyFacts) =>
+      buildUserPolicy(f)
+        .sections.flatMap((section) => [...section.paragraphs, ...section.items])
+        .join("\n");
+
+    expect(flat(facts({ cashbackHoldDays: 15 }))).toContain("thời gian giữ 15 ngày");
+    // Số ngày giữ bằng 0 thì không nhắc tới việc giữ.
+    expect(flat(facts({ cashbackHoldDays: 0 }))).not.toContain("thời gian giữ");
   });
 
   it("dựng URL tuyệt đối không bị lặp dấu gạch chéo", () => {
