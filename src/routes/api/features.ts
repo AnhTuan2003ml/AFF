@@ -9,6 +9,7 @@ import {
   getUnreadNotificationCount,
   getUserMissionOverview,
   listMissionReferralPeople,
+  clearAllNotifications,
   listNotifications,
   markAllNotificationsRead,
 } from "../../services/mission.js";
@@ -289,6 +290,16 @@ export async function registerFeatureApiRoutes(
     { preHandler: requireApiUser },
     async (request, reply) => {
       await markAllNotificationsRead(deps.db, request.currentUser!.id);
+      return reply.code(204).send();
+    },
+  );
+
+  // Xóa tất cả thông báo của người dùng (nút "Xóa tất cả" — dọn sạch khay).
+  app.delete(
+    "/notifications",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      await clearAllNotifications(deps.db, request.currentUser!.id);
       return reply.code(204).send();
     },
   );

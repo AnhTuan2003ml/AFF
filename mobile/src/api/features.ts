@@ -255,6 +255,11 @@ export async function danhDauDaDoc(): Promise<void> {
   await apiFetch<unknown>('/api/v1/notifications/mark-read', { method: 'POST' });
 }
 
+/** Xóa tất cả thông báo — dọn sạch khay của người dùng. */
+export async function xoaTatCaThongBao(): Promise<void> {
+  await apiFetch<unknown>('/api/v1/notifications', { method: 'DELETE' });
+}
+
 /** Đăng ký token đẩy của thiết bị để nhận thông báo ngoài app. */
 export async function dangKyPush(token: string): Promise<void> {
   await apiFetch<unknown>('/api/v1/push/register', {

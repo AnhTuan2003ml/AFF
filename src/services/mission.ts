@@ -349,6 +349,20 @@ export async function markAllNotificationsRead(
   );
 }
 
+// Xóa sạch khay thông báo của người dùng (nút "Xóa tất cả"). Trả về số bản ghi
+// đã xóa để phía gọi hiển thị/ghi log nếu cần.
+export async function clearAllNotifications(
+  db: Database,
+  userId: string,
+): Promise<number> {
+  const r = await query(
+    db,
+    `DELETE FROM notifications WHERE user_id = $1`,
+    [userId],
+  );
+  return r.rowCount ?? 0;
+}
+
 interface UserProgressCounts {
   referralCount: number;
   purchaseCount: number;

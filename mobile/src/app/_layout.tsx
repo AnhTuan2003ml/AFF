@@ -62,7 +62,11 @@ export default function RootLayout() {
             <Stack.Screen name="support" options={{ presentation: 'modal' }} />
             <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
             <Stack.Screen name="kol" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
+            {/* Thông báo = popup đè lên màn đang mở (nền dưới vẫn thấy, mờ đi). */}
+            <Stack.Screen
+              name="notifications"
+              options={{ presentation: 'transparentModal', animation: 'fade' }}
+            />
             <Stack.Screen name="privacy" options={{ presentation: 'modal' }} />
             <Stack.Screen name="disclaimer" options={{ presentation: 'modal' }} />
             <Stack.Screen name="delete-account" options={{ presentation: 'modal' }} />

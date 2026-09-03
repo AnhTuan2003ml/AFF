@@ -3,10 +3,10 @@ import { Image } from 'expo-image';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { danhDauDaDoc, layThongBao, type NotificationItem } from '@/api/features';
+import { danhDauDaDoc, layThongBao, xoaTatCaThongBao, type NotificationItem } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { CAMIO, type CamioMood } from '@/components/Mascot';
 import { camio } from '@/lib/camio-voice';
@@ -17,8 +17,9 @@ import { localizeNotification } from '@/lib/notification-i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 /**
- * Thông báo — dựng lại danh sách thông báo của web. Mở màn này là đánh dấu đã
- * đọc tất cả (đồng bộ số badge ở chuông).
+ * Thông báo — POPUP đè lên màn hình đang mở (route transparentModal trong
+ * _layout.tsx: nền dưới vẫn thấy, làm mờ). Bấm ra ngoài thẻ để đóng. Mở màn là
+ * đánh dấu đã đọc tất cả (đồng bộ badge chuông). Có nút "Xóa tất cả" dọn khay.
  */
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -40,48 +41,92 @@ export default function NotificationsScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
+  const xoaHet = useMutation({
+    mutationFn: xoaTatCaThongBao,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
   // Mở màn = đã xem → đánh dấu đọc hết (nếu còn chưa đọc).
   useEffect(() => {
     if (data && data.unread > 0) danhDau.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.unread]);
 
-  return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={{ width: 22 }}>
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-        <Text style={styles.headerTitle}>{t('Thông báo', 'Notifications')}</Text>
-        <View style={{ width: 22 }} />
-      </View>
+  const items = data?.items ?? [];
+  const coItem = items.length > 0;
 
-      {!user ? (
-        <CanDangNhap
-          mo_ta={t(
-            'Đăng nhập để xem thông báo về đơn hàng, hoàn tiền và nhiệm vụ.',
-            'Sign in to see notifications about orders, cashback and tasks.',
-          )}
-        />
-      ) : isPending ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.brand} />
+  function xacNhanXoaHet() {
+    if (!coItem || xoaHet.isPending) return;
+    Alert.alert(
+      t('Xóa tất cả thông báo?', 'Clear all notifications?'),
+      t('Toàn bộ thông báo sẽ bị xóa khỏi khay và không khôi phục được.',
+        'All notifications will be removed from the tray and cannot be restored.'),
+      [
+        { text: t('Hủy', 'Cancel'), style: 'cancel' },
+        { text: t('Xóa tất cả', 'Clear all'), style: 'destructive', onPress: () => xoaHet.mutate() },
+      ],
+    );
+  }
+
+  return (
+    <Pressable style={styles.scrim} onPress={() => router.back()}>
+      {/* Thẻ popup — chặn sự kiện bấm để không đóng khi chạm vào trong thẻ. */}
+      <Pressable style={[styles.card, { marginTop: insets.top + 8 }]} onPress={() => {}}>
+        <View style={styles.head}>
+          <Text style={styles.headTitle}>{t('Thông báo', 'Notifications')}</Text>
+          <View style={styles.headRight}>
+            {coItem && user ? (
+              <Pressable
+                onPress={xacNhanXoaHet}
+                hitSlop={8}
+                disabled={xoaHet.isPending}
+                style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.6 }]}>
+                {xoaHet.isPending ? (
+                  <ActivityIndicator color={colors.danger} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={14} color={colors.danger} />
+                    <Text style={styles.clearText}>{t('Xóa tất cả', 'Clear all')}</Text>
+                  </>
+                )}
+              </Pressable>
+            ) : null}
+            <Pressable onPress={() => router.back()} hitSlop={8} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color={colors.inkSoft} />
+            </Pressable>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          data={data?.items ?? []}
-          keyExtractor={(n) => n.id}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="notifications-off-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyText}>{EMPTY_NOTIF}</Text>
-            </View>
-          }
-          renderItem={({ item }) => <Dong n={item} lang={lang} />}
-        />
-      )}
-    </View>
+
+        {!user ? (
+          <View style={styles.pad}>
+            <CanDangNhap
+              mo_ta={t(
+                'Đăng nhập để xem thông báo về đơn hàng, hoàn tiền và nhiệm vụ.',
+                'Sign in to see notifications about orders, cashback and tasks.',
+              )}
+            />
+          </View>
+        ) : isPending ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.brand} />
+          </View>
+        ) : (
+          <FlatList
+            data={items}
+            keyExtractor={(n) => n.id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Ionicons name="notifications-off-outline" size={30} color={colors.muted} />
+                <Text style={styles.emptyText}>{EMPTY_NOTIF}</Text>
+              </View>
+            }
+            renderItem={({ item }) => <Dong n={item} lang={lang} />}
+          />
+        )}
+      </Pressable>
+    </Pressable>
   );
 }
 
@@ -110,20 +155,52 @@ function Dong({ n, lang }: { n: NotificationItem; lang: string }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.paper },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
+  // Nền mờ phủ toàn màn — thấy giao diện dưới. Bấm vùng này để đóng.
+  scrim: {
+    flex: 1,
+    backgroundColor: 'rgba(20,12,8,0.5)',
+    paddingHorizontal: 10,
+    justifyContent: 'flex-start',
+  },
+  card: {
+    maxHeight: '82%',
+    backgroundColor: colors.paper,
+    borderRadius: 22,
+    overflow: 'hidden',
+    // Đổ bóng nhẹ để nổi trên nền dưới.
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
+  },
+  head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 10,
+    paddingLeft: 18,
+    paddingRight: 10,
+    paddingVertical: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
-  headerTitle: { fontSize: 17, fontWeight: '900', color: colors.text },
+  headTitle: { fontSize: 17, fontWeight: '900', color: colors.text },
+  headRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: colors.dangerSoft,
+  },
+  clearText: { fontSize: 12.5, fontWeight: '800', color: colors.danger },
+  closeBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
 
+  center: { paddingVertical: 50, alignItems: 'center', justifyContent: 'center' },
+  pad: { padding: spacing.md },
   list: { padding: spacing.md, gap: 10 },
   item: {
     flexDirection: 'row',
