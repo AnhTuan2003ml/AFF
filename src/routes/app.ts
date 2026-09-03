@@ -1221,6 +1221,7 @@ export async function registerAppRoutes(
           FROM referrals r
           JOIN users u ON u.id = r.referred_user_id
           WHERE r.referrer_user_id = $1
+            AND u.deleted_at IS NULL
           ORDER BY r.created_at DESC
         `,
         [id],
