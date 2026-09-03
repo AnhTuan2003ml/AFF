@@ -257,13 +257,17 @@ export async function registerMeApiRoutes(
     },
     async (request, reply) => {
       const input = parseInput(
-        z.object({ forfeitBalance: z.boolean().optional().default(false) }),
+        z.object({
+          forfeitBalance: z.boolean().optional().default(false),
+          password: z.string().max(200).optional(),
+        }),
         request.body ?? {},
       );
       const userId = request.currentUser!.id;
       const result = await deleteOwnAccount(deps.db, {
         userId,
         forfeitBalance: input.forfeitBalance,
+        password: input.password,
       });
       // Ghi nhật ký SAU khi xóa thành công, nếu không thì mỗi lần bị chặn
       // (còn lệnh rút, còn số dư) cũng để lại một dòng "đã xóa tài khoản" sai

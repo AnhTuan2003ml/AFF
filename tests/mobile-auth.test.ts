@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readBearerToken } from "../src/auth/session.js";
 import type { Database } from "../src/db.js";
 import { sha256 } from "../src/lib/crypto.js";
+import { hashPassword } from "../src/lib/password.js";
 import { deleteOwnAccount } from "../src/services/account-deletion.js";
 import {
   issueMobileTokens,
@@ -30,17 +31,27 @@ afterEach(async () => {
 
 let referralCounter = 0;
 
+// Mật khẩu chung của user test + hash thật (băm 1 lần, dùng lại cho mọi user)
+// để kiểm tra được bước xác thực mật khẩu khi xóa tài khoản.
+const USER_PASSWORD = "MatKhau@123";
+let cachedPasswordHash: string | null = null;
+async function userPasswordHash(): Promise<string> {
+  if (!cachedPasswordHash) cachedPasswordHash = await hashPassword(USER_PASSWORD);
+  return cachedPasswordHash;
+}
+
 async function createUser(status = "ACTIVE"): Promise<string> {
   referralCounter += 1;
   const result = await db.query(
     `
       INSERT INTO users (email, full_name, password_hash, status, referral_code)
-      VALUES ($1, $2, 'argon2-hash', $3, $4)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `,
     [
       `khach${referralCounter}@example.com`,
       "Nguyễn Văn A",
+      await userPasswordHash(),
       status,
       `REF${String(referralCounter).padStart(5, "0")}`,
     ],
@@ -201,6 +212,15 @@ describe("Phiên token cho app di động", () => {
 });
 
 describe("Xóa tài khoản tự phục vụ", () => {
+  it("chặn khi mật khẩu sai", async () => {
+    const userId = await createUser();
+    await expect(
+      deleteOwnAccount(db, { userId, forfeitBalance: false, password: "sai-mat-khau" }),
+    ).rejects.toThrow(/mật khẩu không đúng/i);
+    const user = await db.query("SELECT status FROM users WHERE id = $1", [userId]);
+    expect(user.rows[0]?.status).toBe("ACTIVE");
+  });
+
   it("chặn khi còn lệnh rút đang xử lý", async () => {
     const userId = await createUser();
     await db.query(
@@ -214,7 +234,7 @@ describe("Xóa tài khoản tự phục vụ", () => {
     );
 
     await expect(
-      deleteOwnAccount(db, { userId, forfeitBalance: true }),
+      deleteOwnAccount(db, { userId, forfeitBalance: true, password: USER_PASSWORD }),
     ).rejects.toThrow(/lệnh rút tiền chưa xử lý xong/i);
 
     const user = await db.query("SELECT status FROM users WHERE id = $1", [
@@ -228,7 +248,7 @@ describe("Xóa tài khoản tự phục vụ", () => {
     await creditWallet(userId, "AVAILABLE", 250000);
 
     await expect(
-      deleteOwnAccount(db, { userId, forfeitBalance: false }),
+      deleteOwnAccount(db, { userId, forfeitBalance: false, password: USER_PASSWORD }),
     ).rejects.toThrow(/còn 250.000 đồng/i);
   });
 
@@ -253,7 +273,7 @@ describe("Xóa tài khoản tự phục vụ", () => {
       [userId],
     );
 
-    const result = await deleteOwnAccount(db, { userId, forfeitBalance: true });
+    const result = await deleteOwnAccount(db, { userId, forfeitBalance: true, password: USER_PASSWORD });
     expect(result.forfeitedVnd).toBe(90000);
 
     const user = await db.query(
@@ -308,7 +328,7 @@ describe("Xóa tài khoản tự phục vụ", () => {
     ]);
     const oldEmail = before.rows[0]?.email as string;
 
-    await deleteOwnAccount(db, { userId, forfeitBalance: false });
+    await deleteOwnAccount(db, { userId, forfeitBalance: false, password: USER_PASSWORD });
 
     // Chỉ mục users_email_unique_lower đã được nhả ra.
     await expect(
@@ -322,7 +342,7 @@ describe("Xóa tài khoản tự phục vụ", () => {
     ).resolves.toBeDefined();
 
     await expect(
-      deleteOwnAccount(db, { userId, forfeitBalance: false }),
+      deleteOwnAccount(db, { userId, forfeitBalance: false, password: USER_PASSWORD }),
     ).rejects.toThrow(/đã được xóa/i);
   });
 });

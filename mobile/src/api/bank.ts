@@ -78,10 +78,10 @@ export async function dangXuatMoiThietBi(): Promise<void> {
  * Xóa tài khoản (xóa mềm). `forfeitBalance=false` mà còn số dư/lệnh rút sẽ bị
  * backend chặn — khi đó hỏi lại rồi gọi với `true` để bỏ lại số dư.
  */
-export function xoaTaiKhoan(forfeitBalance: boolean) {
+export function xoaTaiKhoan(forfeitBalance: boolean, password?: string) {
   return apiFetch<{ status: string; forfeitedVnd: number }>('/api/v1/me', {
     method: 'DELETE',
-    body: { forfeitBalance },
+    body: { forfeitBalance, ...(password ? { password } : {}) },
   });
 }
 

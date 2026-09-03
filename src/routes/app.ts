@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { isGuestAppPath, requireUser } from "../auth/guards.js";
 import { revokeCurrentSession, revokeAllUserSessions } from "../auth/session.js";
+import { deleteOwnAccount } from "../services/account-deletion.js";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { decryptField, sha256 } from "../lib/crypto.js";
@@ -1809,6 +1810,33 @@ export async function registerAppRoutes(
       "Đã đăng xuất tất cả thiết bị.",
     );
     return reply.redirect("/dang-nhap");
+  });
+
+  // Xóa tài khoản tự phục vụ (web). Bắt buộc nhập đúng mật khẩu (tài khoản có
+  // mật khẩu); ví còn tiền thì phải tick chấp nhận mất số dư. Xóa mềm: gỡ danh
+  // tính, đặt DISABLED, thu hồi mọi phiên (xem services/account-deletion.ts).
+  app.post("/settings/delete-account", async (request, reply) => {
+    try {
+      const input = parseInput(
+        z.object({
+          password: z.string().max(200).optional(),
+          forfeitBalance: z.string().optional(),
+        }),
+        request.body,
+      );
+      await deleteOwnAccount(deps.db, {
+        userId: userId(request),
+        forfeitBalance: input.forfeitBalance === "true",
+        password: input.password,
+      });
+      // deleteOwnAccount đã thu hồi phiên trong DB; xóa nốt cookie phiên hiện tại.
+      await revokeCurrentSession(deps.db, deps.config, request, reply);
+      setFlash(reply, deps.config, "success", "Tài khoản của bạn đã được xóa.");
+      return reply.redirect("/dang-nhap");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+      return reply.redirect("/app/profile");
+    }
   });
 
 }

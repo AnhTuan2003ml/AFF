@@ -2908,6 +2908,66 @@ label small {
   color: var(--lx-muted)
 }
 
+/* Form xóa tài khoản trong modal (dùng khung .policy-modal). */
+.delete-account-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px
+}
+
+.delete-account-form > label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lx-ink)
+}
+
+.delete-account-form input[type="password"] {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--lx-line);
+  background: var(--lx-surface);
+  color: var(--lx-ink);
+  font-size: 14px
+}
+
+.delete-account-form input[type="password"]:focus {
+  outline: none;
+  border-color: var(--lx-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lx-brand) 22%, transparent)
+}
+
+.delete-account-form small {
+  font-weight: 500;
+  color: var(--lx-muted)
+}
+
+.delete-account-forfeit {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lx-ink-2)
+}
+
+.delete-account-forfeit input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: var(--lx-brand)
+}
+
+.delete-account-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px
+}
+
 .policy-modal-foot {
   display: flex;
   flex-wrap: wrap;

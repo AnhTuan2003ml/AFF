@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { dangXuatMoiThietBi, doiTen, layPhien, xoaTaiKhoan } from '@/api/bank';
 import { useT } from '@/i18n';
@@ -23,6 +23,8 @@ export default function ProfileScreen() {
   const [ten, setTen] = useState(user?.fullName ?? '');
   const [dangLuu, setDangLuu] = useState(false);
   const [dangXL, setDangXL] = useState(false);
+  const [moXoa, setMoXoa] = useState(false);
+  const [matKhau, setMatKhau] = useState('');
   const { data: phien } = useQuery({
     queryKey: ['sessions'],
     queryFn: layPhien,
@@ -78,15 +80,18 @@ export default function ProfileScreen() {
   }
 
   async function xoa(forfeit: boolean) {
+    if (dangXL) return;
     setDangXL(true);
     try {
-      await xoaTaiKhoan(forfeit);
+      await xoaTaiKhoan(forfeit, matKhau || undefined);
+      setMoXoa(false);
+      setMatKhau('');
       await dangXuat();
       router.dismissAll();
       Alert.alert(t('Đã xóa tài khoản', 'Account deleted'), t('Tài khoản của bạn đã được xóa.', 'Your account has been deleted.'));
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      // Còn số dư/lệnh rút → backend chặn; hỏi lại để bỏ số dư.
+      // Còn số dư/lệnh rút → backend chặn; hỏi lại để bỏ số dư (giữ mật khẩu đã nhập).
       if (!forfeit && /số dư|lệnh rút|balance|withdraw/i.test(msg)) {
         Alert.alert(
           t('Còn số dư/lệnh rút', 'Remaining balance/withdrawal'),
@@ -97,6 +102,7 @@ export default function ProfileScreen() {
           ],
         );
       } else {
+        // Sai mật khẩu / lỗi khác → giữ popup mở để nhập lại.
         Alert.alert(t('Chưa xóa được', "Couldn't delete"), msg || t('Thử lại sau.', 'Please try again later.'));
       }
     } finally {
@@ -105,17 +111,8 @@ export default function ProfileScreen() {
   }
 
   function hoiXoa() {
-    Alert.alert(
-      t('Xóa tài khoản?', 'Delete account?'),
-      t(
-        'Hành động này không thể hoàn tác. Toàn bộ dữ liệu tài khoản sẽ bị xóa.',
-        'This action cannot be undone. All account data will be deleted.',
-      ),
-      [
-        { text: t('Hủy', 'Cancel'), style: 'cancel' },
-        { text: t('Xóa tài khoản', 'Delete account'), style: 'destructive', onPress: () => void xoa(false) },
-      ],
-    );
+    setMatKhau('');
+    setMoXoa(true);
   }
 
   return (
@@ -175,6 +172,49 @@ export default function ProfileScreen() {
         <Text style={[styles.rowText, { color: colors.danger }]}>{t('Xóa tài khoản', 'Delete account')}</Text>
         <Ionicons name="chevron-forward" size={17} color={colors.danger} />
       </Pressable>
+
+      {/* Popup nhập mật khẩu để xóa tài khoản (giống web). */}
+      <Modal visible={moXoa} transparent animationType="fade" onRequestClose={() => setMoXoa(false)}>
+        <Pressable style={styles.scrim} onPress={() => setMoXoa(false)}>
+          <Pressable style={styles.xoaCard} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.xoaIcon}>
+              <Ionicons name="trash-outline" size={22} color={colors.danger} />
+            </View>
+            <Text style={styles.xoaTitle}>{t('Xóa tài khoản?', 'Delete account?')}</Text>
+            <Text style={styles.xoaSub}>
+              {t(
+                'Hành động này không thể hoàn tác. Danh tính (email, tên, mật khẩu, ngân hàng) sẽ bị gỡ và bạn đăng xuất mọi thiết bị. Nhập mật khẩu để xác nhận.',
+                'This cannot be undone. Your identity (email, name, password, bank) will be removed and you will be signed out of all devices. Enter your password to confirm.',
+              )}
+            </Text>
+            <TextInput
+              style={styles.xoaInput}
+              value={matKhau}
+              onChangeText={setMatKhau}
+              placeholder={t('Mật khẩu', 'Password')}
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              autoFocus
+            />
+            <Text style={styles.xoaHint}>
+              {t('Đăng nhập bằng Google thì bỏ trống ô này.', 'Leave empty if you signed in with Google.')}
+            </Text>
+            <Pressable
+              onPress={() => void xoa(false)}
+              disabled={dangXL}
+              style={({ pressed }) => [styles.xoaBtn, (pressed || dangXL) && { opacity: 0.85 }]}>
+              {dangXL ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.xoaBtnText}>{t('Xóa tài khoản', 'Delete account')}</Text>
+              )}
+            </Pressable>
+            <Pressable style={styles.xoaCancel} onPress={() => setMoXoa(false)}>
+              <Text style={styles.xoaCancelText}>{t('Hủy', 'Cancel')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </FormScreen>
   );
 }
@@ -218,4 +258,52 @@ const styles = StyleSheet.create({
   },
   phienTitle: { fontSize: 13.5, fontWeight: '800', color: colors.text },
   phienTime: { fontSize: 11.5, color: colors.muted, marginTop: 2 },
+
+  scrim: {
+    flex: 1,
+    backgroundColor: 'rgba(40,22,14,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  xoaCard: {
+    width: '100%',
+    maxWidth: 360,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    gap: 8,
+  },
+  xoaIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.dangerSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  xoaTitle: { fontSize: 18, fontWeight: '900', color: colors.text },
+  xoaSub: { fontSize: 13, color: colors.muted, lineHeight: 19, marginBottom: 8 },
+  xoaInput: {
+    height: 48,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surfaceMuted,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: colors.text,
+  },
+  xoaHint: { fontSize: 11.5, color: colors.muted, marginBottom: 6 },
+  xoaBtn: {
+    height: 50,
+    borderRadius: radius.sm,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  xoaBtnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  xoaCancel: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  xoaCancelText: { color: colors.muted, fontWeight: '800', fontSize: 14 },
 });

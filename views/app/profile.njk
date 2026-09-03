@@ -66,6 +66,14 @@
         <div class="danger-zone-copy"><b>{{ t('Đăng xuất mọi nơi', 'Sign out everywhere') }}</b><p>{{ t('Dùng khi bạn nghi ngờ tài khoản bị truy cập trái phép.', 'Use this if you suspect unauthorized access to your account.') }}</p></div>
         <button class="button button-danger" type="submit">{{ t('Đăng xuất tất cả thiết bị', 'Sign out all devices') }}</button>
       </form>
+
+      <div class="danger-zone">
+        <div class="danger-zone-copy">
+          <b>{{ t('Xóa tài khoản', 'Delete account') }}</b>
+          <p>{{ t('Gỡ vĩnh viễn danh tính (email, tên, mật khẩu, tài khoản ngân hàng) và đăng xuất mọi thiết bị. Không thể hoàn tác.', 'Permanently remove your identity (email, name, password, bank account) and sign out of all devices. This cannot be undone.') }}</p>
+        </div>
+        <button class="button button-danger" type="button" data-open-delete-account>{{ t('Xóa tài khoản', 'Delete account') }}</button>
+      </div>
     </section>
 
     <section class="panel settings-sessions-panel">
@@ -98,4 +106,36 @@
       <a class="mb-linkrow" href="/app/settings">{{ icon('settings') }}<span>{{ t('Tất cả chức năng', 'All features') }}</span></a>
     </div>
   </section>
+
+  {# Popup nhập mật khẩu để xóa tài khoản (dùng lại khung .policy-modal). #}
+  <div class="policy-modal-scrim" data-delete-account-modal hidden inert>
+    <section class="policy-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+      <header class="policy-modal-head">
+        <div>
+          <span class="eyebrow">{{ t('XÁC NHẬN XÓA', 'CONFIRM DELETION') }}</span>
+          <h2 id="delete-account-title">{{ t('Xóa tài khoản?', 'Delete account?') }}</h2>
+        </div>
+        <button type="button" class="policy-modal-close" data-delete-account-close aria-label="{{ t('Đóng', 'Close') }}">×</button>
+      </header>
+      <div class="policy-modal-body">
+        <p>{{ t('Hành động này KHÔNG THỂ hoàn tác. Danh tính của bạn (email, tên, mật khẩu, tài khoản ngân hàng) sẽ bị gỡ và bạn sẽ đăng xuất khỏi mọi thiết bị. Nhập mật khẩu để xác nhận.', 'This action CANNOT be undone. Your identity (email, name, password, bank account) will be removed and you will be signed out of all devices. Enter your password to confirm.') }}</p>
+        <form method="post" action="/app/settings/delete-account" class="delete-account-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label for="delete-account-password">{{ t('Mật khẩu', 'Password') }}
+            <input id="delete-account-password" type="password" name="password" autocomplete="current-password" placeholder="{{ t('Nhập mật khẩu để xác nhận', 'Enter your password to confirm') }}">
+            <small>{{ t('Đăng nhập bằng Google thì bỏ trống ô này.', 'Leave this empty if you signed in with Google.') }}</small>
+          </label>
+          <label class="delete-account-forfeit"><input type="checkbox" name="forfeitBalance" value="true"> <span>{{ t('Tôi chấp nhận mất số dư còn lại (nếu có).', 'I accept forfeiting any remaining balance.') }}</span></label>
+          <div class="delete-account-actions">
+            <button type="button" class="button button-ghost" data-delete-account-close>{{ t('Hủy', 'Cancel') }}</button>
+            <button type="submit" class="button button-danger">{{ t('Xóa tài khoản', 'Delete account') }}</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/delete-account.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

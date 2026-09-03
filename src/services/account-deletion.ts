@@ -1,5 +1,6 @@
 import { query, type Database, withTransaction } from "../db.js";
 import { AppError } from "../lib/errors.js";
+import { verifyPassword } from "../lib/password.js";
 import { getWalletBalances } from "./ledger.js";
 
 /**
@@ -49,8 +50,37 @@ export async function deleteOwnAccount(
      * cũng không được chặn hẳn đường xóa vì hai cửa hàng đòi luôn xóa được.
      */
     forfeitBalance: boolean;
+    /**
+     * Mật khẩu người dùng nhập ở popup xác nhận. Bắt buộc đúng nếu tài khoản
+     * CÓ mật khẩu; tài khoản đăng nhập Google thuần (không mật khẩu) bỏ qua.
+     */
+    password?: string | undefined;
   },
 ): Promise<DeleteAccountResult> {
+  // Xác thực danh tính trước khi xóa: nếu tài khoản có mật khẩu thì phải nhập
+  // đúng. Tránh người khác mượn phiên đang mở để xóa tài khoản của chủ máy.
+  const acc = await query<{ password_hash: string | null }>(
+    db,
+    "SELECT password_hash FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1",
+    [params.userId],
+  );
+  const accRow = acc.rows[0];
+  if (!accRow) {
+    throw new AppError("ACCOUNT_ALREADY_DELETED", "Tài khoản này đã được xóa.", 409);
+  }
+  if (accRow.password_hash) {
+    const ok = params.password
+      ? await verifyPassword(accRow.password_hash, params.password)
+      : false;
+    if (!ok) {
+      throw new AppError(
+        "WRONG_PASSWORD",
+        "Mật khẩu không đúng. Nhập đúng mật khẩu để xóa tài khoản.",
+        403,
+      );
+    }
+  }
+
   const inFlight = await query<{ count: string }>(
     db,
     `
