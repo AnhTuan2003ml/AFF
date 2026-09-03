@@ -3762,6 +3762,12 @@ body.no-scroll {
   gap: 14px
 }
 
+/* Khung hẹp căn giữa cho trang menu Tài khoản: desktop khỏi trải full-width. */
+.mb-shell {
+  max-width: 760px;
+  margin: 0 auto
+}
+
 .mb-panel {
   padding: 22px;
   margin-top: 24px

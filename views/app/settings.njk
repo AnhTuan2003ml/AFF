@@ -10,6 +10,8 @@
 
 {% block app_content %}
   {% set profileBalances = headerBalances or balances %}
+  {# Khung hẹp căn giữa: trên desktop tránh menu ngắn trải hết bề rộng cho đỡ loạn. #}
+  <div class="mb-shell">
   <a class="mb-profile mb-profile-link" href="/app/profile" aria-label="{{ t('Xem thông tin cá nhân', 'View personal info') }}">
     <span class="mb-profile-avatar" aria-hidden="true">
       {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
@@ -98,4 +100,5 @@
       </form>
     </div>
   </section>
+  </div>
 {% endblock %}
