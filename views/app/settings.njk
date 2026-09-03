@@ -47,16 +47,7 @@
     </div>
   </section>
 
-  <section class="mb-panel" aria-label="{{ t('Tài khoản', 'Account') }}">
-    <div class="mb-panel-head">
-      <h2 class="mb-panel-title">{{ t('Tài khoản', 'Account') }}</h2>
-    </div>
-    <div class="mb-linklist">
-      <a class="mb-linkrow" href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
-      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>{{ t('Tài khoản nhận tiền', 'Payout account') }}</span></a>
-    </div>
-  </section>
-
+  {# Nhóm quan trọng/hay dùng nhất (tiền + đơn) lên đầu; hồ sơ/ngân hàng sau. #}
   <section class="mb-panel" aria-label="{{ t('Tiền và đơn hàng', 'Money & orders') }}">
     <div class="mb-panel-head">
       <h2 class="mb-panel-title">{{ t('Tiền và đơn hàng', 'Money & orders') }}</h2>
@@ -66,6 +57,16 @@
       <a class="mb-linkrow" href="/app/withdrawals">{{ icon('withdraw') }}<span>{{ t('Rút tiền về ngân hàng', 'Withdraw to bank') }}</span></a>
       <a class="mb-linkrow" href="/app/orders">{{ icon('orders') }}<span>{{ t('Đơn hàng & đối soát', 'Orders & reconciliation') }}</span></a>
       <a class="mb-linkrow" href="/app/nhiem-vu">{{ icon('mission') }}<span>{{ t('Nhiệm vụ nhận thưởng', 'Rewards & missions') }}</span></a>
+    </div>
+  </section>
+
+  <section class="mb-panel" aria-label="{{ t('Tài khoản', 'Account') }}">
+    <div class="mb-panel-head">
+      <h2 class="mb-panel-title">{{ t('Tài khoản', 'Account') }}</h2>
+    </div>
+    <div class="mb-linklist">
+      <a class="mb-linkrow" href="/app/profile">{{ icon('user') }}<span>{{ t('Thông tin cá nhân', 'Personal info') }}</span></a>
+      <a class="mb-linkrow" href="/app/banks">{{ icon('bank') }}<span>{{ t('Tài khoản nhận tiền', 'Payout account') }}</span></a>
     </div>
   </section>
 

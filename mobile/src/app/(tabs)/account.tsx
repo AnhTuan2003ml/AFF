@@ -163,23 +163,7 @@ export default function AccountScreen() {
           </View>
         </View>
 
-        {/* Nhóm 1 — Tài khoản */}
-        <Text style={styles.h2}>{t('Tài khoản', 'Account')}</Text>
-        <View style={styles.card}>
-          <MenuRow
-            icon="person-outline"
-            label={t('Thông tin cá nhân', 'Personal info')}
-            onPress={() => router.push('/profile')}
-          />
-          <MenuRow
-            icon="card-outline"
-            label={t('Tài khoản nhận tiền', 'Payout account')}
-            onPress={() => router.push('/bank')}
-            divider
-          />
-        </View>
-
-        {/* Nhóm 2 — Tiền và đơn hàng */}
+        {/* Nhóm 1 — Tiền và đơn hàng (ưu tiên cao nhất: dùng nhiều nhất). */}
         <Text style={styles.h2}>{t('Tiền và đơn hàng', 'Money & orders')}</Text>
         <View style={styles.card}>
           <MenuRow
@@ -203,6 +187,22 @@ export default function AccountScreen() {
             icon="flag-outline"
             label={t('Nhiệm vụ nhận thưởng', 'Rewards & missions')}
             onPress={() => router.push('/missions')}
+            divider
+          />
+        </View>
+
+        {/* Nhóm 2 — Tài khoản */}
+        <Text style={styles.h2}>{t('Tài khoản', 'Account')}</Text>
+        <View style={styles.card}>
+          <MenuRow
+            icon="person-outline"
+            label={t('Thông tin cá nhân', 'Personal info')}
+            onPress={() => router.push('/profile')}
+          />
+          <MenuRow
+            icon="card-outline"
+            label={t('Tài khoản nhận tiền', 'Payout account')}
+            onPress={() => router.push('/bank')}
             divider
           />
         </View>
@@ -341,9 +341,10 @@ function MenuRow({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.paper },
-  content: { padding: spacing.md, paddingBottom: spacing.xl, gap: 12 },
+  content: { padding: spacing.md, paddingBottom: spacing.xl, gap: 14 },
   h1: { fontSize: 25, fontWeight: '800', color: colors.text, letterSpacing: -0.6 },
-  h2: { fontSize: 14, fontWeight: '800', color: colors.inkSoft, marginTop: 8, letterSpacing: 0.2 },
+  // Khoảng cách trên lớn hơn để các nhóm tách bạch, đỡ loạn mắt.
+  h2: { fontSize: 13.5, fontWeight: '800', color: colors.inkSoft, marginTop: 20, marginBottom: 2, letterSpacing: 0.6, textTransform: 'uppercase' },
 
   profile: {
     flexDirection: 'row',
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     ...shadow.card,
   },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 13 },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15 },
   menuDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   menuIcon: {
     width: 36,

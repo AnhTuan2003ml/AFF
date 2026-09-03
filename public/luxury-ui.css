@@ -3764,7 +3764,7 @@ body.no-scroll {
 
 .mb-panel {
   padding: 22px;
-  margin-top: 16px
+  margin-top: 24px
 }
 
 .mb-panel-head {
@@ -3787,8 +3787,8 @@ body.no-scroll {
 .mb-linkrow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px 0;
+  gap: 13px;
+  padding: 15px 0;
   border-bottom: 1px solid var(--lx-line)
 }
 
