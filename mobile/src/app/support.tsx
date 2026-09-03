@@ -93,6 +93,8 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
   const qc = useQueryClient();
   const listRef = useRef<FlatList<SupportMessage>>(null);
   const inputRef = useRef<TextInput>(null);
+  const oDay = useRef(true); // người dùng đang ở gần đáy hội thoại?
+  const soTinTruoc = useRef(0);
   const [noiDung, setNoiDung] = useState('');
   const [donDangHoi, setDonDangHoi] = useState<SupportOrderOption | null>(null);
   const [moChonDon, setMoChonDon] = useState(false);
@@ -100,7 +102,8 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
   const { data, isPending } = useQuery({
     queryKey: ['support'],
     queryFn: layHoTro,
-    refetchInterval: 15000,
+    // Nhịp poll ngắn cho cảm giác realtime khi đang mở màn chat.
+    refetchInterval: 8000,
   });
   // Danh sách đơn để gắn vào câu hỏi — dùng chung nguồn với form theo mẫu.
   const { data: form } = useQuery({
@@ -128,6 +131,18 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
   const coDon = (form?.orderOptions.length ?? 0) > 0;
   const loiChao = camioAt('supportIntro', 0);
 
+  // Có tin MỚI (poll hoặc vừa gửi) → tự cuộn xuống nếu đang ở gần đáy, để tin
+  // mới hiện ngay mà KHÔNG cần thoát/mở lại màn hình. Không giật khi đọc lịch sử.
+  useEffect(() => {
+    if (tin.length > soTinTruoc.current && oDay.current) {
+      const id = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+      soTinTruoc.current = tin.length;
+      return () => clearTimeout(id);
+    }
+    soTinTruoc.current = tin.length;
+    return undefined;
+  }, [tin.length]);
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -145,7 +160,15 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
           data={tin}
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          scrollEventThrottle={100}
+          onScroll={(e) => {
+            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+            oDay.current =
+              contentOffset.y + layoutMeasurement.height >= contentSize.height - 120;
+          }}
+          onContentSizeChange={() => {
+            if (oDay.current) listRef.current?.scrollToEnd({ animated: false });
+          }}
           ListEmptyComponent={
             <View style={styles.intro2}>
               <Mascot mood="haohung" size={72} />
