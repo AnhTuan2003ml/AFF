@@ -6409,15 +6409,15 @@ body.no-scroll {
 }
 
 .support-thread-foot {
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--lx-line);
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  gap: 8px;
+  align-items: center;
   color: var(--lx-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11.5px;
+  line-height: 1.35;
 }
 
 .support-thread-foot-ico {
@@ -6426,8 +6426,8 @@ body.no-scroll {
 }
 
 .support-thread-foot-ico svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -6528,7 +6528,7 @@ body.no-scroll {
   .support-thread-panel[data-reply-panel] .support-thread-foot {
     flex: 0 0 auto;
     margin: 0;
-    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--lx-line);
     background: var(--lx-paper);
   }
