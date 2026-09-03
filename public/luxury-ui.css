@@ -6520,6 +6520,9 @@ body.no-scroll {
   .support-thread-panel[data-reply-panel] .support-thread {
     flex: 1 1 auto;
     min-height: 0;
+    /* Bỏ trần 46vh của bản desktop để vùng tin nhắn giãn kín drawer,
+       đẩy ô nhập + dòng chú thích xuống sát đáy (hết khoảng trống thừa). */
+    max-height: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 16px 16px 8px;
