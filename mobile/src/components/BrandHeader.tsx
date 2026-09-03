@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
   logo: { width: 34, height: 34 },
   brandText: { fontSize: 21, fontWeight: '900', letterSpacing: -1, color: colors.brand },
 
-  right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
     top: 3,
