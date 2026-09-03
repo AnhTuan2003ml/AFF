@@ -37,9 +37,27 @@
   if (closeBtn) closeBtn.addEventListener("click", close);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
 
-  if (mqMobile.matches && panel.getAttribute("data-has-reply") === "1") {
-    window.setTimeout(open, 250);
+  // Nút "Gửi yêu cầu theo mẫu": bung/thu form (mobile mặc định thu gọn để CSKH
+  // và form đều bấm được ngay đầu trang, khỏi cuộn).
+  var formToggle = document.querySelector("[data-form-toggle]");
+  var formPanel = document.querySelector("[data-form-panel]");
+  if (formToggle && formPanel) {
+    formToggle.addEventListener("click", function () {
+      var willOpen = formPanel.classList.contains("is-collapsed");
+      formPanel.classList.toggle("is-collapsed", !willOpen);
+      formToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      if (willOpen) {
+        formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        var firstField = formPanel.querySelector("select, textarea, input");
+        if (firstField) window.setTimeout(function () {
+          try { firstField.focus({ preventScroll: true }); } catch (e) {}
+        }, 350);
+      }
+    });
   }
+
+  // Không tự bung chat khi tải: mặc định hiện 2 nút (Chat / Gửi yêu cầu) cho gọn;
+  // có phản hồi chưa đọc thì chấm đỏ trên nút "Chat trực tiếp" báo hiệu.
 
   // ===== Dựng bong bóng tin nhắn =====
   function fmt(iso) {

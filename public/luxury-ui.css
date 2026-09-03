@@ -6259,6 +6259,91 @@ body.no-scroll {
   font-size: 13px;
 }
 
+/* ===== Trang Hỗ trợ: 2 lối vào nhanh (chat / form) ngay đầu trang ===== */
+/* Desktop: form + chat đã hiện cạnh nhau nên ẩn hàng nút. Mobile: hiện lên đầu. */
+.support-actions {
+  display: none;
+}
+
+.support-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--lx-line);
+  background: var(--lx-surface);
+  cursor: pointer;
+  position: relative;
+  transition: border-color .15s ease, background .15s ease, transform .05s ease;
+}
+
+.support-action:hover {
+  border-color: var(--lx-line-strong);
+}
+
+.support-action:active {
+  transform: translateY(1px);
+}
+
+.support-action-primary {
+  border-color: color-mix(in srgb, var(--lx-brand) 35%, var(--lx-line));
+  background: color-mix(in srgb, var(--lx-brand) 6%, var(--lx-surface));
+}
+
+.support-action-ico {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--lx-brand) 12%, transparent);
+  color: var(--lx-brand);
+}
+
+.support-action-ico svg {
+  width: 22px;
+  height: 22px;
+}
+
+.support-action-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.support-action-copy b {
+  font-size: 15.5px;
+  color: var(--lx-ink);
+}
+
+.support-action-copy small {
+  color: var(--lx-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.support-action-go {
+  flex: 0 0 auto;
+  color: var(--lx-muted);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.support-action .support-reply-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lx-orange);
+  box-shadow: 0 0 0 3px var(--lx-orange-soft);
+}
+
 /* ===== Trang Hỗ trợ: form + "Phản Hồi" cạnh nhau (desktop); mobile là drawer ===== */
 .support-shell {
   max-width: 640px;
@@ -6359,6 +6444,20 @@ body.no-scroll {
 }
 
 @media (max-width: 820px) {
+  /* Mobile: 2 nút hành động lên đầu; form thu gọn cho tới khi bấm "Gửi yêu cầu". */
+  .support-actions {
+    display: grid;
+    gap: 12px;
+    max-width: 640px;
+    margin: 0 auto 16px;
+  }
+
+  /* Thắng rule desktop .support-shell.has-reply>.panel (0,3,0) để form thu gọn được. */
+  .support-shell.has-reply .support-request-panel.is-collapsed,
+  .support-shell .support-request-panel.is-collapsed {
+    display: none;
+  }
+
   .support-shell.has-reply {
     display: block;
     max-width: 640px;

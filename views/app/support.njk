@@ -5,12 +5,39 @@
   <section class="page-heading">
     <div>
       <h1>{{ t('Hỗ trợ', 'Support') }}</h1>
-      <p>{{ t('Gửi yêu cầu theo mẫu. CSKH phản hồi qua email và thông báo.', 'Submit a request form. Support replies by email and notification.') }}</p>
+      <p>{{ t('Chat trực tiếp với CSKH, hoặc gửi yêu cầu theo mẫu.', 'Live chat with support, or submit a request form.') }}</p>
     </div>
   </section>
 
+  {% if not guest %}
+    {# Hai lối vào ngay đầu trang — khỏi phải cuộn qua form mới bấm được CSKH. #}
+    <div class="support-actions">
+      <button type="button" class="support-action support-action-primary" data-reply-open>
+        <span class="support-action-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 20l1.4-4.2A8.5 8.5 0 1 1 21 11.5z"/></svg>
+        </span>
+        <span class="support-action-copy">
+          <b>{{ t('Chat trực tiếp với CSKH', 'Live chat with support') }}</b>
+          <small>{{ t('Đội CSKH trả lời ngay tại đây', 'The team replies right here') }}</small>
+        </span>
+        {% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
+        <span class="support-action-go" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="support-action" data-form-toggle aria-expanded="false" aria-controls="support-form-panel">
+        <span class="support-action-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        </span>
+        <span class="support-action-copy">
+          <b>{{ t('Gửi yêu cầu theo mẫu', 'Submit a request form') }}</b>
+          <small>{{ t('Kèm mã đơn, xử lý theo hồ sơ', 'With order code, handled as a ticket') }}</small>
+        </span>
+        <span class="support-action-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  {% endif %}
+
   <div class="support-shell {% if latestRequest or latestReply %}has-reply{% endif %}">
-    <section class="panel support-request-panel">
+    <section class="panel support-request-panel{% if not guest %} is-collapsed{% endif %}" id="support-form-panel"{% if not guest %} data-form-panel{% endif %}>
       <header class="panel-heading">
         <div>
           <h2>{{ t('Gửi yêu cầu theo mẫu', 'Submit a request') }}</h2>
@@ -88,9 +115,6 @@
     </section>
 
     {% if not guest %}
-      <button type="button" class="support-reply-trigger" data-reply-open>
-        {{ t('Nhắn CSKH', 'Message support') }}{% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
-      </button>
       <aside class="panel support-thread-panel" data-reply-panel
         data-has-reply="{{ '1' if latestReply else '' }}" aria-label="{{ t('Phản Hồi', 'Replies') }}">
         <header class="panel-heading support-thread-head">
