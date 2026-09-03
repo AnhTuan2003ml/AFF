@@ -6,6 +6,7 @@ import {
   isPlatformPurchaseEnabled,
   isSafeAffiliateRedirect,
 } from "../services/affiliate.js";
+import { buildPrivacyPolicy, buildTerms } from "../services/legal-docs.js";
 import {
   buildUserPolicy,
   loadUserPolicyFacts,
@@ -49,20 +50,6 @@ export async function registerPublicRoutes(
     },
   );
 
-  app.get("/dieu-khoan", async (_request, reply) =>
-    reply.view("legal/terms.njk", {
-      pageTitle: "Điều khoản sử dụng",
-      policyVersion: deps.config.TERMS_VERSION,
-    }),
-  );
-
-  app.get("/quyen-rieng-tu", async (_request, reply) =>
-    reply.view("legal/privacy.njk", {
-      pageTitle: "Chính sách quyền riêng tư",
-      policyVersion: deps.config.PRIVACY_VERSION,
-    }),
-  );
-
   // Nội dung đổi theo ngôn ngữ (cookie `lang`). Cùng một URL nhưng khác nội dung
   // theo cookie nên KHÔNG được để trình duyệt/CDN phục vụ lại bản đã cache: sau
   // khi /lang/:code đổi cookie rồi quay về đây, nếu còn cache thì thấy ngôn ngữ
@@ -93,6 +80,24 @@ export async function registerPublicRoutes(
     return reply
       .type("text/html; charset=utf-8")
       .view("legal/user-policy-body.njk", { policy });
+  });
+
+  app.get("/dieu-khoan", async (request, reply) => {
+    const doc = buildTerms(
+      await loadUserPolicyFacts(deps.db, deps.config),
+      policyLang(request),
+    );
+    reply.header("cache-control", POLICY_CACHE);
+    return reply.view("legal/terms.njk", { pageTitle: doc.title, doc });
+  });
+
+  app.get("/quyen-rieng-tu", async (request, reply) => {
+    const doc = buildPrivacyPolicy(
+      await loadUserPolicyFacts(deps.db, deps.config),
+      policyLang(request),
+    );
+    reply.header("cache-control", POLICY_CACHE);
+    return reply.view("legal/privacy.njk", { pageTitle: doc.title, doc });
   });
 
   app.get<{

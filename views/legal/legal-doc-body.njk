@@ -1,0 +1,21 @@
+{# Nội dung tài liệu pháp lý có cấu trúc (Điều khoản, Quyền riêng tư).
+   Dữ liệu `doc` do src/services/legal-docs.ts dựng — song ngữ theo cookie lang,
+   con số lấy từ business_config nên web và các tài liệu không lệch nhau. #}
+<div class="policy-doc">
+  <p class="policy-lead">{{ doc.lead }}</p>
+  {% for section in doc.sections %}
+    <section class="policy-section" id="{{ section.id }}">
+      <h2>{{ section.heading }}</h2>
+      {% for paragraph in section.paragraphs %}
+        <p>{{ paragraph }}</p>
+      {% endfor %}
+      {% if section.items.length %}
+        <ul class="policy-list">
+          {% for item in section.items %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>

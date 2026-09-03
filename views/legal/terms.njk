@@ -1,19 +1,9 @@
 {% extends "base.njk" %}
 
 {% block content %}
-  <article class="legal-page">
-    <span class="eyebrow">PHIÊN BẢN {{ policyVersion }}</span>
-    <h1>Điều khoản sử dụng</h1>
-    <p class="legal-lead">Điều khoản này quy định nguyên tắc sử dụng ShopTik. Khi có thay đổi đáng kể, hệ thống sẽ yêu cầu bạn xem và chấp nhận phiên bản mới trước khi tiếp tục sử dụng.</p>
-    <h2>1. Phạm vi dịch vụ</h2>
-    <p>ShopTik tạo đường dẫn Affiliate, ghi nhận click, hiển thị dữ liệu đơn do đối tác cung cấp và tính khoản hoàn theo chính sách. ShopTik không bán hàng, giao hàng hoặc quyết định trạng thái đơn.</p>
-    <h2>2. Điều kiện nhận hoàn</h2>
-    <p>Khoản hoàn chỉ trở thành khả dụng sau khi đối tác xác nhận đơn hợp lệ và hoa hồng. Đơn hủy, trả hàng, gian lận hoặc không được ghi nhận có thể không phát sinh khoản hoàn.</p>
-    <h2>3. Sử dụng hợp lệ</h2>
-    <p>Người dùng không được tạo giao dịch giả, tự động click, lạm dụng giới thiệu, can thiệp tracking hoặc sử dụng danh tính/tài khoản ngân hàng của người khác.</p>
-    <h2>4. Rút tiền</h2>
-    <p>Người dùng cung cấp tài khoản ngân hàng chính chủ. ShopTik không yêu cầu mật khẩu, PIN hay OTP Internet Banking. Yêu cầu rút có thể được kiểm tra rủi ro trước khi xử lý.</p>
-    <h2>5. Thay đổi chính sách</h2>
-    <p>Khi điều khoản thay đổi đáng kể, hệ thống sẽ yêu cầu người dùng xem và chấp nhận phiên bản mới trước thao tác liên quan.</p>
+  <article class="legal-page policy-page">
+    <span class="eyebrow">{{ t('PHIÊN BẢN', 'VERSION') }} {{ doc.version }}</span>
+    <h1>{{ doc.title }}</h1>
+    {% include "legal/legal-doc-body.njk" %}
   </article>
 {% endblock %}
