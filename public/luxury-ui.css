@@ -4001,9 +4001,40 @@ body.no-scroll {
 .legal-page,
 .policy-page,
 .terms-page {
-  width: min(920px, calc(100% - 40px));
+  width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
   padding: 36px 0 36px
+}
+
+/* Bố cục tài liệu: mục lục thành CỘT DỌC BÊN TRÁI (sticky), nội dung bên phải.
+   Mobile: xếp dọc — mục lục lên trên, nội dung dưới. */
+.policy-layout {
+  display: block
+}
+
+.policy-content {
+  min-width: 0
+}
+
+@media(min-width:900px) {
+  .policy-layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start
+  }
+
+  .policy-toc-aside {
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 104px);
+    overflow-y: auto
+  }
+
+  /* Nội dung đã có mục lục riêng bên trái → giới hạn bề rộng đọc dễ hơn. */
+  .policy-content {
+    max-width: 760px
+  }
 }
 
 .legal-page h1,
@@ -4071,13 +4102,6 @@ body.no-scroll {
 .policy-toc-list a:focus-visible {
   color: var(--lx-brand);
   border-bottom-color: currentColor
-}
-
-@media(min-width:720px) {
-  .policy-toc-list {
-    grid-template-columns: 1fr 1fr;
-    gap: 9px 28px
-  }
 }
 
 /* Khi nhảy tới một mục, chừa khoảng trên để tiêu đề không bị header che. */

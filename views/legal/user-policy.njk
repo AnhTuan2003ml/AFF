@@ -4,9 +4,15 @@
   <article class="legal-page policy-page">
     <span class="eyebrow">{{ t('PHIÊN BẢN', 'VERSION') }} {{ policy.version }}</span>
     <h1>{{ policy.title }}</h1>
-    {% set tocSections = policy.sections %}
-    {% set tocPrefix = "chinh-sach-" %}
-    {% include "legal/legal-toc.njk" %}
-    {% include "legal/user-policy-body.njk" %}
+    <div class="policy-layout">
+      <aside class="policy-toc-aside">
+        {% set tocSections = policy.sections %}
+        {% set tocPrefix = "chinh-sach-" %}
+        {% include "legal/legal-toc.njk" %}
+      </aside>
+      <div class="policy-content">
+        {% include "legal/user-policy-body.njk" %}
+      </div>
+    </div>
   </article>
 {% endblock %}
