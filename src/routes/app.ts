@@ -1820,6 +1820,7 @@ export async function registerAppRoutes(
       const input = parseInput(
         z.object({
           password: z.string().max(200).optional(),
+          confirmEmail: z.string().max(320).optional(),
           forfeitBalance: z.string().optional(),
         }),
         request.body,
@@ -1828,6 +1829,7 @@ export async function registerAppRoutes(
         userId: userId(request),
         forfeitBalance: input.forfeitBalance === "true",
         password: input.password,
+        confirmEmail: input.confirmEmail,
       });
       // deleteOwnAccount đã thu hồi phiên trong DB; xóa nốt cookie phiên hiện tại.
       await revokeCurrentSession(deps.db, deps.config, request, reply);

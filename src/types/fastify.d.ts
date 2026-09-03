@@ -9,6 +9,9 @@ export interface CurrentUser {
   referralCode: string;
   avatarUrl: string;
   isSpecialPartner?: boolean;
+  /** Có đặt mật khẩu không. Tài khoản đăng nhập Google thuần = false → xác nhận
+   *  xóa tài khoản bằng email thay vì mật khẩu. */
+  hasPassword?: boolean;
 }
 
 declare module "fastify" {

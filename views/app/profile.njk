@@ -121,10 +121,16 @@
         <p>{{ t('Hành động này KHÔNG THỂ hoàn tác. Danh tính của bạn (email, tên, mật khẩu, tài khoản ngân hàng) sẽ bị gỡ và bạn sẽ đăng xuất khỏi mọi thiết bị. Nhập mật khẩu để xác nhận.', 'This action CANNOT be undone. Your identity (email, name, password, bank account) will be removed and you will be signed out of all devices. Enter your password to confirm.') }}</p>
         <form method="post" action="/app/settings/delete-account" class="delete-account-form">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-          <label for="delete-account-password">{{ t('Mật khẩu', 'Password') }}
-            <input id="delete-account-password" type="password" name="password" autocomplete="current-password" placeholder="{{ t('Nhập mật khẩu để xác nhận', 'Enter your password to confirm') }}">
-            <small>{{ t('Đăng nhập bằng Google thì bỏ trống ô này.', 'Leave this empty if you signed in with Google.') }}</small>
-          </label>
+          {% if currentUser.hasPassword %}
+            <label for="delete-account-password">{{ t('Mật khẩu', 'Password') }}
+              <input id="delete-account-password" type="password" name="password" autocomplete="current-password" placeholder="{{ t('Nhập mật khẩu để xác nhận', 'Enter your password to confirm') }}">
+            </label>
+          {% else %}
+            <label for="delete-account-email">{{ t('Nhập email tài khoản để xác nhận', 'Enter your account email to confirm') }}
+              <input id="delete-account-email" type="email" name="confirmEmail" autocomplete="email" placeholder="{{ currentUser.email }}">
+              <small>{{ t('Tài khoản đăng nhập bằng Google không có mật khẩu — nhập đúng email để xác nhận.', 'Google-only accounts have no password — enter the exact email to confirm.') }}</small>
+            </label>
+          {% endif %}
           <label class="delete-account-forfeit"><input type="checkbox" name="forfeitBalance" value="true"> <span>{{ t('Tôi chấp nhận mất số dư còn lại (nếu có).', 'I accept forfeiting any remaining balance.') }}</span></label>
           <div class="delete-account-actions">
             <button type="button" class="button button-ghost" data-delete-account-close>{{ t('Hủy', 'Cancel') }}</button>

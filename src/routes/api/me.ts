@@ -260,6 +260,7 @@ export async function registerMeApiRoutes(
         z.object({
           forfeitBalance: z.boolean().optional().default(false),
           password: z.string().max(200).optional(),
+          confirmEmail: z.string().max(320).optional(),
         }),
         request.body ?? {},
       );
@@ -268,6 +269,7 @@ export async function registerMeApiRoutes(
         userId,
         forfeitBalance: input.forfeitBalance,
         password: input.password,
+        confirmEmail: input.confirmEmail,
       });
       // Ghi nhật ký SAU khi xóa thành công, nếu không thì mỗi lần bị chặn
       // (còn lệnh rút, còn số dư) cũng để lại một dòng "đã xóa tài khoản" sai

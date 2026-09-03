@@ -5,7 +5,8 @@
   "use strict";
   var scrim = document.querySelector("[data-delete-account-modal]");
   if (!scrim) return;
-  var pwd = scrim.querySelector("#delete-account-password");
+  // Ô xác nhận: mật khẩu (tài khoản thường) HOẶC email (tài khoản Google).
+  var field = scrim.querySelector(".delete-account-form input:not([type=hidden])");
   var lastFocus = null;
 
   function open() {
@@ -13,10 +14,10 @@
     scrim.hidden = false;
     scrim.removeAttribute("inert");
     document.body.classList.add("is-policy-open");
-    if (pwd) {
-      pwd.value = "";
+    if (field) {
+      field.value = "";
       window.setTimeout(function () {
-        pwd.focus();
+        field.focus();
       }, 40);
     }
   }

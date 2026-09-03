@@ -221,6 +221,34 @@ describe("Xóa tài khoản tự phục vụ", () => {
     expect(user.rows[0]?.status).toBe("ACTIVE");
   });
 
+  it("tài khoản Google (không mật khẩu): xác nhận bằng đúng email", async () => {
+    referralCounter += 1;
+    const email = `ggl${referralCounter}@example.com`;
+    const inserted = await db.query(
+      `
+        INSERT INTO users (email, full_name, password_hash, status, referral_code)
+        VALUES ($1, $2, NULL, 'ACTIVE', $3)
+        RETURNING id
+      `,
+      [email, "Google User", `REFG${String(referralCounter).padStart(4, "0")}`],
+    );
+    const userId = inserted.rows[0]?.id as string;
+
+    // Sai email (và không có mật khẩu) → chặn.
+    await expect(
+      deleteOwnAccount(db, { userId, forfeitBalance: false, confirmEmail: "sai@example.com" }),
+    ).rejects.toThrow(/email/i);
+    // Không nhập gì → cũng chặn.
+    await expect(
+      deleteOwnAccount(db, { userId, forfeitBalance: false }),
+    ).rejects.toThrow(/email/i);
+
+    // Đúng email → xóa mềm thành công.
+    await deleteOwnAccount(db, { userId, forfeitBalance: false, confirmEmail: email });
+    const user = await db.query("SELECT status FROM users WHERE id = $1", [userId]);
+    expect(user.rows[0]?.status).toBe("DISABLED");
+  });
+
   it("chặn khi còn lệnh rút đang xử lý", async () => {
     const userId = await createUser();
     await db.query(

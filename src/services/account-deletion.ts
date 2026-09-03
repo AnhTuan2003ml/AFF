@@ -51,17 +51,23 @@ export async function deleteOwnAccount(
      */
     forfeitBalance: boolean;
     /**
-     * Mật khẩu người dùng nhập ở popup xác nhận. Bắt buộc đúng nếu tài khoản
-     * CÓ mật khẩu; tài khoản đăng nhập Google thuần (không mật khẩu) bỏ qua.
+     * Mật khẩu người dùng nhập ở popup xác nhận — bắt buộc đúng nếu tài khoản
+     * CÓ mật khẩu.
      */
     password?: string | undefined;
+    /**
+     * Email nhập để xác nhận — dùng cho tài khoản đăng nhập Google thuần
+     * (không có mật khẩu). Phải trùng email tài khoản.
+     */
+    confirmEmail?: string | undefined;
   },
 ): Promise<DeleteAccountResult> {
-  // Xác thực danh tính trước khi xóa: nếu tài khoản có mật khẩu thì phải nhập
-  // đúng. Tránh người khác mượn phiên đang mở để xóa tài khoản của chủ máy.
-  const acc = await query<{ password_hash: string | null }>(
+  // Xác thực danh tính trước khi xóa (tránh người khác mượn phiên đang mở):
+  // - Tài khoản có mật khẩu → phải nhập đúng mật khẩu.
+  // - Tài khoản Google thuần (không mật khẩu) → xác nhận bằng đúng email.
+  const acc = await query<{ password_hash: string | null; email: string }>(
     db,
-    "SELECT password_hash FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1",
+    "SELECT password_hash, email FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1",
     [params.userId],
   );
   const accRow = acc.rows[0];
@@ -76,6 +82,17 @@ export async function deleteOwnAccount(
       throw new AppError(
         "WRONG_PASSWORD",
         "Mật khẩu không đúng. Nhập đúng mật khẩu để xóa tài khoản.",
+        403,
+      );
+    }
+  } else {
+    const ok =
+      !!params.confirmEmail &&
+      params.confirmEmail.trim().toLowerCase() === accRow.email.toLowerCase();
+    if (!ok) {
+      throw new AppError(
+        "WRONG_CONFIRM_EMAIL",
+        "Tài khoản đăng nhập bằng Google không có mật khẩu. Nhập đúng email tài khoản để xác nhận xóa.",
         403,
       );
     }

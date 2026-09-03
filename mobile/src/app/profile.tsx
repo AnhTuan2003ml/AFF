@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { layMe } from '@/api/account';
 import { dangXuatMoiThietBi, doiTen, layPhien, xoaTaiKhoan } from '@/api/bank';
 import { useT } from '@/i18n';
 import { ngayGio } from '@/lib/format';
@@ -30,6 +31,10 @@ export default function ProfileScreen() {
     queryFn: layPhien,
     enabled: !!user,
   });
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
+  // Có mật khẩu → xác nhận bằng mật khẩu; Google thuần → bằng email. Mặc định
+  // true (an toàn hơn: đòi mật khẩu) khi chưa tải xong.
+  const coMatKhau = me?.user.hasPassword ?? true;
 
   if (!user) {
     return (
@@ -83,7 +88,12 @@ export default function ProfileScreen() {
     if (dangXL) return;
     setDangXL(true);
     try {
-      await xoaTaiKhoan(forfeit, matKhau || undefined);
+      await xoaTaiKhoan(
+        forfeit,
+        coMatKhau
+          ? { password: matKhau || undefined }
+          : { confirmEmail: matKhau || undefined },
+      );
       setMoXoa(false);
       setMatKhau('');
       await dangXuat();
@@ -182,22 +192,32 @@ export default function ProfileScreen() {
             </View>
             <Text style={styles.xoaTitle}>{t('Xóa tài khoản?', 'Delete account?')}</Text>
             <Text style={styles.xoaSub}>
-              {t(
-                'Hành động này không thể hoàn tác. Danh tính (email, tên, mật khẩu, ngân hàng) sẽ bị gỡ và bạn đăng xuất mọi thiết bị. Nhập mật khẩu để xác nhận.',
-                'This cannot be undone. Your identity (email, name, password, bank) will be removed and you will be signed out of all devices. Enter your password to confirm.',
-              )}
+              {coMatKhau
+                ? t(
+                    'Hành động này không thể hoàn tác. Danh tính (email, tên, mật khẩu, ngân hàng) sẽ bị gỡ và bạn đăng xuất mọi thiết bị. Nhập mật khẩu để xác nhận.',
+                    'This cannot be undone. Your identity (email, name, password, bank) will be removed and you will be signed out of all devices. Enter your password to confirm.',
+                  )
+                : t(
+                    'Hành động này không thể hoàn tác. Tài khoản đăng nhập bằng Google không có mật khẩu — nhập đúng email tài khoản để xác nhận.',
+                    'This cannot be undone. Google-only accounts have no password — enter your exact account email to confirm.',
+                  )}
             </Text>
             <TextInput
               style={styles.xoaInput}
               value={matKhau}
               onChangeText={setMatKhau}
-              placeholder={t('Mật khẩu', 'Password')}
+              placeholder={coMatKhau ? t('Mật khẩu', 'Password') : user.email}
               placeholderTextColor={colors.muted}
-              secureTextEntry
+              secureTextEntry={coMatKhau}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType={coMatKhau ? 'default' : 'email-address'}
               autoFocus
             />
             <Text style={styles.xoaHint}>
-              {t('Đăng nhập bằng Google thì bỏ trống ô này.', 'Leave empty if you signed in with Google.')}
+              {coMatKhau
+                ? t('Nhập đúng mật khẩu tài khoản của bạn.', 'Enter your correct account password.')
+                : t('Nhập đúng email tài khoản của bạn.', 'Enter your exact account email.')}
             </Text>
             <Pressable
               onPress={() => void xoa(false)}

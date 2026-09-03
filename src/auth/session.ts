@@ -43,6 +43,7 @@ interface SessionRow {
   referral_code: string;
   avatar_url: string;
   is_special_partner: boolean;
+  has_password: boolean;
 }
 
 // "Ghi nhớ đăng nhập": giữ phiên 30 ngày thay vì TTL mặc định. KHÔNG lưu mật
@@ -86,7 +87,7 @@ export async function registerSessionHooks(
         SELECT
           s.id, s.token_hash, s.last_seen_at, u.id AS user_id, u.email,
           u.full_name, u.role, u.status, u.referral_code, u.avatar_url,
-          u.is_special_partner
+          u.is_special_partner, (u.password_hash IS NOT NULL) AS has_password
         FROM sessions s
         JOIN users u ON u.id = s.user_id
         WHERE s.token_hash = $1
@@ -118,6 +119,7 @@ export async function registerSessionHooks(
       referralCode: row.referral_code,
       avatarUrl: row.avatar_url,
       isSpecialPartner: row.is_special_partner,
+      hasPassword: row.has_password,
     };
 
     if (Date.now() - row.last_seen_at.getTime() > 15 * 60 * 1000) {
