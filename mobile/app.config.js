@@ -37,6 +37,16 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
+    // EAS Update (OTA): app tự tải & áp bản JS/asset mới khi mở lại, khỏi cài
+    // lại APK. Chỉ cần `eas update --branch <profile>`. Thay đổi phần NATIVE
+    // (thêm thư viện native, đổi SDK) vẫn phải build APK mới.
+    updates: {
+      ...config.updates,
+      url: "https://u.expo.dev/f7b17097-96a2-46c4-81f1-02ef6663a22d",
+    },
+    // Bản JS chỉ được áp cho build có cùng runtimeVersion. Gắn theo version app
+    // (1.0.0) — đổi version (thường kèm thay đổi native) thì cần build APK mới.
+    runtimeVersion: { policy: "appVersion" },
     android: {
       ...config.android,
       ...(coFcm ? { googleServicesFile } : {}),
