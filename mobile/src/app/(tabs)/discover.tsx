@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import * as Clipboard from 'expo-clipboard';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 
 import {
@@ -208,11 +209,17 @@ export default function DiscoverScreen() {
         })}
       </ScrollView>
       {conTabPhai && (
-        <View pointerEvents="none" style={styles.tabsMore}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(251,248,244,0)', 'rgba(251,248,244,0.9)', '#fbf8f4']}
+          locations={[0, 0.6, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.tabsMore}>
           <View style={styles.tabsMoreBadge}>
             <Ionicons name="chevron-forward" size={16} color={colors.brand} />
           </View>
-        </View>
+        </LinearGradient>
       )}
       </View>
     </View>
@@ -482,10 +489,10 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    paddingLeft: 16,
+    width: 60,
+    paddingRight: 2,
     alignItems: 'flex-end',
     justifyContent: 'center',
-    backgroundColor: colors.paper,
   },
   tabsMoreBadge: {
     width: 26,
@@ -493,9 +500,9 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,253,250,0.72)',
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: 'rgba(233,222,212,0.7)',
   },
   tabs: { gap: 8, paddingVertical: 14 },
   tab: {
