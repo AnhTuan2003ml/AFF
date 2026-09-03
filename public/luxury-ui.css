@@ -3248,8 +3248,38 @@ body.no-scroll {
 }
 
 .security-checklist {
-  padding-left: 20px;
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
   color: var(--lx-muted)
+}
+
+/* Mỗi mục: số thứ tự thành huy hiệu tròn BÊN TRÁI, chữ bên phải (không xuống dòng). */
+.security-checklist > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px
+}
+
+.security-checklist > div > span {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lx-brand) 12%, transparent);
+  color: var(--lx-brand);
+  font-size: 13px;
+  font-weight: 800
+}
+
+.security-checklist > div > p {
+  margin: 0;
+  color: var(--lx-ink-2);
+  line-height: 1.6
 }
 
 .back-link {
