@@ -4027,6 +4027,64 @@ body.no-scroll {
   line-height: 1.75
 }
 
+/* Mục lục tài liệu pháp lý — hộp danh sách link nhảy tới từng mục. */
+.policy-toc {
+  margin: 22px 0 30px;
+  padding: 20px 22px;
+  border: 1px solid var(--lx-line);
+  border-radius: 18px;
+  background: var(--lx-surface-2, var(--lx-surface));
+}
+
+.policy-toc-title {
+  margin: 0 0 12px !important;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--lx-brand)
+}
+
+.policy-toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 9px
+}
+
+.policy-toc-list li {
+  margin: 0
+}
+
+.policy-toc-list a {
+  display: inline-block;
+  color: var(--lx-ink);
+  text-decoration: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  border-bottom: 1px solid transparent
+}
+
+.policy-toc-list a:hover,
+.policy-toc-list a:focus-visible {
+  color: var(--lx-brand);
+  border-bottom-color: currentColor
+}
+
+@media(min-width:720px) {
+  .policy-toc-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 28px
+  }
+}
+
+/* Khi nhảy tới một mục, chừa khoảng trên để tiêu đề không bị header che. */
+.policy-section {
+  scroll-margin-top: 88px
+}
+
 /* Responsive */
 @media(max-width:1560px) {
   .px-desktop-nav {

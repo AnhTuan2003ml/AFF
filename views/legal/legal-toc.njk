@@ -1,0 +1,13 @@
+{# Mục lục cho trang tài liệu pháp lý. Mỗi mục là link nhảy tới phần tương ứng.
+   Cần đặt trước khi include: `tocSections` (danh sách section) và `tocPrefix`
+   (tiền tố id neo — user-policy dùng "chinh-sach-", điều khoản/riêng tư dùng ""). #}
+{% if tocSections and tocSections.length %}
+  <nav class="policy-toc" aria-label="{{ t('Mục lục', 'Table of contents') }}">
+    <h2 class="policy-toc-title">{{ t('Mục lục', 'Table of contents') }}</h2>
+    <ul class="policy-toc-list">
+      {% for section in tocSections %}
+        <li><a href="#{{ tocPrefix }}{{ section.id }}">{{ section.heading }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+{% endif %}

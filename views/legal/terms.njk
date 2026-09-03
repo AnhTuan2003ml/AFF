@@ -4,6 +4,9 @@
   <article class="legal-page policy-page">
     <span class="eyebrow">{{ t('PHIÊN BẢN', 'VERSION') }} {{ doc.version }}</span>
     <h1>{{ doc.title }}</h1>
+    {% set tocSections = doc.sections %}
+    {% set tocPrefix = "" %}
+    {% include "legal/legal-toc.njk" %}
     {% include "legal/legal-doc-body.njk" %}
   </article>
 {% endblock %}
