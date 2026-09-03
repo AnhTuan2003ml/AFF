@@ -231,9 +231,7 @@ export function buildUserPolicy(
           "Nếu đơn đã mua đúng liên kết mà sau 72 giờ vẫn chưa xuất hiện, hãy gửi yêu " +
             "cầu trong mục Hỗ trợ kèm mã đơn của sàn và thời điểm đặt hàng. Khiếu nại " +
             "về một đơn cần được gửi trong vòng 30 ngày kể từ ngày đặt.",
-          facts.communityZaloUrl
-            ? `Bạn cũng có thể liên hệ qua nhóm cộng đồng chính thức: ${facts.communityZaloUrl}.`
-            : "Mọi liên hệ chính thức đều đi qua mục Hỗ trợ sau khi đăng nhập.",
+          "Mọi liên hệ chính thức đều đi qua mục Hỗ trợ sau khi đăng nhập.",
         ],
       ),
       section(
@@ -425,9 +423,7 @@ function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
             "72 hours, submit a request in Support with the platform order code and " +
             "the purchase time. A complaint about an order must be submitted within " +
             "30 days of the order date.",
-          facts.communityZaloUrl
-            ? `You can also reach us via the official community group: ${facts.communityZaloUrl}.`
-            : "All official contact goes through the Support section after signing in.",
+          "All official contact goes through the Support section after signing in.",
         ],
       ),
       section(
