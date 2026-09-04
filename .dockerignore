@@ -1,8 +1,24 @@
+# Deps & build output (cài/biên dịch lại trong image)
 node_modules
+**/node_modules
 dist
-profile-worker
-.env
-.git
 coverage
+
+# Thư mục KHÔNG dùng cho build web (Dockerfile chỉ COPY: src, scripts,
+# migrations, views, public, templates, package*.json, tsconfig.json).
+# Bỏ khỏi build context để bước "transferring context" nhẹ và nhanh.
+mobile
+profile-worker
+tests
+docs
+.git
+.github
+.claude
+.codegraph
+.vscode
+
+# File lẻ không cần trong context
+.env
 *.log
 *.zip
+*.md

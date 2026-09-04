@@ -1,12 +1,13 @@
+# syntax=docker/dockerfile:1
 FROM node:24-bookworm-slim AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY src ./src
 COPY scripts ./scripts
 RUN npm run build
