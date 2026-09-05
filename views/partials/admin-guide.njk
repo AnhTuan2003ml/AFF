@@ -22,6 +22,7 @@
         <a href="#g-split" data-guide-link>Tỷ lệ chia hoa hồng</a>
         <a href="#g-status" data-guide-link>Trạng thái đơn khi đồng bộ</a>
         <a href="#g-sync" data-guide-link>Đồng bộ đơn từ sàn</a>
+        <a href="#g-products" data-guide-link>Kho sản phẩm Khám phá</a>
         <a href="#g-withdraw" data-guide-link>Duyệt rút tiền</a>
         <a href="#g-config" data-guide-link>Cấu hình nghiệp vụ (1 nguồn)</a>
         <a href="#g-deleted" data-guide-link>Người dùng đã xóa</a>
@@ -67,6 +68,15 @@
             <b>Đồng bộ sàn</b> (mặc định 60 phút/lượt, lấy đơn 30 ngày gần nhất). Sub ID nằm ở
             <code>utm_content</code>, các mảnh nối bằng “-” và có thể bị sàn cắt bớt đuôi — vẫn khớp
             được nhờ quy tắc ở mục <b>Gán đơn về đúng người mua</b>.</p>
+        </section>
+
+        <section id="g-products" data-guide-section>
+          <h3>Kho sản phẩm Khám phá (Profile Shopee)</h3>
+          <p><b>Deal Hot</b>: server mở <code>shopee.vn/m/ma-giam-gia</code> bằng Profile, cuộn bắt bộ
+            sưu tập voucher → kho HOT. <b>Voucher</b>: lấy từ shopeeanalytics.com (không cần profile).
+            <b>Lazada</b>: lấy từ API affiliate. Cả ba <b>tự làm mới 1h sáng mỗi ngày</b>. <b>Nạp theo
+            dải trang</b>: mỗi trang 20 sản phẩm, tối đa 40 trang/lượt; trang đã có thì cập nhật lại
+            (vd hôm nay 1–25, hôm sau 26–50).</p>
         </section>
 
         <section id="g-withdraw" data-guide-section>
