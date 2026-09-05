@@ -73,7 +73,7 @@ export async function registerAdminProfileRoutes(
         getCachedPageRange(deps.db, EXCLUSIVE_LIST_TYPE),
       ]);
     return reply.view("backoffice/profiles.njk", {
-      pageTitle: "Profile Shopee",
+      pageTitle: "Trình duyệt lấy dữ liệu",
       backofficeSection: "profiles",
       settings,
       profiles,

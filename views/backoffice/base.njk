@@ -45,24 +45,30 @@
         </div>
 
         <nav class="st-nav" aria-label="Quản trị">
-          <p class="st-nav-group">Hôm nay</p>
+          <p class="st-nav-group">Tổng quan</p>
           <a href="/backoffice/console" {% if backofficeSection == 'dashboard' %}class="active" aria-current="page"{% endif %}>{{ icon('dashboard') }}<span>Tổng quan</span></a>
+
+          <p class="st-nav-group">Vận hành</p>
           <a href="/backoffice/reconciliation" {% if backofficeSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Đơn &amp; hoàn tiền</span>{% if backofficeOrdersPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeOrdersPendingCount }} đơn chờ xử lý">{{ backofficeOrdersPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/withdrawals" {% if backofficeSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>{{ icon('withdraw') }}<span>Yêu cầu rút tiền</span>{% if backofficeWithdrawalsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
+          <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Duyệt KOL/KOC</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ KOL/KOC chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/support" {% if backofficeSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
-          <p class="st-nav-group">Quản lý</p>
+
+          <p class="st-nav-group">Người dùng</p>
           <a href="/backoffice/accounts" {% if backofficeSection == 'users' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Người dùng &amp; quyền</span>{% if backofficeReferralCodesPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeReferralCodesPendingCount }} yêu cầu đổi mã giới thiệu chờ duyệt">{{ backofficeReferralCodesPendingCount }}</em>{% endif %}</a>
-          <a href="/backoffice/purchase-history" {% if backofficeSection == 'purchase-history' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Lịch sử mua</span></a>
           <a href="/backoffice/banks" {% if backofficeSection == 'banks' %}class="active" aria-current="page"{% endif %}>{{ icon('bank') }}<span>Tài khoản ngân hàng</span>{% if backofficeBanksPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeBanksPendingCount }} tài khoản ngân hàng chờ xác minh">{{ backofficeBanksPendingCount }}</em>{% endif %}</a>
-          <a href="/backoffice/products" {% if backofficeSection == 'products' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Khám phá</span></a>
-          <a href="/backoffice/missions" {% if backofficeSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ</span>{% if backofficeMissionsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
-          <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Đăng ký KOL/KOC</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ KOL/KOC chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
+          <a href="/backoffice/purchase-history" {% if backofficeSection == 'purchase-history' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Lịch sử mua</span></a>
+          <a href="/backoffice/missions" {% if backofficeSection == 'missions' %}class="active" aria-current="page"{% endif %}>{{ icon('mission') }}<span>Nhiệm vụ &amp; thưởng</span>{% if backofficeMissionsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeMissionsPendingCount }} yêu cầu nhận thưởng chờ duyệt">{{ backofficeMissionsPendingCount }}</em>{% endif %}</a>
+
+          <p class="st-nav-group">Nội dung &amp; doanh thu</p>
+          <a href="/backoffice/products" {% if backofficeSection == 'products' %}class="active" aria-current="page"{% endif %}>{{ icon('discover') }}<span>Nội dung Khám phá</span></a>
           <a href="/backoffice/revenue" {% if backofficeSection == 'revenue' %}class="active" aria-current="page"{% endif %}>{{ icon('wallet') }}<span>Doanh thu</span></a>
-          <p class="st-nav-group">Hệ thống</p>
-          <a href="/backoffice/sync" {% if backofficeSection == 'sync' %}class="active" aria-current="page"{% endif %}>{{ icon('refresh') }}<span>Đồng bộ sàn</span></a>
-          <a href="/backoffice/profiles" {% if backofficeSection == 'profiles' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<span>Profile Shopee</span></a>
+
+          <p class="st-nav-group">Cài đặt &amp; hệ thống</p>
           <a href="/backoffice/config" {% if backofficeSection == 'config' %}class="active" aria-current="page"{% endif %}>{{ icon('settings') }}<span>Cấu hình nghiệp vụ</span></a>
-          <a href="/backoffice/audit" {% if backofficeSection == 'audit' %}class="active" aria-current="page"{% endif %}>{{ icon('audit') }}<span>Nhật ký</span></a>
+          <a href="/backoffice/sync" {% if backofficeSection == 'sync' %}class="active" aria-current="page"{% endif %}>{{ icon('refresh') }}<span>Kết nối &amp; đồng bộ sàn</span></a>
+          <a href="/backoffice/profiles" {% if backofficeSection == 'profiles' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<span>Trình duyệt lấy dữ liệu</span></a>
+          <a href="/backoffice/audit" {% if backofficeSection == 'audit' %}class="active" aria-current="page"{% endif %}>{{ icon('audit') }}<span>Nhật ký hệ thống</span></a>
         </nav>
 
         {# Ghim đáy sidebar: ai đang trực + lối về khu người dùng. Ca vận hành
