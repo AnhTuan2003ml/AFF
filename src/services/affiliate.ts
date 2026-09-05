@@ -11,8 +11,16 @@ import {
   isTikTokOpenApiConfigured,
   parseTikTokProductId,
 } from "./tiktok-open-api.js";
-import { generateLazadaAffiliateLink } from "./browser-control.js";
+import {
+  generateLazadaAffiliateLink,
+  readProfileCookieHeader,
+} from "./browser-control.js";
 import { listHarvestProfiles } from "./discover-harvest.js";
+import {
+  getLazadaCookie,
+  getPlatformSyncSettings,
+  setPlatformCookie,
+} from "./platform-sync-settings.js";
 
 type Fetcher = typeof fetch;
 type JsonObject = Record<string, unknown>;
@@ -526,36 +534,130 @@ async function lazadaConvertProfileId(db: Database): Promise<string | null> {
   return profiles[0]?.id ?? null;
 }
 
+const LAZADA_CONVERT_API =
+  "https://adsense.lazada.vn/newOffer/link-convert-v2.json";
+const LAZADA_CONVERT_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36";
+
+/**
+ * Gọi THẲNG API chuyển đổi Lazada từ server bằng cookie đã lưu (không mở
+ * profile) — nhanh nhất. Trả link rút gọn `s.lazada.vn` mang exlaz=e_ của
+ * tài khoản. Nếu cookie hỏng, Lazada trả HTML/anti-bot (không phải JSON) →
+ * ném lỗi để tầng trên rơi về profile.
+ */
+async function convertLazadaLinkWithCookie(
+  cookie: string,
+  jumpUrl: string,
+  fetcher: Fetcher,
+): Promise<string> {
+  const res = await fetcher(LAZADA_CONVERT_API, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/plain, */*",
+      origin: "https://adsense.lazada.vn",
+      referer: "https://adsense.lazada.vn/index.htm",
+      "user-agent": LAZADA_CONVERT_UA,
+      cookie,
+    },
+    body: JSON.stringify({ jumpUrl, subIdTemplateKey: "" }),
+  });
+  const text = await res.text();
+  let json: JsonObject | null = null;
+  try {
+    json = JSON.parse(text) as JsonObject;
+  } catch {
+    throw new AppError(
+      "LAZADA_SERVER_CONVERT_FAILED",
+      "Gọi API Lazada từ server bị chặn (không phải JSON) — cookie có thể đã hỏng.",
+      502,
+    );
+  }
+  const data = (json?.data ?? {}) as JsonObject;
+  if (!json?.success || Number(json?.resultCode) !== 1) {
+    throw new AppError(
+      "LAZADA_SERVER_CONVERT_FAILED",
+      `Lazada từ chối chuyển đổi link: ${String(json?.message || "không rõ lý do")}.`,
+      502,
+    );
+  }
+  const link =
+    typeof data.shortLink === "string" && data.shortLink ? data.shortLink : "";
+  if (!link) {
+    throw new AppError(
+      "LAZADA_SERVER_CONVERT_FAILED",
+      "API Lazada không trả shortLink.",
+      502,
+    );
+  }
+  return link;
+}
+
 /**
  * Link mua Lazada, ưu tiên theo thứ tự:
- *  1. Profile Browser Control (adsense.lazada.vn) — TÁI TẠO link cho đúng tài
- *     khoản, mang exlaz=e_… nên hoa hồng về đúng chủ. Đây là đường chính.
- *  2. Master Link c.lazada.vn (cấu hình cũ) — chỉ dùng khi chưa có profile.
- *  3. Partner API tự cấu hình.
- * Khi có profile mà sinh link thất bại thì NÉM lỗi, không im lặng rơi về
- * Master Link (vì Master Link cho ra mã đối soát chung, sai người nhận).
+ *  1. COOKIE ĐÃ LƯU → gọi thẳng API từ server (nhanh, không mở profile).
+ *  2. Profile Browser Control (adsense.lazada.vn) — khi chưa có cookie hoặc
+ *     cookie hỏng; sinh xong thì tự LẤY LẠI cookie từ profile lưu vào DB để
+ *     lần sau lại dùng đường (1).
+ *  3. Master Link c.lazada.vn (cấu hình cũ) — chỉ khi không có cả cookie lẫn profile.
+ *  4. Partner API tự cấu hình.
+ * Link luôn phải qua allowlist host (isSafeAffiliateRedirect).
  */
 async function buildLazadaBuyUrl(
+  db: Database,
   config: AppConfig,
   params: BuildLinkParams,
   fetcher: Fetcher,
   profileId: string | null,
+  actorId: string,
 ): Promise<{ affiliateUrl: string; subId: string }> {
   const subId = buildSubId(params);
-  if (profileId) {
-    const { link } = await generateLazadaAffiliateLink(config, {
-      profileId,
-      jumpUrl: buildLazadaJumpUrl(params),
-    });
+  const jumpUrl = buildLazadaJumpUrl(params);
+
+  const ensureSafe = (link: string): { affiliateUrl: string; subId: string } => {
     if (!isSafeAffiliateRedirect(link, "LAZADA", config)) {
       throw new AppError(
         "LAZADA_LINK_UNSAFE",
-        "Link Affiliate Lazada trả về không nằm trong allowlist host — kiểm tra lại công cụ chuyển đổi.",
+        "Link Affiliate Lazada trả về không nằm trong allowlist host.",
         502,
       );
     }
     return { affiliateUrl: link, subId };
+  };
+
+  // 1) Cookie đã lưu → gọi thẳng server.
+  const storedCookie = await getLazadaCookie(db, config).catch(() => null);
+  if (storedCookie) {
+    try {
+      return ensureSafe(await convertLazadaLinkWithCookie(storedCookie, jumpUrl, fetcher));
+    } catch (error) {
+      // Cookie hỏng: chỉ rơi xuống profile nếu có, không thì ném lỗi rõ.
+      if (!profileId) throw error;
+    }
   }
+
+  // 2) Profile: sinh link + tự lấy lại cookie mới lưu để lần sau dùng đường (1).
+  if (profileId) {
+    const { link } = await generateLazadaAffiliateLink(config, {
+      profileId,
+      jumpUrl,
+    });
+    const result = ensureSafe(link);
+    try {
+      const fresh = await readProfileCookieHeader(config, profileId, "LAZADA");
+      await setPlatformCookie(
+        db,
+        config,
+        { platform: "LAZADA", cookie: fresh, source: "PROFILE" },
+        actorId,
+      );
+    } catch {
+      /* best-effort: không lưu được cookie thì lần sau lại đi qua profile */
+    }
+    return result;
+  }
+
+  // 3) Master Link cũ. 4) Partner API.
   if (configuredLazadaMasterLink(config)) {
     return buildLazadaAffiliateUrl(config, params);
   }
@@ -759,13 +861,18 @@ export async function createPurchaseIntent(
   // profile (không phụ thuộc Master Link nữa).
   const lazadaProfileId =
     resolved.platform === "LAZADA" ? await lazadaConvertProfileId(db) : null;
+  // Lazada "sẵn sàng" khi có cookie đã lưu (gọi API thẳng) HOẶC có profile.
+  const lazadaHasCookie =
+    resolved.platform === "LAZADA"
+      ? (await getPlatformSyncSettings(db)).lazadaHasCookie
+      : false;
   const programAffiliateId =
     integration.affiliateId ||
     (resolved.platform === "TIKTOK"
       ? config.TIKTOK_OPEN_API_APP_KEY
       : resolved.platform === "LAZADA"
         ? lazadaProgramAffiliateId(config) ||
-          (lazadaProfileId ? "lazada-profile" : "")
+          (lazadaProfileId || lazadaHasCookie ? "lazada-profile" : "")
         : "");
   if (
     !isPlatformPurchaseEnabled(config, resolved.platform) ||
@@ -810,10 +917,12 @@ export async function createPurchaseIntent(
       : resolved.platform === "TIKTOK"
         ? await buildTikTokBuyUrl(config, buildParams, fetcher)
         : await buildLazadaBuyUrl(
+            db,
             config,
             buildParams,
             fetcher,
             lazadaProfileId,
+            params.userId,
           );
 
   const program = await query<{ id: string }>(
