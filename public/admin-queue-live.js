@@ -12,7 +12,7 @@
     { key: "missions", href: "/backoffice/missions", label: "Nhận thưởng" },
     { key: "referralCodes", href: "/backoffice/accounts", label: "Đổi mã mời" },
     { key: "banks", href: "/backoffice/banks", label: "Ngân hàng xác minh" },
-    { key: "kol", href: "/backoffice/kol", label: "Đăng ký KOL/KOC" },
+    { key: "kol", href: "/backoffice/kol", label: "Duyệt đối tác" },
   ];
   var truoc = null;
   var tieuDeGoc = document.title.replace(/^\(\d+\)\s*/, "");

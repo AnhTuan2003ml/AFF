@@ -51,7 +51,7 @@
           <p class="st-nav-group">Vận hành</p>
           <a href="/backoffice/reconciliation" {% if backofficeSection == 'orders' %}class="active" aria-current="page"{% endif %}>{{ icon('orders') }}<span>Đơn &amp; hoàn tiền</span>{% if backofficeOrdersPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeOrdersPendingCount }} đơn chờ xử lý">{{ backofficeOrdersPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/withdrawals" {% if backofficeSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>{{ icon('withdraw') }}<span>Yêu cầu rút tiền</span>{% if backofficeWithdrawalsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
-          <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Duyệt KOL/KOC</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ KOL/KOC chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
+          <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Duyệt đối tác</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ đối tác chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/support" {% if backofficeSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
 
           <p class="st-nav-group">Người dùng</p>
@@ -119,7 +119,7 @@
                 <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
               {% endif %}
               {% if backofficeKolPendingCount > 0 %}
-                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Đăng ký KOL/KOC</a>
+                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Duyệt đối tác</a>
               {% endif %}
             {% else %}
               <span class="bo-queue-clear">Không còn việc chờ xử lý</span>
@@ -179,7 +179,7 @@
                 <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
               {% endif %}
               {% if backofficeKolPendingCount > 0 %}
-                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Đăng ký KOL/KOC</a>
+                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Duyệt đối tác</a>
               {% endif %}
             </div>
           {% block backoffice_content %}{% endblock %}

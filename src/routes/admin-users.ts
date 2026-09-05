@@ -788,7 +788,7 @@ export async function registerAdminUserRoutes(
   app.get("/kol", async (_request, reply) => {
     const applications = await listKolApplications(deps.db);
     return reply.view("backoffice/kol.njk", {
-      pageTitle: "Đăng ký KOL/KOC",
+      pageTitle: "Duyệt đối tác",
       backofficeSection: "kol",
       applications,
     });
@@ -963,7 +963,7 @@ export async function registerAdminUserRoutes(
           deps.config,
           "success",
           approve
-            ? `Đã duyệt KOL/KOC "${result.fullName}" — người dùng thành đối tác đặc biệt.${mailNote}`
+            ? `Đã duyệt đối tác "${result.fullName}" — người dùng thành đối tác đặc biệt.${mailNote}`
             : `Đã từ chối hồ sơ "${result.fullName}".`,
         );
       } catch (error) {
