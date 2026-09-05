@@ -2,7 +2,7 @@
 {% from "partials/macros.njk" import status_badge, empty_state %}
 
 {% block backoffice_content %}
-  <section class="page-heading"><div><span class="eyebrow">TIỀN ĐÃ GIỮ TRƯỚC KHI DUYỆT</span><h1>Duyệt rút tiền</h1><p>Duyệt sẽ đưa yêu cầu sang hàng chờ chi; hệ thống chưa tự chuyển tiền vào ngân hàng.</p></div></section>
+  <section class="page-heading"><div><span class="eyebrow">TIỀN ĐÃ GIỮ TRƯỚC KHI DUYỆT</span><h1>Duyệt rút tiền</h1><p>Duyệt đưa yêu cầu sang hàng chờ chi (chưa tự chuyển tiền).</p></div></section>
   <aside class="warning-strip"><span>!</span><div><b>Không gửi lại yêu cầu “Chờ kiểm tra” khi chưa đối soát</b><p>Hãy tra cứu trạng thái từ đối tác chi hộ trước khi thử lại để tránh chuyển tiền hai lần.</p></div></aside>
   <section class="panel">
     {% if withdrawals.length %}
