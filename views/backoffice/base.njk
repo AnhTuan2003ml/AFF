@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="/assets/theme/mb-admin.css?v={{ assetVersion }}">
   <script src="/assets/admin-table.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/admin-queue-live.js?v={{ assetVersion }}" defer></script>
+  <script src="/assets/admin-guide.js?v={{ assetVersion }}" defer></script>
   {# Khung quản trị dùng CHUNG hệ shell st-* với app (app-shell.css):
      sidebar nhóm chức năng + topbar mỏng + tabbar mobile. Class
      backoffice-shell giữ lại cho CSS nội dung trang (dashboard.css,
@@ -121,6 +122,10 @@
 
           <div class="st-topbar-spacer"></div>
 
+          <button type="button" class="bo-guide-btn" data-guide-open aria-haspopup="dialog" title="Hướng dẫn chi tiết">
+            {{ icon('audit') }}<span>Hướng dẫn</span>
+          </button>
+
           {% include "partials/theme-button.njk" %}
 
           <div class="st-menu">
@@ -175,6 +180,8 @@
         </main>
       </div>
     </div>
+
+    {% include "partials/admin-guide.njk" %}
 
     <button class="st-scrim" type="button" aria-label="Đóng menu" data-sidebar-close></button>
 

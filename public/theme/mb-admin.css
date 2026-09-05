@@ -1300,3 +1300,149 @@
 .backoffice-shell .st-nav-badge.is-bump {
   animation: boBadgeBump .5s ease;
 }
+
+/* ============================================================
+   Popup "Hướng dẫn chi tiết" (từ điển: mục lục trái / nội dung phải)
+   Dùng chung mọi trang quản trị — gom diễn giải khỏi giao diện chính.
+   ============================================================ */
+.bo-guide-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid var(--lx-line, #e6e0d8);
+  background: var(--lx-surface, #fff);
+  color: var(--lx-ink, #23201d);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.bo-guide-btn:hover { border-color: var(--lx-brand, #ee4d2d); color: var(--lx-brand, #ee4d2d); }
+.bo-guide-btn svg { width: 16px; height: 16px; }
+@media (max-width: 640px) { .bo-guide-btn span { display: none; } .bo-guide-btn { padding: 0 10px; } }
+
+body.bo-guide-open { overflow: hidden; }
+
+.bo-guide-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(24, 16, 10, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.bo-guide {
+  width: 100%;
+  max-width: 920px;
+  height: min(80vh, 680px);
+  background: var(--lx-surface, #fff);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(20, 12, 6, 0.35);
+}
+.bo-guide-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--lx-line, #eee3d8);
+  background: var(--lx-paper, #fbf8f4);
+}
+.bo-guide-head b { display: block; font-size: 16px; color: var(--lx-ink, #23201d); }
+.bo-guide-head small { color: var(--lx-muted, #8a8178); font-size: 12px; }
+.bo-guide-close {
+  width: 34px; height: 34px;
+  border: 0; border-radius: 10px;
+  background: transparent;
+  color: var(--lx-muted, #8a8178);
+  font-size: 24px; line-height: 1; cursor: pointer;
+}
+.bo-guide-close:hover { background: var(--lx-line, #eee3d8); color: var(--lx-ink, #23201d); }
+
+.bo-guide-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 232px 1fr;
+}
+.bo-guide-toc {
+  border-right: 1px solid var(--lx-line, #eee3d8);
+  background: var(--lx-paper, #fbf8f4);
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bo-guide-search {
+  width: 100%;
+  height: 34px;
+  margin-bottom: 8px;
+  padding: 0 11px;
+  border: 1px solid var(--lx-line, #e6e0d8);
+  border-radius: 9px;
+  background: var(--lx-surface, #fff);
+  font-size: 13px;
+  color: var(--lx-ink, #23201d);
+}
+.bo-guide-toc a {
+  display: block;
+  padding: 9px 11px;
+  border-radius: 9px;
+  color: var(--lx-ink-2, #4a453f);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.bo-guide-toc a:hover { background: var(--lx-line, #f0e9e0); }
+.bo-guide-toc a.is-active {
+  background: color-mix(in srgb, var(--lx-brand, #ee4d2d) 12%, transparent);
+  color: var(--lx-brand, #ee4d2d);
+}
+.bo-guide-content {
+  overflow-y: auto;
+  padding: 8px 22px 28px;
+}
+.bo-guide-content section { padding-top: 18px; scroll-margin-top: 8px; }
+.bo-guide-content h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--lx-ink, #23201d);
+}
+.bo-guide-content p {
+  margin: 0;
+  color: var(--lx-ink-2, #4a453f);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.bo-guide-content code {
+  background: var(--lx-line, #f0e9e0);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 12.5px;
+}
+
+@media (max-width: 720px) {
+  .bo-guide { height: 88vh; max-width: none; }
+  .bo-guide-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .bo-guide-toc {
+    border-right: 0;
+    border-bottom: 1px solid var(--lx-line, #eee3d8);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 132px;
+  }
+  .bo-guide-search { flex: 1 1 100%; margin-bottom: 4px; }
+  .bo-guide-toc a { font-size: 12.5px; padding: 7px 10px; }
+}

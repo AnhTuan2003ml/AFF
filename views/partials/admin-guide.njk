@@ -1,0 +1,96 @@
+{#
+  Popup "Hướng dẫn chi tiết" DÙNG CHUNG cho mọi trang quản trị — dạng từ điển:
+  mục lục cột trái, nội dung cột phải. Mọi diễn giải nghiệp vụ gom về đây để các
+  trang giữ giao diện dashboard gọn, không chèn văn bản dài inline.
+  Mở bằng nút [data-guide-open] ở topbar; đóng bằng nút × / bấm nền / phím Esc.
+#}
+<div class="bo-guide-scrim" data-guide-scrim hidden>
+  <div class="bo-guide" role="dialog" aria-modal="true" aria-label="Hướng dẫn chi tiết" data-guide>
+    <header class="bo-guide-head">
+      <div>
+        <b>Hướng dẫn chi tiết</b>
+        <small>Tra cứu cách hệ thống vận hành</small>
+      </div>
+      <button class="bo-guide-close" type="button" data-guide-close aria-label="Đóng">×</button>
+    </header>
+
+    <div class="bo-guide-body">
+      <nav class="bo-guide-toc" aria-label="Mục lục">
+        <input class="bo-guide-search" type="search" placeholder="Tìm mục…" data-guide-search aria-label="Tìm mục hướng dẫn">
+        <a href="#g-subid" data-guide-link>Gán đơn về đúng người mua</a>
+        <a href="#g-cashback" data-guide-link>Cách tiền hoàn được cộng</a>
+        <a href="#g-split" data-guide-link>Tỷ lệ chia hoa hồng</a>
+        <a href="#g-status" data-guide-link>Trạng thái đơn khi đồng bộ</a>
+        <a href="#g-sync" data-guide-link>Đồng bộ đơn từ sàn</a>
+        <a href="#g-withdraw" data-guide-link>Duyệt rút tiền</a>
+        <a href="#g-config" data-guide-link>Cấu hình nghiệp vụ (1 nguồn)</a>
+        <a href="#g-deleted" data-guide-link>Người dùng đã xóa</a>
+      </nav>
+
+      <div class="bo-guide-content" data-guide-scroll tabindex="0">
+        <section id="g-subid" data-guide-section>
+          <h3>Gán đơn về đúng người mua</h3>
+          <p>Khi người dùng bấm <b>Mua ngay</b>, link Affiliate được gắn Sub ID dạng
+            <code>c&lt;mã lượt click&gt;-u&lt;mã người mua&gt;-p&lt;mã sản phẩm&gt;-&lt;nguồn&gt;-&lt;chiến dịch&gt;</code>.
+            Mỗi lượt đồng bộ đọc lại Sub ID trong báo cáo sàn: khớp <b>mã lượt click</b> trước;
+            nếu sàn cắt mất thì đối chiếu tiếp cặp <b>mã người mua + mã sản phẩm</b> (chọn lượt
+            bấm mua gần nhất trước giờ mua và chưa gắn đơn nào). <b>Không suy đoán từ email.</b></p>
+        </section>
+
+        <section id="g-cashback" data-guide-section>
+          <h3>Cách tiền hoàn được cộng</h3>
+          <p>Đơn <b>Hoàn thành</b> phải chờ thêm số ngày giữ (đặt ở <b>Cấu hình nghiệp vụ</b>)
+            mới chuyển từ ví chờ sang <b>số dư khả dụng</b> để rút. Đơn <b>Đã hủy</b> bị đảo khoản
+            và báo lý do cho người dùng. Đơn còn lại giữ trạng thái <b>Đang duyệt</b> và sẽ được
+            hỏi lại ở lượt đồng bộ sau.</p>
+        </section>
+
+        <section id="g-split" data-guide-section>
+          <h3>Tỷ lệ chia hoa hồng</h3>
+          <p>Nền tảng luôn giữ <b>(100 − tỷ lệ người mua)%</b> hoa hồng. Mặc định người mua nhận
+            <b>60%</b>, nền tảng <b>40%</b>. Nếu người mua có <b>người giới thiệu</b>, người giới thiệu
+            nhận <b>6%</b> <i>trích từ phần người mua</i> (không lấy thêm của nền tảng) → người mua còn
+            <b>54%</b>. Đơn giá trị nhỏ (≤ ngưỡng ở Cấu hình) người mua được tỷ lệ cao hơn. Tất cả các
+            con số này đọc từ <b>Cấu hình nghiệp vụ</b> — đổi 1 chỗ, mọi tính toán tự ăn theo.</p>
+        </section>
+
+        <section id="g-status" data-guide-section>
+          <h3>Trạng thái đơn khi đồng bộ</h3>
+          <p><b>COMPLETED</b> → Đã duyệt (APPROVED, cộng hoàn tiền). <b>CANCEL</b> → Đã hủy
+            (CANCELLED, đảo khoản + hiện lý do). Trạng thái khác → <b>Đang duyệt</b> (PENDING),
+            hỏi lại ở lượt đồng bộ sau.</p>
+        </section>
+
+        <section id="g-sync" data-guide-section>
+          <h3>Đồng bộ đơn từ sàn</h3>
+          <p>Hệ thống gọi báo cáo chuyển đổi của sàn theo <b>cookie + tần suất</b> admin đặt ở
+            <b>Đồng bộ sàn</b> (mặc định 60 phút/lượt, lấy đơn 30 ngày gần nhất). Sub ID nằm ở
+            <code>utm_content</code>, các mảnh nối bằng “-” và có thể bị sàn cắt bớt đuôi — vẫn khớp
+            được nhờ quy tắc ở mục <b>Gán đơn về đúng người mua</b>.</p>
+        </section>
+
+        <section id="g-withdraw" data-guide-section>
+          <h3>Duyệt rút tiền</h3>
+          <p>Người dùng chỉ rút được từ <b>số dư khả dụng</b> (đơn đã hết thời gian giữ). Số tiền
+            trong khoảng min–max ở <b>Cấu hình nghiệp vụ</b>. Mọi thay đổi số dư đi qua bút toán
+            ledger cân bằng — không sửa trực tiếp số dư.</p>
+        </section>
+
+        <section id="g-config" data-guide-section>
+          <h3>Cấu hình nghiệp vụ (một nguồn duy nhất)</h3>
+          <p>Tỷ lệ hoàn, tỷ lệ người giới thiệu, ngày giữ, ngưỡng đơn nhỏ, hạn mức rút… đều lưu ở
+            <b>một chỗ</b> (Cấu hình nghiệp vụ). Đổi ở đây là <b>toàn bộ logic tính tiền, preview,
+            chính sách hiển thị tự động ăn theo</b> — không cần sửa code, không thiết lập lặp ở
+            nhiều nơi.</p>
+        </section>
+
+        <section id="g-deleted" data-guide-section>
+          <h3>Người dùng đã xóa</h3>
+          <p>Tài khoản bị xóa được ẩn danh (email/tên/mật khẩu/ngân hàng gỡ bỏ) nhưng <b>giữ lại
+            tên hiển thị</b> để đối soát lịch sử. Danh sách người dùng đã xóa nằm ở <b>bảng/lọc riêng</b>,
+            tách khỏi người dùng đang hoạt động.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
