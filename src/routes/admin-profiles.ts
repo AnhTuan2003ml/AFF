@@ -21,6 +21,7 @@ import { query } from "../db.js";
 import {
   directFetchHotDeals,
   directFetchOfferRange,
+  generateLazadaAffiliateLink,
 } from "../services/browser-control.js";
 import { refreshShopeeVouchers } from "../services/shopee-voucher.js";
 import { refreshLazadaOffers } from "../services/lazada-offer-store.js";
@@ -273,6 +274,45 @@ export async function registerAdminProfileRoutes(
       return reply.redirect("/backoffice/profiles");
     },
   );
+
+  // Kiểm thử sinh link Affiliate Lazada bằng profile (adsense.lazada.vn):
+  // dán URL sản phẩm → trả về link rút gọn để admin kiểm chứng đối soát.
+  app.post("/profiles/test-lazada-link", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({
+          productUrl: z
+            .string()
+            .trim()
+            .url("URL sản phẩm Lazada không hợp lệ."),
+        }),
+        request.body,
+      );
+      const profile = (await listHarvestProfiles(deps.db))[0];
+      if (!profile) {
+        throw new AppError(
+          "NO_PROFILE",
+          "Chưa có Profile ID. Điền Profile ID của Browser Control ở trên.",
+        );
+      }
+      const { link } = await generateLazadaAffiliateLink(deps.config, {
+        profileId: profile.id,
+        productUrl: input.productUrl,
+        subAffId: "shoptik",
+        subIds: ["ctest", "utest", "ptest", "web", "manual"],
+      });
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã tạo link Lazada qua profile: ${link}`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/profiles");
+  });
 
   app.post("/profiles/settings", async (request, reply) => {
     requireManage(request.currentUser!.role);

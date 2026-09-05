@@ -11,6 +11,8 @@ import {
   isTikTokOpenApiConfigured,
   parseTikTokProductId,
 } from "./tiktok-open-api.js";
+import { generateLazadaAffiliateLink } from "./browser-control.js";
+import { listHarvestProfiles } from "./discover-harvest.js";
 
 type Fetcher = typeof fetch;
 type JsonObject = Record<string, unknown>;
@@ -494,6 +496,55 @@ export function buildLazadaAffiliateUrl(
   return { affiliateUrl: affiliateUrl.toString(), subId };
 }
 
+/** Profile Browser Control (nếu có) — dùng để sinh link Lazada đúng tài khoản. */
+async function lazadaConvertProfileId(db: Database): Promise<string | null> {
+  const profiles = await listHarvestProfiles(db);
+  return profiles[0]?.id ?? null;
+}
+
+/**
+ * Link mua Lazada, ưu tiên theo thứ tự:
+ *  1. Profile Browser Control (adsense.lazada.vn) — TÁI TẠO link cho đúng tài
+ *     khoản, mang exlaz=e_… nên hoa hồng về đúng chủ. Đây là đường chính.
+ *  2. Master Link c.lazada.vn (cấu hình cũ) — chỉ dùng khi chưa có profile.
+ *  3. Partner API tự cấu hình.
+ * Khi có profile mà sinh link thất bại thì NÉM lỗi, không im lặng rơi về
+ * Master Link (vì Master Link cho ra mã đối soát chung, sai người nhận).
+ */
+async function buildLazadaBuyUrl(
+  config: AppConfig,
+  params: BuildLinkParams,
+  fetcher: Fetcher,
+  profileId: string | null,
+): Promise<{ affiliateUrl: string; subId: string }> {
+  const subId = buildSubId(params);
+  if (profileId) {
+    const normalized = resolveProductUrl(params.productUrl, "LAZADA").normalizedUrl;
+    const destination = new URL(normalized);
+    if (/^\/products\/.+\.html\/?$/i.test(destination.pathname)) {
+      destination.search = "";
+    }
+    const { link } = await generateLazadaAffiliateLink(config, {
+      profileId,
+      productUrl: destination.toString(),
+      subAffId: cleanSubIdPart(params.source ?? "shoptik", "shoptik"),
+      subIds: buildSubIdParts(params).slice(0, 6),
+    });
+    if (!isSafeAffiliateRedirect(link, "LAZADA", config)) {
+      throw new AppError(
+        "LAZADA_LINK_UNSAFE",
+        "Link Affiliate Lazada trả về không nằm trong allowlist host — kiểm tra lại công cụ chuyển đổi.",
+        502,
+      );
+    }
+    return { affiliateUrl: link, subId };
+  }
+  if (configuredLazadaMasterLink(config)) {
+    return buildLazadaAffiliateUrl(config, params);
+  }
+  return buildPartnerAffiliateUrl(config, "LAZADA", params, fetcher);
+}
+
 async function buildTikTokBuyUrl(
   config: AppConfig,
   params: BuildLinkParams,
@@ -687,12 +738,17 @@ export async function createPurchaseIntent(
 }> {
   const resolved = resolveProductUrl(params.productUrl, params.product.platform);
   const integration = integrationConfig(config, resolved.platform);
+  // Lazada: nếu có profile Browser Control thì sinh link đúng tài khoản qua
+  // profile (không phụ thuộc Master Link nữa).
+  const lazadaProfileId =
+    resolved.platform === "LAZADA" ? await lazadaConvertProfileId(db) : null;
   const programAffiliateId =
     integration.affiliateId ||
     (resolved.platform === "TIKTOK"
       ? config.TIKTOK_OPEN_API_APP_KEY
       : resolved.platform === "LAZADA"
-        ? lazadaProgramAffiliateId(config)
+        ? lazadaProgramAffiliateId(config) ||
+          (lazadaProfileId ? "lazada-profile" : "")
         : "");
   if (
     !isPlatformPurchaseEnabled(config, resolved.platform) ||
@@ -736,14 +792,12 @@ export async function createPurchaseIntent(
         )
       : resolved.platform === "TIKTOK"
         ? await buildTikTokBuyUrl(config, buildParams, fetcher)
-        : configuredLazadaMasterLink(config)
-          ? buildLazadaAffiliateUrl(config, buildParams)
-          : await buildPartnerAffiliateUrl(
-              config,
-              "LAZADA",
-              buildParams,
-              fetcher,
-            );
+        : await buildLazadaBuyUrl(
+            config,
+            buildParams,
+            fetcher,
+            lazadaProfileId,
+          );
 
   const program = await query<{ id: string }>(
     db,

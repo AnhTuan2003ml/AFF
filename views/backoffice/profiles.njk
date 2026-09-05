@@ -113,6 +113,16 @@
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
       <button class="button button-primary" type="submit">🛒 Làm mới sản phẩm Lazada ngay</button>
     </form>
+
+    <form method="post" action="/backoffice/profiles/test-lazada-link" class="bp-lazada-test" data-validate-form novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <label for="lazTestUrl">Kiểm thử tạo link Affiliate (qua profile)</label>
+      <div class="bp-lazada-test-row">
+        <input type="url" id="lazTestUrl" name="productUrl" placeholder="Dán URL sản phẩm Lazada…" required data-required-message="Nhập URL sản phẩm Lazada.">
+        <button class="button" type="submit">Tạo link thử</button>
+      </div>
+      <p class="bp-hint">Mở profile adsense.lazada.vn, chuyển đổi link cho đúng tài khoản rồi trả link rút gọn để bạn kiểm chứng đối soát.</p>
+    </form>
   </section>
 
   {# ── Lấy dữ liệu theo dải trang ────────────────────────────────────── #}
