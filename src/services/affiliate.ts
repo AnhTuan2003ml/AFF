@@ -21,6 +21,7 @@ import {
   getPlatformSyncSettings,
   setPlatformCookie,
 } from "./platform-sync-settings.js";
+import { getLazadaSubIdKey } from "./lazada-subid.js";
 
 type Fetcher = typeof fetch;
 type JsonObject = Record<string, unknown>;
@@ -505,26 +506,16 @@ export function buildLazadaAffiliateUrl(
 }
 
 /**
- * URL đích gửi cho API chuyển đổi Lazada: URL sản phẩm sạch + sub_aff_id và
- * sub_id1..6 để đối soát người mua (giống bộ tham số Master Link cũ dùng).
+ * URL đích gửi cho API chuyển đổi Lazada: URL sản phẩm sạch. KHÔNG gắn
+ * sub_aff_id/sub_id vào đây vì Lazada bỏ hết query của jumpUrl — subid đối soát
+ * đi qua `subIdTemplateKey` (xem getLazadaSubIdKey) chứ không qua URL.
  */
 function buildLazadaJumpUrl(params: BuildLinkParams): string {
   const normalized = resolveProductUrl(params.productUrl, "LAZADA").normalizedUrl;
   const destination = new URL(normalized);
-  // URL sản phẩm Lazada tới `.html`; bỏ query của link người dùng dán để không
-  // kế thừa tracking lạ, rồi tự gắn sub_aff_id/sub_id của mình.
   if (/^\/products\/.+\.html\/?$/i.test(destination.pathname)) {
     destination.search = "";
   }
-  destination.searchParams.set(
-    "sub_aff_id",
-    cleanSubIdPart(params.source ?? "shoptik", "shoptik"),
-  );
-  buildSubIdParts(params)
-    .slice(0, 6)
-    .forEach((part, index) => {
-      destination.searchParams.set(`sub_id${index + 1}`, part);
-    });
   return destination.toString();
 }
 
@@ -549,6 +540,7 @@ async function convertLazadaLinkWithCookie(
   cookie: string,
   jumpUrl: string,
   fetcher: Fetcher,
+  subIdTemplateKey = "",
 ): Promise<string> {
   const res = await fetcher(LAZADA_CONVERT_API, {
     method: "POST",
@@ -560,7 +552,7 @@ async function convertLazadaLinkWithCookie(
       "user-agent": LAZADA_CONVERT_UA,
       cookie,
     },
-    body: JSON.stringify({ jumpUrl, subIdTemplateKey: "" }),
+    body: JSON.stringify({ jumpUrl, subIdTemplateKey }),
   });
   const text = await res.text();
   let json: JsonObject | null = null;
@@ -625,11 +617,24 @@ async function buildLazadaBuyUrl(
     return { affiliateUrl: link, subId };
   };
 
-  // 1) Cookie đã lưu → gọi thẳng server.
   const storedCookie = await getLazadaCookie(db, config).catch(() => null);
+
+  // Subid đối soát người mua: dùng subIdTemplateKey của Lazada mang
+  // subId1 = u<tracking_code>. Cache theo user; nếu chưa có key và không có
+  // cookie thì bỏ qua (link vẫn đúng tài khoản, chỉ thiếu subid).
+  const subId1 = params.userCode
+    ? cleanSubIdPart(`u${params.userCode}`, "user")
+    : null;
+  const subIdTemplateKey = subId1
+    ? (await getLazadaSubIdKey(db, config, subId1, storedCookie, fetcher)) ?? ""
+    : "";
+
+  // 1) Cookie đã lưu → gọi thẳng server.
   if (storedCookie) {
     try {
-      return ensureSafe(await convertLazadaLinkWithCookie(storedCookie, jumpUrl, fetcher));
+      return ensureSafe(
+        await convertLazadaLinkWithCookie(storedCookie, jumpUrl, fetcher, subIdTemplateKey),
+      );
     } catch (error) {
       // Cookie hỏng: chỉ rơi xuống profile nếu có, không thì ném lỗi rõ.
       if (!profileId) throw error;
@@ -641,6 +646,7 @@ async function buildLazadaBuyUrl(
     const { link } = await generateLazadaAffiliateLink(config, {
       profileId,
       jumpUrl,
+      ...(subIdTemplateKey ? { subIdTemplateKey } : {}),
     });
     const result = ensureSafe(link);
     try {

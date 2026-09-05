@@ -705,11 +705,10 @@ const LAZADA_CONVERT_API =
 
 export interface LazadaConvertInput {
   profileId: string;
-  /**
-   * URL đích đã dựng sẵn (kèm sub_aff_id/sub_id để đối soát) — chính là
-   * `jumpUrl` gửi cho API chuyển đổi.
-   */
+  /** URL đích (URL sản phẩm sạch) — chính là `jumpUrl` gửi cho API chuyển đổi. */
   jumpUrl: string;
+  /** Key template subid (mang subId1 = u<tracking_code>) để đối soát người mua. */
+  subIdTemplateKey?: string;
 }
 
 /**
@@ -742,7 +741,7 @@ export async function generateLazadaAffiliateLink(
   try {
     const body = JSON.stringify({
       jumpUrl: input.jumpUrl,
-      subIdTemplateKey: "",
+      subIdTemplateKey: input.subIdTemplateKey ?? "",
     });
     const expr =
       `fetch(${JSON.stringify(LAZADA_CONVERT_API)},{` +
