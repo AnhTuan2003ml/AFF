@@ -5,6 +5,8 @@ import { setFlash } from "../lib/flash.js";
 import { parseInput } from "../lib/validation.js";
 import { writeAuditLog } from "../services/audit.js";
 import { getBusinessConfig } from "../services/business-config.js";
+import { readProfileCookieHeader } from "../services/browser-control.js";
+import { listHarvestProfiles } from "../services/discover-harvest.js";
 import {
   buildLazadaAuthorizationUrl,
   createLazadaOAuthState,
@@ -12,8 +14,11 @@ import {
   isLazadaOAuthConfigured,
 } from "../services/lazada-oauth.js";
 import {
+  clearPlatformCookie,
   getPlatformSyncSettings,
-  updatePlatformSyncSettings,
+  setPlatformCookie,
+  updateShopeeSyncSchedule,
+  type SyncPlatform,
 } from "../services/platform-sync-settings.js";
 import { runShopeeOrderSync } from "../services/shopee-order-sync.js";
 import {
@@ -23,35 +28,56 @@ import {
 
 const MANAGE_ROLES = ["SUPER_ADMIN", "ADMIN", "FINANCE"];
 
+const platformField = z.enum(["SHOPEE", "LAZADA"]);
+const platformLabel: Record<SyncPlatform, string> = {
+  SHOPEE: "Shopee",
+  LAZADA: "Lazada",
+};
+
 export async function registerAdminSyncRoutes(
   app: FastifyInstance,
   deps: AdminConsoleDeps,
 ): Promise<void> {
+  const requireManage = (role: string): void => {
+    if (!MANAGE_ROLES.includes(role)) {
+      throw new AppError("FORBIDDEN", "Bạn không có quyền đổi cấu hình đồng bộ.", 403);
+    }
+  };
+
+  const firstProfileId = async (): Promise<string> => {
+    const profiles = await listHarvestProfiles(deps.db);
+    const id = profiles[0]?.id;
+    if (!id) {
+      throw new AppError(
+        "NO_PROFILE",
+        "Chưa có Profile trong mục 'Trình duyệt lấy dữ liệu'. Thêm Profile ID trước khi lấy cookie tự động.",
+      );
+    }
+    return id;
+  };
+
   app.get("/sync", async (_request, reply) => {
-    const [syncSettings, businessConfig, lazadaOauth] = await Promise.all([
-      getPlatformSyncSettings(deps.db),
-      getBusinessConfig(deps.db, deps.config),
-      getLazadaTokenStatus(deps.db, deps.config),
-    ]);
+    const [syncSettings, businessConfig, lazadaOauth, profiles] =
+      await Promise.all([
+        getPlatformSyncSettings(deps.db),
+        getBusinessConfig(deps.db, deps.config),
+        getLazadaTokenStatus(deps.db, deps.config),
+        listHarvestProfiles(deps.db),
+      ]);
     return reply.view("backoffice/sync.njk", {
-      pageTitle: "Đồng bộ sàn",
+      pageTitle: "Kết nối & đồng bộ sàn",
       backofficeSection: "sync",
       syncSettings,
       lazadaOauth,
+      hasProfile: profiles.length > 0,
       cashbackHoldDays: businessConfig.cashbackHoldDays,
     });
   });
 
-  // Bắt đầu OAuth Lazada: chỉ admin (hook backoffice đã chặn), tạo state ký
-  // HMAC hạn 15 phút rồi đưa trình duyệt sang trang authorize của Lazada.
+  // Bắt đầu OAuth Lazada Open API (dùng cho báo cáo đơn) — riêng với cookie
+  // adsense dùng để sinh link.
   app.get("/lazada/start", async (request, reply) => {
-    if (!MANAGE_ROLES.includes(request.currentUser!.role)) {
-      throw new AppError(
-        "FORBIDDEN",
-        "Bạn không có quyền kết nối Lazada.",
-        403,
-      );
-    }
+    requireManage(request.currentUser!.role);
     if (!isLazadaOAuthConfigured(deps.config)) {
       setFlash(
         reply,
@@ -65,20 +91,14 @@ export async function registerAdminSyncRoutes(
     return reply.redirect(buildLazadaAuthorizationUrl(deps.config, state));
   });
 
-  // Trạng thái OAuth Lazada cho admin — KHÔNG bao giờ trả token.
   app.get("/lazada/status", async (_request, reply) => {
     reply.header("cache-control", "private, no-store");
     return getLazadaTokenStatus(deps.db, deps.config);
   });
 
+  // Lưu lịch đồng bộ Shopee (bật/tắt + tần suất + phạm vi truy hồi).
   app.post("/sync", async (request, reply) => {
-    if (!MANAGE_ROLES.includes(request.currentUser!.role)) {
-      throw new AppError(
-        "FORBIDDEN",
-        "Bạn không có quyền đổi cấu hình đồng bộ.",
-        403,
-      );
-    }
+    requireManage(request.currentUser!.role);
     try {
       const body = request.body as Record<string, unknown>;
       const input = parseInput(
@@ -93,52 +113,132 @@ export async function registerAdminSyncRoutes(
             .int()
             .min(1, "Số ngày truy hồi phải từ 1 đến 180.")
             .max(180, "Số ngày truy hồi phải từ 1 đến 180."),
-          shopeeCookie: z.string().max(16_384, "Cookie quá dài.").optional(),
           shopeeEnabled: z.coerce.boolean(),
-          clearShopeeCookie: z.coerce.boolean(),
         }),
-        {
-          ...body,
-          shopeeEnabled: body.shopeeEnabled === "on",
-          clearShopeeCookie: body.clearShopeeCookie === "on",
-        },
+        { ...body, shopeeEnabled: body.shopeeEnabled === "on" },
       );
 
       const before = await getPlatformSyncSettings(deps.db);
-      const after = await updatePlatformSyncSettings(
+      const after = await updateShopeeSyncSchedule(
         deps.db,
-        deps.config,
         {
           shopeeEnabled: input.shopeeEnabled,
           shopeeIntervalMinutes: input.shopeeIntervalMinutes,
           shopeeLookbackDays: input.shopeeLookbackDays,
-          ...(input.shopeeCookie ? { shopeeCookie: input.shopeeCookie } : {}),
-          clearShopeeCookie: input.clearShopeeCookie,
         },
         request.currentUser!.id,
       );
       await writeAuditLog(deps.db, deps.config, request, {
         action: "PLATFORM_SYNC_CONFIG_UPDATED",
         targetType: "BUSINESS_CONFIG",
-        // Không ghi cookie vào nhật ký — chỉ ghi các tham số vận hành.
         before: {
           shopeeEnabled: before.shopeeEnabled,
           shopeeIntervalMinutes: before.shopeeIntervalMinutes,
           shopeeLookbackDays: before.shopeeLookbackDays,
-          shopeeHasCookie: before.shopeeHasCookie,
         },
         after: {
           shopeeEnabled: after.shopeeEnabled,
           shopeeIntervalMinutes: after.shopeeIntervalMinutes,
           shopeeLookbackDays: after.shopeeLookbackDays,
-          shopeeHasCookie: after.shopeeHasCookie,
         },
+      });
+      setFlash(reply, deps.config, "success", "Đã lưu lịch đồng bộ Shopee.");
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/sync");
+  });
+
+  // Dán cookie tay cho một sàn.
+  app.post("/sync/cookie/manual", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({
+          platform: platformField,
+          cookie: z.string().trim().min(1, "Hãy dán cookie.").max(16_384, "Cookie quá dài."),
+        }),
+        request.body,
+      );
+      await setPlatformCookie(
+        deps.db,
+        deps.config,
+        { platform: input.platform, cookie: input.cookie, source: "MANUAL" },
+        request.currentUser!.id,
+      );
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "PLATFORM_COOKIE_SET",
+        targetType: "BUSINESS_CONFIG",
+        after: { platform: input.platform, source: "MANUAL" },
       });
       setFlash(
         reply,
         deps.config,
         "success",
-        "Đã lưu cấu hình đồng bộ Shopee.",
+        `Đã lưu cookie ${platformLabel[input.platform]} (dán tay).`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/sync");
+  });
+
+  // Tự động lấy cookie một sàn từ profile Browser Control (phiên đăng nhập sẵn).
+  app.post("/sync/cookie/profile", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({ platform: platformField }),
+        request.body,
+      );
+      const profileId = await firstProfileId();
+      const cookie = await readProfileCookieHeader(
+        deps.config,
+        profileId,
+        input.platform,
+      );
+      await setPlatformCookie(
+        deps.db,
+        deps.config,
+        { platform: input.platform, cookie, source: "PROFILE" },
+        request.currentUser!.id,
+      );
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "PLATFORM_COOKIE_SET",
+        targetType: "BUSINESS_CONFIG",
+        after: { platform: input.platform, source: "PROFILE" },
+      });
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã lấy cookie ${platformLabel[input.platform]} từ profile.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/sync");
+  });
+
+  // Xóa cookie đang lưu của một sàn.
+  app.post("/sync/cookie/clear", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const input = parseInput(
+        z.object({ platform: platformField }),
+        request.body,
+      );
+      await clearPlatformCookie(deps.db, input.platform, request.currentUser!.id);
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "PLATFORM_COOKIE_CLEARED",
+        targetType: "BUSINESS_CONFIG",
+        after: { platform: input.platform },
+      });
+      setFlash(
+        reply,
+        deps.config,
+        "success",
+        `Đã xóa cookie ${platformLabel[input.platform]}.`,
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);
@@ -147,9 +247,7 @@ export async function registerAdminSyncRoutes(
   });
 
   app.post("/sync/run", async (request, reply) => {
-    if (!MANAGE_ROLES.includes(request.currentUser!.role)) {
-      throw new AppError("FORBIDDEN", "Bạn không có quyền chạy đồng bộ.", 403);
-    }
+    requireManage(request.currentUser!.role);
     try {
       const summary = await runShopeeOrderSync(deps.db, deps.config, {
         actorId: request.currentUser!.id,

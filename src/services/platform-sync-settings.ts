@@ -4,11 +4,15 @@ import { decryptField, encryptField } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
 import { extractShopeeCookie } from "./shopee-report.js";
 
+export type CookieSource = "MANUAL" | "PROFILE";
+export type SyncPlatform = "SHOPEE" | "LAZADA";
+
 export interface PlatformSyncSettings {
   shopeeEnabled: boolean;
   shopeeCookieHint: string | null;
   shopeeCookieUpdatedAt: Date | null;
   shopeeHasCookie: boolean;
+  shopeeCookieSource: CookieSource;
   shopeeIntervalMinutes: number;
   shopeeLookbackDays: number;
   shopeeLastRunAt: Date | null;
@@ -18,6 +22,10 @@ export interface PlatformSyncSettings {
   shopeeLastFetchedCount: number;
   shopeeLastImportedCount: number;
   shopeeLastFailedCount: number;
+  lazadaCookieHint: string | null;
+  lazadaCookieUpdatedAt: Date | null;
+  lazadaHasCookie: boolean;
+  lazadaCookieSource: CookieSource;
   updatedAt: Date;
 }
 
@@ -26,6 +34,7 @@ interface SettingsRow {
   shopee_cookie_ciphertext: string | null;
   shopee_cookie_hint: string | null;
   shopee_cookie_updated_at: Date | null;
+  shopee_cookie_source: CookieSource;
   shopee_interval_minutes: number;
   shopee_lookback_days: number;
   shopee_last_run_at: Date | null;
@@ -35,15 +44,21 @@ interface SettingsRow {
   shopee_last_fetched_count: number;
   shopee_last_imported_count: number;
   shopee_last_failed_count: number;
+  lazada_cookie_ciphertext: string | null;
+  lazada_cookie_hint: string | null;
+  lazada_cookie_updated_at: Date | null;
+  lazada_cookie_source: CookieSource;
   updated_at: Date;
 }
 
 const SELECT_SQL = `
   SELECT shopee_enabled, shopee_cookie_ciphertext, shopee_cookie_hint,
-    shopee_cookie_updated_at, shopee_interval_minutes, shopee_lookback_days,
-    shopee_last_run_at, shopee_last_success_at, shopee_last_status,
-    shopee_last_error, shopee_last_fetched_count, shopee_last_imported_count,
-    shopee_last_failed_count, updated_at
+    shopee_cookie_updated_at, shopee_cookie_source, shopee_interval_minutes,
+    shopee_lookback_days, shopee_last_run_at, shopee_last_success_at,
+    shopee_last_status, shopee_last_error, shopee_last_fetched_count,
+    shopee_last_imported_count, shopee_last_failed_count,
+    lazada_cookie_ciphertext, lazada_cookie_hint, lazada_cookie_updated_at,
+    lazada_cookie_source, updated_at
   FROM platform_sync_settings
   WHERE id = true
 `;
@@ -54,6 +69,7 @@ function mapRow(row: SettingsRow): PlatformSyncSettings {
     shopeeCookieHint: row.shopee_cookie_hint,
     shopeeCookieUpdatedAt: row.shopee_cookie_updated_at,
     shopeeHasCookie: Boolean(row.shopee_cookie_ciphertext),
+    shopeeCookieSource: row.shopee_cookie_source,
     shopeeIntervalMinutes: row.shopee_interval_minutes,
     shopeeLookbackDays: row.shopee_lookback_days,
     shopeeLastRunAt: row.shopee_last_run_at,
@@ -63,6 +79,10 @@ function mapRow(row: SettingsRow): PlatformSyncSettings {
     shopeeLastFetchedCount: row.shopee_last_fetched_count,
     shopeeLastImportedCount: row.shopee_last_imported_count,
     shopeeLastFailedCount: row.shopee_last_failed_count,
+    lazadaCookieHint: row.lazada_cookie_hint,
+    lazadaCookieUpdatedAt: row.lazada_cookie_updated_at,
+    lazadaHasCookie: Boolean(row.lazada_cookie_ciphertext),
+    lazadaCookieSource: row.lazada_cookie_source,
     updatedAt: row.updated_at,
   };
 }
@@ -92,42 +112,53 @@ export async function getShopeeCookie(
   db: Database,
   config: AppConfig,
 ): Promise<string | null> {
-  const result = await query<{ shopee_cookie_ciphertext: string | null }>(
+  return getPlatformCookie(db, config, "SHOPEE");
+}
+
+/** Cookie Lazada (adsense.lazada.vn) đã giải mã — cho luồng sinh link server-side. */
+export async function getLazadaCookie(
+  db: Database,
+  config: AppConfig,
+): Promise<string | null> {
+  return getPlatformCookie(db, config, "LAZADA");
+}
+
+async function getPlatformCookie(
+  db: Database,
+  config: AppConfig,
+  platform: SyncPlatform,
+): Promise<string | null> {
+  const column =
+    platform === "SHOPEE"
+      ? "shopee_cookie_ciphertext"
+      : "lazada_cookie_ciphertext";
+  const result = await query<Record<string, string | null>>(
     db,
-    "SELECT shopee_cookie_ciphertext FROM platform_sync_settings WHERE id = true",
+    `SELECT ${column} FROM platform_sync_settings WHERE id = true`,
   );
-  const ciphertext = result.rows[0]?.shopee_cookie_ciphertext;
+  const ciphertext = result.rows[0]?.[column];
   if (!ciphertext) return null;
   try {
     return decryptField(ciphertext, config);
   } catch {
     throw new AppError(
-      "SHOPEE_COOKIE_UNREADABLE",
-      "Không giải mã được cookie Shopee đã lưu. Hãy nhập lại cookie trong trang đồng bộ.",
+      "COOKIE_UNREADABLE",
+      `Không giải mã được cookie ${platform === "SHOPEE" ? "Shopee" : "Lazada"} đã lưu. Hãy lấy lại từ profile hoặc dán lại.`,
       500,
     );
   }
 }
 
-export interface PlatformSyncSettingsPatch {
+export interface ShopeeSchedulePatch {
   shopeeEnabled: boolean;
   shopeeIntervalMinutes: number;
   shopeeLookbackDays: number;
-  /** Bỏ trống nghĩa là giữ nguyên cookie cũ. */
-  shopeeCookie?: string;
-  clearShopeeCookie?: boolean;
 }
 
-function cookieHint(cookie: string): string {
-  const sessionId = cookie.match(/SPC_(?:EC|ST|F)=([^;]+)/)?.[1] ?? cookie;
-  const tail = sessionId.replace(/\s/g, "").slice(-6);
-  return `•••${tail}`;
-}
-
-export async function updatePlatformSyncSettings(
+/** Lưu lịch đồng bộ Shopee (bật/tắt, tần suất, phạm vi truy hồi) — không đụng cookie. */
+export async function updateShopeeSyncSchedule(
   db: Database,
-  config: AppConfig,
-  patch: PlatformSyncSettingsPatch,
+  patch: ShopeeSchedulePatch,
   actorId: string,
 ): Promise<PlatformSyncSettings> {
   if (
@@ -150,19 +181,12 @@ export async function updatePlatformSyncSettings(
       "Khoảng thời gian truy hồi phải từ 1 đến 180 ngày.",
     );
   }
-
-  await getPlatformSyncSettings(db);
-  const cookie = patch.shopeeCookie?.trim()
-    ? extractShopeeCookie(patch.shopeeCookie)
-    : null;
-  if (patch.shopeeEnabled && !cookie) {
-    const current = await getPlatformSyncSettings(db);
-    if (!current.shopeeHasCookie || patch.clearShopeeCookie) {
-      throw new AppError(
-        "SHOPEE_COOKIE_REQUIRED",
-        "Hãy nhập cookie Shopee trước khi bật đồng bộ tự động.",
-      );
-    }
+  const current = await getPlatformSyncSettings(db);
+  if (patch.shopeeEnabled && !current.shopeeHasCookie) {
+    throw new AppError(
+      "SHOPEE_COOKIE_REQUIRED",
+      "Hãy nạp cookie Shopee (dán tay hoặc lấy từ profile) trước khi bật đồng bộ tự động.",
+    );
   }
 
   const updated = await query<SettingsRow>(
@@ -172,42 +196,108 @@ export async function updatePlatformSyncSettings(
         shopee_enabled = $1,
         shopee_interval_minutes = $2,
         shopee_lookback_days = $3,
-        shopee_cookie_ciphertext = CASE
-          WHEN $5 THEN NULL
-          WHEN $4::text IS NOT NULL THEN $4
-          ELSE shopee_cookie_ciphertext
-        END,
-        shopee_cookie_hint = CASE
-          WHEN $5 THEN NULL
-          WHEN $4::text IS NOT NULL THEN $6
-          ELSE shopee_cookie_hint
-        END,
-        shopee_cookie_updated_at = CASE
-          WHEN $5 THEN NULL
-          WHEN $4::text IS NOT NULL THEN now()
-          ELSE shopee_cookie_updated_at
-        END,
-        updated_by = $7,
+        updated_by = $4,
         updated_at = now()
       WHERE id = true
-      RETURNING shopee_enabled, shopee_cookie_ciphertext, shopee_cookie_hint,
-        shopee_cookie_updated_at, shopee_interval_minutes, shopee_lookback_days,
-        shopee_last_run_at, shopee_last_success_at, shopee_last_status,
-        shopee_last_error, shopee_last_fetched_count,
-        shopee_last_imported_count, shopee_last_failed_count, updated_at
+      RETURNING ${RETURNING_COLUMNS}
     `,
     [
       patch.shopeeEnabled,
       patch.shopeeIntervalMinutes,
       patch.shopeeLookbackDays,
-      cookie ? encryptField(cookie, config) : null,
-      Boolean(patch.clearShopeeCookie),
-      cookie ? cookieHint(cookie) : null,
       actorId,
     ],
   );
   return mapRow(updated.rows[0]!);
 }
+
+function cookieHint(cookie: string, platform: SyncPlatform): string {
+  const pattern =
+    platform === "SHOPEE"
+      ? /SPC_(?:EC|ST|F)=([^;]+)/
+      : /(?:lzd_sid|_m_h5_tk|lwrid)=([^;]+)/;
+  const token = cookie.match(pattern)?.[1] ?? cookie;
+  const tail = token.replace(/\s/g, "").slice(-6);
+  return `•••${tail}`;
+}
+
+/**
+ * Nạp cookie cho một sàn từ chuỗi thô (dán tay hoặc lấy từ profile) và ghi lại
+ * nguồn (`source`). Cookie mã hóa AES-256-GCM trước khi lưu.
+ */
+export async function setPlatformCookie(
+  db: Database,
+  config: AppConfig,
+  input: { platform: SyncPlatform; cookie: string; source: CookieSource },
+  actorId: string,
+): Promise<PlatformSyncSettings> {
+  await getPlatformSyncSettings(db);
+  const normalized =
+    input.platform === "SHOPEE"
+      ? extractShopeeCookie(input.cookie)
+      : input.cookie.trim();
+  if (!normalized) {
+    throw new AppError(
+      "COOKIE_EMPTY",
+      `Không đọc được cookie ${input.platform === "SHOPEE" ? "Shopee" : "Lazada"} hợp lệ từ nội dung đã nhập.`,
+    );
+  }
+  const prefix = input.platform === "SHOPEE" ? "shopee" : "lazada";
+  const updated = await query<SettingsRow>(
+    db,
+    `
+      UPDATE platform_sync_settings SET
+        ${prefix}_cookie_ciphertext = $1,
+        ${prefix}_cookie_hint = $2,
+        ${prefix}_cookie_updated_at = now(),
+        ${prefix}_cookie_source = $3,
+        updated_by = $4,
+        updated_at = now()
+      WHERE id = true
+      RETURNING ${RETURNING_COLUMNS}
+    `,
+    [
+      encryptField(normalized, config),
+      cookieHint(normalized, input.platform),
+      input.source,
+      actorId,
+    ],
+  );
+  return mapRow(updated.rows[0]!);
+}
+
+/** Xóa cookie đang lưu của một sàn. */
+export async function clearPlatformCookie(
+  db: Database,
+  platform: SyncPlatform,
+  actorId: string,
+): Promise<PlatformSyncSettings> {
+  const prefix = platform === "SHOPEE" ? "shopee" : "lazada";
+  const updated = await query<SettingsRow>(
+    db,
+    `
+      UPDATE platform_sync_settings SET
+        ${prefix}_cookie_ciphertext = NULL,
+        ${prefix}_cookie_hint = NULL,
+        ${prefix}_cookie_updated_at = NULL,
+        ${prefix === "shopee" ? "shopee_enabled = false," : ""}
+        updated_by = $1,
+        updated_at = now()
+      WHERE id = true
+      RETURNING ${RETURNING_COLUMNS}
+    `,
+    [actorId],
+  );
+  return mapRow(updated.rows[0]!);
+}
+
+const RETURNING_COLUMNS = `shopee_enabled, shopee_cookie_ciphertext,
+  shopee_cookie_hint, shopee_cookie_updated_at, shopee_cookie_source,
+  shopee_interval_minutes, shopee_lookback_days, shopee_last_run_at,
+  shopee_last_success_at, shopee_last_status, shopee_last_error,
+  shopee_last_fetched_count, shopee_last_imported_count,
+  shopee_last_failed_count, lazada_cookie_ciphertext, lazada_cookie_hint,
+  lazada_cookie_updated_at, lazada_cookie_source, updated_at`;
 
 export interface SyncRunOutcome {
   status: "SUCCESS" | "PARTIAL" | "ERROR";

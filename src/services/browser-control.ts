@@ -111,6 +111,10 @@ interface CdpSession {
   getBody(requestId: string): Promise<any>;
   /** Body thô (text) của một response — để tự parse/regex khi JSON lồng sâu. */
   getBodyRaw(requestId: string): Promise<string | null>;
+  /** Toàn bộ cookie của trình duyệt profile (Network.getAllCookies). */
+  getAllCookies(): Promise<
+    Array<{ name: string; value: string; domain: string }>
+  >;
   /** Đưa tab ra trước để trang render + lazy-load khi cuộn (tab nền bị throttle). */
   bringToFront(): Promise<void>;
   close(): void;
@@ -259,6 +263,15 @@ function openCdpSession(wsUrl: string): Promise<CdpSession> {
         return body.base64Encoded
           ? Buffer.from(body.body, "base64").toString("utf8")
           : String(body.body);
+      },
+      async getAllCookies() {
+        const res = await command("Network.getAllCookies").catch(() => null);
+        const cookies = Array.isArray(res?.cookies) ? res.cookies : [];
+        return cookies.map((c: any) => ({
+          name: String(c.name ?? ""),
+          value: String(c.value ?? ""),
+          domain: String(c.domain ?? ""),
+        }));
       },
       close() {
         try {
@@ -766,6 +779,62 @@ export async function generateLazadaAffiliateLink(
       );
     }
     return { link };
+  } finally {
+    session.close();
+  }
+}
+
+const PLATFORM_COOKIE_TARGET: Record<
+  string,
+  { origin: string; domain: string }
+> = {
+  SHOPEE: { origin: AFFILIATE_ORIGIN, domain: "shopee.vn" },
+  LAZADA: { origin: ADSENSE_ORIGIN, domain: "lazada.vn" },
+};
+
+/**
+ * Lấy chuỗi cookie (header `Cookie`) của một sàn TỪ profile Browser Control:
+ * mở tab đúng origin (để phiên đăng nhập nạp cookie), đọc Network.getAllCookies
+ * rồi ghép các cookie thuộc domain sàn. Nhờ đó admin không phải dán tay — chỉ
+ * cần profile đang đăng nhập sàn đó.
+ */
+export async function readProfileCookieHeader(
+  config: AppConfig,
+  profileId: string,
+  platform: "SHOPEE" | "LAZADA",
+): Promise<string> {
+  const target = PLATFORM_COOKIE_TARGET[platform]!;
+  const { cdpHost, cdpPort } = await ensureProfileRunning(config, profileId);
+  const wsUrl = await ensureTabForOrigin(
+    config,
+    profileId,
+    cdpHost,
+    cdpPort,
+    target.origin,
+    `${target.origin}/`,
+  );
+  const session = await openCdpSession(wsUrl);
+  try {
+    const all = await session.getAllCookies();
+    const dedup = new Map<string, string>();
+    for (const c of all) {
+      const d = c.domain.replace(/^\./, "");
+      if (!c.name) continue;
+      if (d === target.domain || d.endsWith(`.${target.domain}`)) {
+        dedup.set(c.name, c.value);
+      }
+    }
+    const header = [...dedup.entries()]
+      .map(([n, v]) => `${n}=${v}`)
+      .join("; ");
+    if (!header) {
+      throw new AppError(
+        "PROFILE_NO_COOKIE",
+        `Profile chưa có cookie ${target.domain} — hãy đăng nhập ${target.origin} trong Browser Control rồi thử lại.`,
+        502,
+      );
+    }
+    return header;
   } finally {
     session.close();
   }

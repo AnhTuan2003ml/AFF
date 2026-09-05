@@ -1,168 +1,185 @@
 {% extends "backoffice/base.njk" %}
 
-{% macro status_pill(status) %}
-  {% if status == 'SUCCESS' %}
-    <span class="status-badge status-positive">Thành công</span>
-  {% elif status == 'PARTIAL' %}
-    <span class="status-badge status-pending">Có đơn lỗi</span>
-  {% elif status == 'ERROR' %}
-    <span class="status-badge status-negative">Thất bại</span>
-  {% else %}
-    <span class="status-badge status-neutral">Chưa chạy</span>
-  {% endif %}
+{% set manage = currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+
+{% macro run_pill(status) %}
+  {% if status == 'SUCCESS' %}<span class="status-badge status-positive">Thành công</span>
+  {% elif status == 'PARTIAL' %}<span class="status-badge status-pending">Có đơn lỗi</span>
+  {% elif status == 'ERROR' %}<span class="status-badge status-negative">Thất bại</span>
+  {% else %}<span class="status-badge status-neutral">Chưa chạy</span>{% endif %}
 {% endmacro %}
 
 {% macro lazada_pill(status) %}
-  {% if status == 'CONNECTED' %}
-    <span class="status-badge status-positive">Đã kết nối</span>
-  {% elif status == 'TOKEN_EXPIRING' %}
-    <span class="status-badge status-pending">Sắp hết hạn</span>
-  {% elif status == 'REAUTH_REQUIRED' %}
-    <span class="status-badge status-negative">Cần authorize lại</span>
-  {% elif status == 'NOT_CONNECTED' %}
-    <span class="status-badge status-neutral">Chưa kết nối</span>
-  {% else %}
-    <span class="status-badge status-neutral">Chưa cấu hình</span>
-  {% endif %}
+  {% if status == 'CONNECTED' %}<span class="status-badge status-positive">Đã kết nối</span>
+  {% elif status == 'TOKEN_EXPIRING' %}<span class="status-badge status-pending">Sắp hết hạn</span>
+  {% elif status == 'REAUTH_REQUIRED' %}<span class="status-badge status-negative">Cần authorize lại</span>
+  {% elif status == 'NOT_CONNECTED' %}<span class="status-badge status-neutral">Chưa kết nối</span>
+  {% else %}<span class="status-badge status-neutral">Chưa cấu hình</span>{% endif %}
+{% endmacro %}
+
+{# Một khối quản lý cookie cho một sàn: trạng thái + 2 chế độ nạp (từ profile / dán tay) + xóa. #}
+{% macro cookie_block(platform, hasCookie, hint, updatedAt, source, domain, loginUrl) %}
+  <div class="sync-cookie">
+    {% if hasCookie %}
+      <p class="sync-cookie-state ok">
+        <span class="status-badge status-positive">Đã có cookie</span>
+        <b>{{ hint }}</b>
+        <small>{{ 'Lấy từ profile' if source == 'PROFILE' else 'Dán tay' }} · {{ updatedAt | datetime }}</small>
+      </p>
+    {% else %}
+      <p class="sync-cookie-state">
+        <span class="status-badge status-neutral">Chưa có cookie</span>
+        <small>Đăng nhập <code>{{ domain }}</code> trong profile rồi lấy tự động, hoặc dán tay.</small>
+      </p>
+    {% endif %}
+
+    {% if manage %}
+      <div class="sync-seg" role="tablist" aria-label="Nguồn cookie {{ platform }}">
+        <label>
+          <input type="radio" name="{{ platform | lower }}-mode" value="profile" {% if source != 'MANUAL' %}checked{% endif %}>
+          <span>Tự động từ profile</span>
+        </label>
+        <label>
+          <input type="radio" name="{{ platform | lower }}-mode" value="manual" {% if source == 'MANUAL' %}checked{% endif %}>
+          <span>Dán tay</span>
+        </label>
+      </div>
+
+      <div class="sync-mode-panel" data-mode="profile">
+        <form method="post" action="/backoffice/sync/cookie/profile">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="platform" value="{{ platform }}">
+          <button class="button button-primary" type="submit" data-submit-button>Lấy cookie từ profile</button>
+          <small>Mở <code>{{ loginUrl }}</code> bằng profile đang đăng nhập rồi trích cookie tự động.</small>
+        </form>
+      </div>
+
+      <div class="sync-mode-panel" data-mode="manual">
+        <form method="post" action="/backoffice/sync/cookie/manual" data-validate-form novalidate>
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="platform" value="{{ platform }}">
+          <label class="sr-only" for="{{ platform | lower }}-cookie">Cookie {{ domain }}</label>
+          <textarea id="{{ platform | lower }}-cookie" name="cookie" rows="3" autocomplete="off" spellcheck="false" placeholder="Dán header cookie của {{ domain }}…" required data-required-message="Hãy dán cookie."></textarea>
+          <button class="button button-primary" type="submit" data-submit-button>Lưu cookie</button>
+        </form>
+      </div>
+
+      {% if hasCookie %}
+        <form method="post" action="/backoffice/sync/cookie/clear" class="sync-clear">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="platform" value="{{ platform }}">
+          <button class="button button-link-danger" type="submit">Xóa cookie</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
 {% endmacro %}
 
 {% block backoffice_content %}
   <section class="page-heading">
     <div>
-      <span class="eyebrow">ĐỐI SOÁT TỰ ĐỘNG TỪ BÁO CÁO SÀN</span>
-      <h1>Đồng bộ sàn</h1>
-      <p>Cookie, tần suất và phạm vi gọi báo cáo chuyển đổi Shopee.</p>
+      <span class="eyebrow">KẾT NỐI SÀN</span>
+      <h1>Kết nối &amp; đồng bộ sàn</h1>
+      <p>Nạp cookie phiên đăng nhập từng sàn (dán tay hoặc lấy tự động từ profile), rồi đặt lịch đối soát đơn.</p>
     </div>
   </section>
 
-  {# ── OAuth Lazada Open Platform: vòng đời token cho Open API (tự refresh).
-     Token không bao giờ hiển thị — chỉ trạng thái/hạn dùng. Luồng Affiliate
-     Master Link của Lazada là phần khác, không phụ thuộc mục này. #}
-  <section class="panel" aria-label="Kết nối Lazada Open Platform">
-    <header class="admin-section-heading">
-      <div>
-        <span class="admin-kicker">LAZADA OPEN PLATFORM</span>
-        <h2>OAuth Lazada {{ lazada_pill(lazadaOauth.status) }}</h2>
-      </div>
-      {% if lazadaOauth.status != 'NOT_CONFIGURED' %}
-        <a class="button button-primary" href="/backoffice/lazada/start">
-          {% if lazadaOauth.status == 'NOT_CONNECTED' %}Kết nối Lazada{% else %}Authorize lại{% endif %}
-        </a>
-      {% endif %}
-    </header>
-    {% if lazadaOauth.status == 'NOT_CONFIGURED' %}
-      <p>Đặt <code>LAZADA_OPEN_API_APP_KEY</code> và <code>LAZADA_OPEN_API_APP_SECRET</code> trong cấu hình máy chủ rồi tải lại trang.</p>
-    {% else %}
-      <div class="profile-meta">
-        <span>Callback: <code>{{ lazadaOauth.redirectUri }}</code> (khai đúng URL này trên Lazada Open Platform)</span>
-        {% if lazadaOauth.account %}<span>Tài khoản: <b>{{ lazadaOauth.account }}</b>{% if lazadaOauth.country %} · {{ lazadaOauth.country | upper }}{% endif %}</span>{% endif %}
-        {% if lazadaOauth.accessTokenExpiresAt %}<span>Access token hết hạn: {{ lazadaOauth.accessTokenExpiresAt | datetime }} (tự gia hạn khi còn dưới 30 phút)</span>{% endif %}
-        {% if lazadaOauth.refreshTokenExpiresAt %}<span>Refresh token hết hạn: {{ lazadaOauth.refreshTokenExpiresAt | datetime }}</span>{% endif %}
-        {% if lazadaOauth.lastRefreshAt %}<span>Lần tự gia hạn gần nhất: {{ lazadaOauth.lastRefreshAt | datetime }}</span>{% endif %}
-      </div>
-      <p><small>Đơn/hoa hồng Affiliate Lazada qua Open API còn chờ quyền (category Loyalty) — hiện đối soát Lazada vẫn theo luồng sẵn có.</small></p>
-    {% endif %}
-  </section>
-
-  <section class="order-summary-grid" aria-label="Kết quả lượt đồng bộ gần nhất">
-    <a href="/backoffice/sync">
-      <span>Lượt gần nhất</span>
-      <strong>{{ status_pill(syncSettings.shopeeLastStatus) }}</strong>
-      <small>{% if syncSettings.shopeeLastRunAt %}{{ syncSettings.shopeeLastRunAt | datetime }}{% else %}Chưa chạy lần nào{% endif %}</small>
-    </a>
-    <a href="/backoffice/reconciliation">
-      <span>Đơn lấy về</span>
-      <strong>{{ syncSettings.shopeeLastFetchedCount }}</strong>
-      <small>Đơn có trong báo cáo Shopee</small>
-    </a>
-    <a href="/backoffice/reconciliation">
-      <span>Đơn ghi nhận</span>
-      <strong>{{ syncSettings.shopeeLastImportedCount }}</strong>
-      <small>Đã gán được về tài khoản ShopTik</small>
-    </a>
-    <a href="/backoffice/reconciliation">
-      <span>Đơn lỗi</span>
-      <strong>{{ syncSettings.shopeeLastFailedCount }}</strong>
-      <small>Cần đối soát thủ công</small>
-    </a>
-  </section>
-
-  <section class="panel config-section">
-    <header class="admin-section-heading">
-      <div><span class="admin-kicker">VẬN HÀNH</span><h2>Chạy đồng bộ thủ công</h2></div>
-    </header>
-    {% if syncSettings.shopeeLastError %}
-      <aside class="info-strip"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ syncSettings.shopeeLastError }}</p></div></aside>
-    {% endif %}
-    {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
-      <form method="post" action="/backoffice/sync/run" class="config-save-bar">
-        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <button class="button button-dark" type="submit" data-submit-button>Đồng bộ ngay</button>
-      </form>
-    {% endif %}
-  </section>
-
-  {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
+  {% if not manage %}
     <aside class="info-strip"><span>i</span><div><b>Chỉ xem</b><p>Vai trò của bạn chỉ được xem cấu hình đồng bộ.</p></div></aside>
   {% endif %}
 
-  <form method="post" action="/backoffice/sync" class="config-form" data-validate-form novalidate>
-    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-    <fieldset {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}disabled{% endif %}>
+  <div class="sync-grid">
 
-      <section class="panel config-section">
-        <header class="admin-section-heading">
-          <div><span class="admin-kicker">SHOPEE</span><h2>Phiên đăng nhập Affiliate</h2></div>
-        </header>
-        <div class="stack-form">
-          <label for="sync-shopee-cookie-input">Cookie affiliate.shopee.vn
-            <textarea id="sync-shopee-cookie-input" name="shopeeCookie" rows="4" autocomplete="off" spellcheck="false" placeholder="SPC_F=...; SPC_EC=...; SPC_ST=..."></textarea>
-            <small>
-              {% if syncSettings.shopeeHasCookie %}
-                Đang dùng cookie <b>{{ syncSettings.shopeeCookieHint }}</b>, lưu lúc {{ syncSettings.shopeeCookieUpdatedAt | datetime }}. Bỏ trống ô này để giữ nguyên.
-              {% else %}
-                Chưa có cookie. Mở affiliate.shopee.vn &rarr; DevTools &rarr; Network &rarr; sao chép header <code>cookie</code> rồi dán vào đây.
-              {% endif %}
-            </small>
-            <small class="field-error" id="sync-shopee-cookie-input-error" hidden></small>
-          </label>
-          {% if syncSettings.shopeeHasCookie %}
-            <label class="switch-row">
-              <input type="checkbox" name="clearShopeeCookie">
-              <span>Xóa cookie đang lưu<small>Đồng bộ tự động sẽ dừng cho tới khi nhập cookie mới.</small></span>
+    {# ── SHOPEE ─────────────────────────────────────────── #}
+    <section class="panel sync-card">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">SHOPEE</span><h2>Phiên đăng nhập Affiliate</h2></div>
+      </header>
+
+      {{ cookie_block('SHOPEE', syncSettings.shopeeHasCookie, syncSettings.shopeeCookieHint,
+         syncSettings.shopeeCookieUpdatedAt, syncSettings.shopeeCookieSource,
+         'affiliate.shopee.vn', 'https://affiliate.shopee.vn') }}
+
+      <hr class="sync-sep">
+
+      <form method="post" action="/backoffice/sync" class="sync-schedule" data-validate-form novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <fieldset {% if not manage %}disabled{% endif %}>
+          <div class="sync-schedule-grid">
+            <label for="sync-interval">Tần suất (phút)
+              <input id="sync-interval" type="number" name="shopeeIntervalMinutes" min="5" max="1440" value="{{ syncSettings.shopeeIntervalMinutes }}" required data-required-message="Nhập tần suất." data-min-message="Tối thiểu 5 phút." data-max-message="Tối đa 1440 phút.">
             </label>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="panel config-section">
-        <header class="admin-section-heading">
-          <div><span class="admin-kicker">LỊCH CHẠY</span><h2>Tần suất và phạm vi</h2></div>
-        </header>
-        <div class="stack-form">
-          <label for="sync-interval-input">Tần suất đồng bộ (phút)
-            <input id="sync-interval-input" type="number" name="shopeeIntervalMinutes" min="5" max="1440" value="{{ syncSettings.shopeeIntervalMinutes }}" required data-required-message="Vui lòng nhập tần suất." data-min-message="Tối thiểu 5 phút." data-max-message="Tối đa 1440 phút.">
-            <small>Khoảng cách giữa hai lần gọi báo cáo Shopee. Gọi quá dày dễ bị sàn chặn.</small>
-            <small class="field-error" id="sync-interval-input-error" hidden></small>
-          </label>
-          <label for="sync-lookback-input">Phạm vi truy hồi (ngày)
-            <input id="sync-lookback-input" type="number" name="shopeeLookbackDays" min="1" max="180" value="{{ syncSettings.shopeeLookbackDays }}" required data-required-message="Vui lòng nhập số ngày." data-min-message="Tối thiểu 1 ngày." data-max-message="Tối đa 180 ngày.">
-            <small>Mỗi lượt chạy lấy lại các đơn phát sinh trong khoảng này để cập nhật đơn còn đang duyệt.</small>
-            <small class="field-error" id="sync-lookback-input-error" hidden></small>
-          </label>
+            <label for="sync-lookback">Truy hồi (ngày)
+              <input id="sync-lookback" type="number" name="shopeeLookbackDays" min="1" max="180" value="{{ syncSettings.shopeeLookbackDays }}" required data-required-message="Nhập số ngày." data-min-message="Tối thiểu 1 ngày." data-max-message="Tối đa 180 ngày.">
+            </label>
+          </div>
           <label class="switch-row">
             <input type="checkbox" name="shopeeEnabled" {% if syncSettings.shopeeEnabled %}checked{% endif %}>
-            <span>Bật đồng bộ tự động<small>Khi tắt, chỉ còn nút &ldquo;Đồng bộ ngay&rdquo; chạy thủ công.</small></span>
+            <span>Bật đồng bộ tự động<small>Khi tắt, chỉ chạy khi bấm &ldquo;Đồng bộ ngay&rdquo;.</small></span>
           </label>
-        </div>
-      </section>
+          {% if manage %}
+            <div class="sync-schedule-actions">
+              <button class="button button-primary" type="submit" data-submit-button>Lưu lịch</button>
+            </div>
+          {% endif %}
+        </fieldset>
+      </form>
 
-      <div class="config-save-bar">
-        <span class="config-saved-state">Cập nhật lúc {{ syncSettings.updatedAt | datetime }}</span>
-        {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
-          <button class="button button-primary" type="submit" data-submit-button>Lưu cấu hình</button>
+      <footer class="sync-runbar">
+        <div class="sync-runstat">
+          {{ run_pill(syncSettings.shopeeLastStatus) }}
+          <small>
+            {% if syncSettings.shopeeLastRunAt %}{{ syncSettings.shopeeLastRunAt | datetime }} · {% endif %}
+            lấy {{ syncSettings.shopeeLastFetchedCount }} · ghi nhận {{ syncSettings.shopeeLastImportedCount }} · lỗi {{ syncSettings.shopeeLastFailedCount }}
+          </small>
+        </div>
+        {% if manage %}
+          <form method="post" action="/backoffice/sync/run">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <button class="button button-dark" type="submit" data-submit-button>Đồng bộ ngay</button>
+          </form>
+        {% endif %}
+      </footer>
+      {% if syncSettings.shopeeLastError %}
+        <aside class="info-strip is-error"><span>!</span><div><b>Lỗi gần nhất</b><p>{{ syncSettings.shopeeLastError }}</p></div></aside>
+      {% endif %}
+    </section>
+
+    {# ── LAZADA ─────────────────────────────────────────── #}
+    <section class="panel sync-card">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">LAZADA</span><h2>Phiên adsense</h2></div>
+      </header>
+      <p class="sync-note">Dùng để sinh link Affiliate qua <code>adsense.lazada.vn</code> cho đúng tài khoản.</p>
+
+      {{ cookie_block('LAZADA', syncSettings.lazadaHasCookie, syncSettings.lazadaCookieHint,
+         syncSettings.lazadaCookieUpdatedAt, syncSettings.lazadaCookieSource,
+         'adsense.lazada.vn', 'https://adsense.lazada.vn') }}
+
+      <hr class="sync-sep">
+
+      <div class="sync-subrow">
+        <div>
+          <b>Open API — báo cáo đơn</b>
+          {{ lazada_pill(lazadaOauth.status) }}
+          <small>
+            {% if lazadaOauth.status == 'NOT_CONFIGURED' %}Đặt <code>LAZADA_OPEN_API_APP_KEY/SECRET</code> ở máy chủ.
+            {% elif lazadaOauth.account %}{{ lazadaOauth.account }}{% if lazadaOauth.country %} · {{ lazadaOauth.country | upper }}{% endif %}
+            {% else %}Chưa kết nối tài khoản.{% endif %}
+          </small>
+        </div>
+        {% if manage and lazadaOauth.status != 'NOT_CONFIGURED' %}
+          <a class="button" href="/backoffice/lazada/start">
+            {% if lazadaOauth.status == 'NOT_CONNECTED' %}Kết nối{% else %}Authorize lại{% endif %}
+          </a>
         {% endif %}
       </div>
-    </fieldset>
-  </form>
+
+      <div class="sync-subrow">
+        <div><b>Thử tạo link</b><small>Kiểm chứng link Affiliate sinh ra đúng tài khoản.</small></div>
+        <a class="button" href="/backoffice/profiles#lazada">Mở công cụ</a>
+      </div>
+    </section>
+
+  </div>
 {% endblock %}
