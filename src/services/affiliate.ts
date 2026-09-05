@@ -496,6 +496,30 @@ export function buildLazadaAffiliateUrl(
   return { affiliateUrl: affiliateUrl.toString(), subId };
 }
 
+/**
+ * URL đích gửi cho API chuyển đổi Lazada: URL sản phẩm sạch + sub_aff_id và
+ * sub_id1..6 để đối soát người mua (giống bộ tham số Master Link cũ dùng).
+ */
+function buildLazadaJumpUrl(params: BuildLinkParams): string {
+  const normalized = resolveProductUrl(params.productUrl, "LAZADA").normalizedUrl;
+  const destination = new URL(normalized);
+  // URL sản phẩm Lazada tới `.html`; bỏ query của link người dùng dán để không
+  // kế thừa tracking lạ, rồi tự gắn sub_aff_id/sub_id của mình.
+  if (/^\/products\/.+\.html\/?$/i.test(destination.pathname)) {
+    destination.search = "";
+  }
+  destination.searchParams.set(
+    "sub_aff_id",
+    cleanSubIdPart(params.source ?? "shoptik", "shoptik"),
+  );
+  buildSubIdParts(params)
+    .slice(0, 6)
+    .forEach((part, index) => {
+      destination.searchParams.set(`sub_id${index + 1}`, part);
+    });
+  return destination.toString();
+}
+
 /** Profile Browser Control (nếu có) — dùng để sinh link Lazada đúng tài khoản. */
 async function lazadaConvertProfileId(db: Database): Promise<string | null> {
   const profiles = await listHarvestProfiles(db);
@@ -519,16 +543,9 @@ async function buildLazadaBuyUrl(
 ): Promise<{ affiliateUrl: string; subId: string }> {
   const subId = buildSubId(params);
   if (profileId) {
-    const normalized = resolveProductUrl(params.productUrl, "LAZADA").normalizedUrl;
-    const destination = new URL(normalized);
-    if (/^\/products\/.+\.html\/?$/i.test(destination.pathname)) {
-      destination.search = "";
-    }
     const { link } = await generateLazadaAffiliateLink(config, {
       profileId,
-      productUrl: destination.toString(),
-      subAffId: cleanSubIdPart(params.source ?? "shoptik", "shoptik"),
-      subIds: buildSubIdParts(params).slice(0, 6),
+      jumpUrl: buildLazadaJumpUrl(params),
     });
     if (!isSafeAffiliateRedirect(link, "LAZADA", config)) {
       throw new AppError(

@@ -298,9 +298,7 @@ export async function registerAdminProfileRoutes(
       }
       const { link } = await generateLazadaAffiliateLink(deps.config, {
         profileId: profile.id,
-        productUrl: input.productUrl,
-        subAffId: "shoptik",
-        subIds: ["ctest", "utest", "ptest", "web", "manual"],
+        jumpUrl: input.productUrl,
       });
       setFlash(
         reply,

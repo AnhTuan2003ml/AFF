@@ -687,55 +687,30 @@ export async function directFetchHotDeals(
   }
 }
 
-/** Poll một biểu thức boolean trong trang cho tới khi true hoặc hết giờ. */
-async function waitForInPage(
-  session: CdpSession,
-  boolExpr: string,
-  timeoutMs: number,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const ok = await session
-      .evaluate(`Boolean(${boolExpr})`, 4000)
-      .catch(() => false);
-    if (ok) return true;
-    await sleep(400);
-  }
-  return false;
-}
-
-const LAZADA_URL_RE = /https?:\/\/[^\s"'\\<>]*lazada[^\s"'\\<>]*/gi;
-
-/** Chọn link Affiliate Lazada từ một khối text/JSON thô (ưu tiên s.lazada.vn). */
-function pickLazadaAffiliateLink(raw: string): string | null {
-  const urls = raw.match(LAZADA_URL_RE) || [];
-  const short = urls.find((u) => /(^|\/\/)s\.lazada\.vn\//i.test(u));
-  if (short) return short.replace(/\\+$/, "");
-  const withExlaz = urls.find((u) => /exlaz=/i.test(u));
-  return (withExlaz ?? urls.find((u) => !/lazada\.vn\/products\//i.test(u)) ?? null)?.replace(
-    /\\+$/,
-    "",
-  ) ?? null;
-}
+const LAZADA_CONVERT_API =
+  "https://adsense.lazada.vn/newOffer/link-convert-v2.json";
 
 export interface LazadaConvertInput {
   profileId: string;
-  productUrl: string;
-  /** Giá trị ô "subAff ID" (nguồn). */
-  subAffId: string;
-  /** Các ô SubID 1..6 theo thứ tự (tối đa 6). */
-  subIds: string[];
+  /**
+   * URL đích đã dựng sẵn (kèm sub_aff_id/sub_id để đối soát) — chính là
+   * `jumpUrl` gửi cho API chuyển đổi.
+   */
+  jumpUrl: string;
 }
 
 /**
- * Sinh link Affiliate Lazada cho ĐÚNG tài khoản của profile: mở
- * adsense.lazada.vn bằng profile đã đăng nhập, lái công cụ "Chuyển đổi link"
- * (điền URL sản phẩm + subAff/SubID), bấm Chuyển đổi rồi bắt response
- * `newOffer/link-convert-v2.json` qua CDP để lấy link rút gọn s.lazada.vn.
+ * Sinh link Affiliate Lazada cho ĐÚNG tài khoản của profile bằng cách GỌI THẲNG
+ * API chuyển đổi `newOffer/link-convert-v2.json` NGAY TRONG trang adsense
+ * (phiên đăng nhập của profile → cookie tự gửi). Payload chỉ gồm
+ * `{ jumpUrl, subIdTemplateKey }`; response trả `data.shortLink`
+ * (`https://s.lazada.vn/s.xxx`) mang `exlaz=e_…` của tài khoản — thứ mà Master
+ * Link c.xxxx KHÔNG cho ra (nó chỉ ra mã đối soát chung c_lzd_byr, sai người
+ * nhận hoa hồng).
  *
- * Đây là cách DUY NHẤT lấy được exlaz=e_… của tài khoản (Master Link c.xxxx chỉ
- * ra mã đối soát chung c_lzd_byr, sai người nhận hoa hồng). Nếu profile mất
- * đăng nhập adsense thì hàm ném lỗi để admin xử lý, KHÔNG tự bịa link.
+ * Không lái UI nữa: mở tab adsense rồi fetch API là đủ, nhanh và ổn định hơn.
+ * Nếu profile mất đăng nhập, response không phải JSON hợp lệ → ném lỗi để admin
+ * xử lý, KHÔNG tự bịa link.
  */
 export async function generateLazadaAffiliateLink(
   config: AppConfig,
@@ -752,107 +727,41 @@ export async function generateLazadaAffiliateLink(
   );
   const session = await openCdpSession(wsUrl);
   try {
-    await session.bringToFront();
-    // Chờ trang adsense sẵn sàng (đã đăng nhập → có link "Chuyển đổi link").
-    const ready = await waitForInPage(
-      session,
-      `[...document.querySelectorAll('a,button,span,div')].some(el => (el.textContent||'').trim() === 'Chuyển đổi link')`,
-      12_000,
-    );
-    if (!ready) {
+    const body = JSON.stringify({
+      jumpUrl: input.jumpUrl,
+      subIdTemplateKey: "",
+    });
+    const expr =
+      `fetch(${JSON.stringify(LAZADA_CONVERT_API)},{` +
+      `method:"POST",credentials:"include",` +
+      `headers:{"content-type":"application/json",accept:"application/json, text/plain, */*"},` +
+      `body:${JSON.stringify(body)}}).then(r=>r.text())`;
+    const raw = await session.evaluate(expr, 30_000);
+
+    let json: any = null;
+    try {
+      json = JSON.parse(String(raw ?? ""));
+    } catch {
+      // Response không phải JSON → gần như chắc chắn bị đá về trang đăng nhập.
       throw new AppError(
         "LAZADA_PROFILE_NOT_READY",
-        "Profile chưa mở được adsense.lazada.vn ở trạng thái đăng nhập — hãy đăng nhập lại Lazada Affiliate trong Browser Control.",
+        "Profile chưa đăng nhập adsense.lazada.vn (API chuyển đổi trả về không phải JSON). Đăng nhập lại Lazada Affiliate trong Browser Control rồi thử lại.",
         502,
       );
     }
-
-    // 1) Mở công cụ Chuyển đổi link.
-    await session.evaluate(`(() => {
-      const nav = [...document.querySelectorAll('a,button,span,div')]
-        .find(el => (el.textContent||'').trim() === 'Chuyển đổi link');
-      if (nav) nav.click();
-      return !!nav;
-    })()`);
-    await waitForInPage(
-      session,
-      `[...document.querySelectorAll('input,textarea')].some(el => /Dán link tại đây/i.test(el.placeholder||''))`,
-      8000,
-    );
-
-    // 2) Điền URL sản phẩm + chọn "Liên kết rút gọn".
-    await session.evaluate(`(() => {
-      const setVal = (el, v) => { const s = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el),'value').set; s.call(el, v); el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); };
-      const url = [...document.querySelectorAll('input,textarea')].find(el => /Dán link tại đây/i.test(el.placeholder||''));
-      if (url) setVal(url, ${JSON.stringify(input.productUrl)});
-      const radios = [...document.querySelectorAll('input[type=radio]')];
-      const shortR = radios.find(r => /rút gọn/i.test(((r.closest('label')||r.parentElement||{}).textContent)||''));
-      if (shortR && !shortR.checked) shortR.click();
-      return !!url;
-    })()`);
-
-    // 3) Mở "Thêm Subid" → điền subAff + SubID1..N → Xác nhận.
-    const opened = await session.evaluate(`(() => {
-      const btn = [...document.querySelectorAll('button,a,span,div')].find(el => (el.textContent||'').trim() === 'Thêm Subid');
-      if (btn) btn.click();
-      return !!btn;
-    })()`);
-    if (opened) {
-      await waitForInPage(
-        session,
-        `[...document.querySelectorAll('[role="dialog"],.next-dialog,.next-overlay-inner')].some(d => /Thêm Subid/.test(d.textContent||''))`,
-        6000,
+    if (!json?.success || Number(json?.resultCode) !== 1) {
+      throw new AppError(
+        "LAZADA_CONVERT_FAILED",
+        `Lazada từ chối chuyển đổi link: ${json?.message || "không rõ lý do"}.`,
+        502,
       );
-      const subVals = [input.subAffId, ...input.subIds].slice(0, 7);
-      await session.evaluate(`(() => {
-        const setVal = (el, v) => { const s = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el),'value').set; s.call(el, v); el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); };
-        const dialogs = [...document.querySelectorAll('[role="dialog"],.next-dialog,.next-overlay-inner')];
-        const modal = dialogs.reverse().find(d => /Thêm Subid/.test(d.textContent||''));
-        if (!modal) return 0;
-        const inputs = [...modal.querySelectorAll('input[type="text"], input:not([type])')];
-        const vals = ${JSON.stringify(subVals)};
-        inputs.slice(0, vals.length).forEach((el,i)=> setVal(el, vals[i]));
-        const ok = [...modal.querySelectorAll('button')].find(b => /Xác nhận/i.test((b.textContent||'').trim()));
-        if (ok) ok.click();
-        return inputs.length;
-      })()`);
-      await sleep(800);
     }
-
-    // 4) Bấm Chuyển đổi và hứng response link-convert.
-    session.clearConvertIds();
-    await session.evaluate(`(() => {
-      const btn = [...document.querySelectorAll('button')].find(b => (b.textContent||'').trim() === 'Chuyển đổi');
-      if (btn) btn.click();
-      return !!btn;
-    })()`);
-
-    let link: string | null = null;
-    for (let i = 0; i < 25 && !link; i += 1) {
-      await sleep(600);
-      for (const id of session.convertRequestIds()) {
-        const raw = await session.getBodyRaw(id).catch(() => null);
-        if (raw) {
-          link = pickLazadaAffiliateLink(raw);
-          if (link) break;
-        }
-      }
-    }
-    // Dự phòng: đọc link kết quả hiển thị trong trang (evaluate không bị che URL).
-    if (!link) {
-      const domLink = await session
-        .evaluate(`(() => {
-          const t = document.body.innerText || '';
-          const m = t.match(/https?:\\/\\/s\\.lazada\\.vn\\/[^\\s"']+/i) || t.match(/https?:\\/\\/[^\\s"']*lazada[^\\s"']*/i);
-          return m ? m[0] : null;
-        })()`)
-        .catch(() => null);
-      if (typeof domLink === "string") link = pickLazadaAffiliateLink(domLink) || domLink;
-    }
+    const link: string =
+      (typeof json?.data?.shortLink === "string" && json.data.shortLink) || "";
     if (!link) {
       throw new AppError(
         "LAZADA_CONVERT_FAILED",
-        "Công cụ chuyển đổi Lazada không trả link — kiểm tra profile còn đăng nhập adsense.lazada.vn.",
+        "API chuyển đổi Lazada không trả shortLink.",
         502,
       );
     }
