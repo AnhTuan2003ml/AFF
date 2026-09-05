@@ -86,6 +86,13 @@ export async function registerAdminUserRoutes(
       params.partner,
       "ALL",
     );
+    // Tách người dùng ĐÃ XÓA ra khỏi danh sách chính: mặc định chỉ hiện tài
+    // khoản đang hoạt động; đổi bộ lọc để xem riêng người đã xóa.
+    const deleted = selectedValue(
+      ["ACTIVE", "DELETED", "ALL"] as const,
+      params.deleted,
+      "ACTIVE",
+    );
     const page = pageNumber(params.page);
     const limit = 30;
     const offset = (page - 1) * limit;
@@ -184,13 +191,16 @@ export async function registerAdminUserRoutes(
           AND ($6 = 'ALL'
             OR ($6 = 'PARTNER' AND u.is_special_partner)
             OR ($6 = 'NORMAL' AND NOT u.is_special_partner))
+          AND ($7 = 'ALL'
+            OR ($7 = 'ACTIVE' AND u.deleted_at IS NULL)
+            OR ($7 = 'DELETED' AND u.deleted_at IS NOT NULL))
         ORDER BY
           CASE u.status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING_EMAIL' THEN 1
             WHEN 'LOCKED' THEN 2 ELSE 3 END,
           u.created_at DESC
         LIMIT $4 OFFSET $5
       `,
-      [q, role, status, limit, offset, partner],
+      [q, role, status, limit, offset, partner, deleted],
     );
     const total = Number(users.rows[0]?.total_count ?? 0);
     const refRequests = await listReferralCodeRequests(deps.db);
@@ -199,7 +209,7 @@ export async function registerAdminUserRoutes(
       backofficeSection: "users",
       refRequests,
       users: users.rows,
-      filters: { q, role, status, partner },
+      filters: { q, role, status, partner, deleted },
       pagination: {
         page,
         pages: Math.max(1, Math.ceil(total / limit)),

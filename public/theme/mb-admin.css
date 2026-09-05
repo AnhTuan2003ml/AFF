@@ -1446,3 +1446,21 @@ body.bo-guide-open { overflow: hidden; }
   .bo-guide-search { flex: 1 1 100%; margin-bottom: 4px; }
   .bo-guide-toc a { font-size: 12.5px; padding: 7px 10px; }
 }
+
+/* Người dùng đã xóa: làm mờ dòng + tag "Đã xóa" (tách trực quan khỏi tài khoản
+   đang hoạt động; tên vẫn giữ để đối soát). */
+.admin-data-table tr.is-deleted-row { opacity: 0.6; }
+.admin-data-table tr.is-deleted-row:hover { opacity: 0.85; }
+.deleted-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  color: #b02a1c;
+  background: #fdecea;
+  border: 1px solid #f3b4ab;
+  vertical-align: middle;
+}

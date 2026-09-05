@@ -80,7 +80,14 @@
           <option value="ACTIVE"{% if filters.status == 'ACTIVE' %} selected{% endif %}>Đang hoạt động</option>
           <option value="PENDING_EMAIL"{% if filters.status == 'PENDING_EMAIL' %} selected{% endif %}>Chờ xác minh</option>
           <option value="LOCKED"{% if filters.status == 'LOCKED' %} selected{% endif %}>Đã chặn</option>
-          <option value="DISABLED"{% if filters.status == 'DISABLED' %} selected{% endif %}>Đã xóa</option>
+          <option value="DISABLED"{% if filters.status == 'DISABLED' %} selected{% endif %}>Đã vô hiệu</option>
+        </select>
+      </label>
+      <label><span>Người dùng</span>
+        <select name="deleted">
+          <option value="ACTIVE"{% if filters.deleted == 'ACTIVE' %} selected{% endif %}>Đang hoạt động</option>
+          <option value="DELETED"{% if filters.deleted == 'DELETED' %} selected{% endif %}>🗑 Đã xóa</option>
+          <option value="ALL"{% if filters.deleted == 'ALL' %} selected{% endif %}>Tất cả</option>
         </select>
       </label>
       <label><span>Đối tác</span>
@@ -102,8 +109,8 @@
     {% if users.length %}
       <div class="responsive-table"><table class="admin-data-table">
         <thead><tr><th>Người dùng</th><th>Đối tác</th><th>Trạng thái</th><th>Nguồn vào</th><th>Đơn mua</th><th>Tiền hoàn</th><th>Đã mời</th><th>Hoạt động cuối</th><th class="row-actions-cell"><span class="sr-only">Hành động</span></th></tr></thead>
-        <tbody>{% for user in users %}<tr{% if user.is_special_partner %} class="is-partner-row"{% endif %}>
-          <td><a class="user-cell" href="/backoffice/accounts/{{ user.id }}"><span class="avatar{% if user.is_special_partner %} avatar-partner{% endif %}">{{ user.full_name | first | upper }}</span><span><strong>{{ user.full_name }}{% if user.is_special_partner %} <em class="partner-star" title="Đối tác/KOL đặc biệt">⭐</em>{% endif %}</strong><small>{{ user.email }}</small><small class="user-refcode">Mã mời: <b>{{ user.referral_code }}</b></small></span></a></td>
+        <tbody>{% for user in users %}<tr class="{% if user.is_special_partner %}is-partner-row {% endif %}{% if user.deleted_at %}is-deleted-row{% endif %}">
+          <td><a class="user-cell" href="/backoffice/accounts/{{ user.id }}"><span class="avatar{% if user.is_special_partner %} avatar-partner{% endif %}">{{ user.full_name | first | upper }}</span><span><strong>{{ user.full_name }}{% if user.is_special_partner %} <em class="partner-star" title="Đối tác/KOL đặc biệt">⭐</em>{% endif %}{% if user.deleted_at %} <em class="deleted-tag" title="Đã xóa tài khoản">🗑 Đã xóa</em>{% endif %}</strong><small>{{ user.email }}</small><small class="user-refcode">Mã mời: <b>{{ user.referral_code }}</b></small></span></a></td>
           <td>
             {# Gán/bỏ quyền đối tác NGAY tại bảng — không phải mở hồ sơ. #}
             {% if user.role == 'USER' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}

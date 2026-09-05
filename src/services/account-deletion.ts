@@ -12,7 +12,9 @@ import { getWalletBalances } from "./ledger.js";
  * XÓA MỀM, không DELETE. Lý do là nghiệp vụ chứ không phải kỹ thuật: bút toán
  * ledger, đơn hàng và lệnh rút đã trả là chứng từ đối soát với sàn và với ngân
  * hàng — xóa cứng thì sổ sách thủng, và những khoản đã chi không truy lại được.
- * Cái bị gỡ là DANH TÍNH: email, tên, mật khẩu, số tài khoản ngân hàng.
+ * Cái bị gỡ là DANH TÍNH nhạy cảm: email, mật khẩu, số tài khoản ngân hàng.
+ * GIỮ LẠI `full_name` để khu quản trị còn nhận diện được người dùng đã xóa khi
+ * đối soát lịch sử (danh sách/đơn cũ vẫn hiện đúng tên).
  *
  * Dùng lại ĐÚNG cơ chế xóa mềm mà khu quản trị đã có (`deleted_at` +
  * `deletion_reason`, status DISABLED — xem routes/admin-users.ts). Không dựng
@@ -136,7 +138,6 @@ export async function deleteOwnAccount(
             deleted_at = now(),
             deletion_reason = $2,
             email = 'deleted+' || id::text || '@shoptik.invalid',
-            full_name = 'Người dùng đã xóa',
             password_hash = NULL,
             updated_at = now()
         WHERE id = $1 AND deleted_at IS NULL

@@ -32,7 +32,9 @@ export async function registerAdminPurchaseHistoryRoutes(
           (SELECT count(*) FROM affiliate_links l WHERE l.user_id = u.id)::text
             AS clicks_count
         FROM users u
-        WHERE u.status <> 'DELETED'
+        -- Dọn người dùng ĐÃ XÓA khỏi lịch sử mua (trước dùng status <> 'DELETED'
+        -- vô tác dụng vì xóa mềm đặt status = 'DISABLED' + deleted_at).
+        WHERE u.deleted_at IS NULL
         ORDER BY u.created_at DESC
         LIMIT 500
       `,
