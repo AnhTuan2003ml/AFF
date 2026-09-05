@@ -39,12 +39,63 @@
     });
   });
 
+  // Kênh mạng xã hội: nhiều URL — nút "+" thêm dòng, "×" xóa dòng; gộp lại
+  // (mỗi kênh một dòng) vào ô ẩn socialLinks khi submit.
+  var social = document.querySelector("[data-social]");
+  var socialAdd = document.querySelector("[data-social-add]");
+  var socialHidden = document.querySelector("[data-social-hidden]");
+  if (social && socialAdd && socialHidden) {
+    var syncDel = function () {
+      var rows = social.querySelectorAll(".kol-social-row");
+      rows.forEach(function (row) {
+        var del = row.querySelector("[data-social-del]");
+        if (del) del.hidden = rows.length <= 1;
+      });
+    };
+    var combine = function () {
+      var vals = [];
+      social.querySelectorAll("[data-social-input]").forEach(function (inp) {
+        var v = inp.value.trim();
+        if (v) vals.push(v);
+      });
+      socialHidden.value = vals.join("\n");
+    };
+    socialAdd.addEventListener("click", function () {
+      var first = social.querySelector(".kol-social-row");
+      var row = first.cloneNode(true);
+      row.querySelector("[data-social-input]").value = "";
+      social.appendChild(row);
+      syncDel();
+      row.querySelector("[data-social-input]").focus();
+    });
+    social.addEventListener("click", function (e) {
+      var del = e.target.closest && e.target.closest("[data-social-del]");
+      if (!del) return;
+      var rows = social.querySelectorAll(".kol-social-row");
+      if (rows.length > 1) del.closest(".kol-social-row").remove();
+      syncDel();
+      combine();
+    });
+    social.addEventListener("input", combine);
+    syncDel();
+  }
+
   var form = document.querySelector("[data-kol-form]");
   var btn = document.querySelector("[data-kol-submit]");
-  if (form && btn) {
+  if (form) {
     form.addEventListener("submit", function () {
-      btn.disabled = true;
-      btn.textContent = "Đang gửi…";
+      if (socialHidden && social) {
+        var vals = [];
+        social.querySelectorAll("[data-social-input]").forEach(function (inp) {
+          var v = inp.value.trim();
+          if (v) vals.push(v);
+        });
+        socialHidden.value = vals.join("\n");
+      }
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Đang gửi…";
+      }
     });
   }
 })();

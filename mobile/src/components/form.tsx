@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, radius } from '@/theme/tokens';
@@ -34,6 +35,68 @@ export function Field({
         />
       </View>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * Nhiều URL kênh mạng xã hội: mỗi kênh một ô, nút "+" thêm, "×" xóa.
+ * Gộp lại thành một chuỗi ngăn cách bằng xuống dòng qua onChange.
+ */
+export function SocialLinksInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  addLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (joined: string) => void;
+  placeholder?: string;
+  addLabel: string;
+}) {
+  const [rows, setRows] = useState<string[]>(() => {
+    const arr = (value ?? '').split('\n');
+    return arr.length ? arr : [''];
+  });
+  const sync = (next: string[]) => {
+    setRows(next);
+    onChange(next.map((s) => s.trim()).filter(Boolean).join('\n'));
+  };
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <Text style={styles.label}>{label}</Text>
+      {rows.map((v, i) => (
+        <View key={i} style={styles.socialRow}>
+          <View style={[styles.wrap, { flex: 1 }]}>
+            <TextInput
+              placeholderTextColor={colors.muted}
+              style={styles.input}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={v}
+              placeholder={placeholder}
+              onChangeText={(nv) => {
+                const n = [...rows];
+                n[i] = nv;
+                sync(n);
+              }}
+            />
+          </View>
+          {rows.length > 1 ? (
+            <Pressable
+              onPress={() => sync(rows.filter((_, j) => j !== i))}
+              hitSlop={8}
+              style={styles.socialDel}>
+              <Ionicons name="close" size={18} color={colors.muted} />
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
+      <Pressable onPress={() => sync([...rows, ''])} style={styles.socialAdd}>
+        <Text style={styles.socialAddText}>+ {addLabel}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -126,6 +189,27 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 14, color: colors.text, padding: 0 },
   hint: { fontSize: 11.5, color: colors.muted, marginTop: 6 },
+  socialRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  socialDel: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialAdd: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.brandLine,
+    backgroundColor: colors.brandSoft,
+  },
+  socialAddText: { fontSize: 13, fontWeight: '800', color: colors.brand },
 
   check: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   box: {

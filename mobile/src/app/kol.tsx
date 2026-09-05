@@ -23,7 +23,7 @@ import {
   type TepKyc,
 } from '@/api/kol';
 import { ApiError } from '@/api/client';
-import { Checkbox, ErrorBox, Field, PrimaryButton } from '@/components/form';
+import { Checkbox, ErrorBox, Field, PrimaryButton, SocialLinksInput } from '@/components/form';
 import { useT } from '@/i18n';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -362,11 +362,12 @@ export default function KolScreen() {
               value={info.bankName ?? ''}
               onChangeText={(v) => dat('bankName', v)}
             />
-            <Field
-              label={t('Kênh mạng xã hội (link)', 'Social media channel (link)')}
+            <SocialLinksInput
+              label={t('Kênh mạng xã hội (link)', 'Social media channels (links)')}
               placeholder="TikTok / Facebook / Instagram…"
               value={info.socialLinks ?? ''}
-              onChangeText={(v) => dat('socialLinks', v)}
+              onChange={(v) => dat('socialLinks', v)}
+              addLabel={t('Thêm kênh', 'Add channel')}
             />
 
             <Text style={styles.section}>{t('Xác minh danh tính', 'Identity verification')}</Text>

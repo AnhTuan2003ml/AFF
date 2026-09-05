@@ -5,7 +5,7 @@
   <section class="kol-wrap kol-form-wrap">
     <header class="kol-head">
       <span class="kol-eyebrow">{{ t('HỒ SƠ ĐỐI TÁC · BƯỚC 2/2', 'PARTNER APPLICATION · STEP 2/2') }}</span>
-      <h1>{{ t('Thông tin &amp; xác minh', 'Information &amp; verification') }}</h1>
+      <h1>{{ t('Thông tin & xác minh', 'Information & verification') }}</h1>
       <p>{{ t('Điền thông tin và tải lên ảnh CCCD hai mặt cùng video khuôn mặt để xác minh danh tính.', 'Fill in your details and upload both sides of your ID plus a face video to verify your identity.') }}</p>
     </header>
 
@@ -40,14 +40,21 @@
           <label class="kol-field kol-col-2"><span>Email</span>
             <input name="email" type="email" autocomplete="email" placeholder="ban@email.com">
           </label>
-          <label class="kol-field kol-col-2"><span>{{ t('Kênh mạng xã hội (link)', 'Social channels (links)') }}</span>
-            <input name="socialLinks" placeholder="TikTok / Facebook / Instagram…">
-          </label>
+          <div class="kol-field kol-col-2"><span>{{ t('Kênh mạng xã hội (link)', 'Social channels (links)') }}</span>
+            <div class="kol-social" data-social>
+              <div class="kol-social-row">
+                <input class="kol-social-input" data-social-input placeholder="TikTok / Facebook / Instagram…">
+                <button type="button" class="kol-social-del" data-social-del aria-label="{{ t('Xóa kênh', 'Remove channel') }}" hidden>×</button>
+              </div>
+            </div>
+            <button type="button" class="kol-social-add" data-social-add>+ {{ t('Thêm kênh', 'Add channel') }}</button>
+            <input type="hidden" name="socialLinks" data-social-hidden>
+          </div>
         </div>
       </div>
 
       <div class="kol-card">
-        <h2 class="kol-card-title">{{ t('Thanh toán &amp; thuế', 'Payment &amp; tax') }}</h2>
+        <h2 class="kol-card-title">{{ t('Thanh toán & thuế', 'Payment & tax') }}</h2>
         <div class="kol-grid">
           <label class="kol-field"><span>{{ t('Mã số thuế cá nhân', 'Personal tax code') }}</span>
             <input name="taxCode" inputmode="numeric" placeholder="{{ t('Nếu có', 'If any') }}">

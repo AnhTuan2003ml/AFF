@@ -349,3 +349,29 @@
 .kol-docx-row { margin: 0 0 12px; }
 .kol-approve .kol-admin-actions { margin-top: 12px; }
 .kol-contract-link { font-size: 12.5px; font-weight: 700; color: var(--lx-orange, #ee4d2d); }
+
+/* Kênh mạng xã hội: nhiều URL, mỗi dòng 1 kênh + nút thêm/xóa. */
+.kol-social { display: flex; flex-direction: column; gap: 8px; }
+.kol-social-row { display: flex; align-items: center; gap: 8px; }
+.kol-social-input { flex: 1 1 auto; min-width: 0; }
+.kol-social-del {
+  flex: 0 0 auto;
+  width: 38px; height: 38px;
+  border: 1px solid var(--line, #e6e0d8);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted, #8a8178);
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.kol-social-del:hover { border-color: #f3b4ab; color: #b02a1c; background: #fdecea; }
+.kol-social-add {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 7px 14px;
+  border: 1px dashed var(--line-strong, #d3d7de);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--jade, #0b3a99);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.kol-social-add:hover { background: var(--mint, #e8f2ff); }
