@@ -225,7 +225,7 @@ export default function AccountScreen() {
           />
           <MenuRow
             icon="ribbon-outline"
-            label={t('Đăng ký KOL/KOC', 'Become a KOL/KOC')}
+            label={t('Đăng ký đối tác với chúng tôi', 'Become our partner')}
             onPress={() => router.push('/kol')}
             divider
           />

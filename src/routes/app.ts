@@ -1621,13 +1621,13 @@ export async function registerAppRoutes(
     const app0 = await getUserKolApplication(deps.db, userId(request));
     if (app0 && app0.status === "APPROVED") {
       return reply.view("app/kol-approved.njk", {
-        pageTitle: "Đối tác KOL/KOC",
+        pageTitle: "Đối tác của chúng tôi",
         appSection: "referrals",
         a: app0,
       });
     }
     return reply.view("app/kol-terms.njk", {
-      pageTitle: "Đăng ký KOL/KOC",
+      pageTitle: "Đăng ký đối tác với chúng tôi",
       appSection: "referrals",
       sections: KOL_AGREEMENT_SECTIONS,
       agreementVersion: KOL_AGREEMENT_VERSION,
@@ -1666,7 +1666,7 @@ export async function registerAppRoutes(
       return reply.redirect("/app/dang-ky-kol");
     }
     return reply.view("app/kol-form.njk", {
-      pageTitle: "Hồ sơ KOL/KOC",
+      pageTitle: "Hồ sơ đối tác",
       appSection: "referrals",
       agreementVersion: KOL_AGREEMENT_VERSION,
       banks: BANKS,

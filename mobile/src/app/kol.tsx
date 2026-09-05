@@ -183,10 +183,10 @@ export default function KolScreen() {
         </Pressable>
 
         <Text style={styles.eyebrow}>
-          {daDuyet ? t('ĐỐI TÁC KOL/KOC', 'KOL/KOC PARTNER') : t('ĐĂNG KÝ ĐỐI TÁC', 'PARTNER REGISTRATION')}
+          {daDuyet ? t('ĐỐI TÁC CỦA CHÚNG TÔI', 'OUR PARTNER') : t('ĐĂNG KÝ ĐỐI TÁC', 'PARTNER REGISTRATION')}
         </Text>
         <Text style={styles.h1}>
-          {daDuyet ? t('Đối tác chính thức', 'Official partner') : t('Đăng ký KOL/KOC', 'Register as KOL/KOC')}
+          {daDuyet ? t('Đối tác chính thức', 'Official partner') : t('Đăng ký đối tác với chúng tôi', 'Become our partner')}
         </Text>
 
         {daDuyet ? (

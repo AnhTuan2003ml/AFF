@@ -151,9 +151,9 @@
               <a href="/app/support">{{ icon('support') }}<span>{{ t('Hỗ trợ & khiếu nại', 'Support & complaints') }}</span></a>
               <a href="/app/settings">{{ icon('settings') }}<span>{{ t('Tất cả chức năng', 'All features') }}</span></a>
               {% if currentUser.isSpecialPartner %}
-                <a href="/app/dang-ky-kol">{{ icon('user') }}<span>{{ t('Đối tác KOL/KOC', 'KOL/KOC partner') }} ✓</span></a>
+                <a href="/app/dang-ky-kol">{{ icon('user') }}<span>{{ t('Đối tác của chúng tôi', 'Our partner') }} ✓</span></a>
               {% else %}
-                <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>{{ t('Đăng ký KOL/KOC', 'Become a KOL/KOC') }}</span></a>
+                <a href="/app/dang-ky-kol" class="st-menu-kol">{{ icon('user') }}<span>{{ t('Đăng ký đối tác với chúng tôi', 'Become our partner') }}</span></a>
               {% endif %}
               {% if currentUser.role != 'USER' %}<a href="/backoffice/console">{{ icon('ops') }}<span>{{ t('Trang quản trị', 'Admin console') }}</span></a>{% endif %}
               <div class="st-menu-divider" role="separator"></div>

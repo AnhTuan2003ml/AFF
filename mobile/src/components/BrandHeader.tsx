@@ -194,7 +194,7 @@ function MenuTaiKhoan({
           <Muc icon="flag-outline" nhan={t('Nhiệm vụ nhận thưởng', 'Reward missions')} onPress={() => di('/missions')} />
           <Muc icon="share-social-outline" nhan={t('Chia sẻ nhận hoa hồng', 'Share to earn commission')} onPress={() => di('/chia-se')} />
           <Muc icon="link-outline" nhan={t('Giới thiệu bạn bè', 'Refer friends')} onPress={() => di('/referrals')} />
-          <Muc icon="ribbon-outline" nhan={t('Đăng ký KOL/KOC', 'Register as KOL/KOC')} onPress={() => di('/kol')} />
+          <Muc icon="ribbon-outline" nhan={t('Đăng ký đối tác với chúng tôi', 'Become our partner')} onPress={() => di('/kol')} />
           <Muc icon="card-outline" nhan={t('Tài khoản ngân hàng', 'Bank account')} onPress={() => di('/bank')} />
           <Muc icon="chatbubbles-outline" nhan={t('Hỗ trợ & khiếu nại', 'Support & complaints')} onPress={() => di('/support')} />
 
