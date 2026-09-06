@@ -21,6 +21,7 @@ import {
   type SyncPlatform,
 } from "../services/platform-sync-settings.js";
 import { runShopeeOrderSync } from "../services/shopee-order-sync.js";
+import { runLazadaOrderSync } from "../services/lazada-order-sync.js";
 import {
   flashAdminError,
   type AdminConsoleDeps,
@@ -239,6 +240,37 @@ export async function registerAdminSyncRoutes(
         deps.config,
         "success",
         `Đã xóa cookie ${platformLabel[input.platform]}.`,
+      );
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/sync");
+  });
+
+  // Đối soát đơn Lazada thủ công qua Open API (báo cáo chuyển đổi).
+  app.post("/sync/run/lazada", async (request, reply) => {
+    requireManage(request.currentUser!.role);
+    try {
+      const summary = await runLazadaOrderSync(deps.db, deps.config, {
+        actorId: request.currentUser!.id,
+      });
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "PLATFORM_SYNC_RUN",
+        targetType: "ORDER_BATCH",
+        reason: `Đối soát Lazada: ${summary.imported}/${summary.fetched} đơn`,
+        after: {
+          fetched: summary.fetched,
+          imported: summary.imported,
+          skipped: summary.skipped,
+          failed: summary.failed,
+        },
+      });
+      setFlash(
+        reply,
+        deps.config,
+        summary.failed ? "info" : "success",
+        `Đối soát Lazada: lấy ${summary.fetched} đơn, ghi nhận ${summary.imported}, bỏ qua ${summary.skipped}, lỗi ${summary.failed}. Giải ngân ${summary.releasedOrders} đơn đến hạn.` +
+          (summary.failures[0] ? ` ${summary.failures[0]}` : ""),
       );
     } catch (error) {
       flashAdminError(reply, deps.config, error);

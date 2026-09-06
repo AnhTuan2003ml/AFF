@@ -19,6 +19,8 @@ import {
   isShopeeSyncDue,
   runShopeeOrderSync,
 } from "../services/shopee-order-sync.js";
+import { runLazadaOrderSync } from "../services/lazada-order-sync.js";
+import { isLazadaAffiliateConfigured } from "../services/lazada-affiliate-api.js";
 
 /**
  * Tiến trình nền một nhịp/phút: đến hạn thì gọi báo cáo Shopee để cập nhật
@@ -170,7 +172,20 @@ export function startSyncScheduler(
             );
           });
 
-          await Promise.all([shopeeFlow, lazadaFlow]);
+          // Đối soát đơn Lazada qua Open API (báo cáo chuyển đổi) — 1 lần/ngày.
+          const lazadaOrderFlow = (async () => {
+            if (!isLazadaAffiliateConfigured(config)) return;
+            const r = await runLazadaOrderSync(db, config, { actorId });
+            logger.info(
+              { fetched: r.fetched, imported: r.imported, skipped: r.skipped },
+              "Đã đối soát đơn Lazada (1h sáng)",
+            );
+          })().catch((e) => {
+            logger.warn({ err: e }, "Đối soát đơn Lazada thất bại");
+            alertAdmin("lazada-order-sync", "Đối soát đơn Lazada", e);
+          });
+
+          await Promise.all([shopeeFlow, lazadaFlow, lazadaOrderFlow]);
         }
       } catch (error) {
         logger.warn({ err: error }, "Cập nhật kho Khám phá (Shopee/Lazada) thất bại");

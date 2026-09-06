@@ -628,6 +628,7 @@ async function buildLazadaBuyUrl(
       config,
       String(params.productId),
       fetcher,
+      params.userCode ? `u${params.userCode}` : undefined,
     ).catch(() => null);
     if (viaApi?.trackingLink) return ensureSafe(viaApi.trackingLink);
   }

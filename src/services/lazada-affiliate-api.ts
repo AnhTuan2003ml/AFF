@@ -261,6 +261,119 @@ export async function fetchLazadaAffiliateProduct(
   }
 }
 
+const REPORT_PATH = "/marketing/conversion/report";
+
+export interface LazadaConversionOrder {
+  orderId: string;
+  subOrderId?: string;
+  /** Trạng thái đơn thô của Lazada (Fulfilled/Pending/Cancelled/Returned...). */
+  status: string;
+  itemId?: string;
+  productName?: string;
+  orderAmountVnd?: number;
+  /** Hoa hồng dự chi của affiliate (VND). */
+  payoutVnd?: number;
+  /** subId1 gắn khi tạo link — thường u<tracking_code>. */
+  subId1?: string;
+  /** Thời điểm đặt đơn (ISO), suy từ conversionTime. */
+  conversionTime?: string;
+  fulfilledTime?: string;
+}
+
+/** Lấy itemId từ pdpUrl Lazada (…/pdp-i<itemId>-s<skuId>.html). */
+function itemIdFromPdp(url: unknown): string | undefined {
+  const s = optionalString(url);
+  return s ? (s.match(/-i(\d{3,})/)?.[1] ?? undefined) : undefined;
+}
+
+export function parseLazadaConversionReport(
+  payload: unknown,
+): LazadaConversionOrder[] {
+  const root = asObject(payload);
+  const data = asObject(root?.result)?.data ?? root?.data;
+  const list = Array.isArray(data) ? data : [];
+  const orders: LazadaConversionOrder[] = [];
+  for (const raw of list) {
+    const o = asObject(raw);
+    if (!o) continue;
+    const orderId = optionalString(o.orderId ?? o.subOrderId);
+    if (!orderId) continue;
+    orders.push({
+      orderId,
+      ...(optionalString(o.subOrderId)
+        ? { subOrderId: optionalString(o.subOrderId)! }
+        : {}),
+      status: optionalString(o.status) ?? "PENDING",
+      ...(itemIdFromPdp(o.pdpUrl) ? { itemId: itemIdFromPdp(o.pdpUrl)! } : {}),
+      ...(optionalString(o.skuName)
+        ? { productName: optionalString(o.skuName)! }
+        : {}),
+      ...(optionalVnd(o.orderAmt) !== undefined
+        ? { orderAmountVnd: optionalVnd(o.orderAmt)! }
+        : {}),
+      ...(optionalVnd(o.estPayout) !== undefined
+        ? { payoutVnd: optionalVnd(o.estPayout)! }
+        : {}),
+      ...(optionalString(o.subId1) ? { subId1: optionalString(o.subId1)! } : {}),
+      ...(optionalString(o.conversionTime)
+        ? { conversionTime: optionalString(o.conversionTime)! }
+        : {}),
+      ...(optionalString(o.fulfilledTime)
+        ? { fulfilledTime: optionalString(o.fulfilledTime)! }
+        : {}),
+    });
+  }
+  return orders;
+}
+
+/**
+ * Lấy MỘT trang báo cáo chuyển đổi Lazada. LƯU Ý: API chỉ cho phép khoảng
+ * `dateStart`–`dateEnd` NẰM TRONG CÙNG MỘT THÁNG LỊCH (format YYYY-MM-DD).
+ */
+export async function fetchLazadaConversionReport(
+  config: AppConfig,
+  opts: { dateStart: string; dateEnd: string; page?: number; limit?: number },
+  fetcher: Fetcher = fetch,
+): Promise<LazadaConversionOrder[]> {
+  if (!isLazadaAffiliateConfigured(config)) return [];
+  const params: Record<string, string> = {
+    app_key: config.LAZADA_OPEN_API_APP_KEY,
+    timestamp: String(Date.now()),
+    sign_method: "sha256",
+    userToken: config.LAZADA_AFFILIATE_USER_TOKEN,
+    dateStart: opts.dateStart,
+    dateEnd: opts.dateEnd,
+    page: String(Math.max(1, Math.trunc(opts.page ?? 1))),
+    limit: String(Math.min(Math.max(Math.trunc(opts.limit ?? 100), 1), 100)),
+  };
+  const sign = signLazadaRequest(
+    REPORT_PATH,
+    params,
+    config.LAZADA_OPEN_API_APP_SECRET,
+  );
+  const endpoint = new URL(`${BASE_URL}${REPORT_PATH}`);
+  for (const [key, value] of Object.entries(params)) {
+    endpoint.searchParams.set(key, value);
+  }
+  endpoint.searchParams.set("sign", sign);
+
+  const response = await fetcher(endpoint, {
+    redirect: "error",
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Lazada report HTTP ${response.status}`);
+  }
+  const json = JSON.parse(await response.text()) as JsonObject;
+  if (asObject(json.result)?.success !== true && json.code !== "0") {
+    throw new Error(
+      `Lazada report lỗi: ${optionalString(json.message) ?? "không rõ"}`,
+    );
+  }
+  return parseLazadaConversionReport(json);
+}
+
 const LINK_PATH = "/marketing/product/link";
 
 export interface LazadaAffiliateLink {
@@ -280,16 +393,22 @@ export async function fetchLazadaAffiliateLink(
   config: AppConfig,
   itemId: string,
   fetcher: Fetcher = fetch,
+  /** subId1 gắn vào link (thường u<tracking_code>) để đối soát người mua qua báo cáo. */
+  subId1?: string,
 ): Promise<LazadaAffiliateLink | null> {
   if (!isLazadaAffiliateConfigured(config)) return null;
   if (!/^\d{1,20}$/.test(itemId)) return null;
 
+  const cleanSubId = subId1
+    ? subId1.replace(/[^a-zA-Z0-9]/g, "").slice(0, 50)
+    : "";
   const params: Record<string, string> = {
     app_key: config.LAZADA_OPEN_API_APP_KEY,
     timestamp: String(Date.now()),
     sign_method: "sha256",
     userToken: config.LAZADA_AFFILIATE_USER_TOKEN,
     productId: itemId,
+    ...(cleanSubId ? { subId1: cleanSubId } : {}),
   };
   const sign = signLazadaRequest(
     LINK_PATH,

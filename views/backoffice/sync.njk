@@ -176,6 +176,16 @@
       </div>
 
       <div class="sync-subrow">
+        <div><b>Đối soát đơn (Open API)</b><small>Lấy báo cáo chuyển đổi Lazada và gán đơn về người mua.</small></div>
+        {% if manage %}
+          <form method="post" action="/backoffice/sync/run/lazada">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <button class="button button-dark" type="submit" data-submit-button>Đối soát ngay</button>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="sync-subrow">
         <div><b>Thử tạo link</b><small>Kiểm chứng link Affiliate sinh ra đúng tài khoản.</small></div>
         <a class="button" href="/backoffice/profiles#lazada">Mở công cụ</a>
       </div>
