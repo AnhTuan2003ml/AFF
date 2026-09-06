@@ -22,7 +22,8 @@ export interface ShopeeReportPage {
     page_num: number;
     page_size: number;
     total_count: number;
-    list: unknown[];
+    // Shopee trả `null` (không phải []) khi báo cáo rỗng.
+    list: unknown[] | null;
   };
 }
 
@@ -207,7 +208,9 @@ function assertReportPage(value: unknown): asserts value is ShopeeReportPage {
     typeof page !== "object" ||
     page.code !== 0 ||
     !page.data ||
-    !Array.isArray(page.data.list) ||
+    // Báo cáo rỗng: Shopee trả list = null (hợp lệ, 0 đơn) — chỉ từ chối khi
+    // list tồn tại nhưng KHÔNG phải mảng.
+    (page.data.list != null && !Array.isArray(page.data.list)) ||
     !Number.isInteger(page.data.total_count)
   ) {
     const message = typeof page?.msg === "string" ? ` (${page.msg})` : "";
@@ -291,7 +294,7 @@ export async function fetchShopeeReport(
     1,
     fetcher,
   );
-  const list = [...firstPage.data.list];
+  const list = [...(firstPage.data.list ?? [])];
   const totalPages = Math.min(
     Math.max(1, Math.ceil(firstPage.data.total_count / pageSize)),
     options.maxPages ?? 50,
@@ -304,7 +307,7 @@ export async function fetchShopeeReport(
       pageNum,
       fetcher,
     );
-    list.push(...page.data.list);
+    list.push(...(page.data.list ?? []));
   }
   return { totalCount: firstPage.data.total_count, list };
 }
