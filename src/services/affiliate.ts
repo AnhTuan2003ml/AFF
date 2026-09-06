@@ -22,6 +22,10 @@ import {
   setPlatformCookie,
 } from "./platform-sync-settings.js";
 import { getLazadaSubIdKey } from "./lazada-subid.js";
+import {
+  fetchLazadaAffiliateLink,
+  isLazadaAffiliateConfigured,
+} from "./lazada-affiliate-api.js";
 
 type Fetcher = typeof fetch;
 type JsonObject = Record<string, unknown>;
@@ -617,6 +621,17 @@ async function buildLazadaBuyUrl(
     return { affiliateUrl: link, subId };
   };
 
+  // 0) Open API (LiteApp) — cách CHÍNH THỨC: chỉ cần productId + userToken,
+  //    không cookie/profile. Click tự tính về tài khoản. Ưu tiên cao nhất.
+  if (params.productId && isLazadaAffiliateConfigured(config)) {
+    const viaApi = await fetchLazadaAffiliateLink(
+      config,
+      String(params.productId),
+      fetcher,
+    ).catch(() => null);
+    if (viaApi?.trackingLink) return ensureSafe(viaApi.trackingLink);
+  }
+
   const storedCookie = await getLazadaCookie(db, config).catch(() => null);
 
   // Subid đối soát người mua: dùng subIdTemplateKey của Lazada mang
@@ -878,7 +893,11 @@ export async function createPurchaseIntent(
       ? config.TIKTOK_OPEN_API_APP_KEY
       : resolved.platform === "LAZADA"
         ? lazadaProgramAffiliateId(config) ||
-          (lazadaProfileId || lazadaHasCookie ? "lazada-profile" : "")
+          (isLazadaAffiliateConfigured(config) ||
+          lazadaProfileId ||
+          lazadaHasCookie
+            ? "lazada-profile"
+            : "")
         : "");
   if (
     !isPlatformPurchaseEnabled(config, resolved.platform) ||

@@ -260,3 +260,69 @@ export async function fetchLazadaAffiliateProduct(
     return null;
   }
 }
+
+const LINK_PATH = "/marketing/product/link";
+
+export interface LazadaAffiliateLink {
+  trackingLink: string;
+  productName?: string;
+  commissionRateBps?: number;
+}
+
+/**
+ * Sinh link Affiliate Lazada CHÍNH THỨC qua Open API `/marketing/product/link`
+ * (chỉ cần productId + userToken, KHÔNG cần cookie/profile). Trả link rút gọn
+ * s.lazada.vn đã gắn tài khoản affiliate (click tự tính về tài khoản), kèm tên
+ * sản phẩm + tỷ lệ hoa hồng. Đây là đường tạo link ưu tiên; các đường
+ * cookie/profile/Master Link chỉ là dự phòng.
+ */
+export async function fetchLazadaAffiliateLink(
+  config: AppConfig,
+  itemId: string,
+  fetcher: Fetcher = fetch,
+): Promise<LazadaAffiliateLink | null> {
+  if (!isLazadaAffiliateConfigured(config)) return null;
+  if (!/^\d{1,20}$/.test(itemId)) return null;
+
+  const params: Record<string, string> = {
+    app_key: config.LAZADA_OPEN_API_APP_KEY,
+    timestamp: String(Date.now()),
+    sign_method: "sha256",
+    userToken: config.LAZADA_AFFILIATE_USER_TOKEN,
+    productId: itemId,
+  };
+  const sign = signLazadaRequest(
+    LINK_PATH,
+    params,
+    config.LAZADA_OPEN_API_APP_SECRET,
+  );
+  const endpoint = new URL(`${BASE_URL}${LINK_PATH}`);
+  for (const [key, value] of Object.entries(params)) {
+    endpoint.searchParams.set(key, value);
+  }
+  endpoint.searchParams.set("sign", sign);
+
+  try {
+    const response = await fetcher(endpoint, {
+      redirect: "error",
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(config.SHOPEE_PRODUCT_LOOKUP_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    const json = JSON.parse(await response.text()) as JsonObject;
+    const data = asObject(asObject(json.result)?.data);
+    const trackingLink = optionalString(data?.trackingLink);
+    if (!trackingLink) return null;
+    return {
+      trackingLink,
+      ...(optionalString(data?.productName)
+        ? { productName: optionalString(data?.productName)! }
+        : {}),
+      ...(fractionToBps(data?.commisionRate) !== undefined
+        ? { commissionRateBps: fractionToBps(data?.commisionRate)! }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
+}
