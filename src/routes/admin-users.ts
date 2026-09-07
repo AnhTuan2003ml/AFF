@@ -320,6 +320,7 @@ export async function registerAdminUserRoutes(
             role: string;
             referral_code: string;
             is_special_partner: boolean;
+            partner_share_percent: number | null;
             referred_by_name: string | null;
             referred_by_email: string | null;
             created_at: Date;
@@ -342,7 +343,7 @@ export async function registerAdminUserRoutes(
             deps.db,
             `
               SELECT u.id, u.email, u.full_name, u.status, u.role,
-                u.referral_code, u.is_special_partner,
+                u.referral_code, u.is_special_partner, u.partner_share_percent,
                 referrer.full_name AS referred_by_name,
                 referrer.email AS referred_by_email, u.created_at,
                 u.last_login_at, u.email_verified_at, u.deleted_at,
@@ -1130,6 +1131,57 @@ export async function registerAdminUserRoutes(
       // Gọi từ bảng danh sách (next=list) thì quay về đúng danh sách đang lọc.
       const next = (request.body as Record<string, unknown>).next;
       if (next === "list") return reply.redirect("/backoffice/accounts");
+      return reply.redirect(`/backoffice/accounts/${request.params.id}`);
+    },
+  );
+
+  // Đặt/hạ/xóa % hoa hồng RIÊNG cho một đối tác (override mức chung).
+  app.post<{ Params: { id: string } }>(
+    "/accounts/:id/partner-percent",
+    async (request, reply) => {
+      try {
+        const raw = String(
+          (request.body as Record<string, unknown>).percent ?? "",
+        ).trim();
+        let percent: number | null;
+        if (raw === "") {
+          percent = null; // để trống = xóa % riêng, dùng lại mức chung
+        } else {
+          const n = Number(raw);
+          if (!Number.isInteger(n) || n < 0 || n > 100) {
+            throw new AppError(
+              "INVALID_PERCENT",
+              "Tỷ lệ % phải là số nguyên từ 0 đến 100.",
+            );
+          }
+          percent = n;
+        }
+        const updated = await query<{ id: string }>(
+          deps.db,
+          `UPDATE users SET partner_share_percent = $2
+           WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+          [request.params.id, percent],
+        );
+        if (!updated.rows[0]) {
+          throw new AppError("USER_NOT_FOUND", "Không tìm thấy người dùng.");
+        }
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: "USER_PARTNER_PERCENT_SET",
+          targetType: "USER",
+          targetId: request.params.id,
+          after: { partner_share_percent: percent },
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          percent === null
+            ? "Đã xóa % riêng — đối tác dùng lại mức chung."
+            : `Đã đặt % hoa hồng riêng cho đối tác: ${percent}%.`,
+        );
+      } catch (error) {
+        flashAdminError(reply, deps.config, error);
+      }
       return reply.redirect(`/backoffice/accounts/${request.params.id}`);
     },
   );

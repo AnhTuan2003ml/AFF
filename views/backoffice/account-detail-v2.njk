@@ -23,6 +23,17 @@
             <button type="submit" class="button button-ghost button-small">{{ 'Bỏ đặc biệt' if user.is_special_partner else 'Đặt làm đặc biệt' }}</button>
           </form>
         </span>
+        <span class="partner-percent-cell">
+          {% if user.partner_share_percent != null %}<b>% riêng: {{ user.partner_share_percent }}%</b>{% else %}<span>% hoa hồng: mức chung</span>{% endif %}
+          <form method="post" action="/backoffice/accounts/{{ user.id }}/partner-percent" style="display:inline-flex;gap:6px;align-items:center">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <input type="number" name="percent" min="0" max="100" step="1"
+              value="{{ user.partner_share_percent if user.partner_share_percent != null else '' }}"
+              placeholder="—" style="width:64px"
+              title="Tỷ lệ % chia cho đối tác này. Để trống = dùng mức chung (đặc biệt/thường).">
+            <button type="submit" class="button button-ghost button-small">Lưu %</button>
+          </form>
+        </span>
         <span>
           {% if user.referred_by_name %}
             Vào qua giới thiệu của <b>{{ user.referred_by_name }}</b> ({{ user.referred_by_email }})

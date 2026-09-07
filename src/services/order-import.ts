@@ -842,15 +842,21 @@ export async function importOrderRow(
       : undefined;
   const sharerUserId = explicitSharer ?? referralSharer;
 
-  // Đối tác ĐẶC BIỆT hưởng specialPartnerSharePercent thay cho mức thường.
+  // % chia cho sharer: ưu tiên % RIÊNG của đối tác (partner_share_percent),
+  // rồi tới mức đặc biệt (is_special_partner), cuối cùng là mức thường (F1).
   let sharerLaDacBiet = false;
+  let sharerCustomPercent: number | null = null;
   if (sharerUserId) {
-    const sharerRow = await query<{ is_special_partner: boolean }>(
+    const sharerRow = await query<{
+      is_special_partner: boolean;
+      partner_share_percent: number | null;
+    }>(
       db,
-      "SELECT is_special_partner FROM users WHERE id = $1",
+      "SELECT is_special_partner, partner_share_percent FROM users WHERE id = $1",
       [sharerUserId],
     );
     sharerLaDacBiet = sharerRow.rows[0]?.is_special_partner ?? false;
+    sharerCustomPercent = sharerRow.rows[0]?.partner_share_percent ?? null;
   }
 
   // Chính sách 2026-08-29: nền tảng giữ 40% (đơn ≤ 25k: 20%); người giới thiệu
@@ -862,9 +868,12 @@ export async function importOrderRow(
         orderAmount > 0 ? orderAmount : null,
         businessConfig,
       ),
-      sharerSharePercent: sharerLaDacBiet
-        ? businessConfig.specialPartnerSharePercent
-        : businessConfig.referrerSharePercent,
+      sharerSharePercent:
+        sharerCustomPercent !== null
+          ? sharerCustomPercent
+          : sharerLaDacBiet
+            ? businessConfig.specialPartnerSharePercent
+            : businessConfig.referrerSharePercent,
     },
     Boolean(sharerUserId),
   );
