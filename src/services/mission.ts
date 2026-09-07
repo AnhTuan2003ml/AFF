@@ -264,13 +264,21 @@ export async function deleteMissionDefinition(
 
 export async function createNotification(
   db: Database | Transaction,
-  params: { userId: string; type: string; title: string; body?: string },
+  params: {
+    userId: string;
+    type: string;
+    title: string;
+    body?: string;
+    /** Bỏ qua push riêng lẻ — dùng khi caller sẽ gộp nhiều đơn thành 1 push. */
+    skipPush?: boolean;
+  },
 ): Promise<void> {
   await query(
     db,
     `INSERT INTO notifications (user_id, type, title, body) VALUES ($1, $2, $3, $4)`,
     [params.userId, params.type, params.title, params.body ?? ""],
   );
+  if (params.skipPush) return;
   // Bắn push ra thiết bị (fire-and-forget) để báo ngoài app như các app khác.
   void sendPushToUser(db, params.userId, {
     title: params.title,

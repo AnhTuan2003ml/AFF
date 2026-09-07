@@ -14,10 +14,52 @@ import {
 import { maybeRewardReferral } from "./referral-reward.js";
 import { camioVoice } from "./camio-voice.js";
 import { createNotification } from "./mission.js";
+import { sendPushToUser } from "./push.js";
 import {
   PRODUCT_PLATFORMS,
   type ProductPlatform,
 } from "./affiliate.js";
+
+/** Một lượt đổi trạng thái đơn cần báo ngoài app (gộp per-user ở caller). */
+export interface OrderStatusNotify {
+  userId: string;
+  orderCode: string;
+  kind: "PENDING" | "APPROVED";
+}
+
+/**
+ * Gộp các lượt đổi trạng thái đơn trong MỘT lần đồng bộ thành MỘT push mỗi
+ * người: mỗi đơn một dòng, quá 3 đơn thì rút gọn "…và N đơn khác". Gọi sau khi
+ * xử lý xong cả batch (fire-and-forget qua sendPushToUser).
+ */
+export async function flushOrderStatusPushes(
+  db: Database,
+  notifies: OrderStatusNotify[],
+): Promise<void> {
+  const byUser = new Map<string, OrderStatusNotify[]>();
+  for (const n of notifies) {
+    const list = byUser.get(n.userId) ?? [];
+    list.push(n);
+    byUser.set(n.userId, list);
+  }
+  const label = (kind: OrderStatusNotify["kind"]): string =>
+    kind === "APPROVED" ? "đã duyệt" : "đang duyệt";
+  for (const [userId, list] of byUser) {
+    const lines = list
+      .slice(0, 3)
+      .map((n) => `• Đơn ${n.orderCode}: ${label(n.kind)}`);
+    if (list.length > 3) lines.push(`…và ${list.length - 3} đơn khác`);
+    const title =
+      list.length === 1
+        ? `Đơn ${list[0]!.orderCode} ${label(list[0]!.kind)}`
+        : `${list.length} đơn cập nhật trạng thái`;
+    await sendPushToUser(db, userId, {
+      title,
+      body: lines.join("\n"),
+      data: { type: "ORDER_STATUS" },
+    });
+  }
+}
 
 export type ImportOrderStatus =
   | "PENDING"
@@ -758,7 +800,11 @@ export async function importOrderRow(
   config: AppConfig,
   row: OrderImportRow,
   actorId: string,
-): Promise<{ orderId: string; status: ImportOrderStatus }> {
+): Promise<{
+  orderId: string;
+  status: ImportOrderStatus;
+  notify?: OrderStatusNotify;
+}> {
   const platform = normalizePlatform(row.platform);
   const platformOrderId = String(row.platform_order_id ?? "").trim();
   if (!/^[A-Za-z0-9_-]{3,100}$/.test(platformOrderId)) {
@@ -1171,23 +1217,36 @@ export async function importOrderRow(
       `,
       [rawId],
     );
-    // Đơn vừa được sàn XÁC NHẬN (lần đầu chuyển sang APPROVED) → báo cho khách.
-    if (
-      row.status === "APPROVED" &&
-      (!existing || existing.status !== "APPROVED") &&
-      split.buyerVnd > 0
-    ) {
+    // Đổi trạng thái đơn → ghi thông báo trong app (KHÔNG push lẻ; caller gộp
+    // nhiều đơn thành MỘT push ngoài app). "đang chờ"→"đang duyệt" (đơn mới hiện
+    // trên sàn, PENDING) và "đang duyệt"→"đã duyệt" (APPROVED).
+    let notify: OrderStatusNotify | undefined;
+    const toApproved =
+      row.status === "APPROVED" && (!existing || existing.status !== "APPROVED");
+    const toPending =
+      row.status === "PENDING" && (!existing || existing.status !== "PENDING");
+    if (toApproved && split.buyerVnd > 0) {
       await createNotification(db, {
         userId: owner.userId,
         type: "ORDER_APPROVED",
+        skipPush: true,
         ...camioVoice.orderApproved({
           orderCode: platformOrderId,
           platform,
           amount: `${split.buyerVnd.toLocaleString("vi-VN")}₫`,
         }),
       });
+      notify = { userId: owner.userId, orderCode: platformOrderId, kind: "APPROVED" };
+    } else if (toPending) {
+      await createNotification(db, {
+        userId: owner.userId,
+        type: "ORDER_PENDING",
+        skipPush: true,
+        ...camioVoice.orderPending({ orderCode: platformOrderId, platform }),
+      });
+      notify = { userId: owner.userId, orderCode: platformOrderId, kind: "PENDING" };
     }
-    return { orderId, status: row.status };
+    return { orderId, status: row.status, ...(notify ? { notify } : {}) };
   } catch (error) {
     await query(
       db,

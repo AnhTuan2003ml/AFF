@@ -8,9 +8,11 @@ import { parseInput } from "../lib/validation.js";
 import { writeAuditLog } from "../services/audit.js";
 import { getBusinessConfig } from "../services/business-config.js";
 import {
+  flushOrderStatusPushes,
   importOrderRow,
   normalizeOrderImportRecord,
   type OrderImportRow,
+  type OrderStatusNotify,
 } from "../services/order-import.js";
 import {
   flashAdminError,
@@ -86,7 +88,7 @@ async function reviewCashbackOrder(
       "Không thể duyệt hoàn tiền: đơn chưa có chuỗi bằng chứng Sub ID/Click ID khớp với tài khoản ShopTik.",
     );
   }
-  await importOrderRow(
+  const manualResult = await importOrderRow(
     deps.db,
     deps.config,
     {
@@ -101,6 +103,9 @@ async function reviewCashbackOrder(
     },
     request.currentUser!.id,
   );
+  if (manualResult.notify) {
+    await flushOrderStatusPushes(deps.db, [manualResult.notify]);
+  }
   await query(
     deps.db,
     `
@@ -322,6 +327,7 @@ export async function registerAdminOrderRoutes(
       let success = 0;
       let autoApproved = 0;
       const failures: string[] = [];
+      const notifies: OrderStatusNotify[] = [];
       for (const [index, row] of records.entries()) {
         try {
           const hasTrackingEvidence = Boolean(
@@ -343,6 +349,7 @@ export async function registerAdminOrderRoutes(
             shouldAutoApprove ? { ...row, status: "APPROVED" } : row,
             request.currentUser!.id,
           );
+          if (imported.notify) notifies.push(imported.notify);
           if (shouldAutoApprove) {
             autoApproved += 1;
             await query(
@@ -373,6 +380,7 @@ export async function registerAdminOrderRoutes(
           );
         }
       }
+      await flushOrderStatusPushes(deps.db, notifies);
       await writeAuditLog(deps.db, deps.config, request, {
         action: "ORDERS_IMPORTED",
         targetType: "ORDER_BATCH",

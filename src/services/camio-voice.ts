@@ -34,6 +34,22 @@ export function platformName(platform: string): string {
 }
 
 export const camioVoice = {
+  /** Sàn vừa GHI NHẬN đơn (chuyển từ "đang chờ" sang "đang duyệt"). */
+  orderPending(p: { orderCode: string; platform: string }): CamioNotice {
+    const san = platformName(p.platform);
+    return {
+      title: pick([
+        "Đơn đã lên sàn rồi 👀",
+        "Camio thấy đơn của bạn!",
+        "Có đơn mới đang duyệt 🧡",
+      ]),
+      body: pick([
+        `Đơn ${p.orderCode} trên ${san} đã được ghi nhận, đang chờ sàn duyệt. Camio sẽ báo khi có kết quả.`,
+        `${san} đã nhận đơn ${p.orderCode} của bạn — đang duyệt. Theo dõi ở mục Đơn hàng nhé!`,
+      ]),
+    };
+  },
+
   /** Sàn vừa XÁC NHẬN đơn — tiền hoàn ghi nhận vào ví CHỜ (chưa rút được). */
   orderApproved(p: { orderCode: string; platform: string; amount: string }): CamioNotice {
     const san = platformName(p.platform);

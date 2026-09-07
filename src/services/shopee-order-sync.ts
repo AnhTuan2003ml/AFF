@@ -13,7 +13,12 @@ import {
   parseShopeeReportOrders,
   type ShopeeSyncOrder,
 } from "./shopee-report.js";
-import { importOrderRow, type OrderImportRow } from "./order-import.js";
+import {
+  flushOrderStatusPushes,
+  importOrderRow,
+  type OrderImportRow,
+  type OrderStatusNotify,
+} from "./order-import.js";
 
 type Fetcher = typeof fetch;
 
@@ -123,14 +128,16 @@ export async function runShopeeOrderSync(
     const orders = parseShopeeReportOrders(report.list);
     summary.fetched = orders.length;
 
+    const notifies: OrderStatusNotify[] = [];
     for (const order of orders) {
       try {
-        await importOrderRow(
+        const res = await importOrderRow(
           db,
           config,
           toOrderImportRow(order),
           options.actorId,
         );
+        if (res.notify) notifies.push(res.notify);
         summary.imported += 1;
       } catch (error) {
         const appError = error instanceof AppError ? error : null;
@@ -148,6 +155,8 @@ export async function runShopeeOrderSync(
         }
       }
     }
+    // Gộp mọi đổi trạng thái của lượt này thành 1 push mỗi người.
+    await flushOrderStatusPushes(db, notifies);
     outcome = {
       status: summary.failed ? "PARTIAL" : "SUCCESS",
       fetched: summary.fetched,

@@ -7,7 +7,12 @@ import {
   isLazadaAffiliateConfigured,
   type LazadaConversionOrder,
 } from "./lazada-affiliate-api.js";
-import { importOrderRow, type OrderImportRow } from "./order-import.js";
+import {
+  flushOrderStatusPushes,
+  importOrderRow,
+  type OrderImportRow,
+  type OrderStatusNotify,
+} from "./order-import.js";
 
 type Fetcher = typeof fetch;
 
@@ -137,6 +142,7 @@ export async function runLazadaOrderSync(
     failures: [],
   };
 
+  const notifies: OrderStatusNotify[] = [];
   for (const range of monthRanges(new Date())) {
     for (let page = 1; page <= 50; page += 1) {
       const orders = await fetchLazadaConversionReport(
@@ -147,12 +153,13 @@ export async function runLazadaOrderSync(
       summary.fetched += orders.length;
       for (const order of orders) {
         try {
-          await importOrderRow(
+          const res = await importOrderRow(
             db,
             config,
             toOrderImportRow(order),
             options.actorId,
           );
+          if (res.notify) notifies.push(res.notify);
           summary.imported += 1;
         } catch (error) {
           const appError = error instanceof AppError ? error : null;
@@ -171,6 +178,7 @@ export async function runLazadaOrderSync(
       if (orders.length < 100) break; // hết trang của khoảng này
     }
   }
+  await flushOrderStatusPushes(db, notifies);
 
   const release = await releaseDueCashback(db, { actorId: options.actorId });
   summary.releasedOrders = release.released;
