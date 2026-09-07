@@ -29,6 +29,19 @@ export async function registerPublicRoutes(
     reply.redirect("/assets/images/icon.png"),
   );
 
+  // Xác minh sở hữu site cho Google Search Console — file phải phục vụ ở GỐC
+  // (không phải /assets). Nội dung đúng chuẩn Google: một dòng duy nhất.
+  app.get(
+    "/googleb508425d4f4d370d.html",
+    { config: { csrf: false } },
+    (_request, reply) => {
+      reply.type("text/html; charset=utf-8");
+      return reply.send(
+        "google-site-verification: googleb508425d4f4d370d.html",
+      );
+    },
+  );
+
   // Đổi ngôn ngữ hiển thị: đặt cookie `lang` rồi quay lại trang trước. Chỉ nhận
   // 'vi'/'en'; chỉ redirect nội bộ (bắt đầu "/") để tránh open-redirect.
   app.get<{ Params: { code: string }; Querystring: { next?: string } }>(
