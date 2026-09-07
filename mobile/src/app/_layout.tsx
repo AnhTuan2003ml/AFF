@@ -1,11 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
+import { useEffect } from 'react';
+import { Appearance } from 'react-native';
 
 import { SessionProvider } from '@/hooks/useSession';
 import { LanguageProvider } from '@/i18n';
-import { colors } from '@/theme/tokens';
+import { colors, isDarkTheme } from '@/theme/tokens';
 
 /*
  * Tạo QueryClient MỘT lần ở tầng module, không phải trong component.
@@ -24,14 +27,14 @@ const queryClient = new QueryClient({
 });
 
 /*
- * Khoá giao diện sáng. Web (`public/luxury-ui.css`) đặt cứng
- * `color-scheme: light` và không có bảng màu tối, nên để app đi theo chế độ của
- * máy sẽ khiến app và web lệch hẳn nhau ngay khi người dùng bật chế độ tối.
+ * Theme đi THEO MÁY, giống web: web đã có bảng tối (`public/luxury-dark.css`)
+ * và tự chọn theo prefers-color-scheme, app cũng vậy — `tokens.ts` đọc chế độ
+ * của máy một lần lúc mở app và xuất đúng bảng màu (sáng/tối espresso ấm).
  */
 const theme = {
-  ...DefaultTheme,
+  ...(isDarkTheme ? DarkTheme : DefaultTheme),
   colors: {
-    ...DefaultTheme.colors,
+    ...(isDarkTheme ? DarkTheme.colors : DefaultTheme.colors),
     background: colors.paper,
     card: colors.surface,
     text: colors.text,
@@ -41,6 +44,18 @@ const theme = {
 };
 
 export default function RootLayout() {
+  // Bảng màu cố định từ lúc mở app (mọi màn import `colors` tĩnh). Máy đổi
+  // sáng↔tối giữa chừng thì nạp lại bundle để chọn lại bảng — sự kiện hiếm,
+  // đổi theme cả hệ thống nên người dùng không thấy đường đột.
+  useEffect(() => {
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      if ((colorScheme === 'dark') !== isDarkTheme) {
+        Updates.reloadAsync().catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* SessionProvider nằm TRONG QueryClientProvider vì nó gọi
@@ -48,7 +63,7 @@ export default function RootLayout() {
       <SessionProvider>
         <LanguageProvider>
         <ThemeProvider value={theme}>
-          <StatusBar style="dark" />
+          <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             {/* Đăng nhập trượt lên từ đáy như một tờ giấy, không đẩy tab đi. */}

@@ -1,5 +1,5 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state, role_label %}
+{% from "partials/macros.njk" import status_badge, empty_state, role_label, pagination_bar %}
 {% from "partials/icons.njk" import icon %}
 
 {% block backoffice_content %}
@@ -107,6 +107,10 @@
   <section class="panel data-panel">
     <header class="panel-heading"><div><span class="admin-kicker">DANH SÁCH</span><h2>{{ pagination.total }} tài khoản</h2></div><span class="muted">Trang {{ pagination.page }}/{{ pagination.pages }}</span></header>
     {% if users.length %}
+      {{ pagination_bar(pagination, '/backoffice/accounts', {
+      q: filters.q, status: filters.status, role: filters.role,
+      partner: filters.partner, deleted: filters.deleted
+      }) }}
       <div class="responsive-table"><table class="admin-data-table">
         <thead><tr><th>Người dùng</th><th>Đối tác</th><th>Trạng thái</th><th>Nguồn vào</th><th>Đơn mua</th><th>Tiền hoàn</th><th>Đã mời</th><th>Hoạt động cuối</th><th class="row-actions-cell"><span class="sr-only">Hành động</span></th></tr></thead>
         <tbody>{% for user in users %}<tr class="{% if user.is_special_partner %}is-partner-row {% endif %}{% if user.deleted_at %}is-deleted-row{% endif %}">
@@ -161,7 +165,6 @@
           </td>
         </tr>{% endfor %}</tbody>
       </table></div>
-      {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Phân trang">{% if pagination.page > 1 %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;partner={{ filters.partner }}&amp;page={{ pagination.page - 1 }}">← Trước</a>{% endif %}<span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.page < pagination.pages %}<a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;role={{ filters.role }}&amp;partner={{ filters.partner }}&amp;page={{ pagination.page + 1 }}">Sau →</a>{% endif %}</nav>{% endif %}
     {% else %}{{ empty_state("Không tìm thấy tài khoản", "Hãy thử đổi từ khóa hoặc bộ lọc.") }}{% endif %}
   </section>
 

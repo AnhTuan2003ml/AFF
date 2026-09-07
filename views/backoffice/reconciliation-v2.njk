@@ -1,5 +1,5 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/macros.njk" import status_badge, empty_state, pagination_bar %}
 {% from "partials/icons.njk" import icon %}
 
 {% set canReview = currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}
@@ -104,6 +104,9 @@
         </form>
       {% endif %}
 
+      {{ pagination_bar(pagination, '/backoffice/reconciliation', {
+      q: filters.q, status: filters.status
+      }) }}
       <div class="responsive-table">
         <table class="admin-data-table order-review-table">
           <thead>
@@ -267,17 +270,6 @@
         </div>
       {% endfor %}
 
-      {% if pagination.pages > 1 %}
-        <nav class="pagination" aria-label="Phân trang">
-          {% if pagination.page > 1 %}
-            <a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;page={{ pagination.page - 1 }}">← Trước</a>
-          {% endif %}
-          <span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>
-          {% if pagination.page < pagination.pages %}
-            <a class="button button-ghost" href="?q={{ filters.q | urlencode }}&amp;status={{ filters.status }}&amp;page={{ pagination.page + 1 }}">Sau →</a>
-          {% endif %}
-        </nav>
-      {% endif %}
     {% else %}
       {{ empty_state("Chưa có đơn phù hợp", "Thử thay đổi bộ lọc hoặc nhập báo cáo mới.") }}
     {% endif %}

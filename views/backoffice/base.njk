@@ -2,6 +2,7 @@
 {% from "partials/icons.njk" import icon %}
 {% from "partials/macros.njk" import role_label %}
 
+
 {% block base_styles %}
   <link rel="stylesheet" href="/assets/styles.css?v={{ assetVersion }}">
   <link rel="stylesheet" href="/assets/instant-purchase.css?v={{ assetVersion }}">
@@ -77,7 +78,7 @@
            bằng tài khoản nào trước khi bấm duyệt tiền. #}
         <div class="bo-side-foot">
           <div class="bo-side-foot-card">
-            <i aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</i>
+            <i aria-hidden="true">{% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}{% endif %}</i>
             <span>
               <b title="{{ currentUser.email }}">{{ currentUser.fullName or currentUser.email }}</b>
               <small>{{ role_label(currentUser.role) }}</small>
@@ -129,6 +130,18 @@
 
           <div class="st-topbar-spacer"></div>
 
+          {# Mobile: tổng việc đang chờ (đơn, rút tiền, thưởng, đổi mã, ngân
+             hàng — trừ đối tác vì đã có chuông riêng) dồn vào MỘT icon có số
+             đếm, thay cho dải chip từng chiếm đầu mọi trang. Desktop ẩn icon
+             này vì topbar đã có dải chip chi tiết. #}
+          {% set boQueueTotal = backofficeOrdersPendingCount + backofficeWithdrawalsPendingCount + backofficeMissionsPendingCount + backofficeReferralCodesPendingCount + backofficeBanksPendingCount %}
+          <a href="/backoffice/console" class="bo-bell bo-queue-ico"
+             title="{% if boQueueTotal > 0 %}{{ boQueueTotal }} việc đang chờ xử lý{% else %}Không còn việc chờ xử lý{% endif %}"
+             aria-label="{% if boQueueTotal > 0 %}{{ boQueueTotal }} việc đang chờ xử lý{% else %}Việc chờ xử lý{% endif %}">
+            {{ icon('orders') }}
+            {% if boQueueTotal > 0 %}<em class="bo-bell-badge">{{ boQueueTotal }}</em>{% endif %}
+          </a>
+
           {# Chuông nhắc: có hồ sơ đối tác đang chờ duyệt thì đổ đỏ + rung nhẹ. #}
           <a href="/backoffice/kol" class="bo-bell{% if backofficeKolPendingCount > 0 %} is-alert{% endif %}"
              title="{% if backofficeKolPendingCount > 0 %}{{ backofficeKolPendingCount }} hồ sơ đối tác đang chờ duyệt{% else %}Không có hồ sơ đối tác chờ duyệt{% endif %}"
@@ -141,11 +154,23 @@
             {{ icon('audit') }}<span>Hướng dẫn</span>
           </button>
 
-          {% include "partials/theme-button.njk" %}
+          {# Đổi ngôn ngữ VI/EN như header khu người dùng (details nên
+             không cần JS). Nút gạt theme đã bỏ — theme tự theo máy. #}
+          <details class="bo-lang-menu">
+            <summary class="st-icon-button bo-lang-trigger" aria-label="{{ t('Ngôn ngữ', 'Language') }}" title="{{ t('Ngôn ngữ', 'Language') }}">
+              {# width/height gắn cứng để icon đúng cỡ ngay cả khi CSS bị cache cũ. #}
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>
+              <span class="bo-lang-code">{{ 'VI' if lang == 'vi' else 'EN' }}</span>
+            </summary>
+            <div class="bo-lang-panel" role="menu">
+              <a href="/lang/vi?next={{ currentPath | urlencode }}" role="menuitem"{% if lang == 'vi' %} class="active" aria-current="true"{% endif %}>🇻🇳 Tiếng Việt</a>
+              <a href="/lang/en?next={{ currentPath | urlencode }}" role="menuitem"{% if lang == 'en' %} class="active" aria-current="true"{% endif %}>🇬🇧 English</a>
+            </div>
+          </details>
 
           <div class="st-menu">
             <button type="button" class="st-account" data-menu-trigger aria-haspopup="true" aria-expanded="false" title="{{ currentUser.email }}">
-              <span class="st-avatar" aria-hidden="true">{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>
+              <span class="st-avatar" aria-hidden="true">{% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}{% endif %}</span>
               <span class="st-account-email">{{ currentUser.email }}</span>
               <svg class="st-menu-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
             </button>
@@ -166,31 +191,8 @@
 
         <main class="st-content" id="main-content" tabindex="-1">
           {% include "partials/flash.njk" %}
-          {# Bản mobile của dải hàng chờ: topbar navy đã kín chỗ nên nó xuống
-             đầu nội dung, cuộn ngang được. #}
-          {# Container luôn render (hidden khi trống) để admin-queue-live.js
-             bơm việc mới vào realtime mà không cần tải lại trang. #}
-          {% set moQueueMobile = backofficeOrdersPendingCount > 0 or backofficeWithdrawalsPendingCount > 0 or backofficeMissionsPendingCount > 0 or backofficeReferralCodesPendingCount > 0 or backofficeBanksPendingCount > 0 or backofficeKolPendingCount > 0 %}
-            <div class="bo-queue-mobile" aria-label="Việc đang chờ xử lý"{% if not moQueueMobile %} hidden{% endif %}>
-              {% if backofficeOrdersPendingCount > 0 %}
-                <a href="/backoffice/reconciliation"><b>{{ backofficeOrdersPendingCount }}</b>Đơn hoàn tiền</a>
-              {% endif %}
-              {% if backofficeWithdrawalsPendingCount > 0 %}
-                <a href="/backoffice/withdrawals"><b>{{ backofficeWithdrawalsPendingCount }}</b>Yêu cầu rút</a>
-              {% endif %}
-              {% if backofficeMissionsPendingCount > 0 %}
-                <a href="/backoffice/missions"><b>{{ backofficeMissionsPendingCount }}</b>Nhận thưởng</a>
-              {% endif %}
-              {% if backofficeReferralCodesPendingCount > 0 %}
-                <a href="/backoffice/accounts"><b>{{ backofficeReferralCodesPendingCount }}</b>Đổi mã mời</a>
-              {% endif %}
-              {% if backofficeBanksPendingCount > 0 %}
-                <a href="/backoffice/banks"><b>{{ backofficeBanksPendingCount }}</b>Ngân hàng xác minh</a>
-              {% endif %}
-              {% if backofficeKolPendingCount > 0 %}
-                <a href="/backoffice/kol"><b>{{ backofficeKolPendingCount }}</b>Duyệt đối tác</a>
-              {% endif %}
-            </div>
+          {# Dải chip "việc đang chờ" bản mobile đã bỏ — thay bằng icon
+             tổng số trên topbar (bo-queue-ico), khỏi chiếm đầu mọi trang. #}
           {% block backoffice_content %}{% endblock %}
         </main>
       </div>

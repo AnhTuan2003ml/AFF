@@ -35,6 +35,8 @@
   </div>
 {% endmacro %}
 
+{% from "partials/macros.njk" import pagination_bar %}
+
 {% block backoffice_content %}
   <link rel="stylesheet" href="/assets/kol.css?v={{ assetVersion }}">
   <section class="admin-page-heading">
@@ -57,6 +59,7 @@
   {% if applications.recent.length %}
     <section class="panel data-panel">
       <header class="panel-heading"><div><span class="admin-kicker">GẦN ĐÂY</span><h2>Đã xử lý</h2></div></header>
+      {{ pagination_bar(pagination, '/backoffice/kol') }}
       {{ kol_table(applications.recent) }}
     </section>
   {% endif %}

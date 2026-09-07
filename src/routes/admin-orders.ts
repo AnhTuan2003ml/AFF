@@ -15,8 +15,10 @@ import {
   type OrderStatusNotify,
 } from "../services/order-import.js";
 import {
+  buildPagination,
   flashAdminError,
   pageNumber,
+  perPageNumber,
   selectedValue,
   type AdminConsoleDeps,
 } from "./admin-console-shared.js";
@@ -148,7 +150,7 @@ export async function registerAdminOrderRoutes(
     );
     const q = String(params.q ?? "").trim().slice(0, 120);
     const page = pageNumber(params.page);
-    const limit = 20;
+    const limit = perPageNumber(params.perPage);
     const offset = (page - 1) * limit;
     const [orders, summary, businessConfig] = await Promise.all([
       query<{
@@ -278,11 +280,7 @@ export async function registerAdminOrderRoutes(
       summary: summary.rows[0],
       autoCashbackEnabled: businessConfig.enableAutoCashbackApproval,
       filters: { q, status },
-      pagination: {
-        page,
-        pages: Math.max(1, Math.ceil(total / limit)),
-        total,
-      },
+      pagination: buildPagination(page, limit, total),
     });
   });
 

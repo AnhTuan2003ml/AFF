@@ -10,6 +10,13 @@
 
 {% block app_content %}
   {% set profileBalances = headerBalances or balances %}
+  {# Desktop: tiêu đề trang như các trang khác. Mobile ẩn (CSS) — tab
+     "Tài khoản" đã mở đầu bằng thẻ hồ sơ, thêm tiêu đề nữa là thừa. #}
+  <section class="px-page-intro mb-settings-intro">
+    <span class="px-eyebrow">{{ t('TÀI KHOẢN', 'ACCOUNT') }}</span>
+    <h1>{{ t('Tất cả chức năng.', 'All features.') }}</h1>
+    <p>{{ t('Mọi lối vào ví, đơn hàng, hồ sơ và cài đặt — gom về một nơi.', 'Every entry to wallet, orders, profile and settings — in one place.') }}</p>
+  </section>
   {# Khung hẹp căn giữa: trên desktop tránh menu ngắn trải hết bề rộng cho đỡ loạn. #}
   <div class="mb-shell">
   <a class="mb-profile mb-profile-link" href="/app/profile" aria-label="{{ t('Xem thông tin cá nhân', 'View personal info') }}">
@@ -90,6 +97,12 @@
     <div class="mb-linklist">
       <a class="mb-linkrow" href="/app/support">{{ icon('support') }}<span>{{ t('Hỗ trợ & khiếu nại', 'Support & complaints') }}</span></a>
       <a class="mb-linkrow" href="/chinh-sach-nguoi-dung" data-user-policy-link>{{ icon('audit') }}<span>{{ t('Chính sách người dùng', 'User Policy') }}</span></a>
+      {# Chuyển từ menu avatar xuống đây — menu chỉ giữ lối tắt cốt lõi. #}
+      {% if currentUser.isSpecialPartner %}
+        <a class="mb-linkrow" href="/app/dang-ky-kol">{{ icon('user') }}<span>{{ t('Đối tác của chúng tôi', 'Our partner') }} ✓</span></a>
+      {% else %}
+        <a class="mb-linkrow" href="/app/dang-ky-kol">{{ icon('user') }}<span>{{ t('Đăng ký đối tác với chúng tôi', 'Become our partner') }}</span></a>
+      {% endif %}
       {% if currentUser.role != 'USER' %}
         <a class="mb-linkrow" href="/backoffice/console">{{ icon('ops') }}<span>{{ t('Mở trang quản trị', 'Open admin console') }}</span></a>
       {% endif %}

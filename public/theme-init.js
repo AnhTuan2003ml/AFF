@@ -1,12 +1,15 @@
-// Áp theme đã lưu TRƯỚC khi trang vẽ để không chớp màu.
+// Áp theme TRƯỚC khi trang vẽ để không chớp màu.
 // Tách thành file riêng vì CSP script-src 'self' chặn script inline.
-// Nếu <html> đã có data-theme (vd auth page force light) thì không ghi đè.
+// Nếu <html> đã có data-theme (trang nào đó cố tình ép) thì không ghi đè.
+// Không còn nút gạt tay: mặc định mọi trang đi THEO MÁY
+// (prefers-color-scheme); data-theme-auto để app.js biết mà đổi live khi
+// hệ điều hành chuyển sáng/tối.
 (function () {
   try {
     var html = document.documentElement;
     if (html.getAttribute("data-theme")) return;
-    var saved = localStorage.getItem("aff-theme");
-    var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    html.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : system);
+    var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    html.setAttribute("data-theme", dark ? "dark" : "light");
+    html.setAttribute("data-theme-auto", "1");
   } catch (e) {}
 })();

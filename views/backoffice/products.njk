@@ -1,5 +1,5 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/macros.njk" import status_badge, empty_state, pagination_bar %}
 
 {% block page_scripts %}
   <link rel="stylesheet" href="/assets/backoffice-products.css?v={{ assetVersion }}">
@@ -185,6 +185,7 @@
       </header>
 
       {% if content.length %}
+        {{ pagination_bar(pagination, '/backoffice/products', { tab: 'content' }) }}
         <div class="discover-admin-grid">
           {% for item in content %}
             <article class="discover-admin-card">

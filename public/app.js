@@ -149,9 +149,6 @@
 
   const root = document.documentElement;
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
-  const isDarkNow = () =>
-    root.getAttribute("data-theme") === "dark" ||
-    (!root.hasAttribute("data-theme") && prefersDark.matches);
 
   const applyTheme = (theme) => {
     if (theme !== "light" && theme !== "dark") return;
@@ -165,13 +162,6 @@
     const scrollY = window.scrollY;
     root.classList.add("st-theme-switching");
     root.setAttribute("data-theme", theme);
-    document
-      .querySelectorAll("[data-theme-toggle]")
-      .forEach((b) => {
-        const dark = String(theme === "dark");
-        b.setAttribute("aria-pressed", dark);
-        b.setAttribute("aria-checked", dark);
-      });
     const restore = () => window.scrollTo(scrollX, scrollY);
     restore();
     requestAnimationFrame(() => {
@@ -185,43 +175,22 @@
     // vào tầm nhìn sau khi recalc xong toàn bộ stylesheet).
     window.setTimeout(restore, 120);
     window.setTimeout(restore, 320);
-    // Nhãn của nút theme mô tả HÀNH ĐỘNG sắp tới.
-    const nextLabel =
-      theme === "dark" ? "Bật giao diện sáng" : "Bật giao diện tối";
-    document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
-      b.setAttribute("aria-label", nextLabel);
-      b.setAttribute("title", nextLabel);
-    });
   };
 
-  document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
-    const dark = String(isDarkNow());
-    button.setAttribute("aria-pressed", dark);
-    button.setAttribute("aria-checked", dark);
-    const initialLabel = isDarkNow()
-      ? "Bật giao diện sáng"
-      : "Bật giao diện tối";
-    button.setAttribute("aria-label", initialLabel);
-    button.setAttribute("title", initialLabel);
-    button.addEventListener("click", () => {
-      const next = isDarkNow() ? "light" : "dark";
-      applyTheme(next);
-      try {
-        localStorage.setItem("aff-theme", next);
-      } catch (e) {}
-    });
-  });
+  // Không còn nút gạt theme. Trang nào để theme-init.js tự chọn theo máy
+  // (đánh dấu data-theme-auto) thì đổi LIVE ngay khi hệ điều hành chuyển
+  // sáng/tối — từng tab tự nghe, không cần đồng bộ qua localStorage nữa.
+  if (root.hasAttribute("data-theme-auto")) {
+    const followSystem = (event) =>
+      applyTheme(event.matches ? "dark" : "light");
+    if (prefersDark.addEventListener) {
+      prefersDark.addEventListener("change", followSystem);
+    } else if (prefersDark.addListener) {
+      prefersDark.addListener(followSystem);
+    }
+  }
 
-  // Giữ theme nhất quán giữa các tab đang mở và khi quay lại từ bfcache —
-  // trước đây đổi theme ở tab này thì tab khác vẫn giữ theme cũ.
-  window.addEventListener("storage", (event) => {
-    if (event.key === "aff-theme") applyTheme(event.newValue);
-  });
   window.addEventListener("pageshow", () => {
-    try {
-      const saved = localStorage.getItem("aff-theme");
-      if (saved) applyTheme(saved);
-    } catch (e) {}
     resetSubmitButtons();
   });
   resetSubmitButtons();

@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "scheme": "shoptik",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "vn.shoptik.app",
       "supportsTablet": false,
@@ -36,7 +36,11 @@
         {
           "backgroundColor": "#fbf8f4",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 160
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#16110e",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       "expo-secure-store"

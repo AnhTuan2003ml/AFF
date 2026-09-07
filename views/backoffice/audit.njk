@@ -1,5 +1,5 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import empty_state %}
+{% from "partials/macros.njk" import empty_state, pagination_bar %}
 {% from "partials/icons.njk" import icon %}
 
 {% block backoffice_content %}
@@ -40,6 +40,10 @@
 
   <section class="panel">
     {% if logs.length %}
+      {{ pagination_bar(pagination, '/backoffice/audit', {
+      actor: filters.actor, targetType: filters.targetType,
+      tone: filters.tone, dateFrom: filters.dateFrom, dateTo: filters.dateTo
+      }) }}
       <div class="responsive-table">
         <table class="admin-data-table">
           <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th><th>Kết quả</th><th><span class="sr-only">Chi tiết</span></th></tr></thead>

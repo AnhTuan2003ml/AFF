@@ -102,6 +102,24 @@ export function auditActionTone(action: string): AuditTone {
   return "neutral";
 }
 
+/**
+ * Danh sách mã hành động của một sắc thái — để lọc NGAY TRONG SQL.
+ *
+ * Trước đây trang Nhật ký lấy 300 dòng rồi mới lọc sắc thái bằng JS: phân
+ * trang kiểu đó sẽ sai (tổng số đếm trên tập chưa lọc) và luôn bỏ sót dòng
+ * cũ hơn 300 bản ghi. "neutral" là phần bù nên trả về null — SQL dùng NOT IN
+ * hai tập kia.
+ */
+export function auditActionsOfTone(tone: string): string[] | null {
+  if (tone === "POSITIVE") return [...AUDIT_ACTION_POSITIVE];
+  if (tone === "NEGATIVE") return [...AUDIT_ACTION_NEGATIVE];
+  return null;
+}
+
+export function auditActionsWithTone(): string[] {
+  return [...AUDIT_ACTION_POSITIVE, ...AUDIT_ACTION_NEGATIVE];
+}
+
 const AUDIT_TONE_LABELS: Record<AuditTone, string> = {
   positive: "Duyệt / Mở",
   negative: "Khóa / Từ chối",

@@ -111,3 +111,55 @@
     {% endif %}
   </div>
 {% endmacro %}
+
+{#
+  Thanh phân trang dùng chung cho mọi bảng danh sách ở /backoffice.
+
+  - `pagination` do buildPagination() ở routes/admin-console-shared.ts dựng.
+  - `hidden` là dict các tham số lọc hiện hành (q, status, role...) — phải
+    đính kèm để đổi số dòng/trang KHÔNG làm mất bộ lọc đang chọn.
+
+  Ô chọn số dòng gửi form GET ngay khi đổi (data-auto-submit), nên không cần
+  thêm nút "Áp dụng"; JS ở admin-table.js lo phần submit, không có JS thì
+  vẫn còn nút dự phòng.
+#}
+{% macro pagination_bar(pagination, action, hidden={}) %}
+  {% if pagination and (pagination.total > 0) %}
+    <nav class="bo-pager" aria-label="Phân trang">
+      <form class="bo-pager-size" method="get" action="{{ action }}">
+        {% for key, value in hidden %}
+          {% if value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+        {% endfor %}
+        <label for="per-page-{{ action | replace('/', '-') }}">Mỗi trang</label>
+        <select id="per-page-{{ action | replace('/', '-') }}" name="perPage" data-auto-submit>
+          {% for option in pagination.options %}
+            <option value="{{ option }}"{% if option == pagination.perPage %} selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+        <noscript><button class="button button-small button-ghost" type="submit">Áp dụng</button></noscript>
+      </form>
+
+      <p class="bo-pager-range">Hiện {{ pagination.from }}–{{ pagination.to }} / {{ pagination.total }}</p>
+
+      {% if pagination.pages > 1 %}
+        {% set qs = [] %}
+        {% for key, value in hidden %}{% if value %}{% set qs = (qs.push(key ~ '=' ~ (value | urlencode)), qs) %}{% endif %}{% endfor %}
+        {% set qs = (qs.push('perPage=' ~ pagination.perPage), qs) %}
+        {% set base = action ~ '?' ~ qs | join('&amp;') %}
+        <div class="bo-pager-nav">
+          {% if pagination.page > 1 %}
+            <a class="button button-small button-ghost" href="{{ base }}&amp;page={{ pagination.page - 1 }}" rel="prev">← Trước</a>
+          {% else %}
+            <span class="button button-small button-ghost is-disabled" aria-disabled="true">← Trước</span>
+          {% endif %}
+          <span class="bo-pager-page">Trang {{ pagination.page }} / {{ pagination.pages }}</span>
+          {% if pagination.page < pagination.pages %}
+            <a class="button button-small button-ghost" href="{{ base }}&amp;page={{ pagination.page + 1 }}" rel="next">Sau →</a>
+          {% else %}
+            <span class="button button-small button-ghost is-disabled" aria-disabled="true">Sau →</span>
+          {% endif %}
+        </div>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endmacro %}
