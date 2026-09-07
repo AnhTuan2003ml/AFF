@@ -1604,3 +1604,34 @@ body.bo-guide-open { overflow: hidden; }
   97% { transform: rotate(4deg); }
 }
 @media (prefers-reduced-motion: reduce) { .bo-bell.is-alert { animation: none; } }
+
+/* ── Trang Thống kê ──────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px; align-items: start;
+}
+.stats-scroll { overflow-x: auto; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stats-table th {
+  text-align: left; color: var(--muted); font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .04em; padding: 6px 10px;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.stats-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.stats-table tr:last-child td { border-bottom: none; }
+.stats-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stats-table .rank { color: var(--muted); width: 28px; }
+.stats-prod { display: flex; align-items: center; gap: 10px; }
+.stats-prod img, .stats-prod-ph { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; flex: none; }
+.stats-prod-ph { display: grid; place-items: center; background: var(--surface-muted); color: var(--muted); font-weight: 800; }
+.stats-prod-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stats-user { display: block; text-decoration: none; color: var(--text); }
+.stats-user b { display: block; }
+.stats-user small { color: var(--muted); }
+.stats-bars { display: flex; flex-direction: column; gap: 12px; }
+.stats-bar-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 4px; }
+.stats-bar-top span { color: var(--muted); white-space: nowrap; }
+.stats-bar-track { height: 8px; border-radius: 999px; background: var(--surface-muted); overflow: hidden; }
+.stats-bar-track span { display: block; height: 100%; border-radius: 999px; background: var(--brand); }
+.stats-note { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.stats-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }

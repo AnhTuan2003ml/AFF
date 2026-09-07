@@ -6,6 +6,7 @@ import { registerAdminProfileRoutes } from "./admin-profiles.js";
 import { registerAdminPurchaseHistoryRoutes } from "./admin-purchase-history.js";
 import { registerAdminSyncRoutes } from "./admin-sync.js";
 import { registerAdminUserRoutes } from "./admin-users.js";
+import { registerAdminStatsRoutes } from "./admin-stats.js";
 import type { AdminConsoleDeps } from "./admin-console-shared.js";
 
 export async function registerAdminConsoleRoutes(
@@ -29,4 +30,5 @@ export async function registerAdminConsoleRoutes(
   await registerAdminProfileRoutes(app, deps);
   await registerAdminPurchaseHistoryRoutes(app, deps);
   await registerAdminUserRoutes(app, deps);
+  await registerAdminStatsRoutes(app, deps);
 }

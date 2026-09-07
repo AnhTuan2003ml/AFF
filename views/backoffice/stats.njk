@@ -1,0 +1,130 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">PHÂN TÍCH</span>
+      <h1>Thống kê</h1>
+      <p>Sản phẩm/ngành hàng user dán nhiều nhất và đối tác mạnh nhất theo mạng lưới, doanh số.</p>
+    </div>
+  </section>
+
+  <div class="stats-grid">
+
+    {# ── Sản phẩm dán nhiều nhất ─────────────────────────────── #}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">DÁN NHIỀU NHẤT</span><h2>Sản phẩm được dán link</h2></div>
+      </header>
+      {% if topProducts.length %}
+        <div class="stats-scroll">
+          <table class="stats-table">
+            <thead><tr><th>#</th><th>Sản phẩm</th><th>Sàn</th><th class="num">Lượt dán</th><th class="num">Người dán</th></tr></thead>
+            <tbody>
+              {% for p in topProducts %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>
+                    <span class="stats-prod">
+                      {% if p.image_url %}<img src="{{ p.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}<span class="stats-prod-ph">{{ p.platform | first }}</span>{% endif %}
+                      <span class="stats-prod-name">{{ p.product_name or ('SP ' + p.product_id) }}</span>
+                    </span>
+                  </td>
+                  <td><span class="status-badge status-neutral">{{ p.platform }}</span></td>
+                  <td class="num"><b>{{ p.link_count }}</b></td>
+                  <td class="num">{{ p.user_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stats-empty">Chưa có lượt dán link nào.</p>
+      {% endif %}
+    </section>
+
+    {# ── Nhóm ngành hàng ─────────────────────────────────────── #}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">NGÀNH HÀNG</span><h2>Nhóm ngành dán nhiều nhất</h2></div>
+      </header>
+      {% if topCategories.length %}
+        {% set catMax = topCategories[0].link_count %}
+        <div class="stats-bars">
+          {% for c in topCategories %}
+            <div class="stats-bar">
+              <div class="stats-bar-top"><b>{{ c.category }}</b><span>{{ c.link_count }} lượt · {{ c.user_count }} người</span></div>
+              <div class="stats-bar-track"><span style="width: {{ (c.link_count / catMax * 100) | round }}%"></span></div>
+            </div>
+          {% endfor %}
+        </div>
+        <p class="stats-note">Ngành gom theo từ khóa tên sản phẩm (sàn không trả sẵn ngành hàng).</p>
+      {% else %}
+        <p class="stats-empty">Chưa đủ dữ liệu tên sản phẩm để phân nhóm.</p>
+      {% endif %}
+    </section>
+
+    {# ── Đối tác mạng lưới lớn nhất (F1/F2) ───────────────────── #}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">MẠNG LƯỚI</span><h2>Đối tác nhiều tuyến dưới nhất</h2></div>
+      </header>
+      {% if topNetwork.length %}
+        <div class="stats-scroll">
+          <table class="stats-table">
+            <thead><tr><th>#</th><th>Đối tác</th><th class="num">F1</th><th class="num">F2</th></tr></thead>
+            <tbody>
+              {% for u in topNetwork %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>
+                    <a href="/backoffice/accounts/{{ u.id }}" class="stats-user">
+                      <b>{{ u.full_name or u.email }}</b>{% if u.is_special_partner %} <span class="status-badge status-positive">Đặc biệt</span>{% endif %}
+                      <small>{{ u.email }}</small>
+                    </a>
+                  </td>
+                  <td class="num">{{ u.f1_count }}</td>
+                  <td class="num"><b>{{ u.f2_count }}</b></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="stats-note">F1 = người mời trực tiếp; F2 = người do F1 mời.</p>
+      {% else %}
+        <p class="stats-empty">Chưa có đối tác nào có tuyến dưới.</p>
+      {% endif %}
+    </section>
+
+    {# ── Đối tác doanh số cao nhất ────────────────────────────── #}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">DOANH SỐ</span><h2>Đối tác kiếm hoa hồng nhiều nhất</h2></div>
+      </header>
+      {% if topRevenue.length %}
+        <div class="stats-scroll">
+          <table class="stats-table">
+            <thead><tr><th>#</th><th>Đối tác</th><th class="num">Hoa hồng giới thiệu</th><th class="num">Số đơn</th></tr></thead>
+            <tbody>
+              {% for u in topRevenue %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>
+                    <a href="/backoffice/accounts/{{ u.id }}" class="stats-user">
+                      <b>{{ u.full_name or u.email }}</b><small>{{ u.email }}</small>
+                    </a>
+                  </td>
+                  <td class="num"><b>{{ u.reward_vnd | vnd }}</b></td>
+                  <td class="num">{{ u.orders }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="stats-empty">Chưa có hoa hồng giới thiệu nào được ghi nhận.</p>
+      {% endif %}
+    </section>
+
+  </div>
+{% endblock %}
