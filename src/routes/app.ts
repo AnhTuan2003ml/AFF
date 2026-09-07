@@ -1778,9 +1778,22 @@ export async function registerAppRoutes(
       `,
       [userId(request)],
     );
+    // Người giới thiệu (từ bước nhập mã giới thiệu): ảnh + tên nick để hiển thị.
+    const referrer = await query<{
+      full_name: string;
+      avatar_url: string;
+      referral_code: string;
+    }>(
+      deps.db,
+      `SELECT r.full_name, r.avatar_url, r.referral_code
+       FROM users u JOIN users r ON r.id = u.referred_by_user_id
+       WHERE u.id = $1`,
+      [userId(request)],
+    );
     return reply.view("app/profile.njk", {
       pageTitle: "Thông tin cá nhân",
       appSection: "profile",
+      referrer: referrer.rows[0] ?? null,
       sessions: sessions.rows.map((row) => ({
         ...row,
         is_current: currentTokenHash === row.token_hash,

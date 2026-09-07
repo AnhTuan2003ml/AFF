@@ -1575,3 +1575,32 @@ body.bo-guide-open { overflow: hidden; }
 .backoffice-shell .config-form .stack-form .currency-input-shell {
   max-width: 240px;
 }
+
+/* ── Chuông đối tác chờ duyệt (topbar admin) ────────────────────────── */
+.bo-bell {
+  position: relative; display: inline-grid; place-items: center;
+  width: 36px; height: 36px; border-radius: 10px; flex: none;
+  color: var(--muted); border: 1px solid var(--line);
+  background: var(--surface); text-decoration: none;
+}
+.bo-bell svg { width: 18px; height: 18px; }
+.bo-bell:hover { background: var(--surface-hover); color: var(--text); }
+.bo-bell.is-alert {
+  color: var(--danger); border-color: var(--danger-line);
+  transform-origin: 50% 20%;
+  animation: bo-bell-shake 2.6s ease-in-out infinite;
+}
+.bo-bell-badge {
+  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px;
+  padding: 0 5px; border-radius: 999px; background: var(--danger);
+  color: var(--on-danger, #fff); font-size: 11px; font-weight: 800;
+  font-style: normal; display: grid; place-items: center;
+}
+@keyframes bo-bell-shake {
+  0%, 86%, 100% { transform: rotate(0); }
+  88% { transform: rotate(-13deg); }
+  91% { transform: rotate(11deg); }
+  94% { transform: rotate(-7deg); }
+  97% { transform: rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) { .bo-bell.is-alert { animation: none; } }

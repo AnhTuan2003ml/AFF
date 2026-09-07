@@ -10280,3 +10280,15 @@ button.cal-cell.is-today:hover:not(:disabled) {
     right: 26px;
   }
 }
+
+/* ── Người giới thiệu (trang Thông tin cá nhân) ─────────────────────── */
+.referrer-card { display: flex; align-items: center; gap: 12px; }
+.referrer-avatar {
+  width: 46px; height: 46px; border-radius: 50%; flex: none; overflow: hidden;
+  background: linear-gradient(145deg, var(--lx-orange, #ee4d2d), #ff916a);
+  color: #fff; display: grid; place-items: center; font-weight: 900;
+}
+.referrer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.referrer-copy b { display: block; font-size: 15px; }
+.referrer-copy small { color: var(--lx-muted, #6b7280); }
+.referrer-copy code { font-weight: 700; }

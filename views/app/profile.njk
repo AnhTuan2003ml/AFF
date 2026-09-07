@@ -50,6 +50,21 @@
       </form>
     </section>
 
+    {% if referrer %}
+      <section class="panel">
+        <header class="panel-heading"><div><span class="eyebrow">{{ t('GIỚI THIỆU', 'REFERRAL') }}</span><h2>{{ t('Người giới thiệu bạn', 'Who referred you') }}</h2></div></header>
+        <div class="referrer-card">
+          <span class="referrer-avatar" aria-hidden="true">
+            {% if referrer.avatar_url %}<img src="{{ referrer.avatar_url }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (referrer.full_name or '?') | first | upper }}</span>{% endif %}
+          </span>
+          <div class="referrer-copy">
+            <b>{{ referrer.full_name or t('Đối tác ShopTik', 'ShopTik partner') }}</b>
+            <small>{{ t('Mã giới thiệu', 'Referral code') }}: <code>{{ referrer.referral_code }}</code></small>
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
     <section class="panel settings-security-panel">
       <header class="panel-heading"><div><span class="eyebrow">{{ t('BẢO MẬT', 'SECURITY') }}</span><h2>{{ t('Bảo vệ tài khoản', 'Protect your account') }}</h2></div></header>
       <div class="security-checklist">

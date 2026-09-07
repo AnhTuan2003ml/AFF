@@ -128,6 +128,14 @@
 
           <div class="st-topbar-spacer"></div>
 
+          {# Chuông nhắc: có hồ sơ đối tác đang chờ duyệt thì đổ đỏ + rung nhẹ. #}
+          <a href="/backoffice/kol" class="bo-bell{% if backofficeKolPendingCount > 0 %} is-alert{% endif %}"
+             title="{% if backofficeKolPendingCount > 0 %}{{ backofficeKolPendingCount }} hồ sơ đối tác đang chờ duyệt{% else %}Không có hồ sơ đối tác chờ duyệt{% endif %}"
+             aria-label="{% if backofficeKolPendingCount > 0 %}{{ backofficeKolPendingCount }} hồ sơ đối tác đang chờ duyệt{% else %}Đối tác chờ duyệt{% endif %}">
+            {{ icon('bell') }}
+            {% if backofficeKolPendingCount > 0 %}<em class="bo-bell-badge">{{ backofficeKolPendingCount }}</em>{% endif %}
+          </a>
+
           <button type="button" class="bo-guide-btn" data-guide-open aria-haspopup="dialog" title="Hướng dẫn chi tiết">
             {{ icon('audit') }}<span>Hướng dẫn</span>
           </button>
