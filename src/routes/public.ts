@@ -32,12 +32,12 @@ export async function registerPublicRoutes(
   // Xác minh sở hữu site cho Google Search Console — file phải phục vụ ở GỐC
   // (không phải /assets). Nội dung đúng chuẩn Google: một dòng duy nhất.
   app.get(
-    "/googleb508425d4f4d370d.html",
+    "/googled69bfa970903b549.html",
     { config: { csrf: false } },
     (_request, reply) => {
       reply.type("text/html; charset=utf-8");
       return reply.send(
-        "google-site-verification: googleb508425d4f4d370d.html",
+        "google-site-verification: googled69bfa970903b549.html",
       );
     },
   );
