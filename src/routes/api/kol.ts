@@ -139,6 +139,13 @@ export async function registerKolApiRoutes(
       },
       files,
     );
+    void deps.emailService
+      .sendKolSubmittedNotice({
+        fullName: str("fullName") ?? "",
+        email: str("email") ?? "",
+        phone: str("phone") ?? "",
+      })
+      .catch(() => {});
     return { ok: true };
   });
 }

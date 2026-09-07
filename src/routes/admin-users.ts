@@ -26,6 +26,9 @@ import {
   type KolFileKind,
 } from "../services/kol-application.js";
 import { buildKolDocx } from "../services/kol-docx.js";
+import { buildKolContractPdf, buildTextDocumentPdf } from "../services/kol-pdf.js";
+import { KOL_AGREEMENT_SECTIONS } from "../services/kol-agreement.js";
+import { buildUserPolicy, loadUserPolicyFacts } from "../services/user-policy.js";
 import {
   flashAdminError,
   pageNumber,
@@ -862,47 +865,20 @@ export async function registerAdminUserRoutes(
         const app0 = await getKolApplication(deps.db, request.params.id);
         const to = app0?.account_email ?? app0?.email ?? undefined;
 
-        // Duyệt phải kèm file PDF hợp đồng để gửi cho người đăng ký. Kiểm tra
-        // TRƯỚC khi đổi trạng thái để không "duyệt hụt" mà chưa gửi được.
-        let contractPdf: Buffer | null = null;
-        if (approve) {
-          contractPdf = kolMultipartBuffer(body.contractPdf);
-          if (!contractPdf) {
-            setFlash(
-              reply,
-              deps.config,
-              "error",
-              "Vui lòng đính kèm file PDF hợp đồng để gửi cho người đăng ký.",
-            );
-            return reply.redirect("/backoffice/kol");
-          }
-          if (!isPdf(contractPdf)) {
-            setFlash(
-              reply,
-              deps.config,
-              "error",
-              "File đính kèm không phải PDF hợp lệ.",
-            );
-            return reply.redirect("/backoffice/kol");
-          }
-          if (contractPdf.length > MAX_CONTRACT_PDF) {
-            setFlash(
-              reply,
-              deps.config,
-              "error",
-              "File PDF quá lớn (giới hạn ~18MB để đính kèm email). Vui lòng nén nhỏ lại rồi thử lại.",
-            );
-            return reply.redirect("/backoffice/kol");
-          }
-          if (!to) {
-            setFlash(
-              reply,
-              deps.config,
-              "error",
-              "Không tìm thấy email người đăng ký để gửi hợp đồng.",
-            );
-            return reply.redirect("/backoffice/kol");
-          }
+        // Duyệt: hệ thống TỰ SINH PDF hợp đồng (không cần admin tải/sửa docx rồi
+        // upload). Chỉ cần có email người nhận. Kiểm TRƯỚC khi đổi trạng thái.
+        if (approve && !to) {
+          setFlash(
+            reply,
+            deps.config,
+            "error",
+            "Không tìm thấy email người đăng ký để gửi hợp đồng.",
+          );
+          return reply.redirect("/backoffice/kol");
+        }
+        if (approve && !app0) {
+          setFlash(reply, deps.config, "error", "Không tìm thấy hồ sơ đối tác.");
+          return reply.redirect("/backoffice/kol");
         }
 
         const result = await decideKolApplication(
@@ -919,20 +895,17 @@ export async function registerAdminUserRoutes(
           after: { fullName: result.fullName, cccd: app0?.cccd_number },
         });
 
-        // Lưu file PDF hợp đồng để người dùng xem lại + admin gửi lại nếu cần.
-        if (approve && contractPdf) {
-          await saveKolContractFile(deps.db, request.params.id, contractPdf);
-        }
-
-        // Duyệt xong: gửi email hợp đồng CHẠY NỀN — KHÔNG chặn phản hồi (file PDF
-        // lớn có thể gửi vài chục giây; đừng để admin chờ treo). Lỗi chỉ ghi log.
+        // Duyệt xong: TỰ SINH PDF hợp đồng → lưu lại → gửi email kèm hợp đồng,
+        // điều khoản & chính sách (chạy nền, không chặn phản hồi admin).
         let mailNote = "";
-        if (approve && contractPdf && to) {
-          const pdf = contractPdf;
+        if (approve && to && app0) {
           const userId = result.userId;
           const fullName = result.fullName;
-          const email = app0?.email ?? app0?.account_email ?? to;
-          const phone = app0?.phone ?? "—";
+          const email = app0.email ?? app0.account_email ?? to;
+          const phone = app0.phone ?? "—";
+          const applicationRow = app0;
+          const applicationId = request.params.id;
+          const approvedAt = new Date();
           void (async () => {
             try {
               const partner = await query<{ referral_code: string }>(
@@ -940,23 +913,56 @@ export async function registerAdminUserRoutes(
                 "SELECT referral_code FROM users WHERE id = $1",
                 [userId],
               );
+              const partnerCode = partner.rows[0]?.referral_code ?? "—";
+              const pdf = await buildKolContractPdf(
+                deps.config,
+                applicationRow,
+                { partnerCode, approvedAt },
+              );
+              await saveKolContractFile(deps.db, applicationId, pdf);
+              // Điều khoản hợp tác + Chính sách → 1 PDF đính kèm.
+              const facts = await loadUserPolicyFacts(deps.db, deps.config);
+              const policy = buildUserPolicy(facts);
+              const termsPolicyPdf = await buildTextDocumentPdf(
+                "Điều khoản hợp tác & Chính sách",
+                deps.config.APP_NAME,
+                [
+                  { heading: "PHẦN A — ĐIỀU KHOẢN HỢP TÁC KOL/KOC" },
+                  ...KOL_AGREEMENT_SECTIONS.map((s) => ({
+                    heading: s.label,
+                    paragraphs: s.paragraphs,
+                  })),
+                  { heading: "PHẦN B — CHÍNH SÁCH NGƯỜI DÙNG" },
+                  ...policy.sections.map((s) => ({
+                    heading: s.heading,
+                    paragraphs: s.paragraphs,
+                    items: s.items,
+                  })),
+                ],
+              );
               await deps.emailService.sendKolContract({
                 to,
                 fullName,
-                partnerCode: partner.rows[0]?.referral_code ?? "—",
+                partnerCode,
                 email,
                 phone,
-                approvedAt: new Date(),
+                approvedAt,
                 pdf,
+                extraAttachments: [
+                  {
+                    filename: "Dieu-khoan-va-Chinh-sach-ShopTik.pdf",
+                    content: termsPolicyPdf,
+                  },
+                ],
               });
             } catch (mailError) {
               request.log.error(
                 { err: mailError },
-                "Gửi hợp đồng KOL/KOC thất bại",
+                "Sinh/gửi hợp đồng KOL/KOC thất bại",
               );
             }
           })();
-          mailNote = ` Đang gửi hợp đồng tới ${to} (chạy nền).`;
+          mailNote = ` Đang sinh & gửi hợp đồng tới ${to} (chạy nền).`;
         }
         setFlash(
           reply,
@@ -997,11 +1003,16 @@ export async function registerAdminUserRoutes(
           pdf = stored?.content ?? null;
         }
         if (!pdf) {
-          throw new AppError(
-            "KOL_NO_PDF",
-            "Chưa có file hợp đồng. Vui lòng đính kèm PDF để gửi.",
-            400,
+          // Chưa có bản lưu → TỰ SINH lại từ hồ sơ (không cần admin upload).
+          const p0 = await query<{ referral_code: string }>(
+            deps.db,
+            "SELECT referral_code FROM users WHERE id = $1",
+            [app0.user_id],
           );
+          pdf = await buildKolContractPdf(deps.config, app0, {
+            partnerCode: p0.rows[0]?.referral_code ?? "—",
+          });
+          await saveKolContractFile(deps.db, id, pdf);
         }
         if (pdf.length > MAX_CONTRACT_PDF) {
           throw new AppError(

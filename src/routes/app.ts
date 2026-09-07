@@ -1737,11 +1737,19 @@ export async function registerAppRoutes(
         },
         files,
       );
+      // Báo admin có hồ sơ đối tác mới (chạy nền, không chặn người dùng).
+      void deps.emailService
+        .sendKolSubmittedNotice({
+          fullName: str("fullName") ?? "",
+          email: str("email") ?? "",
+          phone: str("phone") ?? "",
+        })
+        .catch(() => {});
       setFlash(
         reply,
         deps.config,
         "success",
-        "Đã gửi hồ sơ KOL/KOC. Đội ngũ sẽ duyệt và thông báo kết quả cho bạn.",
+        "Đã gửi hồ sơ đăng ký đối tác. Đội ngũ sẽ duyệt và thông báo kết quả cho bạn.",
       );
       return reply.redirect("/app/dang-ky-kol");
     } catch (error) {

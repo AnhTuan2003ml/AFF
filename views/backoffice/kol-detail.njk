@@ -46,20 +46,10 @@
     </div>
 
     {% if a.status == 'PENDING' %}
-      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-approve" enctype="multipart/form-data">
+      <form method="post" action="/backoffice/kol/{{ a.id }}/decide" class="kol-approve">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         <input type="hidden" name="decision" value="approve">
-        <p class="kol-approve-title">Quy trình: tải hợp đồng .docx (đã điền sẵn thông tin người đăng ký) → điền thông tin Bên A → xuất PDF → đính kèm bên dưới → bấm duyệt để gửi. Duyệt xong tài khoản mới được nâng thành đối tác đặc biệt.</p>
-        <p class="kol-docx-row">
-          <a class="button button-ghost button-small" href="/backoffice/kol/{{ a.id }}/contract.docx">⬇ Tải hợp đồng (.docx) đã điền thông tin Bên B</a>
-        </p>
-        <label class="kol-file">
-          <input type="file" name="contractPdf" accept="application/pdf,.pdf" required data-kol-pdf>
-          <span class="kol-file-face">
-            <b data-kol-pdf-name>Chọn file PDF hợp đồng (≤ 18MB)…</b>
-            <small>Bấm duyệt là hệ thống đính kèm đúng file PDF này vào email gửi người đăng ký.</small>
-          </span>
-        </label>
+        <p class="kol-approve-title">Bấm duyệt: hệ thống <b>tự sinh PDF hợp đồng</b> và gửi email cho người đăng ký (kèm hợp đồng, điều khoản &amp; chính sách và lời cảm ơn). Không cần tải/điền file. Duyệt xong tài khoản mới được nâng thành đối tác đặc biệt.</p>
         <div class="kol-admin-actions">
           <button type="submit" class="button button-primary button-small">Phê duyệt &amp; gửi hợp đồng</button>
         </div>
@@ -73,19 +63,12 @@
         </form>
       </footer>
     {% elif a.status == 'APPROVED' %}
-      <form method="post" action="/backoffice/kol/{{ a.id }}/resend-email" class="kol-approve" enctype="multipart/form-data">
+      <form method="post" action="/backoffice/kol/{{ a.id }}/resend-email" class="kol-approve">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <p class="kol-approve-title">Hồ sơ đã duyệt. Gửi lại email hợp đồng (dùng file đã lưu, hoặc đính kèm PDF mới để thay).</p>
+        <p class="kol-approve-title">Hồ sơ đã duyệt. Gửi lại email hợp đồng (hệ thống tự sinh lại PDF nếu cần).</p>
         <p class="kol-docx-row">
           <a class="button button-ghost button-small" href="/backoffice/kol/{{ a.id }}/file/contract_pdf" target="_blank" rel="noopener">⬇ Tải hợp đồng đã gửi (PDF)</a>
         </p>
-        <label class="kol-file">
-          <input type="file" name="contractPdf" accept="application/pdf,.pdf" data-kol-pdf>
-          <span class="kol-file-face">
-            <b data-kol-pdf-name>Đính kèm PDF mới (tùy chọn)…</b>
-            <small>Để trống nếu chỉ gửi lại file hợp đồng đã lưu.</small>
-          </span>
-        </label>
         <div class="kol-admin-actions">
           <button type="submit" class="button button-primary button-small">Gửi lại email hợp đồng</button>
         </div>

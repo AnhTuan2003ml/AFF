@@ -216,6 +216,56 @@ export class EmailService {
   }
 
   /**
+   * Báo cho ADMIN khi có hồ sơ đăng ký đối tác MỚI (tới ADMIN_ALERT_EMAIL →
+   * SUPPORT_EMAIL → SMTP_FROM_EMAIL). Fire-and-forget: lỗi chỉ log, không chặn
+   * luồng nộp hồ sơ của người dùng.
+   */
+  async sendKolSubmittedNotice(params: {
+    fullName: string;
+    email: string;
+    phone: string;
+  }): Promise<void> {
+    const to = this.adminAlertRecipients();
+    const subject = `[${this.config.APP_NAME}] Hồ sơ đối tác mới cần duyệt: ${params.fullName}`;
+    const link = `${this.config.APP_ORIGIN}/backoffice/kol`;
+    if (!this.transporter) {
+      if (this.config.NODE_ENV !== "production") {
+        console.info(`[EMAIL DEV] ${to} | ${subject}`);
+      }
+      return;
+    }
+    try {
+      await this.transporter.sendMail({
+        from: {
+          name: this.config.SMTP_FROM_NAME,
+          address: this.config.SMTP_FROM_EMAIL,
+        },
+        to,
+        subject,
+        text: [
+          "Có hồ sơ đăng ký đối tác mới đang chờ duyệt:",
+          `- Họ tên: ${params.fullName}`,
+          `- Email: ${params.email}`,
+          `- Điện thoại: ${params.phone}`,
+          "",
+          `Vào duyệt: ${link}`,
+        ].join("\n"),
+        html: `<div style="font-family:system-ui,Arial,sans-serif;color:#1f2937;font-size:14px;line-height:1.6">
+          <p><b>Có hồ sơ đăng ký đối tác mới đang chờ duyệt.</b></p>
+          <table style="border-collapse:collapse">
+            <tr><td style="padding:2px 12px 2px 0;color:#6b7280">Họ tên</td><td><b>${escapeHtml(params.fullName)}</b></td></tr>
+            <tr><td style="padding:2px 12px 2px 0;color:#6b7280">Email</td><td>${escapeHtml(params.email)}</td></tr>
+            <tr><td style="padding:2px 12px 2px 0;color:#6b7280">Điện thoại</td><td>${escapeHtml(params.phone)}</td></tr>
+          </table>
+          <p style="margin-top:16px"><a href="${escapeHtml(link)}" style="background:#ee4d2d;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700">Vào duyệt hồ sơ</a></p>
+        </div>`,
+      });
+    } catch (err) {
+      console.warn("Không gửi được email báo hồ sơ đối tác mới", err);
+    }
+  }
+
+  /**
    * Gửi email cảnh báo LỖI HỆ THỐNG NỀN cho admin — ví dụ đồng bộ đối soát đơn
    * thất bại, cookie Shopee hết hạn, không điều khiển được trình duyệt lấy sản
    * phẩm Khám phá. Email nêu rõ tác vụ, mã lỗi, gợi ý xử lý và stack rút gọn.
@@ -323,8 +373,10 @@ export class EmailService {
     phone: string;
     approvedAt: Date;
     pdf: Buffer;
+    /** Đính kèm thêm (điều khoản hợp tác & chính sách…). */
+    extraAttachments?: Array<{ filename: string; content: Buffer }>;
   }): Promise<void> {
-    const subject = `Chúc mừng! Bạn đã trở thành Đối tác KOL/KOC ${this.config.APP_NAME}`;
+    const subject = `Chúc mừng! Bạn đã trở thành Đối tác ${this.config.APP_NAME}`;
     if (!this.transporter) {
       if (this.config.NODE_ENV !== "production") {
         console.info(
@@ -348,6 +400,11 @@ export class EmailService {
         content: params.pdf,
         contentType: "application/pdf",
       },
+      ...(params.extraAttachments ?? []).map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: "application/pdf",
+      })),
     ];
     let logoTag = "";
     try {
@@ -396,7 +453,8 @@ export class EmailService {
         `- Ngày được phê duyệt: ${approvedStr}`,
         `- Trạng thái: Đối tác chính thức`,
         "",
-        "Bản hợp đồng hợp tác (PDF) được đính kèm trong email này. Vui lòng lưu lại.",
+        "Cảm ơn bạn đã tin tưởng và đồng hành cùng chúng tôi 🧡",
+        "Đính kèm email này: (1) Hợp đồng hợp tác, (2) Điều khoản hợp tác & Chính sách. Vui lòng lưu lại.",
         "",
         `Trân trọng, Đội ngũ ${this.config.APP_NAME}.`,
         `Hỗ trợ: ${supportEmail} · ${website}`,
