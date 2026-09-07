@@ -305,7 +305,9 @@ function buildDisplayParagraphs(): string[] {
   const clauseStart = all.findIndex((p) =>
     p.startsWith("Bên A và Bên B sau đây gọi riêng"),
   );
-  const appendixStart = all.findIndex((p) => p === "PHỤ LỤC 01");
+  // Mẫu docx đã BỎ 2 phụ lục → không còn "PHỤ LỤC 01"; khi đó cắt tới hết.
+  let appendixStart = all.findIndex((p) => p === "PHỤ LỤC 01");
+  if (appendixStart < 0) appendixStart = all.length;
   if (partyStart < 0 || clauseStart <= partyStart || appendixStart <= clauseStart) {
     return [...all];
   }

@@ -2,6 +2,7 @@ import path from "node:path";
 import PDFDocument from "pdfkit";
 import type { AppConfig } from "../config.js";
 import type { KolApplicationRow } from "./kol-application.js";
+import { KOL_AGREEMENT_SECTIONS } from "./kol-agreement.js";
 
 /**
  * Sinh PDF hợp đồng đối tác NGAY TRONG code (không tải/sửa file .docx, không cần
@@ -122,9 +123,11 @@ export function buildKolContractPdf(
   // ── Tiêu đề ──
   doc
     .font("B")
-    .fontSize(15)
+    .fontSize(14)
     .fillColor(brand)
-    .text("HỢP ĐỒNG HỢP TÁC KOL/KOC", { align: "center" });
+    .text("THỎA THUẬN HỢP TÁC KOL/KOC", { align: "center" })
+    .fontSize(11)
+    .text("VÀ CAM KẾT BẢO MẬT THÔNG TIN", { align: "center" });
   doc
     .font("R")
     .fontSize(9.5)
@@ -178,47 +181,32 @@ export function buildKolContractPdf(
       : []),
   ]);
 
-  doc
-    .font("R")
-    .fontSize(10)
-    .fillColor(ink)
-    .text(
-      "Hai Bên thống nhất hợp tác tiếp thị liên kết trên nền tảng ShopTik theo các điều khoản thủ tục dưới đây và theo Điều khoản hợp tác, Chính sách người dùng gửi kèm cùng thư duyệt này:",
-      { align: "justify" },
+  // ── Căn cứ + lời mở đầu — LẤY NGUYÊN VĂN từ mẫu docx ──
+  const sections = KOL_AGREEMENT_SECTIONS;
+  const isHeaderLine = (p: string): boolean =>
+    /^CỘNG HÒA|^Độc lập|THỎA THUẬN HỢP TÁC|CAM KẾT BẢO MẬT|^Số:|^Hôm nay,|các Bên gồm/i.test(
+      p,
     );
-  gap(10);
+  const moDau = sections.find((s) => s.label === "Mở đầu");
+  if (moDau) {
+    for (const p of moDau.paragraphs) {
+      if (isHeaderLine(p)) continue; // đã render ở phần đầu / party ở trên
+      doc.font("R").fontSize(9.5).fillColor(ink).text(p, { align: "justify" });
+    }
+    gap(8);
+  }
 
-  // ── Điều khoản thủ tục (gọn) ──
-  const clause = (title: string, body: string): void => {
-    doc.font("B").fontSize(10.5).fillColor(ink).text(title);
-    doc.font("R").fontSize(10).fillColor(ink).text(body, { align: "justify" });
-    doc.moveDown(0.4);
-  };
-  clause(
-    "Điều 1. Phạm vi",
-    "Bên B tạo, đăng tải nội dung giới thiệu sản phẩm/dịch vụ qua liên kết tiếp thị do Bên A cung cấp; Bên A ghi nhận đơn hàng hợp lệ và chi trả hoa hồng tương ứng.",
-  );
-  clause(
-    "Điều 2. Hoa hồng & thanh toán",
-    "Hoa hồng tính trên đơn hàng hợp lệ theo Chính sách hoa hồng hiện hành của Nền tảng; đối soát và thanh toán qua ví/tài khoản đã đăng ký của Bên B.",
-  );
-  clause(
-    "Điều 3. Nghĩa vụ của Bên B",
-    "Cung cấp thông tin trung thực; nội dung tuân thủ pháp luật quảng cáo, bảo vệ người tiêu dùng; không gian lận đơn/hoa hồng dưới mọi hình thức.",
-  );
-  clause(
-    "Điều 4. Bảo mật & dữ liệu cá nhân",
-    "Các Bên giữ bí mật thông tin trao đổi. Bên A xử lý dữ liệu cá nhân của Bên B đúng mục đích xác minh, đối soát, thanh toán theo pháp luật bảo vệ dữ liệu cá nhân.",
-  );
-  clause(
-    "Điều 5. Hiệu lực & chấm dứt",
-    "Hợp đồng có hiệu lực kể từ ngày Bên A phê duyệt hồ sơ. Mỗi Bên có quyền chấm dứt bằng thông báo; quyền lợi hoa hồng của đơn hợp lệ phát sinh trước đó vẫn được bảo đảm.",
-  );
-  clause(
-    "Điều 6. Điều khoản đầy đủ",
-    "Điều khoản hợp tác chi tiết và Chính sách gửi kèm là bộ phận không tách rời của Hợp đồng. Bên B xác nhận đã đọc, hiểu và đồng ý toàn bộ khi nộp hồ sơ và được phê duyệt.",
-  );
-  gap(18);
+  // ── Các ĐIỀU — NGUYÊN VĂN từ mẫu docx (đã bỏ 2 phụ lục) ──
+  for (const s of sections) {
+    if (s.label === "Mở đầu") continue;
+    const [head, ...bodyLines] = s.paragraphs;
+    if (head) doc.font("B").fontSize(10.5).fillColor(ink).text(head);
+    for (const p of bodyLines) {
+      doc.font("R").fontSize(9.5).fillColor(ink).text(p, { align: "justify" });
+    }
+    doc.moveDown(0.35);
+  }
+  gap(16);
 
   // ── Chữ ký (Bên B in đậm) ──
   if (doc.y > doc.page.height - 180) doc.addPage();
