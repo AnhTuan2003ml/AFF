@@ -1,5 +1,9 @@
 <!doctype html>
-<html lang="{{ 'en' if lang == 'en' else 'vi' }}" data-theme="light" {% block html_attrs %}{% endblock %}>
+{# theme_attr: mặc định RỖNG — mọi trang theo sáng/tối của MÁY
+   (theme-init.js đặt data-theme trước khi vẽ; khu khách có bảng tối ở
+   luxury-dark.css, khu quản trị có bảng tối riêng). Trang nào cần ép
+   một theme cố định thì override block này. #}
+<html lang="{{ 'en' if lang == 'en' else 'vi' }}" {% block theme_attr %}{% endblock %} {% block html_attrs %}{% endblock %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +17,7 @@
   <link rel="apple-touch-icon" href="/assets/images/icon-192.png?v={{ assetVersion }}">
   {% block base_styles %}
     <link rel="stylesheet" href="/assets/luxury-ui.css?v={{ assetVersion }}">
+    <link rel="stylesheet" href="/assets/luxury-dark.css?v={{ assetVersion }}">
   {% endblock %}
   {# Chuyển trang mượt + thanh tiến trình thương hiệu. #}
   <link rel="stylesheet" href="/assets/ui-motion.css?v={{ assetVersion }}">

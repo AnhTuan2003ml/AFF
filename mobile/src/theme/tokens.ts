@@ -1,11 +1,10 @@
 /**
- * Bảng màu ShopTik cho app di động.
+ * Bảng màu ShopTik cho app di động — SÁNG và TỐI, tự theo máy.
  *
- * Nguồn thật là `public/luxury-ui.css` ở repo gốc — file DUY NHẤT mà trang
- * `/app` nạp, tức là thứ người dùng thật sự nhìn thấy. Trước đây file này dịch
- * từ `public/theme/tokens.css` (hệ navy), nhưng CSS đó chỉ được backoffice nạp,
- * nên app và web đã trôi thành hai bộ nhận diện khác nhau: app xanh dương, web
- * cam. Đổi màu thì sửa `luxury-ui.css` trước rồi đồng bộ sang đây.
+ * Nguồn thật là web ở repo gốc:
+ *   - bảng SÁNG dịch từ `public/luxury-ui.css` (token --lx-*),
+ *   - bảng TỐI dịch từ `public/luxury-dark.css` (khối :root[data-theme="dark"]).
+ * Đổi màu thì sửa hai file CSS đó trước rồi đồng bộ sang đây.
  *
  * Quy ước màu, giữ đúng như web đang chạy:
  *   brand   cam  — nhận diện, nút chính, mọi hành động chính
@@ -13,10 +12,14 @@
  *   danger  đỏ gạch — lỗi, đơn hủy, đăng xuất
  *   accent  champagne — huy hiệu, nhấn nhẹ
  *
- * Chỉ có MỘT bảng màu vì web không có chế độ tối: `luxury-ui.css` đặt cứng
- * `color-scheme: light`. App theo hệ thống sẽ lệch khỏi web ngay khi máy bật
- * chế độ tối, nên app cũng khoá sáng (`userInterfaceStyle: "light"` ở app.json).
+ * CÁCH CHỌN BẢNG: đọc chế độ sáng/tối của MÁY một lần lúc nạp module
+ * (Appearance.getColorScheme) — mọi màn import `colors` tĩnh nên bảng màu cố
+ * định trong suốt phiên chạy. Máy đổi chế độ giữa chừng thì _layout.tsx nghe
+ * sự kiện và reload bundle để chọn lại (xem RootLayout). app.json phải để
+ * `userInterfaceStyle: "automatic"` thì iOS mới báo đúng chế độ.
  */
+
+import { Appearance } from 'react-native';
 
 export interface ShopTikColors {
   /** Nền trang. */
@@ -52,7 +55,7 @@ export interface ShopTikColors {
   inverseMuted: string;
 }
 
-export const colors: ShopTikColors = {
+export const lightColors: ShopTikColors = {
   paper: '#fbf8f4',
   surface: '#fffdfa',
   surfaceMuted: '#f5efe8',
@@ -79,27 +82,64 @@ export const colors: ShopTikColors = {
   inverseMuted: '#cdb8ac',
 };
 
-/**
- * Giữ hai tên cũ để phần mã còn lại không gãy khi chuyển sang một bảng màu duy
- * nhất. Cả hai trỏ về cùng một bảng — app không có chế độ tối.
- */
-export const lightColors = colors;
-export const darkColors = colors;
+/** Tông "espresso ấm" — khớp luxury-dark.css: giữ nhận diện cam + nâu. */
+export const darkColors: ShopTikColors = {
+  paper: '#16110e',
+  surface: '#211a15',
+  surfaceMuted: '#2c231c',
+  line: '#3b3026',
+  lineStrong: '#4f4134',
+  text: '#f2e9e1',
+  inkSoft: '#d5c8bd',
+  muted: '#a5968a',
+  brand: '#ff6a3d',
+  brand2: '#ff8a5f',
+  brandStrong: '#e85427',
+  brandSoft: 'rgba(255, 106, 61, 0.16)',
+  brandLine: 'rgba(255, 106, 61, 0.30)',
+  onBrand: '#ffffff',
+  accent: '#d8ab6c',
+  success: '#3cb883',
+  successSoft: 'rgba(60, 184, 131, 0.14)',
+  danger: '#ff7a70',
+  dangerSoft: 'rgba(255, 122, 112, 0.14)',
+  warning: '#d8ab6c',
+  warningSoft: 'rgba(216, 171, 108, 0.16)',
+  inverse: '#2b1a12',
+  inverseText: '#ffffff',
+  inverseMuted: '#cdb8ac',
+};
+
+/** Chế độ tối của máy tại thời điểm mở app — cố định cho cả phiên chạy. */
+export const isDarkTheme = Appearance.getColorScheme() === 'dark';
+
+export const colors: ShopTikColors = isDarkTheme ? darkColors : lightColors;
 
 /** Bo góc, lấy từ --lx-radius và --lx-radius-lg. */
 export const radius = { sm: 12, md: 18, lg: 28, pill: 999 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
 
-/** Đổ bóng của web (--lx-shadow-soft) dịch sang thuộc tính React Native. */
+/**
+ * Đổ bóng của web (--lx-shadow-soft) dịch sang thuộc tính React Native.
+ * Bản tối bóng phải đậm và đen hơn mới thấy trên nền tối (như luxury-dark).
+ */
 export const shadow = {
-  card: {
-    shadowColor: '#4d3122',
-    shadowOpacity: 0.07,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 3,
-  },
+  card: isDarkTheme
+    ? {
+        shadowColor: '#000000',
+        shadowOpacity: 0.38,
+        shadowRadius: 22,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 4,
+      }
+    : {
+        shadowColor: '#4d3122',
+        shadowOpacity: 0.07,
+        shadowRadius: 30,
+        shadowOffset: { width: 0, height: 10 },
+        elevation: 3,
+      },
 } as const;
 
 /**
@@ -111,7 +151,7 @@ export const shadow = {
  * giãn dòng thoáng, ít cỡ. Số liệu lớn (tiền/mốc) giữ 900 để nổi bật.
  *
  * Cách dùng:  <Text style={[typography.screenTitle, { color: colors.text }]}>…</Text>
- * (preset đã có color mặc định; ghi đè khi cần.)
+ * (preset đã có color mặc định — lấy từ bảng màu đã chọn theo máy.)
  */
 export const typography = {
   /** Tiêu đề màn hình (h1). */
@@ -133,3 +173,18 @@ export const typography = {
   /** Meta / thời gian / gợi ý nhỏ. */
   small: { fontSize: 11.5, fontWeight: '600', color: colors.muted },
 } as const;
+
+/**
+ * Bộ ba màu cho dải mờ dần ở mép danh sách cuộn ngang (LinearGradient).
+ *
+ * Phải theo bảng màu đang dùng: bản cũ đóng cứng rgba(251,248,244,…) — đúng
+ * nền sáng, nhưng ở chế độ tối nó thành một vệt trắng đục vắt ngang.
+ */
+export const paperFadeGradient: readonly [string, string, string] = isDarkTheme
+  ? ['rgba(22,17,14,0)', 'rgba(22,17,14,0.9)', '#16110e']
+  : ['rgba(251,248,244,0)', 'rgba(251,248,244,0.9)', '#fbf8f4'];
+
+/** Nền kính mờ của nút tròn nhỏ nổi trên nội dung (mũi tên "còn nữa"). */
+export const surfaceGlass = isDarkTheme
+  ? 'rgba(33,26,21,0.82)'
+  : 'rgba(255,253,250,0.72)';

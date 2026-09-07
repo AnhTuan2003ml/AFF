@@ -31,7 +31,9 @@ import { KOL_AGREEMENT_SECTIONS } from "../services/kol-agreement.js";
 import { buildUserPolicy, loadUserPolicyFacts } from "../services/user-policy.js";
 import {
   flashAdminError,
+  buildPagination,
   pageNumber,
+  perPageNumber,
   selectedValue,
   STAFF_ROLES,
   USER_STATUSES,
@@ -97,7 +99,7 @@ export async function registerAdminUserRoutes(
       "ACTIVE",
     );
     const page = pageNumber(params.page);
-    const limit = 30;
+    const limit = perPageNumber(params.perPage);
     const offset = (page - 1) * limit;
     const users = await query<{
       id: string;
@@ -213,11 +215,7 @@ export async function registerAdminUserRoutes(
       refRequests,
       users: users.rows,
       filters: { q, role, status, partner, deleted },
-      pagination: {
-        page,
-        pages: Math.max(1, Math.ceil(total / limit)),
-        total,
-      },
+      pagination: buildPagination(page, limit, total),
     });
   });
 
@@ -789,12 +787,19 @@ export async function registerAdminUserRoutes(
   // Bật/tắt ĐỐI TÁC ĐẶC BIỆT: đơn của người họ giới thiệu chia
   // specialPartnerSharePercent% (thay vì referrerSharePercent%).
   // ── Hồ sơ đăng ký KOL/KOC ──────────────────────────────────────────
-  app.get("/kol", async (_request, reply) => {
-    const applications = await listKolApplications(deps.db);
+  app.get("/kol", async (request, reply) => {
+    const params = request.query as Record<string, unknown>;
+    const perPage = perPageNumber(params.perPage);
+    const page = pageNumber(params.page);
+    const applications = await listKolApplications(deps.db, {
+      limit: perPage,
+      offset: (page - 1) * perPage,
+    });
     return reply.view("backoffice/kol.njk", {
       pageTitle: "Duyệt đối tác",
       backofficeSection: "kol",
       applications,
+      pagination: buildPagination(page, perPage, applications.recentTotal),
     });
   });
 

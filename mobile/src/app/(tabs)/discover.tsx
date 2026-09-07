@@ -31,7 +31,7 @@ import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { moLinkMua } from '@/lib/mua';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, paperFadeGradient, radius, spacing, surfaceGlass } from '@/theme/tokens';
 
 /**
  * Khám phá — dựng lại `px-discover` của web ở khổ điện thoại: hero (eyebrow +
@@ -211,7 +211,7 @@ export default function DiscoverScreen() {
       {conTabPhai && (
         <LinearGradient
           pointerEvents="none"
-          colors={['rgba(251,248,244,0)', 'rgba(251,248,244,0.9)', '#fbf8f4']}
+          colors={paperFadeGradient}
           locations={[0, 0.6, 1]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
@@ -500,9 +500,9 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,253,250,0.72)',
+    backgroundColor: surfaceGlass,
     borderWidth: 1,
-    borderColor: 'rgba(233,222,212,0.7)',
+    borderColor: colors.line,
   },
   tabs: { gap: 8, paddingVertical: 14 },
   tab: {

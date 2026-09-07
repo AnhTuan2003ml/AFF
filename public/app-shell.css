@@ -397,26 +397,6 @@ body {
 /*     nằm trong menu tài khoản.                                           */
 /* ====================================================================== */
 
-/* Nút theme: icon mô tả hành động sắp tới (sáng → mặt trăng, tối → mặt
-   trời). Không track, không thumb, không glow. */
-/* Cùng cỡ 18px với icon chuông để hàng nút topbar đồng nhất. */
-.st-theme-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.st-theme-button .st-theme-icon-sun {
-  display: none;
-}
-
-:root[data-theme="dark"] .st-theme-button .st-theme-icon-moon {
-  display: none;
-}
-
-:root[data-theme="dark"] .st-theme-button .st-theme-icon-sun {
-  display: block;
-}
-
 .st-menu {
   position: relative;
 }

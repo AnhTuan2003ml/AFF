@@ -1,10 +1,11 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/macros.njk" import status_badge, empty_state, pagination_bar %}
 
 {% block backoffice_content %}
   <section class="page-heading"><div><span class="eyebrow">KHÔNG HIỂN THỊ SỐ ĐẦY ĐỦ</span><h1>Xác minh ngân hàng</h1><p>Đối chiếu danh tính; không yêu cầu OTP ngân hàng.</p></div></section>
   <section class="panel">
     {% if accounts.length %}
+      {{ pagination_bar(pagination, '/backoffice/banks') }}
       <div class="responsive-table">
         <table>
           <thead><tr><th>Người dùng</th><th>Ngân hàng</th><th>Chủ tài khoản</th><th>Trạng thái</th><th>Ngày thêm</th><th>Thao tác</th></tr></thead>

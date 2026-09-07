@@ -1,0 +1,359 @@
+/* ============================================================
+   BẢNG MÀU TỐI cho khu người dùng (luxury-ui vốn chỉ có bảng sáng).
+
+   Nạp SAU luxury-ui.css trong views/base.njk. TOÀN BỘ rule nằm dưới
+   :root[data-theme="dark"] nên khi máy để giao diện sáng, trang không đổi
+   một pixel nào. Theme không còn ép cứng — theme-init.js chọn theo
+   prefers-color-scheme của máy và app.js đổi live khi máy đổi.
+
+   Nguyên tắc: đảo hệ token --lx-* sang tông "espresso ấm" (giữ nhận diện
+   cam + nâu, không xám lạnh), rồi đè đúng những chỗ luxury-ui đóng cứng
+   màu sáng (#fff / rgba(255,...)). Những mảng trắng có chủ đích — nút
+   Google (chuẩn thương hiệu), nút trắng trên hero cam, ô logo sàn, chip
+   kính trên nền cam của trang đăng nhập — GIỮ NGUYÊN.
+   ============================================================ */
+
+:root[data-theme="dark"] {
+  --lx-orange: #ff6a3d;
+  --lx-orange-2: #ff8a5f;
+  --lx-orange-soft: rgba(255, 106, 61, .16);
+  --lx-ivory: #16110e;
+  --lx-paper: #211a15;
+  --lx-paper-2: #2c231c;
+  --lx-ink: #f2e9e1;
+  --lx-ink-2: #d5c8bd;
+  --lx-muted: #a5968a;
+  --lx-line: #3b3026;
+  --lx-line-strong: #4f4134;
+  --lx-champagne: #d8ab6c;
+  --lx-green: #3cb883;
+  --lx-danger: #ff7a70;
+  --lx-danger-soft: rgba(255, 122, 112, .14);
+  --lx-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  --lx-shadow-soft: 0 10px 30px rgba(0, 0, 0, .38);
+  /* .voucher-card dùng var(--surface, #fff) — khu khách không nạp tokens.css
+     nên định nghĩa tại đây cho nhánh tối. */
+  --surface: #211a15;
+  --lx-surface: #211a15;
+}
+
+/* ── Khung trang: header, điều hướng, thanh đáy ───────────────────────── */
+
+:root[data-theme="dark"] .px-header {
+  background: rgba(22, 16, 13, .92);
+  border-bottom-color: rgba(84, 68, 55, .65);
+}
+
+:root[data-theme="dark"] .px-desktop-nav a {
+  color: #b7a698;
+}
+
+:root[data-theme="dark"] .px-bottomnav {
+  background: rgba(22, 16, 13, .97);
+}
+
+:root[data-theme="dark"] :is(.notification-dropdown, .st-menu-panel, .px-lang-panel) {
+  background: #251d17;
+}
+
+/* ── Bề mặt panel/thẻ đóng cứng rgba trắng ────────────────────────────── */
+
+:root[data-theme="dark"] :is(.mb-converter, .mb-points, .panel, .flow-card,
+  .mb-panel, .buy-card, .settings-security-panel, .settings-sessions-panel,
+  .bank-create-panel, .bank-list-panel, .wallet-ledger-panel) {
+  background: rgba(33, 26, 21, .96);
+}
+
+:root[data-theme="dark"] :is(input, select, textarea):focus {
+  background: var(--lx-paper-2);
+}
+
+/* ── Thẻ sản phẩm, băng đề xuất, khám phá ─────────────────────────────── */
+
+:root[data-theme="dark"] :is(.promo-card-media, .px-product-media,
+  .orders-viewed .discover-card-media) {
+  background: #2c231c;
+}
+
+:root[data-theme="dark"] .promo-card-badge {
+  background: rgba(28, 22, 17, .92);
+}
+
+:root[data-theme="dark"] :is(.discover-platform-badge, .discover-cashback-badge,
+  .discover-type-badge) {
+  background: rgba(28, 22, 17, .92);
+}
+
+:root[data-theme="dark"] .pc-interest-badge {
+  color: var(--lx-orange-2);
+  background: rgba(28, 22, 17, .92);
+}
+
+:root[data-theme="dark"] .promo-carousel-stage .promo-carousel-arrow {
+  background: rgba(33, 26, 21, .95);
+}
+
+:root[data-theme="dark"] .product-platform-badge {
+  background: var(--lx-paper-2);
+}
+
+/* ── Nhắc nhở, trạng thái, bảng đơn hàng ──────────────────────────────── */
+
+:root[data-theme="dark"] :is(.px-alert, .mb-alert) {
+  border-color: rgba(255, 106, 61, .28);
+  background: rgba(255, 106, 61, .12);
+}
+
+:root[data-theme="dark"] .mb-alert-icon {
+  background: rgba(28, 22, 17, .9);
+}
+
+:root[data-theme="dark"] :is(.orders-history-ref, .orders-history-code) {
+  background: var(--lx-paper-2);
+}
+
+:root[data-theme="dark"] :is(.orders-history-platform,
+  .orders-history-platform.platform-shopee,
+  .orders-history-thumb .platform-shopee) {
+  background: var(--lx-orange-soft);
+}
+
+:root[data-theme="dark"] .status-badge.status-pending {
+  background: rgba(216, 171, 108, .16);
+}
+
+/* ── Nhiệm vụ, điểm danh, bảng xếp hạng, modal ────────────────────────── */
+
+:root[data-theme="dark"] :is(.mission-tabs, .lang-switch) {
+  background: var(--lx-paper-2);
+}
+
+:root[data-theme="dark"] :is(.policy-modal, .checkin-modal) {
+  background: var(--lx-paper);
+}
+
+:root[data-theme="dark"] :is(.checkin-close, .checkin-entry-streak,
+  .lb2-seg button.is-active, .lb2-spot.is-empty .lb2-avatar,
+  .st-menu-refcode [data-copy-button]) {
+  background: var(--lx-paper-2);
+}
+
+:root[data-theme="dark"] :is(.lb2-card, .lb2-panel) {
+  background: var(--lx-paper);
+}
+
+/* Ô copy link giới thiệu: bản sáng ép #fff !important nên đây cũng cần. */
+:root[data-theme="dark"] :is(.copy-field input, .share-copy input,
+  .copy-field-light input) {
+  background: var(--lx-paper-2) !important;
+}
+
+:root[data-theme="dark"] :is(.entry-promo-close, .voucher-modal-close,
+  .entry-promo-scrim > .entry-promo-closebar .entry-promo-close) {
+  color: var(--lx-ink);
+  background: rgba(33, 26, 21, .94);
+}
+
+:root[data-theme="dark"] .entry-promo-scrim > .entry-promo-closebar .entry-promo-close:hover {
+  background: #2c231c;
+}
+
+/* ── Nút "sáng" trên hero cam ─────────────────────────────────────────── */
+
+/* Giữ nền trắng (đúng ý đồ nổi trên nền cam) nhưng mực phải luôn tối —
+   --lx-ink ở nhánh tối là màu sáng nên chữ từng chìm vào nút. */
+:root[data-theme="dark"] :is(.button-light, .px-btn-light) {
+  color: #2b211c;
+}
+
+/* ── Dải quảng bá 3 sàn ───────────────────────────────────────────────── */
+
+/* Gradient sáng đóng cứng chói giữa trang tối — hạ về tông tối nhưng giữ
+   tint nhận diện từng sàn; ô logo trắng giữ nguyên để logo sàn nổi đúng. */
+:root[data-theme="dark"] .lux-platform-slide[data-platform-ad="SHOPEE"] {
+  background: linear-gradient(110deg, #332016, #4a2417);
+  color: #ffb59d;
+}
+
+:root[data-theme="dark"] .lux-platform-slide[data-platform-ad="TIKTOK"] {
+  background: linear-gradient(110deg, #26211d, #322b25);
+  color: #e3d9d1;
+}
+
+:root[data-theme="dark"] .lux-platform-slide[data-platform-ad="LAZADA"] {
+  background: linear-gradient(110deg, #31202a, #3c2033);
+  color: #f0b8d4;
+}
+
+:root[data-theme="dark"] .lux-platform-copy small {
+  color: #4ed48e;
+}
+
+:root[data-theme="dark"] .lux-platform-kicker {
+  background: rgba(22, 16, 13, .55);
+}
+
+/* Nút "Tạo tài khoản" trong thẻ ví khách: chip trắng mờ trên nền tối thành
+   xám đục — đổi sang bề mặt tối, chữ sáng theo token. Không đụng nút
+   is-primary (cam) bên cạnh. */
+:root[data-theme="dark"] .mb-points-actions a:not(.is-primary) {
+  background: var(--lx-paper-2);
+}
+
+/* ── Điểm danh mỗi ngày ───────────────────────────────────────────────── */
+
+/* Dải mời điểm danh trên bảng điều khiển: gradient kem đóng cứng chói giữa
+   trang tối, còn chữ đi theo token mực (giờ là màu sáng) nên chìm vào nền.
+   Hạ nền về tông tối ấm, giữ icon lịch vàng-cam và nút CTA cam nguyên bản. */
+:root[data-theme="dark"] .checkin-entry {
+  border-color: rgba(255, 159, 46, .26);
+  background: linear-gradient(120deg, #2b2018, #362519);
+}
+
+:root[data-theme="dark"] .checkin-entry:hover {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .45);
+}
+
+:root[data-theme="dark"] .checkin-entry-streak {
+  border-color: rgba(255, 159, 46, .3);
+}
+
+/* Nút "Điểm danh" trên thanh nav desktop: cùng tông chip tối, mực cam sáng. */
+:root[data-theme="dark"] .px-nav-checkin {
+  border-color: rgba(255, 159, 46, .3);
+  background: linear-gradient(120deg, #33231a, #3c2818);
+  color: #ffab7a;
+}
+
+/* ── Trang Tài khoản (settings) ───────────────────────────────────────── */
+
+/* Thẻ hồ sơ đầu trang: gradient kem đóng cứng → tối ấm; tên/email theo token. */
+:root[data-theme="dark"] .mb-profile {
+  border-color: #4a3627;
+  background: linear-gradient(145deg, #2b2018, #241b14);
+}
+
+/* Ô mã giới thiệu/link đăng ký: bản sáng ép mực #17171a !important cho "dễ
+   đọc trên nền trắng" — nền đã đổi tối ở trên nên mực cũng phải theo token. */
+:root[data-theme="dark"] :is(.copy-field input, .share-copy input,
+  .copy-field-light input) {
+  color: var(--lx-ink) !important;
+  border-color: var(--lx-line) !important;
+}
+
+/* ── Vùng nguy hiểm trang hồ sơ (Đăng xuất mọi nơi / Xóa tài khoản) ────── */
+
+/* Thẻ hồng nhạt đóng cứng (#fff2ef) chói giữa trang tối; mực đỏ đậm chìm.
+   Đổi sang đỏ trầm trên nền tối — nút "button-danger" đỏ đặc giữ nguyên. */
+:root[data-theme="dark"] .danger-zone {
+  border-color: rgba(255, 122, 112, .28);
+  background: rgba(255, 122, 112, .10);
+}
+
+:root[data-theme="dark"] .danger-zone-copy b {
+  color: #ff8d84;
+}
+
+/* ── Trang Khám phá: dải bộ lọc dính đầu ─────────────────────────────── */
+
+/* Dải này đóng cứng nền kem rgba(251,248,244,.94) để làm "kính mờ" trên nền
+   sáng — ở chế độ tối nó thành một mảng sáng chói chắn ngang giữa trang. */
+:root[data-theme="dark"] .px-discover-filters {
+  background: rgba(22, 17, 14, .94);
+  border-bottom-color: rgba(84, 68, 55, .6);
+}
+
+/* ── Rà soát cuối: các bề mặt nền sáng còn sót ────────────────────────────
+   Rà bằng cách quét mọi rule có nền sáng đóng cứng trong luxury-ui.css rồi
+   trừ đi những gì đã vá ở trên. Danh sách dưới là phần CÒN LẠI thực sự là
+   "bề mặt" (thẻ, ô, chip, khối trạng thái). Không đụng các mảng sáng CỐ Ý:
+   gradient cam thương hiệu, avatar, huy chương vàng, nút Google trắng, ô
+   logo sàn, hero cam và các chip kính đặt trên nền cam. */
+
+/* Ô lỗi / cảnh báo dạng nhạt */
+:root[data-theme="dark"] :is(.form-error, .buy-error) {
+  border-color: rgba(255, 122, 112, .26);
+  background: rgba(255, 122, 112, .12);
+}
+
+/* Chip ghi chú, viên trạng thái nền kem */
+:root[data-theme="dark"] :is(.mb-pill-note, .mb-chip-glass, .px-rate-pill,
+  .kol-cta .badge-pending, .voucher-logo.is-placeholder) {
+  background: var(--lx-paper-2);
+}
+
+/* Ảnh chờ tải / ô ảnh trống */
+:root[data-theme="dark"] :is(.product-media, .ledger-icon, .lb-thumb,
+  .lb-thumb2, .podium-thumb, .lb2-avatar-img) {
+  background: #2c231c;
+}
+
+:root[data-theme="dark"] .skeleton-media {
+  background: linear-gradient(90deg, #241c16, #2f261e, #241c16);
+}
+
+/* Trang Đơn hàng: hero, ô tìm, thẻ đơn, viên trạng thái */
+:root[data-theme="dark"] .orders-history-hero {
+  background: linear-gradient(135deg, #211a15 0%, #16110e 100%);
+}
+
+:root[data-theme="dark"] .orders-history-search {
+  color: var(--lx-ink) !important;
+  background: var(--lx-paper) !important;
+}
+
+:root[data-theme="dark"] .orders-history-card {
+  background: var(--lx-paper);
+}
+
+:root[data-theme="dark"] .orders-history-tabs a:hover {
+  background: var(--lx-paper-2);
+}
+
+:root[data-theme="dark"] .orders-history-status {
+  background: var(--lx-paper-2);
+}
+
+:root[data-theme="dark"] .orders-history-status.is-pending {
+  background: rgba(216, 171, 108, .16);
+}
+
+:root[data-theme="dark"] .orders-history-status.is-cancelled {
+  background: rgba(255, 122, 112, .14);
+}
+
+/* Ví: hai ô luồng tiền "sắp về" / "đã trả" */
+:root[data-theme="dark"] .st-flow-ready {
+  background: rgba(255, 106, 61, .12);
+}
+
+:root[data-theme="dark"] .st-flow-paid {
+  background: rgba(60, 184, 131, .12);
+}
+
+/* Nhiệm vụ · điểm danh · nhắc sản phẩm quan tâm: nền kem gradient */
+:root[data-theme="dark"] :is(.mission-panel, .checkin-badge, .px-alert-interest,
+  .checkin-stats > div) {
+  border-color: rgba(255, 106, 61, .22);
+  background: linear-gradient(120deg, #2b2018, #241b14);
+}
+
+/* Trạng thái rê chuột trong dropdown thông báo và modal chính sách */
+:root[data-theme="dark"] :is(.notification-action:hover,
+  .notification-support-item:hover, .policy-modal-close:hover) {
+  background: var(--lx-paper-2);
+}
+
+/* Tab "Voucher" ở Khám phá (chưa chọn) — nền vàng nhạt */
+:root[data-theme="dark"] .discover-category-tabs button.discover-tab-voucher {
+  background: linear-gradient(180deg, rgba(216, 171, 108, .18), rgba(216, 171, 108, .10));
+}
+
+/* Thẻ giới thiệu ở trang công khai */
+:root[data-theme="dark"] .px-public-cards article:nth-child(2) {
+  background: linear-gradient(145deg, #2b2018, #241b14);
+}
+
+:root[data-theme="dark"] .px-public-cards article:nth-child(3) {
+  background: linear-gradient(145deg, #262019, #201a15);
+}

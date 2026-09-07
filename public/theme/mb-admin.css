@@ -456,7 +456,8 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 26px 26px 56px;
+  /* Đệm đáy tối thiểu — khối cuối trang đã tự mang margin đủ thở. */
+  padding: 26px 26px 10px;
 }
 
 /* shoptik-premium-patch.css bọc tiêu đề trang trong một tấm gradient đen
@@ -632,16 +633,27 @@
 /* ====================================================================== */
 
 @media (max-width: 760px) {
+
+  /* premium-patch sơn wrapper bằng background + BOX-SHADOW !important —
+     phải gỡ đủ cả ba, thiếu box-shadow là còn nguyên một "khối" mờ bao
+     quanh toàn bộ danh sách thẻ. Gỡ luôn nền/viền của chính <table>. */
   .backoffice-shell .responsive-table:has(table[data-cards]) {
     max-height: none !important;
     overflow: visible !important;
+    padding: 0 !important;
     border: 0 !important;
+    border-radius: 0 !important;
     background: transparent !important;
+    box-shadow: none !important;
   }
 
   .backoffice-shell table[data-cards] {
     min-width: 0 !important;
     border-spacing: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
   .backoffice-shell table[data-cards],
@@ -710,15 +722,15 @@
     text-align: right;
   }
 
-  .backoffice-shell table[data-cards] td .cell-body > strong,
-  .backoffice-shell table[data-cards] td .cell-body > b {
+  .backoffice-shell table[data-cards] td .cell-body>strong,
+  .backoffice-shell table[data-cards] td .cell-body>b {
     font-size: 13.5px;
     color: var(--text);
     word-break: break-word;
     display: block;
   }
 
-  .backoffice-shell table[data-cards] td .cell-body > small {
+  .backoffice-shell table[data-cards] td .cell-body>small {
     display: block;
     color: var(--muted);
     font-size: 12px;
@@ -836,6 +848,7 @@
 /* ====================================================================== */
 
 @media (max-width: 960px) {
+
   /* Header mobile: logo bị bóp sát nút hamburger và mất hẳn chữ nên không
      biết đang ở khu quản trị hay khu người dùng. Cho logo ô riêng + nhãn
      QUẢN TRỊ, và đẩy hai nút phải ra sát mép. */
@@ -964,30 +977,30 @@
 /* Danh sách "Việc đang chờ": markup có 4 ô (icon · chữ · số · mũi tên) nhưng
    lưới cũ chỉ khai 3 cột nên mũi tên rơi xuống dòng riêng; và <b>/<small>
    trong cùng một span không được đặt block nên tên việc dính liền mô tả. */
-.backoffice-shell .work-queue > a,
-.backoffice-shell .admin-activity-list > a {
+.backoffice-shell .work-queue>a,
+.backoffice-shell .admin-activity-list>a {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
-.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > b,
-.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > small {
+.backoffice-shell :is(.work-queue, .admin-activity-list)>a>span:not(.queue-icon)>b,
+.backoffice-shell :is(.work-queue, .admin-activity-list)>a>span:not(.queue-icon)>small {
   display: block;
 }
 
-.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > b {
+.backoffice-shell :is(.work-queue, .admin-activity-list)>a>span:not(.queue-icon)>b {
   color: var(--text);
   font-size: 14.5px;
   font-weight: 700;
 }
 
-.backoffice-shell :is(.work-queue, .admin-activity-list) > a > span:not(.queue-icon) > small {
+.backoffice-shell :is(.work-queue, .admin-activity-list)>a>span:not(.queue-icon)>small {
   margin-top: 2px;
   color: var(--muted);
   font-size: 12.5px;
 }
 
 /* Số việc: viên tròn, đỏ khi còn tồn và xám khi đã sạch. */
-.backoffice-shell .work-queue > a > strong {
+.backoffice-shell .work-queue>a>strong {
   display: grid;
   min-width: 30px;
   height: 26px;
@@ -1001,64 +1014,19 @@
   font-weight: 800;
 }
 
-.backoffice-shell .work-queue > a.has-work > strong {
+.backoffice-shell .work-queue>a.has-work>strong {
   color: #fff;
   background: var(--danger);
 }
 
-.backoffice-shell :is(.work-queue, .admin-activity-list) > a > i {
+.backoffice-shell :is(.work-queue, .admin-activity-list)>a>i {
   color: var(--muted);
   font-size: 16px;
   font-style: normal;
 }
 
-/* Dải hàng chờ bản mobile: nằm ngay dưới tiêu đề trang, cuộn ngang. */
-.bo-queue-mobile {
-  display: none;
-}
 
-@media (max-width: 960px) {
-  .bo-queue-mobile {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    margin-bottom: 16px;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-  }
-
-  .bo-queue-mobile::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bo-queue-mobile a {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
-    padding: 8px 14px 8px 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    color: var(--ink-soft);
-    background: var(--surface);
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .bo-queue-mobile a b {
-    display: grid;
-    min-width: 20px;
-    height: 20px;
-    place-items: center;
-    padding: 0 6px;
-    border-radius: 999px;
-    color: #fff;
-    background: var(--danger);
-    font-size: 11px;
-    font-weight: 800;
-  }
-}
+@media (max-width: 960px) {}
 
 /* ====================================================================== */
 /* 10. VÁ BỐ CỤC RIÊNG TỪNG TRANG QUẢN TRỊ                                 */
@@ -1104,8 +1072,8 @@
     flex-direction: row;
   }
 
-  .backoffice-shell .st-content .page-heading > .button,
-  .backoffice-shell .st-content .page-heading > .admin-heading-actions {
+  .backoffice-shell .st-content .page-heading>.button,
+  .backoffice-shell .st-content .page-heading>.admin-heading-actions {
     flex: 0 0 auto;
     margin-left: auto;
   }
@@ -1125,7 +1093,7 @@
   min-width: 200px;
 }
 
-.backoffice-shell .admin-filters > label.admin-date-range {
+.backoffice-shell .admin-filters>label.admin-date-range {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
@@ -1135,7 +1103,7 @@
 
 /* Nhãn "Từ"/"đến" của khoảng ngày nằm CÙNG hàng với ô ngày, nên bỏ kiểu
    nhãn-trên-đầu của các bộ lọc khác. */
-.backoffice-shell .admin-date-range > span {
+.backoffice-shell .admin-date-range>span {
   margin: 0;
   color: var(--muted);
   font-size: 12.5px;
@@ -1181,35 +1149,96 @@
    con rơi xuống một dòng riêng, "Mốc cần đạt" và "(số người giới thiệu hoặc
    số đơn/tháng)" tách làm hai dòng. Bọc chung vào .bo-label-line để cả hai
    nằm cùng một ô lưới. */
-.backoffice-shell .stack-form label > .bo-label-line {
+.backoffice-shell .stack-form label>.bo-label-line {
   display: block;
 }
 
-.backoffice-shell .stack-form label > .bo-label-line > small {
+.backoffice-shell .stack-form label>.bo-label-line>small {
   margin-left: 6px;
   color: var(--muted);
   font-weight: 500;
 }
 
 /* ===== Sidebar tối nâu ấm — đồng bộ nhấn cam ShopTik, luôn tối ===== */
-.backoffice-shell .st-sidebar { background: #241611; border-right: 1px solid rgba(255,255,255,.06); }
-.backoffice-shell .st-sidebar .st-sidebar-head { border-bottom-color: rgba(255,255,255,.1); }
-.backoffice-shell .st-sidebar .st-brand span { color: #fff; }
-.backoffice-shell .st-sidebar .st-brand small { color: rgba(255,255,255,.72); background: rgba(255,255,255,.13); }
-.backoffice-shell .st-nav-group { color: rgba(255,255,255,.42); }
-.backoffice-shell .st-nav a { color: rgba(255,255,255,.82); }
-.backoffice-shell .st-nav a svg { color: rgba(255,255,255,.7); }
-.backoffice-shell .st-nav a:hover { color: #fff; background: rgba(255,255,255,.08); }
-.backoffice-shell .st-nav a.active { color: #fff; background: var(--brand); }
-.backoffice-shell .st-nav a.active svg { color: #fff; }
-.backoffice-shell .bo-side-foot { background: #241611; border-top: 1px solid rgba(255,255,255,.09); }
-.backoffice-shell .bo-side-foot-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
-.backoffice-shell .bo-side-foot-card b { color: #fff; }
-.backoffice-shell .bo-side-foot-card small { color: rgba(255,255,255,.6); }
-.backoffice-shell .bo-side-foot-card i { background: var(--brand); color: #fff; }
-.backoffice-shell .bo-side-foot-link { color: rgba(255,255,255,.75); }
-.backoffice-shell .bo-side-foot-link:hover { color: #fff; background: rgba(255,255,255,.08); }
-.backoffice-shell .bo-side-foot-link svg { color: rgba(255,255,255,.7); }
+.backoffice-shell .st-sidebar {
+  background: #241611;
+  border-right: 1px solid rgba(255, 255, 255, .06);
+}
+
+.backoffice-shell .st-sidebar .st-sidebar-head {
+  border-bottom-color: rgba(255, 255, 255, .1);
+}
+
+.backoffice-shell .st-sidebar .st-brand span {
+  color: #fff;
+}
+
+.backoffice-shell .st-sidebar .st-brand small {
+  color: rgba(255, 255, 255, .72);
+  background: rgba(255, 255, 255, .13);
+}
+
+.backoffice-shell .st-nav-group {
+  color: rgba(255, 255, 255, .42);
+}
+
+.backoffice-shell .st-nav a {
+  color: rgba(255, 255, 255, .82);
+}
+
+.backoffice-shell .st-nav a svg {
+  color: rgba(255, 255, 255, .7);
+}
+
+.backoffice-shell .st-nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+}
+
+.backoffice-shell .st-nav a.active {
+  color: #fff;
+  background: var(--brand);
+}
+
+.backoffice-shell .st-nav a.active svg {
+  color: #fff;
+}
+
+.backoffice-shell .bo-side-foot {
+  background: #241611;
+  border-top: 1px solid rgba(255, 255, 255, .09);
+}
+
+.backoffice-shell .bo-side-foot-card {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .1);
+}
+
+.backoffice-shell .bo-side-foot-card b {
+  color: #fff;
+}
+
+.backoffice-shell .bo-side-foot-card small {
+  color: rgba(255, 255, 255, .6);
+}
+
+.backoffice-shell .bo-side-foot-card i {
+  background: var(--brand);
+  color: #fff;
+}
+
+.backoffice-shell .bo-side-foot-link {
+  color: rgba(255, 255, 255, .75);
+}
+
+.backoffice-shell .bo-side-foot-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+}
+
+.backoffice-shell .bo-side-foot-link svg {
+  color: rgba(255, 255, 255, .7);
+}
 
 /* Hàng đôi nút duyệt/từ chối mã giới thiệu — flex trên div bọc trong td,
    hai nút luôn cùng MỘT hàng, không xuống dòng. */
@@ -1220,11 +1249,15 @@
   flex-wrap: nowrap;
   white-space: nowrap;
 }
-.backoffice-shell .refcode-actions-row form { margin: 0; display: inline-flex; }
+
+.backoffice-shell .refcode-actions-row form {
+  margin: 0;
+  display: inline-flex;
+}
 
 /* ===== Đối tác/KOL trong bảng người dùng ===== */
 /* Hàng đối tác nhuộm nền nhẹ để lướt bảng là nhận ra ngay. */
-.backoffice-shell tr.is-partner-row > td {
+.backoffice-shell tr.is-partner-row>td {
   background: #fff7ee;
 }
 
@@ -1292,9 +1325,17 @@
 
 /* Badge nháy khi số việc chờ TĂNG (admin-queue-live.js). */
 @keyframes boBadgeBump {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.45); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.45);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .backoffice-shell .st-nav-badge.is-bump {
@@ -1312,19 +1353,39 @@
   height: 36px;
   padding: 0 13px;
   border-radius: 999px;
-  border: 1px solid var(--lx-line, #e6e0d8);
-  background: var(--lx-surface, #fff);
-  color: var(--lx-ink, #23201d);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color .15s ease, background .15s ease;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
 }
-.bo-guide-btn:hover { border-color: var(--lx-brand, #ee4d2d); color: var(--lx-brand, #ee4d2d); }
-.bo-guide-btn svg { width: 16px; height: 16px; }
-@media (max-width: 640px) { .bo-guide-btn span { display: none; } .bo-guide-btn { padding: 0 10px; } }
 
-body.bo-guide-open { overflow: hidden; }
+.bo-guide-btn:hover {
+  border-color: var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.bo-guide-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  .bo-guide-btn span {
+    display: none;
+  }
+
+  .bo-guide-btn {
+    padding: 0 10px;
+  }
+}
+
+body.bo-guide-open {
+  overflow: hidden;
+}
 
 .bo-guide-scrim {
   position: fixed;
@@ -1336,6 +1397,7 @@ body.bo-guide-open { overflow: hidden; }
   justify-content: center;
   padding: 20px;
 }
+
 .bo-guide {
   width: 100%;
   max-width: 920px;
@@ -1347,6 +1409,7 @@ body.bo-guide-open { overflow: hidden; }
   flex-direction: column;
   box-shadow: 0 24px 70px rgba(20, 12, 6, 0.35);
 }
+
 .bo-guide-head {
   flex: 0 0 auto;
   display: flex;
@@ -1357,16 +1420,34 @@ body.bo-guide-open { overflow: hidden; }
   border-bottom: 1px solid var(--lx-line, #eee3d8);
   background: var(--lx-paper, #fbf8f4);
 }
-.bo-guide-head b { display: block; font-size: 16px; color: var(--lx-ink, #23201d); }
-.bo-guide-head small { color: var(--lx-muted, #8a8178); font-size: 12px; }
+
+.bo-guide-head b {
+  display: block;
+  font-size: 16px;
+  color: var(--lx-ink, #23201d);
+}
+
+.bo-guide-head small {
+  color: var(--lx-muted, #8a8178);
+  font-size: 12px;
+}
+
 .bo-guide-close {
-  width: 34px; height: 34px;
-  border: 0; border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
   background: transparent;
   color: var(--lx-muted, #8a8178);
-  font-size: 24px; line-height: 1; cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
 }
-.bo-guide-close:hover { background: var(--lx-line, #eee3d8); color: var(--lx-ink, #23201d); }
+
+.bo-guide-close:hover {
+  background: var(--lx-line, #eee3d8);
+  color: var(--lx-ink, #23201d);
+}
 
 .bo-guide-body {
   flex: 1 1 auto;
@@ -1374,6 +1455,7 @@ body.bo-guide-open { overflow: hidden; }
   display: grid;
   grid-template-columns: 232px 1fr;
 }
+
 .bo-guide-toc {
   border-right: 1px solid var(--lx-line, #eee3d8);
   background: var(--lx-paper, #fbf8f4);
@@ -1383,6 +1465,7 @@ body.bo-guide-open { overflow: hidden; }
   flex-direction: column;
   gap: 3px;
 }
+
 .bo-guide-search {
   width: 100%;
   height: 34px;
@@ -1394,6 +1477,7 @@ body.bo-guide-open { overflow: hidden; }
   font-size: 13px;
   color: var(--lx-ink, #23201d);
 }
+
 .bo-guide-toc a {
   display: block;
   padding: 9px 11px;
@@ -1404,27 +1488,39 @@ body.bo-guide-open { overflow: hidden; }
   font-weight: 600;
   line-height: 1.35;
 }
-.bo-guide-toc a:hover { background: var(--lx-line, #f0e9e0); }
+
+.bo-guide-toc a:hover {
+  background: var(--lx-line, #f0e9e0);
+}
+
 .bo-guide-toc a.is-active {
   background: color-mix(in srgb, var(--lx-brand, #ee4d2d) 12%, transparent);
   color: var(--lx-brand, #ee4d2d);
 }
+
 .bo-guide-content {
   overflow-y: auto;
   padding: 8px 22px 28px;
 }
-.bo-guide-content section { padding-top: 18px; scroll-margin-top: 8px; }
+
+.bo-guide-content section {
+  padding-top: 18px;
+  scroll-margin-top: 8px;
+}
+
 .bo-guide-content h3 {
   margin: 0 0 8px;
   font-size: 16px;
   color: var(--lx-ink, #23201d);
 }
+
 .bo-guide-content p {
   margin: 0;
   color: var(--lx-ink-2, #4a453f);
   font-size: 14px;
   line-height: 1.7;
 }
+
 .bo-guide-content code {
   background: var(--lx-line, #f0e9e0);
   padding: 1px 5px;
@@ -1433,8 +1529,16 @@ body.bo-guide-open { overflow: hidden; }
 }
 
 @media (max-width: 720px) {
-  .bo-guide { height: 88vh; max-width: none; }
-  .bo-guide-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .bo-guide {
+    height: 88vh;
+    max-width: none;
+  }
+
+  .bo-guide-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
   .bo-guide-toc {
     border-right: 0;
     border-bottom: 1px solid var(--lx-line, #eee3d8);
@@ -1443,14 +1547,28 @@ body.bo-guide-open { overflow: hidden; }
     gap: 6px;
     max-height: 132px;
   }
-  .bo-guide-search { flex: 1 1 100%; margin-bottom: 4px; }
-  .bo-guide-toc a { font-size: 12.5px; padding: 7px 10px; }
+
+  .bo-guide-search {
+    flex: 1 1 100%;
+    margin-bottom: 4px;
+  }
+
+  .bo-guide-toc a {
+    font-size: 12.5px;
+    padding: 7px 10px;
+  }
 }
 
 /* Người dùng đã xóa: làm mờ dòng + tag "Đã xóa" (tách trực quan khỏi tài khoản
    đang hoạt động; tên vẫn giữ để đối soát). */
-.admin-data-table tr.is-deleted-row { opacity: 0.6; }
-.admin-data-table tr.is-deleted-row:hover { opacity: 0.85; }
+.admin-data-table tr.is-deleted-row {
+  opacity: 0.6;
+}
+
+.admin-data-table tr.is-deleted-row:hover {
+  opacity: 0.85;
+}
+
 .deleted-tag {
   display: inline-block;
   margin-left: 6px;
@@ -1472,91 +1590,242 @@ body.bo-guide-open { overflow: hidden; }
   gap: 16px;
   align-items: start;
 }
-.sync-card { display: flex; flex-direction: column; gap: 14px; }
-.sync-note { margin: 0; color: var(--muted); font-size: 13px; }
 
-.sync-cookie { display: flex; flex-direction: column; gap: 12px; }
-.sync-cookie-state {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  margin: 0; font-size: 13px; color: var(--text);
+.sync-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.sync-cookie-state small { color: var(--muted); }
-.sync-cookie-state b { font-variant-numeric: tabular-nums; }
+
+.sync-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sync-cookie {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sync-cookie-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.sync-cookie-state small {
+  color: var(--muted);
+}
+
+.sync-cookie-state b {
+  font-variant-numeric: tabular-nums;
+}
 
 .sync-seg {
-  display: inline-flex; padding: 3px; gap: 3px;
-  background: var(--surface-muted); border: 1px solid var(--line);
-  border-radius: 999px; width: fit-content;
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  width: fit-content;
 }
-.sync-seg label { cursor: pointer; margin: 0; position: relative; }
-.sync-seg input { position: absolute; opacity: 0; pointer-events: none; }
+
+.sync-seg label {
+  cursor: pointer;
+  margin: 0;
+  position: relative;
+}
+
+.sync-seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .sync-seg span {
-  display: block; padding: 6px 14px; border-radius: 999px;
-  font-size: 12.5px; font-weight: 700; color: var(--muted);
-  white-space: nowrap; transition: background .15s, color .15s;
+  display: block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: background .15s, color .15s;
 }
+
 .sync-seg label:has(input:checked) span {
-  background: var(--surface); color: var(--text);
+  background: var(--surface);
+  color: var(--text);
   box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
 }
-.sync-seg label:focus-within span { outline: 2px solid var(--brand); outline-offset: 1px; }
 
-.sync-mode-panel { display: none; }
+.sync-seg label:focus-within span {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.sync-mode-panel {
+  display: none;
+}
+
 .sync-card:has(.sync-seg input[value="profile"]:checked) .sync-mode-panel[data-mode="profile"],
 .sync-card:has(.sync-seg input[value="manual"]:checked) .sync-mode-panel[data-mode="manual"] {
   display: block;
 }
-.sync-mode-panel form { display: flex; flex-direction: column; gap: 8px; }
-.sync-mode-panel small { color: var(--muted); font-size: 12px; }
+
+.sync-mode-panel form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sync-mode-panel small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .sync-mode-panel textarea {
-  width: 100%; resize: vertical; font: inherit; font-size: 12.5px;
-  padding: 10px 12px; border: 1px solid var(--line);
-  border-radius: var(--bo-radius-s); background: var(--surface); color: var(--text);
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--bo-radius-s);
+  background: var(--surface);
+  color: var(--text);
 }
-.sync-mode-panel .button { align-self: flex-start; }
 
-.sync-clear { margin-top: -2px; }
+.sync-mode-panel .button {
+  align-self: flex-start;
+}
+
+.sync-clear {
+  margin-top: -2px;
+}
+
 .button-link-danger {
-  background: none; border: none; padding: 4px 0; color: var(--danger);
-  font-size: 12.5px; font-weight: 700; cursor: pointer; text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--danger);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
 }
-.button-link-danger:hover { opacity: .8; }
 
-.sync-sep { border: none; border-top: 1px solid var(--line); margin: 2px 0; }
+.button-link-danger:hover {
+  opacity: .8;
+}
+
+.sync-sep {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2px 0;
+}
 
 .sync-schedule fieldset {
-  border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.sync-schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.sync-schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .sync-schedule-grid label {
-  display: flex; flex-direction: column; gap: 6px;
-  font-size: 12.5px; font-weight: 700; color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
 }
+
 .sync-schedule-grid input {
-  height: 40px; padding: 0 12px; border: 1px solid var(--line);
-  border-radius: var(--bo-radius-s); background: var(--surface); color: var(--text); font: inherit;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--bo-radius-s);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
 }
-.sync-schedule-actions { display: flex; justify-content: flex-end; }
+
+.sync-schedule-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 .sync-runbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding-top: 4px; flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  flex-wrap: wrap;
 }
-.sync-runstat { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.sync-runstat small { color: var(--muted); font-size: 12px; }
+
+.sync-runstat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sync-runstat small {
+  color: var(--muted);
+  font-size: 12px;
+}
 
 .sync-subrow {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.sync-subrow b { font-size: 13px; margin-right: 8px; }
-.sync-subrow small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
 
-.info-strip.is-error { --strip-accent: var(--danger); }
+.sync-subrow b {
+  font-size: 13px;
+  margin-right: 8px;
+}
+
+.sync-subrow small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.info-strip.is-error {
+  --strip-accent: var(--danger);
+}
 
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ── Trang Cấu hình: xếp field theo LƯỚI nhiều cột cho gọn ──────────────
@@ -1567,9 +1836,11 @@ body.bo-guide-open { overflow: hidden; }
   gap: 18px 22px;
   align-items: start;
 }
-.backoffice-shell .config-form .stack-form > .switch-row {
+
+.backoffice-shell .config-form .stack-form>.switch-row {
   grid-column: 1 / -1;
 }
+
 /* Bó gọn chiều rộng ô số thuần để không loãng trong ô lưới rộng */
 .backoffice-shell .config-form .stack-form input[type="number"],
 .backoffice-shell .config-form .stack-form .currency-input-shell {
@@ -1578,60 +1849,1850 @@ body.bo-guide-open { overflow: hidden; }
 
 /* ── Chuông đối tác chờ duyệt (topbar admin) ────────────────────────── */
 .bo-bell {
-  position: relative; display: inline-grid; place-items: center;
-  width: 36px; height: 36px; border-radius: 10px; flex: none;
-  color: var(--muted); border: 1px solid var(--line);
-  background: var(--surface); text-decoration: none;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex: none;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-decoration: none;
 }
-.bo-bell svg { width: 18px; height: 18px; }
-.bo-bell:hover { background: var(--surface-hover); color: var(--text); }
+
+.bo-bell svg {
+  width: 18px;
+  height: 18px;
+}
+
+.bo-bell:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .bo-bell.is-alert {
-  color: var(--danger); border-color: var(--danger-line);
+  color: var(--danger);
+  border-color: var(--danger-line);
   transform-origin: 50% 20%;
   animation: bo-bell-shake 2.6s ease-in-out infinite;
 }
+
 .bo-bell-badge {
-  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px;
-  padding: 0 5px; border-radius: 999px; background: var(--danger);
-  color: var(--on-danger, #fff); font-size: 11px; font-weight: 800;
-  font-style: normal; display: grid; place-items: center;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: var(--on-danger, #fff);
+  font-size: 11px;
+  font-weight: 800;
+  font-style: normal;
+  display: grid;
+  place-items: center;
 }
+
 @keyframes bo-bell-shake {
-  0%, 86%, 100% { transform: rotate(0); }
-  88% { transform: rotate(-13deg); }
-  91% { transform: rotate(11deg); }
-  94% { transform: rotate(-7deg); }
-  97% { transform: rotate(4deg); }
+
+  0%,
+  86%,
+  100% {
+    transform: rotate(0);
+  }
+
+  88% {
+    transform: rotate(-13deg);
+  }
+
+  91% {
+    transform: rotate(11deg);
+  }
+
+  94% {
+    transform: rotate(-7deg);
+  }
+
+  97% {
+    transform: rotate(4deg);
+  }
 }
-@media (prefers-reduced-motion: reduce) { .bo-bell.is-alert { animation: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bo-bell.is-alert {
+    animation: none;
+  }
+}
 
 /* ── Trang Thống kê ──────────────────────────────────────────────────── */
 .stats-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 16px; align-items: start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+  align-items: start;
 }
-.stats-scroll { overflow-x: auto; }
-.stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.stats-scroll {
+  overflow-x: auto;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
 .stats-table th {
-  text-align: left; color: var(--muted); font-weight: 700; font-size: 11px;
-  text-transform: uppercase; letter-spacing: .04em; padding: 6px 10px;
-  border-bottom: 1px solid var(--line); white-space: nowrap;
+  text-align: left;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
 }
-.stats-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-.stats-table tr:last-child td { border-bottom: none; }
-.stats-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.stats-table .rank { color: var(--muted); width: 28px; }
-.stats-prod { display: flex; align-items: center; gap: 10px; }
-.stats-prod img, .stats-prod-ph { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; flex: none; }
-.stats-prod-ph { display: grid; place-items: center; background: var(--surface-muted); color: var(--muted); font-weight: 800; }
-.stats-prod-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.stats-user { display: block; text-decoration: none; color: var(--text); }
-.stats-user b { display: block; }
-.stats-user small { color: var(--muted); }
-.stats-bars { display: flex; flex-direction: column; gap: 12px; }
-.stats-bar-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 4px; }
-.stats-bar-top span { color: var(--muted); white-space: nowrap; }
-.stats-bar-track { height: 8px; border-radius: 999px; background: var(--surface-muted); overflow: hidden; }
-.stats-bar-track span { display: block; height: 100%; border-radius: 999px; background: var(--brand); }
-.stats-note { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
-.stats-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+.stats-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.stats-table tr:last-child td {
+  border-bottom: none;
+}
+
+.stats-table .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-table .rank {
+  color: var(--muted);
+  width: 28px;
+}
+
+.stats-prod {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-prod img,
+.stats-prod-ph {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: none;
+}
+
+.stats-prod-ph {
+  display: grid;
+  place-items: center;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.stats-prod-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stats-user {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.stats-user b {
+  display: block;
+}
+
+.stats-user small {
+  color: var(--muted);
+}
+
+.stats-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-bar-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.stats-bar-top span {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stats-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.stats-bar-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+.stats-note {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
+.stats-empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+/* ====================================================================== */
+/* 12. MOBILE: HEADER + TABBAR THEO GIAO DIỆN NGƯỜI DÙNG                   */
+/* ====================================================================== */
+
+/*
+ * Khu người dùng trên điện thoại là header kem mờ + icon trần + avatar tròn
+ * (px-header của luxury-ui) và thanh đáy trắng phẳng (px-bottomnav). Khu quản
+ * trị lại đội nguyên dải gradient nâu + nút chip kính mờ của mb-skin nên hai
+ * không gian nhìn như hai sản phẩm khác nhau. Lớp này đè lên mb-skin
+ * (mb-admin nạp CUỐI) để backoffice mobile nói cùng ngôn ngữ với khu người
+ * dùng; desktop (>960px) giữ nguyên thanh trắng gọn hiện tại.
+ * Màu chép tay từ luxury-ui (--lx-*) vì backoffice KHÔNG nạp file đó.
+ */
+@media (max-width: 960px) {
+
+  /* Nền trang: kem ấm như khu người dùng thay cho xám lạnh --mb-canvas. */
+  .backoffice-shell.st-app {
+    --admin-bg: #fbf8f4;
+    --mb-canvas: #fbf8f4;
+  }
+
+  .backoffice-shell .st-topbar {
+    border-bottom: 1px solid rgba(216, 198, 186, .78);
+    background: rgba(255, 250, 245, .94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: none;
+  }
+
+  /* Thương hiệu: logo trần + chữ "ShopTik" gradient cam đúng kiểu .px-brand;
+     nhãn QUẢN TRỊ thu thành chip cam nhạt — vẫn biết ngay mình đang ở khu
+     vận hành chứ không phải khu mua sắm. */
+  .backoffice-shell .st-topbar-brand {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: 9px;
+    row-gap: 3px;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -.045em;
+    line-height: 1;
+  }
+
+  .backoffice-shell .st-topbar-brand img {
+    grid-row: span 2;
+    width: 37px;
+    height: 37px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .backoffice-shell .st-topbar-brand span {
+    display: block;
+    align-self: end;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: linear-gradient(90deg, #ee4d2d, #ff8459);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .backoffice-shell .st-topbar-brand small {
+    align-self: start;
+    justify-self: start;
+    margin: 0;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: #d63c1e;
+    background: #fff0e9;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: .1em;
+  }
+
+  /* Nút trên header: icon trần như .px-head-icon — bỏ hẳn chip viền/kính mờ. */
+  /* !important để đấu với .st-app .st-icon-button (app-shell) cũng !important. */
+  .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-topbar-open) {
+    height: 38px;
+    min-width: 38px;
+    padding: 0 9px;
+    border: 0 !important;
+    border-radius: 12px !important;
+    color: #4d4038 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-topbar-open):hover {
+    border-color: transparent !important;
+    color: #ee4d2d !important;
+    background: #fff0e9 !important;
+  }
+
+  /* Avatar: tròn, nền gradient cam như .st-avatar khu người dùng. */
+  .backoffice-shell .st-topbar .st-account {
+    width: auto;
+    height: auto;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .backoffice-shell .st-topbar .st-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ee4d2d, #ff8c65);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  /* Thanh đáy: dải kem phẳng sát mép như .px-bottomnav — không còn viên thuốc
+     nổi; mục đang chọn chỉ đổi cam + vạch nhỏ phía trên, bỏ nền pill. */
+  .backoffice-shell .st-tabbar {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 64px;
+    padding: 4px 2px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid #e9ded4;
+    border-radius: 0;
+    background: rgba(255, 251, 247, .97);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: none;
+  }
+
+  .backoffice-shell .st-tabbar :is(a, button) {
+    position: relative;
+    min-height: 56px;
+    border-radius: 0;
+    gap: 3px;
+    color: #8d7e74;
+    font-size: 10px;
+    font-weight: 650;
+  }
+
+  .backoffice-shell .st-tabbar a.active {
+    color: #ee4d2d;
+    background: transparent;
+    box-shadow: none;
+    font-weight: 800;
+  }
+
+  .backoffice-shell .st-tabbar a.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: #ee4d2d;
+  }
+
+  .backoffice-shell .st-tabbar a.active svg {
+    stroke-width: 2.3;
+  }
+
+  /* Thanh đáy cao ~64px — đệm đáy chỉ cần vừa đủ vượt qua nó, không để
+     một dải trống to giữa nội dung cuối và thanh. */
+  .backoffice-shell .st-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Bản tối: giữ nguyên bố cục mới, chỉ đổi sang bảng màu dark sẵn có của khu
+   quản trị (navy đậm + cam sáng) — selector có :root[data-theme] nên thắng
+   khối light phía trên bằng specificity, không phụ thuộc thứ tự. */
+@media (max-width: 960px) {
+  :root[data-theme="dark"] .backoffice-shell .st-topbar {
+    background: rgba(11, 19, 36, .94);
+    border-bottom-color: #24354f;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-topbar-brand span {
+    background: linear-gradient(90deg, #ff8a5f, #ffb499);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-topbar-brand small {
+    color: #ffb499;
+    background: rgba(255, 138, 95, .14);
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-topbar-open) {
+    border: 0 !important;
+    color: #c4d3ea !important;
+    background: transparent !important;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-topbar-open):hover {
+    border-color: transparent !important;
+    color: #ff8a5f !important;
+    background: rgba(255, 138, 95, .14) !important;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-tabbar {
+    background: rgba(11, 19, 36, .97);
+    border-top-color: #24354f;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-tabbar :is(a, button) {
+    color: #8fa3c0;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-tabbar a.active {
+    color: #ff8a5f;
+    background: transparent;
+  }
+
+  :root[data-theme="dark"] .backoffice-shell .st-tabbar a.active::before {
+    background: #ff8a5f;
+  }
+}
+
+/* ====================================================================== */
+/* 13. MENU NGÔN NGỮ TRÊN TOPBAR (thay chỗ nút gạt theme cũ)               */
+/* ====================================================================== */
+
+/* Giống px-lang-menu của khu người dùng nhưng đi bằng token khu quản trị
+   (--surface/--line/--brand) nên bản tối tự đúng màu. Trigger mang class
+   st-icon-button để hưởng dáng chip ở desktop và dáng icon trần ở mobile
+   (mục 12); width auto vì trong nút còn chữ VI/EN. */
+.bo-lang-menu {
+  position: relative;
+}
+
+.backoffice-shell .bo-lang-trigger {
+  width: auto;
+  padding: 0 10px;
+  gap: 6px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.bo-lang-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.bo-lang-trigger svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.bo-lang-code {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+
+.backoffice-shell .bo-lang-menu[open] .bo-lang-trigger {
+  border-color: var(--brand-line, var(--brand)) !important;
+  color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+}
+
+.bo-lang-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, .16);
+}
+
+.bo-lang-panel a {
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bo-lang-panel a:hover {
+  background: var(--surface-muted);
+}
+
+.bo-lang-panel a.active {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* ====================================================================== */
+/* 14. DESKTOP: ĐỒNG NHẤT HÀNG NÚT TOPBAR                                  */
+/* ====================================================================== */
+
+/* Trước mỗi nút một kiểu: chuông 36px bo 10px, "Hướng dẫn" pill trắng cả ở
+   bản tối (lỗi --lx-* đã sửa ở trên), menu VI chip vuông 44px (dáng
+   st-icon-button của app-shell, có !important), tài khoản pill 44px viền đậm.
+   Gom về MỘT dáng: cao 40px, pill 999px, nền/viền/mực theo token nên sáng
+   tối tự đúng; hover đồng loạt đổi cam. !important để đấu với bộ !important
+   của .st-app .st-icon-button trong app-shell. Chỉ desktop — mobile đã có
+   dáng icon trần ở mục 12. */
+@media (min-width: 961px) {
+  .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-account) {
+    height: 40px !important;
+    min-height: 40px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 999px !important;
+    color: var(--ink-soft) !important;
+    background: var(--surface) !important;
+    box-shadow: none !important;
+  }
+
+  .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button, .st-account):hover {
+    border-color: var(--brand-line) !important;
+    color: var(--brand) !important;
+    background: var(--brand-soft) !important;
+  }
+
+  .backoffice-shell .st-topbar .bo-bell {
+    width: 40px;
+  }
+
+  /* Chuông đang có việc chờ: giữ tông đỏ báo động đè lên dáng chung. */
+  .backoffice-shell .st-topbar .bo-bell.is-alert {
+    border-color: var(--danger-line) !important;
+    color: var(--danger) !important;
+  }
+
+  .backoffice-shell .st-topbar .bo-guide-btn {
+    padding: 0 15px;
+  }
+
+  .backoffice-shell .st-topbar .bo-lang-trigger {
+    width: auto;
+    padding: 0 13px;
+  }
+
+  .backoffice-shell .st-topbar .st-account {
+    gap: 8px;
+    padding: 0 13px 0 5px;
+    font-weight: 600;
+  }
+
+  /* Avatar tròn gradient cam như khu người dùng (và như bản mobile mục 12). */
+  .backoffice-shell .st-topbar .st-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ee4d2d, #ff8c65);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .backoffice-shell .st-topbar .st-menu-caret {
+    color: currentColor;
+  }
+}
+
+/* ====================================================================== */
+/* 15. AVATAR = ẢNH TÀI KHOẢN (như khu người dùng)                         */
+/* ====================================================================== */
+
+/* Đăng nhập Google có avatarUrl thì hiện ảnh thật; không có thì chữ cái đầu
+   (markup ở base.njk). Ảnh phải lấp kín hình tròn, không kéo méo. */
+.backoffice-shell :is(.st-avatar, .bo-side-foot-card i) {
+  overflow: hidden;
+}
+
+.backoffice-shell :is(.st-avatar, .bo-side-foot-card i) img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+
+/* ====================================================================== */
+/* 16. MOBILE: NỘI DUNG BỚT "MỘT CỘT THẲNG TUỘT"                           */
+/* ====================================================================== */
+
+/* dashboard.css ép mọi lưới số liệu về 1 cột ở ≤640px nên trang tổng quan
+   thành một tháp thẻ cao lêu nghêu, thẻ nào cũng to bằng nhau. Điện thoại
+   đủ chỗ cho 2 cột thẻ gọn: mật độ gấp đôi, đỡ cuộn, nhìn có nhịp hơn.
+   Hàng "Cần xử lý"/nhật ký giữ dạng danh sách (mỗi dòng có icon + số đếm,
+   nằm ngang đọc vẫn thoáng). */
+@media (max-width: 640px) {
+
+  /* !important vì shoptik-premium-patch ép 1fr/padding cũng bằng !important. */
+  .backoffice-shell :is(.kpi-grid, .order-summary-grid, .profile-metrics, .balance-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px;
+  }
+
+  /* Thẻ hẹp một nửa → ruột xếp dọc: chip phạm vi, tên, số, dòng so sánh. */
+  .backoffice-shell .kpi-card {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "scope" "name" "value" "trend";
+    align-content: start;
+    gap: 5px;
+    padding: 12px 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .backoffice-shell :is(.kpi-trend, .kpi-sub) {
+    max-width: none;
+  }
+
+  .backoffice-shell .kpi-scope {
+    max-width: 100%;
+    margin-bottom: 6px;
+    padding: 3px 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .56rem;
+    letter-spacing: .04em;
+  }
+
+  .backoffice-shell .kpi-name {
+    font-size: .66rem;
+    letter-spacing: .05em;
+  }
+
+  .backoffice-shell .kpi-value {
+    font-size: 1.35rem;
+  }
+
+  .backoffice-shell :is(.kpi-sub, .kpi-trend) {
+    font-size: .64rem;
+  }
+
+  /* Hai nút hành động đầu trang: đứng cạnh nhau thay vì chồng hai tầng. */
+  .backoffice-shell :is(.admin-heading-actions, .admin-filters-actions) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .backoffice-shell :is(.admin-heading-actions, .admin-filters-actions) .button {
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+/* Kicker trong panel (vd "CAN XU LY") con dinh mau xanh navy cua premium-patch
+   cu — ve cung mot mau thuong hieu voi kicker dau trang. */
+.backoffice-shell .st-content .admin-kicker {
+  color: var(--brand) !important;
+}
+
+/* ====================================================================== */
+/* 17. MOBILE: THẺ HÀNG BẢNG DỮ LIỆU GỌN HƠN                               */
+/* ====================================================================== */
+
+/* Bản thẻ cũ: nhãn trái nhưng GIÁ TRỊ dồn hết sang phải nên chữ dài lởm
+   chởm theo mép phải; ô chọn (checkbox) chiếm nguyên một hàng đầu thẻ; hai
+   nút duyệt hàng loạt chồng hai tầng. Chỉnh: nhãn/giá trị thành lưới 2 cột
+   cùng căn trái (admin-table.js đã gói giá trị vào .cell-body nên mỗi ô chỉ
+   có đúng 2 khối), checkbox ghim góc phải trên thẻ, nút hàng loạt đứng
+   cạnh nhau. */
+@media (max-width: 760px) {
+  .backoffice-shell table[data-cards] td {
+    display: grid !important;
+    grid-template-columns: 88px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 8px 0 !important;
+    text-align: left;
+  }
+
+  .backoffice-shell table[data-cards] td::before {
+    max-width: none;
+    padding-top: 2px;
+  }
+
+  .backoffice-shell table[data-cards] td .cell-body {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .backoffice-shell table[data-cards] td .status-cell {
+    align-items: flex-start;
+  }
+
+  .backoffice-shell table[data-cards] td[data-label=""],
+  .backoffice-shell table[data-cards] td:not([data-label]),
+  .backoffice-shell table[data-cards] td[colspan] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Ô chọn: ghim góc phải trên thẻ thay vì chiếm nguyên hàng đầu. */
+  .backoffice-shell table[data-cards] tbody tr {
+    position: relative;
+  }
+
+  .backoffice-shell table[data-cards] td.select-col {
+    position: absolute !important;
+    top: 12px;
+    right: 14px;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .backoffice-shell table[data-cards] td.select-col input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .backoffice-shell table[data-cards] td.select-col+td {
+    padding-right: 34px !important;
+  }
+
+  /* Thanh duyệt hàng loạt: lời nhắc một dòng, hai nút đứng cạnh nhau. */
+  .backoffice-shell .bulk-action-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .backoffice-shell .bulk-action-bar>span {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .backoffice-shell .bulk-action-bar .button {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+/* Tách thẻ rõ hơn: các thẻ đơn đang "liền liền" khó phân biệt — viền đậm +
+   vạch cam nhận diện bên trái, bóng đổ nhẹ, giãn cách rộng; ngược lại kẻ
+   chia BÊN TRONG thẻ mờ đi để ranh giới giữa các thẻ luôn thắng. Ô định
+   danh đầu thẻ (mã đơn/tên) phóng to như tiêu đề. */
+@media (max-width: 760px) {
+
+  /* Cụm đầu danh sách sau khi bỏ hộp: tiêu đề đứng gọn trên nền trang, bỏ
+     vạch kẻ chân mồ côi; thanh duyệt hàng loạt thành MỘT THẺ cùng ngôn ngữ
+     với thẻ đơn (viền đậm + bo 16 + bóng) và cùng nhịp giãn cách 16px. */
+  .backoffice-shell :is(.panel, .data-panel):has(table[data-cards])>.panel-heading {
+    margin: 0 0 12px;
+    padding: 0 2px;
+    border-bottom: 0;
+  }
+
+  .backoffice-shell :is(.panel, .data-panel):has(table[data-cards]) .bulk-action-bar {
+    position: static;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Hộp panel bọc bảng: bỏ hẳn nền/viền/đệm trên mobile — mỗi THẺ ĐƠN tự
+     đứng trên nền trang, không còn cái hộp lớn dính liền tất cả với nhau. */
+  .backoffice-shell :is(.panel, .data-panel):has(table[data-cards]) {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr {
+    margin-bottom: 16px;
+    padding: 12px 14px 12px 17px;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+  }
+
+  /* Vạch cam nhận diện: tab nổi bên trong mép trái (không dùng border-left
+     vì bo góc 16px sẽ pha viền cam loang sang các cạnh khác). */
+  .backoffice-shell table[data-cards] tbody tr::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand);
+  }
+
+  .backoffice-shell table[data-cards] td {
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent) !important;
+  }
+
+  .backoffice-shell table[data-cards] td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .backoffice-shell table[data-cards] td.select-col {
+    border: 0 !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr>td:not(.select-col):first-child .cell-body> :is(strong, b),
+  .backoffice-shell table[data-cards] td.select-col+td .cell-body> :is(strong, b) {
+    font-size: 15.5px;
+    letter-spacing: -.01em;
+  }
+}
+
+/* ====================================================================== */
+/* 18. PANEL DU LIEU HOA VAO NEN TRANG                                     */
+/* ====================================================================== */
+
+/* Theo yeu cau: .panel.data-panel khong con la mot cai hop noi — nen trung
+   voi nen trang (transparent nen tu dung theo theme sang/toi), bo vien va
+   bong; bang/the ben trong tu mang be mat rieng. Ap moi kich thuoc man hinh,
+   khong dung :has() de chac chan chay tren moi trinh duyet. */
+.backoffice-shell .panel.data-panel {
+  border: 0 !important;
+  background: var(--admin-bg) !important;
+  box-shadow: none !important;
+}
+
+/* app-shell.css có "guard" theme tối (bậc 0,5,0 + !important) quét mọi .panel
+   về --sh-surface — rule trên thua ở bản tối. Rule này bậc (0,6,0) thắng nó,
+   trả data-panel về đúng màu NỀN TRANG: tối #070c18, sáng theo --admin-bg. */
+:root[data-theme="dark"] .backoffice-shell .st-content .panel.data-panel {
+  border: 0 !important;
+  background: var(--admin-bg, #070c18) !important;
+  box-shadow: none !important;
+}
+
+/* ====================================================================== */
+/* 19. MOBILE: TIÊU ĐỀ TRANG SÁT MÉP TRÁI + ICON VIỆC CHỜ TRÊN TOPBAR      */
+/* ====================================================================== */
+
+/* Tiêu đề trang trên mobile từng lệch vào giữa vì vẫn mang đệm 22/18px của
+   "tấm gradient" premium cũ và bố cục flex hàng (chữ + cụm nút giành chỗ).
+   Đưa về: dàn CỘT, mọi thứ căn trái, không đệm ngang — mép chữ thẳng hàng
+   với mép nội dung trang. */
+@media (max-width: 960px) {
+  .backoffice-shell .st-content :is(.page-heading, .admin-page-heading) {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0 0 14px !important;
+    text-align: left;
+  }
+
+  .backoffice-shell .st-content :is(.page-heading, .admin-page-heading)>div {
+    width: 100%;
+    margin: 0;
+    text-align: left;
+  }
+
+  .backoffice-shell .st-content :is(.page-heading, .admin-page-heading) :is(h1, p, .admin-kicker, .eyebrow) {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .backoffice-shell .st-content :is(.admin-heading-actions, .admin-filters-actions) {
+    width: 100%;
+  }
+}
+
+/* Icon tổng việc chờ: chỉ hiện trên mobile (desktop đã có dải chip chi tiết
+   ngay trên topbar). Dùng chung dáng .bo-bell. */
+.bo-queue-ico {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .bo-queue-ico {
+    display: inline-grid;
+  }
+}
+
+/* Nut dong ngan keo menu (mobile): o vuong navy cua app-shell lech han tong
+   nau am — doi thanh nut tron kinh mo trang nhe, hover do cam thuong hieu.
+   Sidebar luon nen toi o ca hai theme nen dung trang-alpha la an toan. */
+/* KHÔNG khai display ở đây: app-shell ẩn nút này trên desktop (display:none)
+   và chỉ bật ở màn hẹp — đặt display cứng sẽ làm nút X lòi ra cả bản PC. */
+.backoffice-shell .st-sidebar-close {
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .85);
+  background: rgba(255, 255, 255, .08);
+  font-size: 17px;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.backoffice-shell .st-sidebar-close:hover {
+  border-color: var(--brand);
+  color: #fff;
+  background: var(--brand);
+}
+
+/* ====================================================================== */
+/* 20. MOBILE HẸP: TOPBAR KHÔNG BÓP NÚT                                    */
+/* ====================================================================== */
+
+/* Ở ~390px topbar chật (logo + 5 nút): flexbox nén các item, khối ngôn ngữ
+   bị ép còn 38px nên icon quả cầu teo còn ~2px (đo được bằng DevTools).
+   Nguyên tắc: NÚT không bao giờ co — phần chữ thương hiệu là thứ nhường chỗ
+   (cắt bớt bằng ellipsis); màn thật hẹp thì ẩn chip QUẢN TRỊ và thu gap. */
+@media (max-width: 960px) {
+
+  .backoffice-shell .st-topbar :is(.bo-bell, .bo-guide-btn, .st-icon-button,
+    .st-topbar-open, .bo-lang-menu, .st-menu, .st-account) {
+    flex: 0 0 auto;
+  }
+
+  .backoffice-shell .bo-lang-trigger svg {
+    flex: 0 0 auto;
+  }
+
+  .backoffice-shell .st-topbar-brand {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .backoffice-shell .st-topbar-brand span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .backoffice-shell .st-topbar {
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+}
+
+/* ====================================================================== */
+/* 21. HÀNG ĐỐI TÁC ĐẶC BIỆT THEO THEME                                    */
+/* ====================================================================== */
+
+/* Nền kem #fff7ee đóng cứng chói gắt trên theme tối. Bản tối: tint hổ phách
+   mờ. Bản mobile (bảng đã thành thẻ): bỏ nhuộm từng ô — đổi màu VẠCH nhận
+   diện và viền thẻ sang hổ phách, nhìn ra "đối tác" ngay mà không chói. */
+:root[data-theme="dark"] .backoffice-shell tr.is-partner-row>td {
+  background: rgba(245, 158, 11, .10);
+}
+
+@media (max-width: 760px) {
+  .backoffice-shell table[data-cards] tr.is-partner-row>td {
+    background: transparent !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr.is-partner-row {
+    border-color: rgba(245, 158, 11, .45) !important;
+  }
+
+  .backoffice-shell table[data-cards] tbody tr.is-partner-row::before {
+    background: #f59e0b;
+  }
+}
+
+/* ====================================================================== */
+/* 22. CHỮ "ShopTik" TO NHƯ KHU NGƯỜI DÙNG                                 */
+/* ====================================================================== */
+
+/* app-shell cho .st-brand font HẸP (Bahnschrift SemiCondensed) cỡ 17–18px
+   nên chữ vừa nhỏ vừa bị bóp ngang; khu khách (.px-brand trong luxury-ui)
+   dùng font hệ thống 25px/900, letter-spacing âm — to và rộng hơn hẳn.
+   Mượn đúng công thức đó cho cả sidebar lẫn topbar quản trị. Bậc (0,3,0) để
+   thắng rule cỡ chữ cũ ở mục 1 và mục 12. */
+.backoffice-shell :is(.st-sidebar .st-brand, .st-topbar .st-topbar-brand) {
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -.05em;
+}
+
+.backoffice-shell .st-sidebar .st-brand img {
+  width: 42px;
+  height: 42px;
+}
+
+.backoffice-shell .st-topbar .st-topbar-brand img {
+  width: 38px;
+  height: 38px;
+}
+
+/* Nhãn QUẢN TRỊ nhích theo cho cân với chữ to. */
+.backoffice-shell :is(.st-sidebar, .st-topbar) .st-brand small {
+  font-size: 10px;
+}
+
+/* Mobile hẹp hơn: 22px là mức vừa đủ to mà hàng nút bên phải vẫn nguyên. */
+@media (max-width: 960px) {
+  .backoffice-shell .st-topbar .st-topbar-brand {
+    font-size: 22px;
+  }
+
+  .backoffice-shell .st-topbar .st-topbar-brand small {
+    font-size: 9px;
+  }
+}
+
+/* ====================================================================== */
+/* 23. MOBILE: THANH LỌC — Ô VÀ NÚT BẰNG NHAU                              */
+/* ====================================================================== */
+
+/* Bản cũ để mỗi ô lọc tự co theo nội dung (flex 0 0 auto + min-width 145px)
+   nên hàng nào cũng so le: "Tất cả" hẹp, "Đang hoạt động" dài. Chuyển cả
+   thanh sang LƯỚI 2 CỘT đều nhau — ô tìm kiếm và cụm nút trải hết hàng;
+   mọi ô nhập/chọn và cả hai nút cùng chiều cao, cùng bo góc. */
+@media (max-width: 760px) {
+  .backoffice-shell .admin-filters {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px;
+  }
+
+  .backoffice-shell .admin-filters>.admin-search-field,
+  .backoffice-shell .admin-filters>.admin-filters-actions,
+  .backoffice-shell .admin-filters>.admin-date-range {
+    grid-column: 1 / -1;
+  }
+
+  .backoffice-shell .admin-filters>label {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .backoffice-shell .admin-filters :is(select, input) {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--admin-control-h, 44px);
+  }
+
+  .backoffice-shell .admin-filters-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .backoffice-shell .admin-filters-actions .button {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--admin-control-h, 44px);
+    padding-inline: 10px;
+    justify-content: center;
+    border-radius: 12px;
+  }
+}
+
+/* ====================================================================== */
+/* 24. MOBILE: MỌI KHỐI "SECTION" HÒA VÀO NỀN TRANG                        */
+/* ====================================================================== */
+
+/* Trên điện thoại, panel bọc ngoài chỉ tổ tạo thêm một lớp nền lệch tông và
+   một khung không bo góc chạy sát mép — nội dung bên trong (thẻ số liệu,
+   thẻ dữ liệu, ô nhập) đã tự có bề mặt và bo góc riêng. Cho mọi khối bọc
+   hòa vào nền trang, bỏ viền/bóng và đệm ngang; khối nào vẫn cần "nổi" thì
+   để bo 18px sẵn để không bị vuông góc khi có ai đó gắn lại nền.
+   Không đụng dropdown (.st-menu-panel, .bo-lang-panel) và popup. */
+@media (max-width: 760px) {
+
+  .backoffice-shell .st-content :is(.panel, .data-panel, .chart-panel,
+    .import-panel, .admin-filter-bar, .user-profile-header, .sync-mode-panel,
+    .mission-edit-panel, .discover-editor-panel, .discover-content-admin-panel) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-color: transparent !important;
+    border-radius: 18px;
+    background: var(--admin-bg) !important;
+    box-shadow: none !important;
+  }
+
+  /* Vùng nguy hiểm giữ bề mặt riêng: nó là cảnh báo, không phải khối bọc. */
+  .backoffice-shell .st-content .destructive-panel {
+    padding: 16px !important;
+    border-color: var(--danger-line) !important;
+    border-radius: 16px;
+    background: var(--danger-soft) !important;
+  }
+
+  /* Thẻ số liệu trong trang chi tiết: bề mặt + bo góc rõ để nổi trên nền,
+     nhãn nằm TRÊN số (bản cũ để inline nên "ĐƠN MUA3" dính liền). */
+  .backoffice-shell .st-content :is(.profile-metrics, .balance-grid)>* {
+    display: grid;
+    gap: 3px;
+    padding: 12px 13px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+
+  .backoffice-shell .st-content :is(.profile-metrics, .balance-grid)>*> :is(span, small, b, strong) {
+    display: block;
+  }
+
+  /* Tiêu đề panel sau khi mất nền: bỏ vạch kẻ chân mồ côi, canh sát mép. */
+  .backoffice-shell .st-content :is(.panel, .data-panel, .chart-panel)> :is(.panel-heading, .chart-panel-heading, .admin-section-heading) {
+    margin: 0 0 12px;
+    padding: 0 2px;
+    border-bottom: 0;
+  }
+}
+
+/* ====================================================================== */
+/* 25. VÁ BẬC CHO MỤC 24 (THEME TỐI) + ĐỆM NỘI DUNG                        */
+/* ====================================================================== */
+
+/* app-shell có "guard" quét mọi .panel/.kpi-card/.page-heading về giấy tối
+   với bậc (0,5,0) + !important, nên rule hòa-nền ở mục 24 (bậc 0,3,0) thua
+   và hàng loạt trang vẫn còn khối nền lệch tông. Lặp lại đúng danh sách đó
+   ở bậc (0,5,0) — mb-admin nạp sau app-shell nên hoà nhau thì rule này thắng. */
+@media (max-width: 760px) {
+
+  :root[data-theme="dark"] .backoffice-shell .st-content :is(.panel, .data-panel,
+    .chart-panel, .import-panel, .admin-filter-bar, .user-profile-header,
+    .sync-mode-panel, .mission-edit-panel, .discover-editor-panel,
+    .discover-content-admin-panel) {
+    border-color: transparent !important;
+    background: var(--admin-bg) !important;
+    box-shadow: none !important;
+  }
+
+  /* Thẻ dữ liệu: chữ đang dính sát viền — nới đệm cho dễ đọc (vạch nhận
+     diện 3px nằm ở mép trái nên cột trái cần nhiều hơn một nhịp). */
+  .backoffice-shell table[data-cards] tbody tr {
+    padding: 15px 16px 15px 19px;
+  }
+
+  .backoffice-shell table[data-cards] td {
+    padding: 9px 0 !important;
+  }
+
+  /* Thẻ số liệu / thẻ nội dung khác cũng nới cho cân. */
+  .backoffice-shell .st-content :is(.profile-metrics, .balance-grid)>* {
+    padding: 14px 15px;
+  }
+}
+
+/* ====================================================================== */
+/* 26. THẺ NHIỆM VỤ TRÊN MOBILE: BỎ KHOẢNG TRỐNG                           */
+/* ====================================================================== */
+
+/* .mission-card-main mang flex-basis 260px (dành cho bố cục HÀNG ở desktop).
+   Trên mobile thẻ xếp CỘT nên 260px đó thành CHIỀU CAO — mỗi thẻ cao 357px
+   với một khoảng trống 200px giữa mô tả và hai nút. Trả basis về auto và
+   xếp lại: nội dung trên, hai nút dồn phải bên dưới. */
+@media (max-width: 760px) {
+  .backoffice-shell .mission-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 15px 16px;
+  }
+
+  .backoffice-shell .mission-card-main {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .backoffice-shell .mission-card-side {
+    padding-left: 0;
+    justify-content: flex-end;
+  }
+
+  .backoffice-shell .mission-card-side .button {
+    min-width: 88px;
+  }
+}
+
+/* ====================================================================== */
+/* 27. DỌN KÍCH THƯỚC CỨNG CÒN SÓT Ở CHẾ ĐỘ THẺ                            */
+/* ====================================================================== */
+
+/* Bảng desktop đặt min-width cho từng cột (td 118px, cột thao tác của bảng
+   đối soát tận 330px) và table-layout: fixed. Khi bảng đổi sang THẺ trên
+   điện thoại, mấy con số đó thành chiều rộng tối thiểu của cả thẻ — máy
+   360–390px bị đẩy tràn ngang, chữ dính mép. Ở chế độ thẻ, mọi ràng buộc
+   chiều rộng phải về 0. */
+@media (max-width: 760px) {
+  .backoffice-shell table[data-cards] {
+    table-layout: auto !important;
+  }
+
+  .backoffice-shell table[data-cards] :is(td, th) {
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Ô dài (mã đối chiếu, link, email) tự xuống dòng thay vì đẩy thẻ rộng ra. */
+  .backoffice-shell table[data-cards] td .cell-body {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Lưới 2 cột trong chi tiết đơn: màn hẹp cho về một cột cho dễ đọc. */
+  .backoffice-shell .evidence-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
+  }
+
+  /* Khối cuộn giới hạn chiều cao trên desktop: bỏ trần trên mobile để không
+     sinh ô cuộn lồng trong trang đã cuộn. */
+  .backoffice-shell .st-content :is(.order-evidence-summary, .responsive-table) {
+    max-height: none;
+  }
+}
+
+/* ====================================================================== */
+/* 28. LỊCH SỬ MUA: DANH SÁCH TÀI KHOẢN THÀNH THẺ                          */
+/* ====================================================================== */
+
+/* Mỗi dòng tài khoản vốn trong suốt (chỉ đổi nền khi rê chuột / đang chọn) —
+   hợp với desktop vì đã có nền panel bao quanh, nhưng trên mobile panel đã
+   hoà vào nền trang nên các dòng trôi lơ lửng, không tách nhau. Cho mỗi dòng
+   một bề mặt riêng + bo góc; dòng đang chọn giữ viền cam đậm hơn để vẫn nổi. */
+@media (max-width: 760px) {
+  .backoffice-shell .ph-account-list {
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .backoffice-shell .ph-account {
+    padding: 12px 13px;
+    border-color: var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+
+  .backoffice-shell .ph-account.is-active {
+    border-color: var(--brand);
+    background: var(--brand-soft);
+  }
+
+  /* Ô tìm kiếm và dòng đếm bám sát mép trái nội dung như tiêu đề. */
+  .backoffice-shell .ph-accounts-count {
+    margin: 12px 2px 8px;
+  }
+
+  /* Cột trái vốn là khung cuộn cao 360px (hợp desktop hai cột). Trên điện
+     thoại nó thành ô cuộn lồng trong trang đã cuộn, cắt ngang thẻ cuối —
+     bỏ trần, cho danh sách chảy hết theo trang. */
+  .backoffice-shell .ph-accounts {
+    max-height: none;
+    padding: 0;
+    gap: 0;
+  }
+}
+
+/* ====================================================================== */
+/* 29. TRANG "NỘI DUNG KHÁM PHÁ"                                           */
+/* ====================================================================== */
+
+/* Nhãn nhỏ trong panel dùng class .eyebrow (không phải .admin-kicker) nên
+   không rơi vào rule màu ở mục 12/22 — ở theme tối nó lấy màu mực tối và
+   chìm hẳn vào nền. Cấp màu thương hiệu cho MỌI nhãn nhỏ trong nội dung. */
+.backoffice-shell .st-content .eyebrow {
+  color: var(--brand) !important;
+}
+
+@media (max-width: 760px) {
+
+  /* Hai thẻ một hàng: thẻ một cột quá to, cuộn mãi không hết danh sách. */
+  .backoffice-shell .discover-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+
+  .backoffice-shell .discover-admin-card {
+    border-radius: 14px;
+  }
+
+  /* Ảnh vuông cho hai cột đều nhau, chữ và bảng thuộc tính thu nhỏ theo. */
+  .backoffice-shell .discover-admin-media {
+    aspect-ratio: 1 / 1;
+  }
+
+  .backoffice-shell .discover-admin-body {
+    padding: 11px 12px;
+    gap: 8px;
+  }
+
+  .backoffice-shell .discover-admin-body :is(h3, h4) {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .backoffice-shell .discover-admin-body :is(dl, dt, dd, p, small) {
+    font-size: 11.5px;
+  }
+
+  /* Cụm nút đang là flex space-between nên bốn nút (Ẩn · Lưu trữ · Sửa ·
+     Xóa) xô lệch mỗi hàng một kiểu. Đưa về lưới 2 cột đều nhau; hai <form>
+     bọc dùng display:contents để nút con vào thẳng lưới. */
+  .backoffice-shell .discover-admin-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 11px;
+  }
+
+  .backoffice-shell :is(.discover-admin-status-form, .discover-admin-delete-form) {
+    display: contents;
+  }
+
+  .backoffice-shell .discover-admin-actions .button {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding-inline: 8px;
+    justify-content: center;
+    font-size: 11.5px;
+  }
+}
+
+/* ====================================================================== */
+/* 30. MOBILE: TRANG CẤU HÌNH & TRANG ĐỒNG BỘ SÀN                          */
+/* ====================================================================== */
+
+@media (max-width: 760px) {
+
+  /* --- Chung cho hai trang: tiêu đề nhóm to và rõ thứ bậc --------------- */
+  .backoffice-shell .st-content :is(.config-section, .sync-card)>.admin-section-heading {
+    margin: 0 0 14px;
+    padding: 0 2px 12px;
+
+  }
+
+  .backoffice-shell .st-content :is(.config-section, .sync-card) .admin-section-heading h2 {
+    font-size: 18px;
+    letter-spacing: -.02em;
+  }
+
+  .backoffice-shell .st-content :is(.config-section, .sync-card) .admin-kicker {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10.5px;
+  }
+
+  /* Các nhóm cách nhau một nhịp rõ ràng thay vì dính liền. */
+  .backoffice-shell .config-form,
+  .backoffice-shell .sync-grid {
+    display: grid;
+    gap: 26px;
+  }
+
+  /* --- Cấu hình nghiệp vụ --------------------------------------------- */
+  /* Mỗi trường: nhãn → ô nhập → chú thích, giãn đều; ô cao 46px cho dễ chạm. */
+  .backoffice-shell .config-form .stack-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .backoffice-shell .config-form .stack-form>label {
+    display: grid;
+    gap: 7px;
+    font-size: 13px;
+  }
+
+  .backoffice-shell .config-form .stack-form :is(input, select) {
+    min-height: 46px;
+  }
+
+  .backoffice-shell .config-form .stack-form label>small,
+  .backoffice-shell .config-form .stack-form>.optional {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* Thanh lưu: nổi trên nền, chừa chỗ cho thanh điều hướng dưới cùng. */
+  .backoffice-shell .config-save-bar {
+    bottom: calc(74px + env(safe-area-inset-bottom));
+    gap: 10px;
+    padding: 12px;
+    border-color: var(--line-strong) !important;
+    border-radius: 16px;
+    background: var(--surface) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .22);
+  }
+
+  .backoffice-shell .config-save-bar .button {
+    min-height: 46px;
+  }
+
+  /* --- Kết nối & đồng bộ sàn ------------------------------------------- */
+  /* Nút trong thẻ đồng bộ: full width, xếp dọc theo thứ tự thao tác thay vì
+     rải rác mỗi nút một chỗ. */
+  .backoffice-shell .sync-mode-panel .button,
+  .backoffice-shell .sync-clear .button,
+  .backoffice-shell .sync-schedule-actions .button,
+  .backoffice-shell .sync-runbar .button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .backoffice-shell .sync-schedule-actions,
+  .backoffice-shell .sync-runbar form {
+    display: block;
+    width: 100%;
+  }
+
+  .backoffice-shell .sync-runbar {
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .backoffice-shell .sync-runstat {
+    width: 100%;
+  }
+
+  /* Hai ô "Tần suất / Truy hồi" giữ 2 cột nhưng cao bằng ô cấu hình. */
+  .backoffice-shell .sync-schedule-grid input {
+    height: 46px;
+  }
+
+  /* Dải chọn nguồn cookie: chia đôi bề ngang cho dễ chạm. */
+  .backoffice-shell .sync-seg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .backoffice-shell .sync-seg span {
+    display: block;
+    text-align: center;
+    padding: 10px 8px;
+  }
+
+  /* Khối mã cookie dài không được đẩy thẻ rộng ra. */
+  .backoffice-shell .sync-cookie-state {
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+
+  /* "Xoa cookie" la hanh dong phu, khong duoc mang dang nut chinh mau cam
+     (button-link-danger bi mot rule cu son nen). Tra ve dang chu do vien mo. */
+  .backoffice-shell .sync-clear .button {
+    border: 1px solid var(--danger-line) !important;
+    color: var(--danger) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ====================================================================== */
+/* 31. THANH PHÂN TRANG DÙNG CHUNG (.bo-pager)                             */
+/* ====================================================================== */
+
+/* Dựng bởi macro pagination_bar (views/partials/macros.njk) cho mọi bảng
+   danh sách: ô chọn số dòng · dải "Hiện 1–20 / 135" · nút Trước/Sau. */
+.bo-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bo-pager-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.bo-pager-size label {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.bo-pager-size select {
+  min-height: 38px;
+  padding: 0 30px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.bo-pager-size select:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.bo-pager-range {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bo-pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bo-pager-page {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Nút "Trước/Sau" ở đầu/cuối danh sách: vẫn chiếm chỗ để thanh không nhảy,
+   nhưng mờ đi và không bấm được. */
+.bo-pager-nav .is-disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  /* Cột trái vừa đúng cụm "Mỗi trang [20]" (auto), phần còn lại cho dòng
+     "Hiện 1–20 / 35" — trước chia đôi đều nên nhãn bị bóp xuống hai dòng. */
+  .bo-pager {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bo-pager-size label {
+    white-space: nowrap;
+  }
+
+  /* Ô chọn chỉ cần chứa "100": để nó co theo nội dung, không kéo hết cột. */
+  .bo-pager-size select {
+    width: auto;
+    min-width: 74px;
+    padding: 0 26px 0 10px;
+  }
+
+  .bo-pager-range {
+    justify-self: end;
+    align-self: center;
+  }
+
+  .bo-pager-nav {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+  }
+
+  .bo-pager-nav :is(a, span.button) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ====================================================================== */
+/* 32. CẤU HÌNH & ĐỒNG BỘ: NHÃN NHÓM TO HƠN, KHOẢNG CÁCH GỌN LẠI           */
+/* ====================================================================== */
+
+/* Nhãn nhóm ("NHÓM 3", "SHOPEE", "LAZADA") ở cỡ 10.5px trông như chú thích
+   lạc chỗ trong khi nó là thứ phân biệt các khối. Cho to lên và đậm hơn,
+   đồng thời KÉO các khối lại gần: 26px giữa nhóm là khoảng cách của trang
+   dàn hai cột trên desktop, ở khổ dọc điện thoại nó thành lỗ hổng. */
+.backoffice-shell .st-content :is(.config-section, .sync-card) .admin-kicker {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+@media (max-width: 760px) {
+
+  .backoffice-shell .config-form,
+  .backoffice-shell .sync-grid {
+    gap: 14px;
+  }
+
+  .backoffice-shell .st-content :is(.config-section, .sync-card)>.admin-section-heading {
+    margin: 0 0 2px;
+    padding: 0 2px 10px;
+  }
+
+  .backoffice-shell .st-content :is(.config-section, .sync-card) .admin-kicker {
+    margin-bottom: 5px;
+    font-size: 12.5px;
+  }
+
+  .backoffice-shell .config-form .stack-form {
+    gap: 14px;
+  }
+
+  .backoffice-shell .config-form .stack-form>label {
+    gap: 6px;
+  }
+
+  /* Khối con trong thẻ đồng bộ (chip cookie, dải chọn, form lịch, chân chạy)
+     xếp sát nhau hơn để một sàn = một khối gọn. */
+  .backoffice-shell .sync-card {
+    gap: 10px;
+  }
+
+  .backoffice-shell .sync-cookie {
+    gap: 9px;
+  }
+
+  .backoffice-shell .sync-schedule fieldset {
+    gap: 10px;
+  }
+
+  .backoffice-shell .sync-sep {
+    margin: 0;
+  }
+
+  /* Nút phụ "Xóa cookie": bậc cao hơn để thắng rule nền cam của bản cũ. */
+  .backoffice-shell .st-content .sync-clear .button,
+  .backoffice-shell .st-content .button-link-danger {
+    border: 1px solid var(--danger-line) !important;
+    color: var(--danger) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ====================================================================== */
+/* 33. THỨ BẬC NÚT TRONG THẺ ĐỒNG BỘ                                       */
+/* ====================================================================== */
+
+/* app-shell sơn MỌI button[type="submit"] trong khu quản trị thành nút chính
+   màu cam, bậc (0,4,1) + !important. Hệ quả ở thẻ đồng bộ: "Lấy cookie",
+   "Xóa cookie", "Lưu lịch", "Đồng bộ ngay" cam như nhau — không còn thứ bậc,
+   và nút XÓA lại trông mời gọi nhất. Hai rule dưới lên bậc (0,5,1)/(0,6,1)
+   để đòi lại đúng vai: xóa = cảnh báo, chạy ngay = nút tối.
+   Áp cho mọi bề rộng — thứ bậc sai thì desktop cũng sai. */
+.backoffice-shell .st-content .sync-clear button[type="submit"].button-link-danger,
+.backoffice-shell .st-content .sync-clear button[type="submit"] {
+  border: 1px solid var(--danger-line) !important;
+  color: var(--danger) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+.backoffice-shell .st-content .sync-clear button[type="submit"]:hover {
+  border-color: var(--danger) !important;
+  background: var(--danger-soft) !important;
+}
+
+/* "Đồng bộ ngay" chạy thủ công — quan trọng nhưng không phải nút lưu; để nền
+   tối viền cam cho tách khỏi "Lưu lịch". */
+.backoffice-shell .st-content .sync-runbar button[type="submit"].button-dark {
+  border: 1px solid var(--brand) !important;
+  color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+}
+
+.backoffice-shell .st-content .sync-runbar button[type="submit"].button-dark:hover {
+  color: var(--on-brand, #fff) !important;
+  background: var(--brand) !important;
+}
+
+/* ====================================================================== */
+/* 35. TIÊU ĐỀ TRANG SÁT NỘI DUNG + NHÃN NHÓM CỠ CHỮ THÂN BÀI              */
+/* ====================================================================== */
+
+/* Khoảng hở dưới tiêu đề trang là 28px + đệm 22px = gần 50px trước khi tới
+   nội dung — quá rộng ở khổ dọc. Kéo về 10px như yêu cầu, đệm chân cũng thu
+   lại cho cân với vạch kẻ. Bậc (0,4,0) + !important để đấu với rule gốc ở
+   mục 10 cũng !important. */
+.backoffice-shell .st-content :is(.page-heading, .admin-page-heading) {
+  margin: 0 0 10px !important;
+  padding: 0 0 12px !important;
+}
+
+/* Nhãn nhóm to bằng chữ thân bài — nó là thứ chia khối, không phải chú thích. */
+.backoffice-shell .st-content :is(.config-section, .sync-card) .admin-kicker {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+@media (max-width: 760px) {
+  .backoffice-shell .st-content :is(.config-section, .sync-card) .admin-kicker {
+    font-size: 16px;
+  }
+
+  .backoffice-shell .st-content :is(.page-heading, .admin-page-heading) {
+    margin-bottom: 10px !important;
+    padding-bottom: 10px !important;
+  }
+}
+
+/* ====================================================================== */
+/* 36. BỎ MARGIN ĐÁY CỦA PANEL TRONG KHU QUẢN TRỊ                          */
+/* ====================================================================== */
+
+/* styles.css cho mọi .panel margin-bottom 1.3rem (20.8px). Ở các trang đã
+   dùng lưới/flex có gap (sync-grid, config-form, mb-shell...) margin đó CỘNG
+   THÊM vào gap, thành khoảng hở đôi. Giao khoảng cách cho gap của khối cha
+   quản lý — đúng một nguồn, chỉnh một chỗ là đủ. */
+.backoffice-shell .st-content .panel {
+  margin-bottom: 0;
+}
+
+/* Trang nào panel còn đứng rời (không nằm trong lưới có gap) thì tự chừa
+   khoảng thở bằng margin trên — chỉ áp cho panel liền sau một panel khác. */
+.backoffice-shell .st-content .panel+.panel {
+  margin-top: 0px;
+}
+
+/* ====================================================================== */
+/* 37. TRANG "TRÌNH DUYỆT LẤY DỮ LIỆU": NHỊP ĐỀU                            */
+/* ====================================================================== */
+
+/* Trang này là chuỗi thẻ cùng một dạng (nhãn nhóm → tiêu đề → một nút chạy),
+   nhưng mỗi thẻ lại có số phần tử khác nhau nên khoảng hở nhảy loạn: thẻ chỉ
+   có nút thì dính sát tiêu đề, thẻ có thêm form thử thì hở toác. Ép MỘT nhịp
+   duy nhất: mọi thẻ là lưới dọc gap 12px, nút chạy full width, ô nhập và chú
+   thích theo cùng khoảng cách. */
+@media (max-width: 760px) {
+
+  .backoffice-shell .st-content .config-section:has(.bp-hint),
+  .backoffice-shell .st-content .config-section {
+    display: grid;
+    gap: 12px;
+  }
+
+  /* Thẻ trong trang này chỉ có một nút chạy — cho full width như các trang
+     hành động khác, thay vì nút con con lệch trái. */
+  .backoffice-shell .st-content .config-section>form>.button,
+  .backoffice-shell .st-content .config-section>form>button {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+  }
+
+  /* Form "tạo link thử": ô nhập trên, nút dưới, cùng bề rộng — bản cũ để
+     hai thứ chen một hàng nên ô nhập bị bóp còn nút thì dính vào mép. */
+  .backoffice-shell .bp-lazada-test {
+    display: grid;
+    gap: 10px;
+  }
+
+  .backoffice-shell .bp-lazada-test-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .backoffice-shell .bp-lazada-test-row :is(input, .button, button) {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  /* Ô dán URL: chữ đang dính sát viền trái — cho đệm ngang như các ô nhập
+     khác trong khu quản trị. */
+  .backoffice-shell .bp-lazada-test-row input {
+    padding: 0 14px;
+  }
+
+  /* Chú thích dưới nút: sát vào cụm của nó, không lơ lửng giữa hai thẻ. */
+  .backoffice-shell .st-content .bp-hint {
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  /* Form lưu Profile ID: nhãn → ô → nút, cùng nhịp với phần còn lại. */
+  .backoffice-shell .bp-id-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .backoffice-shell .bp-id-form :is(.bp-id-field, input, button) {
+    width: 100%;
+  }
+
+  /* Ô "Kho dữ liệu" phía trên: cùng nhịp thẻ số liệu ở các trang khác. */
+  .backoffice-shell .st-content .order-summary-grid {
+    gap: 10px;
+  }
+
+  /* "Tao link thu" la kiem thu, khong phai hanh dong chinh cua the — bo
+     nen cam do rule button[type=submit] cua app-shell ap len. */
+  .backoffice-shell .st-content .bp-lazada-test-row button[type="submit"]:not(.button-primary) {
+    border: 1px solid var(--brand-line) !important;
+    color: var(--brand) !important;
+    background: transparent !important;
+  }
+}

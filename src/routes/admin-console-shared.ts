@@ -33,6 +33,56 @@ export function pageNumber(value: unknown): number {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
+/**
+ * Số dòng mỗi trang cho các bảng danh sách ở /backoffice.
+ *
+ * Chỉ nhận đúng bốn mức trong danh sách — giá trị đến từ query string nên
+ * KHÔNG được tin: một `?perPage=100000` sẽ kéo cả bảng users lên RAM và
+ * treo trang. Giá trị lạ rơi về mặc định thay vì báo lỗi, vì đây là tham số
+ * hiển thị, không phải dữ liệu nghiệp vụ.
+ */
+export const PER_PAGE_OPTIONS = [10, 20, 50, 100] as const;
+
+export function perPageNumber(value: unknown, fallback = 20): number {
+  const parsed = Number(value);
+  return (PER_PAGE_OPTIONS as readonly number[]).includes(parsed)
+    ? parsed
+    : fallback;
+}
+
+/**
+ * Gói dữ liệu phân trang cho template (macro `pagination_bar` ở
+ * views/partials/macros.njk dựng thanh điều khiển từ đây).
+ */
+export interface PaginationView {
+  page: number;
+  perPage: number;
+  pages: number;
+  total: number;
+  /** Số thứ tự dòng đầu/cuối đang hiển thị — cho câu "Hiện 1–20 / 135". */
+  from: number;
+  to: number;
+  options: readonly number[];
+}
+
+export function buildPagination(
+  page: number,
+  perPage: number,
+  total: number,
+): PaginationView {
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(page, pages);
+  return {
+    page: safePage,
+    perPage,
+    pages,
+    total,
+    from: total === 0 ? 0 : (safePage - 1) * perPage + 1,
+    to: Math.min(safePage * perPage, total),
+    options: PER_PAGE_OPTIONS,
+  };
+}
+
 export function selectedValue<T extends readonly string[]>(
   allowed: T,
   value: unknown,

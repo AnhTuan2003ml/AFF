@@ -27,10 +27,16 @@ import {
 } from "../services/chart-data.js";
 import {
   AUDIT_TARGET_TYPES,
-  auditActionTone,
+  auditActionsOfTone,
+  auditActionsWithTone,
   formatVnd,
 } from "../lib/format.js";
-import { selectedValue } from "./admin-console-shared.js";
+import {
+  buildPagination,
+  pageNumber,
+  perPageNumber,
+  selectedValue,
+} from "./admin-console-shared.js";
 import { camioVoice } from "../services/camio-voice.js";
 import {
   approveMissionClaim,
@@ -173,7 +179,12 @@ export async function registerBackofficeRoutes(
     reply.redirect("/backoffice/reconciliation"),
   );
 
-  app.get("/banks", async (_request, reply) => {
+  app.get("/banks", async (request, reply) => {
+    const params = request.query as Record<string, unknown>;
+    const perPage = perPageNumber(params.perPage);
+    const page = pageNumber(params.page);
+    // count(*) OVER() đếm TỔNG trước khi LIMIT cắt — một lượt quét, không
+    // cần thêm truy vấn COUNT riêng.
     const accounts = await query<{
       id: string;
       email: string;
@@ -183,23 +194,31 @@ export async function registerBackofficeRoutes(
       account_name_masked: string;
       status: string;
       created_at: Date;
+      total_count: string;
     }>(
       deps.db,
       `
         SELECT b.id, u.email, u.full_name, b.bank_code, b.account_last4,
-          b.account_name_masked, b.status, b.created_at
+          b.account_name_masked, b.status, b.created_at,
+          count(*) OVER()::text AS total_count
         FROM user_bank_accounts b
         JOIN users u ON u.id = b.user_id
         ORDER BY
           CASE b.status WHEN 'PENDING_REVIEW' THEN 0 ELSE 1 END,
           b.created_at DESC
-        LIMIT 200
+        LIMIT $1 OFFSET $2
       `,
+      [perPage, (page - 1) * perPage],
     );
     return reply.view("backoffice/banks.njk", {
       pageTitle: "Xác minh ngân hàng",
       backofficeSection: "banks",
       accounts: accounts.rows,
+      pagination: buildPagination(
+        page,
+        perPage,
+        Number(accounts.rows[0]?.total_count ?? 0),
+      ),
     });
   });
 
@@ -259,7 +278,10 @@ export async function registerBackofficeRoutes(
     },
   );
 
-  app.get("/withdrawals", async (_request, reply) => {
+  app.get("/withdrawals", async (request, reply) => {
+    const params = request.query as Record<string, unknown>;
+    const perPage = perPageNumber(params.perPage);
+    const page = pageNumber(params.page);
     const withdrawals = await query<{
       id: string;
       email: string;
@@ -270,23 +292,31 @@ export async function registerBackofficeRoutes(
       status: string;
       risk_score: number;
       requested_at: Date;
+      total_count: string;
     }>(
       deps.db,
       `
         SELECT w.id, u.email, u.full_name, w.amount_vnd::text,
-          w.bank_code, w.bank_last4, w.status, w.risk_score, w.requested_at
+          w.bank_code, w.bank_last4, w.status, w.risk_score, w.requested_at,
+          count(*) OVER()::text AS total_count
         FROM withdrawals w
         JOIN users u ON u.id = w.user_id
         ORDER BY
           CASE WHEN w.status IN ('FUNDS_HELD', 'UNKNOWN') THEN 0 ELSE 1 END,
           w.requested_at DESC
-        LIMIT 200
+        LIMIT $1 OFFSET $2
       `,
+      [perPage, (page - 1) * perPage],
     );
     return reply.view("backoffice/withdrawals.njk", {
       pageTitle: "Duyệt rút tiền",
       backofficeSection: "withdrawals",
       withdrawals: withdrawals.rows,
+      pagination: buildPagination(
+        page,
+        perPage,
+        Number(withdrawals.rows[0]?.total_count ?? 0),
+      ),
     });
   });
 
@@ -601,6 +631,12 @@ export async function registerBackofficeRoutes(
       ? String(params.dateTo)
       : "";
 
+    const perPage = perPageNumber(params.perPage);
+    const page = pageNumber(params.page);
+    // Sắc thái lọc NGAY trong SQL: lọc bằng JS sau khi LIMIT sẽ khiến tổng
+    // số đếm sai và bỏ sót bản ghi cũ. "NEUTRAL" là phần bù của hai tập kia.
+    const toneActions = auditActionsOfTone(tone);
+    const neutralActions = tone === "NEUTRAL" ? auditActionsWithTone() : [];
     const logs = await query<{
       id: string;
       actor_email: string | null;
@@ -612,35 +648,48 @@ export async function registerBackofficeRoutes(
       before_redacted: unknown;
       after_redacted: unknown;
       created_at: Date;
+      total_count: string;
     }>(
       deps.db,
       `
         SELECT a.id, u.email AS actor_email, a.action, a.target_type,
           a.target_id, a.reason, a.request_id,
-          a.before_redacted, a.after_redacted, a.created_at
+          a.before_redacted, a.after_redacted, a.created_at,
+          count(*) OVER()::text AS total_count
         FROM audit_logs a
         LEFT JOIN users u ON u.id = a.actor_user_id
         WHERE ($1 = '' OR u.email ILIKE '%' || $1 || '%')
           AND ($2 = 'ALL' OR a.target_type = $2)
           AND ($3 = '' OR a.created_at >= $3::date)
           AND ($4 = '' OR a.created_at < ($4::date + interval '1 day'))
-        ORDER BY a.created_at DESC LIMIT 300
+          AND ($5::text[] IS NULL OR a.action = ANY($5::text[]))
+          AND (cardinality($6::text[]) = 0 OR NOT (a.action = ANY($6::text[])))
+        ORDER BY a.created_at DESC
+        LIMIT $7 OFFSET $8
       `,
-      [actor, targetType, dateFrom, dateTo],
+      [
+        actor,
+        targetType,
+        dateFrom,
+        dateTo,
+        toneActions,
+        neutralActions,
+        perPage,
+        (page - 1) * perPage,
+      ],
     );
-    const filteredByTone =
-      tone === "ALL"
-        ? logs.rows
-        : logs.rows.filter(
-            (row) => auditActionTone(row.action).toUpperCase() === tone,
-          );
 
     return reply.view("backoffice/audit.njk", {
       pageTitle: "Nhật ký kiểm toán",
       backofficeSection: "audit",
-      logs: filteredByTone,
+      logs: logs.rows,
       filters: { actor, targetType, tone, dateFrom, dateTo },
       targetTypeOptions: AUDIT_TARGET_TYPES,
+      pagination: buildPagination(
+        page,
+        perPage,
+        Number(logs.rows[0]?.total_count ?? 0),
+      ),
     });
   });
 
@@ -933,10 +982,10 @@ export async function registerBackofficeRoutes(
   });
 
   app.get("/products", async (request, reply) => {
-    const activeTab =
-      (request.query as Record<string, unknown>).tab === "top-products"
-        ? "top-products"
-        : "content";
+    const params = request.query as Record<string, unknown>;
+    const activeTab = params.tab === "top-products" ? "top-products" : "content";
+    const perPage = perPageNumber(params.perPage);
+    const page = pageNumber(params.page);
     const [content, topProducts] = await Promise.all([
       query<{
         id: string;
@@ -954,17 +1003,21 @@ export async function registerBackofficeRoutes(
         price_vnd: string | null;
         original_price_vnd: string | null;
         cashback_rate_bps: number | null;
+        total_count: string;
       }>(
         deps.db,
         `
           SELECT id, type, title, description, target_url, image_url, badge,
             category, status, sort_order, published_at, platform,
-            price_vnd::text, original_price_vnd::text, cashback_rate_bps
+            price_vnd::text, original_price_vnd::text, cashback_rate_bps,
+            count(*) OVER()::text AS total_count
           FROM content_items
           ORDER BY
             CASE status WHEN 'PUBLISHED' THEN 0 WHEN 'DRAFT' THEN 1 ELSE 2 END,
             sort_order, published_at DESC
+          LIMIT $1 OFFSET $2
         `,
+        [perPage, (page - 1) * perPage],
       ),
       query<{
         item_name: string;
@@ -1007,6 +1060,11 @@ export async function registerBackofficeRoutes(
       backofficeSection: "products",
       activeTab,
       content: content.rows,
+      pagination: buildPagination(
+        page,
+        perPage,
+        Number(content.rows[0]?.total_count ?? 0),
+      ),
       topProducts: topProducts.rows,
       topProductsByRevenue,
     });

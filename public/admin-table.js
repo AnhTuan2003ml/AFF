@@ -111,3 +111,18 @@
     observer.observe(shell, { childList: true, subtree: true });
   }
 })();
+
+/*
+ * Ô chọn "Mỗi trang" trong thanh phân trang: đổi là nạp lại danh sách ngay,
+ * không bắt bấm thêm nút. Đặt ở đây vì admin-table.js đã được mọi trang
+ * /backoffice nạp sẵn; không có JS thì <noscript> vẫn còn nút "Áp dụng".
+ */
+(function () {
+  "use strict";
+  document.addEventListener("change", function (event) {
+    var target = event.target;
+    if (!target || !target.hasAttribute || !target.hasAttribute("data-auto-submit")) return;
+    var form = target.form;
+    if (form) form.submit();
+  });
+})();

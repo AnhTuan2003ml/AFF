@@ -3,7 +3,12 @@ import { z } from "zod";
 import { query } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import { parseInput } from "../lib/validation.js";
-import type { AdminConsoleDeps } from "./admin-console-shared.js";
+import {
+  buildPagination,
+  pageNumber,
+  perPageNumber,
+  type AdminConsoleDeps,
+} from "./admin-console-shared.js";
 
 /**
  * Theo dõi lịch sử mua theo từng tài khoản (master-detail):
@@ -15,7 +20,10 @@ export async function registerAdminPurchaseHistoryRoutes(
   app: FastifyInstance,
   deps: AdminConsoleDeps,
 ): Promise<void> {
-  app.get("/purchase-history", async (_request, reply) => {
+  app.get("/purchase-history", async (request, reply) => {
+    const params = request.query as Record<string, unknown>;
+    const perPage = perPageNumber(params.perPage, 50);
+    const page = pageNumber(params.page);
     const accounts = await query<{
       id: string;
       full_name: string;
@@ -23,6 +31,7 @@ export async function registerAdminPurchaseHistoryRoutes(
       tracking_code: string | null;
       orders_count: string;
       clicks_count: string;
+      total_count: string;
     }>(
       deps.db,
       `
@@ -30,19 +39,26 @@ export async function registerAdminPurchaseHistoryRoutes(
           (SELECT count(*) FROM orders o WHERE o.user_id = u.id)::text
             AS orders_count,
           (SELECT count(*) FROM affiliate_links l WHERE l.user_id = u.id)::text
-            AS clicks_count
+            AS clicks_count,
+          count(*) OVER()::text AS total_count
         FROM users u
         -- Dọn người dùng ĐÃ XÓA khỏi lịch sử mua (trước dùng status <> 'DELETED'
         -- vô tác dụng vì xóa mềm đặt status = 'DISABLED' + deleted_at).
         WHERE u.deleted_at IS NULL
         ORDER BY u.created_at DESC
-        LIMIT 500
+        LIMIT $1 OFFSET $2
       `,
+      [perPage, (page - 1) * perPage],
     );
     return reply.view("backoffice/purchase-history.njk", {
       pageTitle: "Lịch sử mua theo tài khoản",
       backofficeSection: "purchase-history",
       accounts: accounts.rows,
+      pagination: buildPagination(
+        page,
+        perPage,
+        Number(accounts.rows[0]?.total_count ?? 0),
+      ),
     });
   });
 

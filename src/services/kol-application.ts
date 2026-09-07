@@ -133,22 +133,39 @@ export interface KolApplicationRow {
 /** Danh sách hồ sơ cho backoffice: chờ duyệt trước, kèm vài quyết định gần đây. */
 export async function listKolApplications(
   db: Database,
-): Promise<{ pending: KolApplicationRow[]; recent: KolApplicationRow[] }> {
+  options: { limit?: number; offset?: number } = {},
+): Promise<{
+  pending: KolApplicationRow[];
+  recent: KolApplicationRow[];
+  recentTotal: number;
+}> {
+  const limit = options.limit ?? 10;
+  const offset = options.offset ?? 0;
   const cols = `a.id, a.user_id, a.status, a.full_name, a.birth_date, a.cccd_number,
     a.cccd_issue, a.address, a.phone, a.email, a.tax_code, a.bank_account,
     a.bank_name, a.social_links, a.reject_reason, a.created_at,
     u.email AS account_email, u.full_name AS account_name`;
+  // Hồ sơ CHỜ DUYỆT không phân trang: đó là hàng đợi việc phải xử lý hết,
+  // cắt trang chỉ khiến hồ sơ cũ bị bỏ quên. Chỉ danh sách "đã xử lý" —
+  // vốn dài vô hạn theo thời gian — mới cần trang.
   const pending = await query<KolApplicationRow>(
     db,
     `SELECT ${cols} FROM kol_applications a JOIN users u ON u.id = a.user_id
      WHERE a.status = 'PENDING' ORDER BY a.created_at ASC`,
   );
-  const recent = await query<KolApplicationRow>(
+  const recent = await query<KolApplicationRow & { total_count: string }>(
     db,
-    `SELECT ${cols} FROM kol_applications a JOIN users u ON u.id = a.user_id
-     WHERE a.status <> 'PENDING' ORDER BY a.decided_at DESC NULLS LAST LIMIT 10`,
+    `SELECT ${cols}, count(*) OVER()::text AS total_count
+     FROM kol_applications a JOIN users u ON u.id = a.user_id
+     WHERE a.status <> 'PENDING' ORDER BY a.decided_at DESC NULLS LAST
+     LIMIT $1 OFFSET $2`,
+    [limit, offset],
   );
-  return { pending: pending.rows, recent: recent.rows };
+  return {
+    pending: pending.rows,
+    recent: recent.rows,
+    recentTotal: Number(recent.rows[0]?.total_count ?? 0),
+  };
 }
 
 export async function getKolApplication(

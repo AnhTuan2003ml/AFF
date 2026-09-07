@@ -1,5 +1,5 @@
 {% extends "backoffice/base.njk" %}
-{% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/macros.njk" import status_badge, empty_state, pagination_bar %}
 
 {% block backoffice_content %}
   <section class="page-heading"><div><span class="eyebrow">TIỀN ĐÃ GIỮ TRƯỚC KHI DUYỆT</span><h1>Duyệt rút tiền</h1><p>Duyệt đưa yêu cầu sang hàng chờ chi (chưa tự chuyển tiền).</p></div></section>
@@ -15,6 +15,7 @@
           <button class="button button-small button-ghost" type="submit" name="scope" value="all_pending">Duyệt tất cả đang chờ</button>
         </form>
       {% endif %}
+      {{ pagination_bar(pagination, '/backoffice/withdrawals') }}
       <div class="responsive-table">
         <table>
           <thead><tr><th class="select-col"><input type="checkbox" data-select-all="withdrawals" aria-label="Chọn tất cả yêu cầu rút trên trang"></th><th>Người dùng</th><th>Số tiền</th><th>Ngân hàng</th><th>Rủi ro</th><th>Trạng thái</th><th>Thời gian</th><th>Quyết định</th></tr></thead>
