@@ -349,6 +349,40 @@
   background: linear-gradient(180deg, rgba(216, 171, 108, .18), rgba(216, 171, 108, .10));
 }
 
+/* Card voucher dùng các alias --text/--muted của lớp cũ nhưng khu người dùng
+   chỉ có token --lx-*; nếu không ghim lại, chữ rơi về màu nâu của theme sáng
+   và chìm trên nền tối. Giới hạn override đúng cụm voucher để không đổi nơi khác. */
+:root[data-theme="dark"] .voucher-card {
+  border-color: var(--lx-line);
+  background: var(--lx-paper);
+}
+
+:root[data-theme="dark"] .voucher-info-col {
+  color: var(--lx-ink);
+}
+
+:root[data-theme="dark"] .voucher-label {
+  color: var(--lx-orange-2) !important;
+}
+
+:root[data-theme="dark"] .voucher-shop {
+  color: var(--lx-ink);
+}
+
+:root[data-theme="dark"] .voucher-title {
+  color: var(--lx-ink-2);
+}
+
+:root[data-theme="dark"] .voucher-expiry {
+  color: var(--lx-muted);
+}
+
+:root[data-theme="dark"] .voucher-btn-copy {
+  border-color: var(--lx-orange-2);
+  color: var(--lx-orange-2);
+  background: var(--lx-orange-soft);
+}
+
 /* Thẻ giới thiệu ở trang công khai */
 :root[data-theme="dark"] .px-public-cards article:nth-child(2) {
   background: linear-gradient(145deg, #2b2018, #241b14);

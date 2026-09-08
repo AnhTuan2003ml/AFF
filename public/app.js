@@ -147,6 +147,22 @@
     .forEach((button) => button.addEventListener("click", openSidebar));
   scrimButtons.forEach((el) => el.addEventListener("click", closeSidebar));
 
+  const sidebarCollapseButton = document.querySelector("[data-sidebar-collapse]");
+  if (sidebar && sidebarCollapseButton) {
+    sidebarCollapseButton.addEventListener("click", () => {
+      const collapsed = body.classList.toggle("st-sidebar-is-collapsed");
+      sidebarCollapseButton.setAttribute("aria-expanded", String(!collapsed));
+      sidebarCollapseButton.setAttribute(
+        "aria-label",
+        collapsed ? "Mở rộng menu quản trị" : "Thu gọn menu quản trị",
+      );
+      sidebarCollapseButton.setAttribute(
+        "title",
+        collapsed ? "Mở rộng menu quản trị" : "Thu gọn menu quản trị",
+      );
+    });
+  }
+
   const root = document.documentElement;
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 

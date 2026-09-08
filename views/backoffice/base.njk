@@ -36,7 +36,7 @@
      app-shell lẫn mb-skin. #}
   <div class="backoffice-shell st-app">
     <div class="st-layout">
-      <aside class="st-sidebar" data-sidebar>
+      <aside class="st-sidebar" id="backoffice-sidebar" data-sidebar>
         <div class="st-sidebar-head">
           <a class="st-brand" href="/backoffice/console" aria-label="ShopTik">
             <img src="/assets/images/icon.png?v={{ assetVersion }}" alt="" aria-hidden="true">
@@ -87,6 +87,16 @@
           <a class="bo-side-foot-link" href="/app">{{ icon('discover') }}<span>Về ứng dụng người dùng</span></a>
         </div>
       </aside>
+
+      <button
+        class="st-sidebar-collapse"
+        type="button"
+        aria-label="Thu gọn menu quản trị"
+        aria-controls="backoffice-sidebar"
+        aria-expanded="true"
+        title="Thu gọn menu quản trị"
+        data-sidebar-collapse
+      ><span aria-hidden="true">‹</span></button>
 
       <div class="st-main">
         <header class="st-topbar">

@@ -121,6 +121,84 @@
   background: var(--surface);
 }
 
+.backoffice-shell .st-sidebar-collapse {
+  display: none;
+}
+
+@media (min-width: 961px) {
+  .backoffice-shell .st-layout {
+    transition: grid-template-columns .18s ease;
+  }
+
+  .backoffice-shell .st-sidebar {
+    min-width: 0;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+
+  .backoffice-shell .st-sidebar-collapse {
+    position: fixed;
+    z-index: 140;
+    top: 76px;
+    left: calc(var(--sh-sidebar-w) - 20px);
+    display: grid;
+    width: 40px;
+    height: 44px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .88);
+    background: #241611;
+    box-shadow: 0 8px 20px rgba(36, 22, 17, .2);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: left .18s ease, color .15s ease, background .15s ease, border-color .15s ease;
+  }
+
+  .backoffice-shell .st-sidebar-collapse span {
+    transition: transform .18s ease;
+  }
+
+  .backoffice-shell .st-sidebar-collapse:hover {
+    border-color: var(--brand);
+    color: #fff;
+    background: var(--brand);
+  }
+
+  .backoffice-shell .st-sidebar-collapse:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand) 48%, transparent);
+    outline-offset: 3px;
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-layout {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse {
+    left: 12px;
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse span {
+    transform: rotate(180deg);
+  }
+}
+
+@media (min-width: 961px) and (prefers-reduced-motion: reduce) {
+  .backoffice-shell .st-layout,
+  .backoffice-shell .st-sidebar,
+  .backoffice-shell .st-sidebar-collapse,
+  .backoffice-shell .st-sidebar-collapse span {
+    transition: none;
+  }
+}
+
 .backoffice-shell .st-sidebar-head {
   margin-bottom: 14px;
   padding: 0 2px 14px;
