@@ -177,7 +177,7 @@
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-layout {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 80px minmax(0, 1fr);
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar {
@@ -194,8 +194,25 @@
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-brand :is(span, small),
-  body.st-sidebar-is-collapsed .backoffice-shell .st-nav-group,
   body.st-sidebar-is-collapsed .backoffice-shell .bo-side-foot-card {
+    display: none;
+  }
+
+  /* Nhãn nhóm ẩn chữ nhưng GIỮ chỗ thành một vạch ngắn giữa rail — nếu bỏ
+     hẳn thì 13 icon dồn thành một cột liền, liếc không ra ranh giới khu vực. */
+  body.st-sidebar-is-collapsed .backoffice-shell .st-nav-group {
+    width: 24px;
+    height: 2px;
+    margin: 12px auto 8px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--line);
+    color: transparent;
+    text-indent: -999px;
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-nav-group:first-child {
     display: none;
   }
 
@@ -217,7 +234,9 @@
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav a {
     position: relative;
-    width: 44px;
+    width: 46px;
+    height: 46px;
+    min-height: 46px;
     justify-content: center;
     gap: 0;
     margin-inline: auto;
@@ -226,8 +245,8 @@
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav a svg,
   body.st-sidebar-is-collapsed .backoffice-shell .bo-side-foot-link svg {
-    width: 20px;
-    height: 20px;
+    width: 21px;
+    height: 21px;
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav-badge {
@@ -245,16 +264,33 @@
   body.st-sidebar-is-collapsed .backoffice-shell .bo-side-foot-link,
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse {
     position: relative;
-    width: 44px;
-    min-height: 44px;
+    width: 46px;
+    min-height: 46px;
     justify-content: center;
     gap: 0;
     margin-inline: auto;
     padding: 0;
   }
 
+  /* Nút mở rộng: khi thu gọn thành một viên tròn nền thương hiệu cho nổi,
+     là điểm neo duy nhất để bung lại menu nên phải thấy ngay. */
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse {
+    margin-top: 10px;
+    border-radius: 999px;
+    border-color: var(--brand-line);
+    color: var(--brand);
+    background: var(--brand-soft);
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse:hover {
+    color: #fff;
+    background: var(--brand);
+    border-color: var(--brand);
+  }
+
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse-icon {
     transform: rotate(180deg);
+    font-size: 24px;
   }
 }
 
