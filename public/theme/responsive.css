@@ -574,17 +574,24 @@
     max-width: none;
   }
 
+  /* Đưa toast xuống ĐÁY màn hình: đặt ở trên cùng nó đè lên header và tiêu đề
+     trang (nhất là khung quản trị). Ở đáy thì luôn trống, không chồng chéo. */
   .flash:not(.support-prefill-banner) {
-    top: calc(72px + env(safe-area-inset-top));
+    top: auto;
     right: 12px;
-    bottom: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
     left: 12px;
     width: auto;
     transform: none;
   }
 
+  /* Khung người dùng có thanh điều hướng dưới → nâng toast lên trên thanh đó. */
+  .px-app .flash:not(.support-prefill-banner) {
+    bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
   .flash:not(.support-prefill-banner).is-hiding {
-    transform: translateY(-8px);
+    transform: translateY(8px);
   }
 
   .notification-dropdown {

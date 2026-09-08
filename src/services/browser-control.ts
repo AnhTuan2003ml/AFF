@@ -443,7 +443,20 @@ async function ensureProfileRunning(
   return { cdpHost: host, cdpPort: port };
 }
 
-/** Chọn tab thuộc `origin` (mở nếu chưa có), trả về webSocketDebuggerUrl. */
+/** Đóng tab theo targetId qua CDP HTTP. Trả lời là text ("Target is closing")
+ * nên cdpHttpGet parse JSON sẽ ném — nuốt lỗi, việc đóng vẫn được kích hoạt. */
+async function closeTab(
+  cdpHost: string,
+  cdpPort: number,
+  targetId: string | null,
+): Promise<void> {
+  if (!targetId) return;
+  await cdpHttpGet(cdpHost, cdpPort, `/json/close/${targetId}`).catch(
+    () => undefined,
+  );
+}
+
+/** Chọn tab thuộc `origin` (mở nếu chưa có); trả wsUrl + targetId để đóng sau. */
 async function ensureTabForOrigin(
   config: AppConfig,
   profileId: string,
@@ -451,7 +464,7 @@ async function ensureTabForOrigin(
   cdpPort: number,
   origin: string,
   pageUrl: string,
-): Promise<string> {
+): Promise<{ wsUrl: string; targetId: string | null }> {
   const pickTab = async (): Promise<any> => {
     const targets: any[] = await cdpHttpGet(cdpHost, cdpPort, "/json/list");
     const pages = targets.filter(
@@ -476,7 +489,10 @@ async function ensureTabForOrigin(
     throw new AppError("NO_TAB", `Không mở được tab ${origin} trong profile.`, 502);
   }
   // cdp_url dùng 127.0.0.1 → đổi sang host của Docker để container kết nối được.
-  return String(tab.webSocketDebuggerUrl).replace("127.0.0.1", cdpHost);
+  return {
+    wsUrl: String(tab.webSocketDebuggerUrl).replace("127.0.0.1", cdpHost),
+    targetId: tab.id ? String(tab.id) : null,
+  };
 }
 
 /** Tab affiliate.shopee.vn — dùng cho luồng lấy sản phẩm offer. */
@@ -486,7 +502,7 @@ function ensureAffiliateTab(
   cdpHost: string,
   cdpPort: number,
   pageUrl: string,
-): Promise<string> {
+): Promise<{ wsUrl: string; targetId: string | null }> {
   return ensureTabForOrigin(
     config,
     profileId,
@@ -523,7 +539,13 @@ export async function directFetchOfferRange(
 
   const pageUrl = offerPageUrl(listType);
   const { cdpHost, cdpPort } = await ensureProfileRunning(config, profileId);
-  const wsUrl = await ensureAffiliateTab(config, profileId, cdpHost, cdpPort, pageUrl);
+  const { wsUrl, targetId } = await ensureAffiliateTab(
+    config,
+    profileId,
+    cdpHost,
+    cdpPort,
+    pageUrl,
+  );
 
   let savedPages = 0;
   let savedItems = 0;
@@ -565,6 +587,8 @@ export async function directFetchOfferRange(
     }
   } finally {
     session.close();
+    // Đóng tab vừa mở/dùng để profile trở về trạng thái sạch.
+    await closeTab(cdpHost, cdpPort, targetId);
   }
 
   // Ghi mốc lấy gần nhất cho profile để trang hiển thị.
@@ -602,7 +626,7 @@ export async function directFetchHotDeals(
 ): Promise<HotDealsResult> {
   const maxItems = Math.min(Math.max(input.maxItems ?? 200, 20), 1000);
   const { cdpHost, cdpPort } = await ensureProfileRunning(config, input.profileId);
-  const wsUrl = await ensureTabForOrigin(
+  const { wsUrl, targetId } = await ensureTabForOrigin(
     config,
     input.profileId,
     cdpHost,
@@ -697,6 +721,8 @@ export async function directFetchHotDeals(
     return { savedPages, savedItems: products.length, collections };
   } finally {
     session.close();
+    // Đóng tab voucher vừa mở.
+    await closeTab(cdpHost, cdpPort, targetId);
   }
 }
 
@@ -729,7 +755,7 @@ export async function generateLazadaAffiliateLink(
   input: LazadaConvertInput,
 ): Promise<{ link: string }> {
   const { cdpHost, cdpPort } = await ensureProfileRunning(config, input.profileId);
-  const wsUrl = await ensureTabForOrigin(
+  const { wsUrl, targetId } = await ensureTabForOrigin(
     config,
     input.profileId,
     cdpHost,
@@ -780,6 +806,8 @@ export async function generateLazadaAffiliateLink(
     return { link };
   } finally {
     session.close();
+    // Đóng tab adsense vừa mở sau khi tạo link xong.
+    await closeTab(cdpHost, cdpPort, targetId);
   }
 }
 
@@ -804,7 +832,7 @@ export async function readProfileCookieHeader(
 ): Promise<string> {
   const target = PLATFORM_COOKIE_TARGET[platform]!;
   const { cdpHost, cdpPort } = await ensureProfileRunning(config, profileId);
-  const wsUrl = await ensureTabForOrigin(
+  const { wsUrl, targetId } = await ensureTabForOrigin(
     config,
     profileId,
     cdpHost,
@@ -836,5 +864,7 @@ export async function readProfileCookieHeader(
     return header;
   } finally {
     session.close();
+    // Đóng tab vừa mở để đọc cookie.
+    await closeTab(cdpHost, cdpPort, targetId);
   }
 }
