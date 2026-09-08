@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useColorScheme,
   View,
 } from 'react-native';
 
@@ -31,7 +32,7 @@ import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
 import { moLinkMua } from '@/lib/mua';
-import { colors, paperFadeGradient, radius, spacing, surfaceGlass } from '@/theme/tokens';
+import { colors, darkColors, paperFadeGradient, radius, spacing, surfaceGlass } from '@/theme/tokens';
 
 /**
  * Khám phá — dựng lại `px-discover` của web ở khổ điện thoại: hero (eyebrow +
@@ -322,6 +323,7 @@ export default function DiscoverScreen() {
 
 function TheVoucher({ v }: { v: ShopeeVoucher }) {
   const t = useT();
+  const darkMode = useColorScheme() === 'dark';
   async function chep() {
     await Clipboard.setStringAsync(v.code);
     Alert.alert(
@@ -337,7 +339,7 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
   const [logoLoi, setLogoLoi] = useState(false);
   // Cột trái ảnh (fallback logo ShopTik), cột phải thông tin + nút dưới.
   return (
-    <View style={styles.vCard}>
+    <View style={[styles.vCard, darkMode && styles.vCardDark]}>
       <Image
         source={
           v.logo_url && !logoLoi
@@ -353,17 +355,17 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
         }}
       />
       <View style={styles.vInfo}>
-        {v.label ? <Text style={styles.vLabel}>{v.label}</Text> : null}
-        <Text style={styles.vShop} numberOfLines={1}>
+        {v.label ? <Text style={[styles.vLabel, darkMode && styles.vLabelDark]}>{v.label}</Text> : null}
+        <Text style={[styles.vShop, darkMode && styles.vShopDark]} numberOfLines={1}>
           {v.shop_name || 'Shopee'}
         </Text>
-        <Text style={styles.vTitle} numberOfLines={2}>
+        <Text style={[styles.vTitle, darkMode && styles.vTitleDark]} numberOfLines={2}>
           {v.title}
         </Text>
-        {v.expiry_text ? <Text style={styles.vExpiry}>{v.expiry_text}</Text> : null}
+        {v.expiry_text ? <Text style={[styles.vExpiry, darkMode && styles.vExpiryDark]}>{v.expiry_text}</Text> : null}
         <View style={styles.vActions}>
-          <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, pressed && { opacity: 0.7 }]}>
-            <Text style={styles.vBtnCopyText} numberOfLines={1}>{t('Mã:', 'Code:')} {v.code}</Text>
+          <Pressable onPress={chep} style={({ pressed }) => [styles.vBtnCopy, darkMode && styles.vBtnCopyDark, pressed && { opacity: 0.7 }]}>
+            <Text style={[styles.vBtnCopyText, darkMode && styles.vBtnCopyTextDark]} numberOfLines={1}>{t('Mã:', 'Code:')} {v.code}</Text>
           </Pressable>
           <Pressable onPress={dungNgay} style={({ pressed }) => [styles.vBtnUse, pressed && { opacity: 0.7 }]}>
             <Text style={styles.vBtnUseText}>{t('Dùng ngay ↗', 'Use now ↗')}</Text>
@@ -647,12 +649,20 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: spacing.md,
   },
+  vCardDark: {
+    backgroundColor: darkColors.surfaceMuted,
+    borderColor: darkColors.lineStrong,
+  },
   vInfo: { flex: 1, gap: 4 },
   vLogo: { width: 104, height: 104, borderRadius: 12, backgroundColor: '#fff' },
   vLabel: { fontSize: 11, fontWeight: '800', color: '#eb3600' },
+  vLabelDark: { color: darkColors.brand2 },
   vShop: { fontSize: 13.5, fontWeight: '800', color: colors.text },
+  vShopDark: { color: darkColors.text },
   vTitle: { fontSize: 13.5, fontWeight: '700', color: colors.text, lineHeight: 18 },
+  vTitleDark: { color: darkColors.inkSoft },
   vExpiry: { fontSize: 11.5, color: colors.muted },
+  vExpiryDark: { color: darkColors.muted },
   vActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
   vBtnCopy: {
     flex: 1,
@@ -665,7 +675,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(238,77,45,0.08)',
   },
+  vBtnCopyDark: {
+    borderColor: darkColors.brand2,
+    backgroundColor: darkColors.brandSoft,
+  },
   vBtnCopyText: { fontSize: 12, fontWeight: '800', color: '#ee4d2d' },
+  vBtnCopyTextDark: { color: darkColors.brand2 },
   vBtnUse: {
     flex: 1,
     minHeight: 40,
