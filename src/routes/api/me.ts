@@ -11,6 +11,10 @@ import { parseInput } from "../../lib/validation.js";
 import { deleteOwnAccount } from "../../services/account-deletion.js";
 import { writeAuditLog } from "../../services/audit.js";
 import {
+  removeUserAvatar,
+  saveUserAvatarFromField,
+} from "../../services/avatar.js";
+import {
   BANKS,
   confirmBankChange,
   requestBankChange,
@@ -42,6 +46,26 @@ export async function registerMeApiRoutes(
   app: FastifyInstance,
   deps: ApiDeps,
 ): Promise<void> {
+  /* ---------------------------- Ảnh đại diện ---------------------------- */
+
+  // Đổi ảnh đại diện (multipart, field "avatar"). Chuẩn hóa JPEG vuông, lưu DB.
+  app.post("/me/avatar", { preHandler: requireApiUser }, async (request) => {
+    const body = request.body as Record<string, unknown>;
+    const { url } = await saveUserAvatarFromField(
+      deps.db,
+      deps.config.APP_ORIGIN,
+      request.currentUser!.id,
+      body.avatar,
+    );
+    return { avatarUrl: url };
+  });
+
+  // Gỡ ảnh đại diện → quay về avatar chữ cái đầu.
+  app.delete("/me/avatar", { preHandler: requireApiUser }, async (request) => {
+    await removeUserAvatar(deps.db, request.currentUser!.id);
+    return { avatarUrl: "" };
+  });
+
   /* ---------------------------- Ngân hàng ---------------------------- */
 
   app.get(

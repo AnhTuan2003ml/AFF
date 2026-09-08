@@ -3,6 +3,10 @@ import { z } from "zod";
 import { isGuestAppPath, requireUser } from "../auth/guards.js";
 import { revokeCurrentSession, revokeAllUserSessions } from "../auth/session.js";
 import { deleteOwnAccount } from "../services/account-deletion.js";
+import {
+  removeUserAvatar,
+  saveUserAvatarFromField,
+} from "../services/avatar.js";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { decryptField, sha256 } from "../lib/crypto.js";
@@ -1803,6 +1807,34 @@ export async function registerAppRoutes(
       flashError(reply, deps.config, error);
     }
     // Quay lại đúng trang vừa sửa (hồ sơ), không phải trang điều hướng.
+    return reply.redirect("/app/profile");
+  });
+
+  // Đổi ảnh đại diện: tải ảnh (multipart) → chuẩn hóa JPEG vuông → lưu DB.
+  app.post("/settings/avatar", async (request, reply) => {
+    try {
+      const body = request.body as Record<string, unknown>;
+      await saveUserAvatarFromField(
+        deps.db,
+        deps.config.APP_ORIGIN,
+        userId(request),
+        body.avatar,
+      );
+      setFlash(reply, deps.config, "success", "Đã cập nhật ảnh đại diện.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/app/profile");
+  });
+
+  // Gỡ ảnh đại diện → quay về avatar chữ cái đầu.
+  app.post("/settings/avatar/remove", async (request, reply) => {
+    try {
+      await removeUserAvatar(deps.db, userId(request));
+      setFlash(reply, deps.config, "success", "Đã gỡ ảnh đại diện.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
     return reply.redirect("/app/profile");
   });
 

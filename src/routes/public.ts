@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { AppConfig } from "../config.js";
 import { query, type Database, withTransaction } from "../db.js";
 import { hashSensitiveValue } from "../lib/crypto.js";
+import { getUserAvatar } from "../services/avatar.js";
 import {
   isPlatformPurchaseEnabled,
   isSafeAffiliateRedirect,
@@ -27,6 +28,24 @@ export async function registerPublicRoutes(
 
   app.get("/favicon.ico", { config: { csrf: false } }, (_request, reply) =>
     reply.redirect("/assets/images/icon.png"),
+  );
+
+  // Ảnh đại diện tự tải lên (lưu trong DB). Công khai để avatar hiển thị được
+  // cho người khác (vd người giới thiệu). URL kèm ?v=<ts> nên cache lâu an toàn.
+  app.get<{ Params: { userId: string } }>(
+    "/avatar/:userId",
+    { config: { csrf: false } },
+    async (request, reply) => {
+      const avatar = await getUserAvatar(deps.db, request.params.userId).catch(
+        () => null,
+      );
+      if (!avatar) {
+        return reply.code(404).send("Not found");
+      }
+      reply.header("content-type", avatar.contentType);
+      reply.header("cache-control", "public, max-age=31536000, immutable");
+      return reply.send(avatar.data);
+    },
   );
 
   // Xác minh sở hữu site cho Google Search Console — file phải phục vụ ở GỐC

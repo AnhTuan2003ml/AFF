@@ -35,6 +35,26 @@
 
   <div class="settings-grid">
     <section class="panel">
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('ẢNH ĐẠI DIỆN', 'AVATAR') }}</span><h2>{{ t('Ảnh đại diện', 'Profile photo') }}</h2></div></header>
+      <div class="avatar-edit">
+        <span class="avatar-edit-preview" aria-hidden="true">
+          {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
+        </span>
+        <form method="post" action="/app/settings/avatar" enctype="multipart/form-data" class="avatar-edit-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="file" name="avatar" accept="image/*" required aria-label="{{ t('Chọn ảnh đại diện', 'Choose a profile photo') }}">
+          <p class="panel-note">{{ t('JPG, PNG, WEBP hoặc ảnh iPhone (HEIC), tối đa 8 MB. Ảnh được cắt vuông tự động.', 'JPG, PNG, WEBP or iPhone (HEIC), up to 8 MB. It is cropped to a square automatically.') }}</p>
+          <div class="avatar-edit-actions">
+            <button class="button button-primary" type="submit">{{ t('Tải ảnh lên', 'Upload') }}</button>
+            {% if currentUser.avatarUrl %}
+            <button class="button button-ghost" type="submit" formaction="/app/settings/avatar/remove" formnovalidate>{{ t('Gỡ ảnh', 'Remove') }}</button>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel">
       <header class="panel-heading"><div><span class="eyebrow">{{ t('HỒ SƠ', 'PROFILE') }}</span><h2>{{ t('Thông tin cá nhân', 'Personal info') }}</h2></div></header>
       <form method="post" action="/app/settings/profile" class="stack-form" data-validate-form data-disable-until-dirty novalidate>
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
