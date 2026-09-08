@@ -15,7 +15,7 @@
 export interface DefaultAdmin {
   email: string;
   name: string;
-  role: "SUPER_ADMIN" | "ADMIN";
+  role: "ADMIN";
   initialPassword: string;
 }
 
@@ -23,13 +23,13 @@ export const DEFAULT_ADMINS: readonly DefaultAdmin[] = [
   {
     email: "tuankkffdnc@gmail.com",
     name: "Quản trị hệ thống",
-    role: "SUPER_ADMIN",
+    role: "ADMIN",
     initialPassword: "AnhTuan2003@",
   },
   {
     email: "hoangngochiep62@gmail.com",
     name: "Quản trị viên",
-    role: "SUPER_ADMIN",
+    role: "ADMIN",
     initialPassword: "HHiep2003@",
   },
 ];

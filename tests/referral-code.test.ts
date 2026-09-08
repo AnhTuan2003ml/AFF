@@ -167,7 +167,7 @@ describe("mã giới thiệu — quyền tự đổi của admin", () => {
     const admin = await seedUser(db, {
       email: "boss@example.com",
       code: "100200",
-      role: "SUPER_ADMIN",
+      role: "ADMIN",
     });
 
     const stateBefore = await getReferralCodeState(db, admin);

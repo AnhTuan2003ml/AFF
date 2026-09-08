@@ -196,27 +196,18 @@
         <div class="current-access">
           <span>Quyền hiện tại</span>
           <strong>
-            {% if user.role == 'SUPER_ADMIN' %}Quản trị cao nhất
-            {% elif user.role == 'ADMIN' %}Quản trị viên
-            {% elif user.role == 'FINANCE' %}Kế toán
-            {% elif user.role == 'SUPPORT' %}Chăm sóc
-            {% elif user.role == 'RISK' %}Kiểm soát
-            {% elif user.role == 'AUDITOR' %}Chỉ xem
+            {% if user.role == 'ADMIN' or user.role == 'SUPER_ADMIN' %}Quản trị
             {% else %}Người dùng{% endif %}
           </strong>
         </div>
 
-        {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+        {% if currentUser.role == 'ADMIN' and user.id != currentUser.id and not user.deleted_at %}
           <form method="post" action="/backoffice/accounts/{{ user.id }}/role" class="stack-form access-form" data-confirm-form data-confirm-message="Xác nhận thay đổi quyền tài khoản này?">
             <input type="hidden" name="_csrf" value="{{ csrfToken }}">
             <label>Đổi quyền
               <select name="role">
                 <option value="USER" {% if user.role == 'USER' %}selected{% endif %}>Người dùng</option>
-                <option value="SUPPORT" {% if user.role == 'SUPPORT' %}selected{% endif %}>Chăm sóc người dùng</option>
-                <option value="FINANCE" {% if user.role == 'FINANCE' %}selected{% endif %}>Kế toán</option>
-                <option value="RISK" {% if user.role == 'RISK' %}selected{% endif %}>Kiểm soát rủi ro</option>
-                <option value="AUDITOR" {% if user.role == 'AUDITOR' %}selected{% endif %}>Chỉ xem báo cáo</option>
-                <option value="ADMIN" {% if user.role == 'ADMIN' %}selected{% endif %}>Quản trị viên</option>
+                <option value="ADMIN" {% if user.role == 'ADMIN' %}selected{% endif %}>Quản trị</option>
               </select>
             </label>
             <label>Lý do thay đổi
@@ -226,7 +217,7 @@
           </form>
         {% endif %}
 
-        {% if user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'RISK'] %}
+        {% if user.id != currentUser.id and user.role != 'ADMIN' and not user.deleted_at and currentUser.role == 'ADMIN' %}
           <form method="post" action="/backoffice/accounts/{{ user.id }}/status" class="stack-form access-form" data-confirm-form data-confirm-message="Xác nhận thay đổi trạng thái tài khoản này?">
             <input type="hidden" name="_csrf" value="{{ csrfToken }}">
             {% if user.status == 'ACTIVE' %}
@@ -265,7 +256,7 @@
         </section>
       {% endif %}
 
-      {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+      {% if currentUser.role == 'ADMIN' and user.id != currentUser.id and user.role != 'ADMIN' and not user.deleted_at %}
         <section class="panel destructive-panel">
           <span class="admin-kicker">VÙNG NGUY HIỂM</span>
           <h2>Xóa tài khoản</h2>

@@ -10,7 +10,7 @@
   </section>
 
   {% if currentUser.role not in ['SUPER_ADMIN', 'ADMIN'] %}
-    <aside class="info-strip"><span>i</span><div><b>Chỉ xem</b><p>Vai trò của bạn chỉ được xem cấu hình. Chỉ Quản trị (ADMIN/SUPER_ADMIN) mới được lưu thay đổi.</p></div></aside>
+    <aside class="info-strip"><span>i</span><div><b>Chỉ xem</b><p>Vai trò của bạn chỉ được xem cấu hình. Chỉ Quản trị mới được lưu thay đổi.</p></div></aside>
   {% endif %}
 
   <form method="post" action="/backoffice/config" class="config-form" data-validate-form novalidate>

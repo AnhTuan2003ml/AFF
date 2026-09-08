@@ -15,14 +15,7 @@ export async function registerAdminConsoleRoutes(
 ): Promise<void> {
   app.addHook(
     "preHandler",
-    requireRoles(
-      "SUPER_ADMIN",
-      "ADMIN",
-      "FINANCE",
-      "RISK",
-      "SUPPORT",
-      "AUDITOR",
-    ),
+    requireRoles("ADMIN"),
   );
   await registerAdminDashboardRoutes(app, deps);
   await registerAdminOrderRoutes(app, deps);

@@ -80,7 +80,7 @@ export async function registerAdminUserRoutes(
     const params = request.query as Record<string, unknown>;
     const q = String(params.q ?? "").trim().slice(0, 120);
     const role = selectedValue(
-      ["ALL", ...STAFF_ROLES, "SUPER_ADMIN"] as const,
+      ["ALL", ...STAFF_ROLES] as const,
       params.role,
       "ALL",
     );
@@ -220,10 +220,10 @@ export async function registerAdminUserRoutes(
   });
 
   app.post("/accounts", async (request, reply) => {
-    if (request.currentUser!.role !== "SUPER_ADMIN") {
+    if (request.currentUser!.role !== "ADMIN") {
       throw new AppError(
         "FORBIDDEN",
-        "Chỉ quản trị cao nhất mới được thêm tài khoản.",
+        "Chỉ quản trị mới được thêm tài khoản.",
         403,
       );
     }
@@ -239,10 +239,9 @@ export async function registerAdminUserRoutes(
             email: z.string().trim().email("Email không hợp lệ."),
             password: passwordSchema,
             passwordConfirm: z.string(),
-            role: z.enum(
-              ["USER", "SUPPORT", "FINANCE", "RISK", "AUDITOR"],
-              { message: "Vui lòng chọn một quyền hợp lệ." },
-            ),
+            role: z.enum(["USER", "ADMIN"], {
+              message: "Vui lòng chọn một quyền hợp lệ.",
+            }),
           })
           .refine((value) => value.password === value.passwordConfirm, {
             message: "Mật khẩu xác nhận chưa khớp.",
@@ -724,27 +723,10 @@ export async function registerAdminUserRoutes(
             "Chỉ tài khoản đang hoạt động hoặc đã khóa mới được đổi trạng thái.",
           );
         }
-        if (row.role === "SUPER_ADMIN") {
+        if (row.role === "ADMIN") {
           throw new AppError(
             "FORBIDDEN",
-            "Không thể khóa tài khoản quản trị cao nhất.",
-            403,
-          );
-        }
-        if (
-          row.role === "ADMIN" &&
-          request.currentUser!.role !== "SUPER_ADMIN"
-        ) {
-          throw new AppError(
-            "FORBIDDEN",
-            "Chỉ quản trị cao nhất mới được khóa quản trị viên.",
-            403,
-          );
-        }
-        if (request.currentUser!.role === "RISK" && row.role !== "USER") {
-          throw new AppError(
-            "FORBIDDEN",
-            "Vai trò kiểm soát chỉ được khóa tài khoản người dùng.",
+            "Không thể khóa tài khoản quản trị.",
             403,
           );
         }
@@ -1194,20 +1176,19 @@ export async function registerAdminUserRoutes(
   app.post<{ Params: { id: string } }>(
     "/accounts/:id/role",
     async (request, reply) => {
-      if (request.currentUser!.role !== "SUPER_ADMIN") {
+      if (request.currentUser!.role !== "ADMIN") {
         throw new AppError(
           "FORBIDDEN",
-          "Chỉ quản trị cao nhất mới được đổi quyền.",
+          "Chỉ quản trị mới được đổi quyền.",
           403,
         );
       }
       try {
         const input = parseInput(
           z.object({
-            role: z.enum(
-              ["USER", "SUPPORT", "FINANCE", "RISK", "AUDITOR", "ADMIN"],
-              { message: "Vui lòng chọn một quyền hợp lệ." },
-            ),
+            role: z.enum(["USER", "ADMIN"], {
+              message: "Vui lòng chọn một quyền hợp lệ.",
+            }),
             reason: z
               .string()
               .trim()
@@ -1230,13 +1211,6 @@ export async function registerAdminUserRoutes(
         const row = target.rows[0];
         if (!row) {
           throw new AppError("USER_NOT_FOUND", "Không tìm thấy người dùng.");
-        }
-        if (row.role === "SUPER_ADMIN") {
-          throw new AppError(
-            "FORBIDDEN",
-            "Không thể đổi quyền quản trị cao nhất.",
-            403,
-          );
         }
         await query(deps.db, "UPDATE users SET role = $2 WHERE id = $1", [
           request.params.id,
@@ -1274,10 +1248,10 @@ export async function registerAdminUserRoutes(
   app.post<{ Params: { id: string } }>(
     "/accounts/:id/delete",
     async (request, reply) => {
-      if (request.currentUser!.role !== "SUPER_ADMIN") {
+      if (request.currentUser!.role !== "ADMIN") {
         throw new AppError(
           "FORBIDDEN",
-          "Chỉ quản trị cao nhất mới được xóa tài khoản.",
+          "Chỉ quản trị mới được xóa tài khoản.",
           403,
         );
       }
@@ -1307,10 +1281,10 @@ export async function registerAdminUserRoutes(
         if (!row) {
           throw new AppError("USER_NOT_FOUND", "Không tìm thấy người dùng.");
         }
-        if (row.role === "SUPER_ADMIN") {
+        if (row.role === "ADMIN") {
           throw new AppError(
             "FORBIDDEN",
-            "Không thể xóa tài khoản quản trị cao nhất.",
+            "Không thể xóa tài khoản quản trị.",
             403,
           );
         }

@@ -49,7 +49,7 @@ describe("syncAdminAccountsFromEnv", () => {
       "SELECT role, password_hash, status FROM users WHERE lower(email) = $1",
       ["admin@shoptik.vn"],
     );
-    expect(row.rows[0]?.role).toBe("SUPER_ADMIN");
+    expect(row.rows[0]?.role).toBe("ADMIN");
     expect(row.rows[0]?.status).toBe("ACTIVE");
     expect(row.rows[0]?.password_hash).toMatch(/^\$argon2id\$/);
     expect(row.rows[0]?.password_hash).not.toContain("MatKhauThat123");
@@ -95,7 +95,7 @@ describe("syncAdminAccountsFromEnv", () => {
       "SELECT role, full_name, password_hash FROM users WHERE lower(email) = $1",
       ["admin@shoptik.vn"],
     );
-    expect(after.rows[0]?.role).toBe("SUPER_ADMIN");
+    expect(after.rows[0]?.role).toBe("ADMIN");
     expect(after.rows[0]?.full_name).toBe("Ten Moi");
     expect(after.rows[0]?.password_hash).toBe(originalHash);
   });

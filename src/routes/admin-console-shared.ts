@@ -11,14 +11,8 @@ export interface AdminConsoleDeps {
   emailService: EmailService;
 }
 
-export const STAFF_ROLES = [
-  "USER",
-  "SUPPORT",
-  "FINANCE",
-  "RISK",
-  "AUDITOR",
-  "ADMIN",
-] as const;
+// Chỉ còn 2 cấp: người dùng và quản trị.
+export const STAFF_ROLES = ["USER", "ADMIN"] as const;
 
 export const USER_STATUSES = [
   "ALL",

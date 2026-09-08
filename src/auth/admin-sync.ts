@@ -21,8 +21,9 @@ const adminAccountSchema = z.object({
 
 const adminAccountsSchema = z.array(adminAccountSchema);
 
+// Chỉ còn 2 cấp: mọi cấu hình admin (kể cả super_admin cũ) đều thành ADMIN.
 const ROLE_MAP = {
-  super_admin: "SUPER_ADMIN",
+  super_admin: "ADMIN",
   admin: "ADMIN",
 } as const;
 

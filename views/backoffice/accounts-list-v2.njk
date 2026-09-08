@@ -9,7 +9,7 @@
       <h1>Người dùng</h1>
       <p>{{ pagination.total }} tài khoản · tìm một người, xem hoạt động và xử lý trong cùng một nơi.</p>
     </div>
-    {% if currentUser.role == 'SUPER_ADMIN' %}
+    {% if currentUser.role == 'ADMIN' %}
       <div class="admin-heading-actions">
         <button class="button button-primary" type="button" data-panel-toggle="create-user-modal">{{ icon("plus") }}Thêm tài khoản</button>
       </div>
@@ -66,12 +66,7 @@
         <select name="role">
           <option value="ALL"{% if filters.role == 'ALL' %} selected{% endif %}>Tất cả</option>
           <option value="USER"{% if filters.role == 'USER' %} selected{% endif %}>Người dùng</option>
-          <option value="SUPPORT"{% if filters.role == 'SUPPORT' %} selected{% endif %}>CSKH</option>
-          <option value="FINANCE"{% if filters.role == 'FINANCE' %} selected{% endif %}>Tài chính</option>
-          <option value="RISK"{% if filters.role == 'RISK' %} selected{% endif %}>Rủi ro</option>
-          <option value="AUDITOR"{% if filters.role == 'AUDITOR' %} selected{% endif %}>Kiểm toán</option>
           <option value="ADMIN"{% if filters.role == 'ADMIN' %} selected{% endif %}>Quản trị</option>
-          <option value="SUPER_ADMIN"{% if filters.role == 'SUPER_ADMIN' %} selected{% endif %}>Quản trị cao nhất</option>
         </select>
       </label>
       <label><span>Trạng thái</span>
@@ -145,7 +140,7 @@
               <button class="icon-button" type="button" data-row-menu-trigger aria-haspopup="true" aria-expanded="false" aria-label="Hành động khác cho {{ user.full_name }}">{{ icon("more") }}</button>
               <div class="row-menu-dropdown" data-row-menu hidden>
                 <a href="/backoffice/accounts/{{ user.id }}">Xem hồ sơ</a>
-                {% set canManage = user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'RISK'] and (currentUser.role != 'RISK' or user.role == 'USER') and (user.role != 'ADMIN' or currentUser.role == 'SUPER_ADMIN') %}
+                {% set canManage = user.id != currentUser.id and user.role != 'ADMIN' and not user.deleted_at and currentUser.role == 'ADMIN' %}
                 {% if canManage and user.status == 'ACTIVE' %}
                   <button type="button" class="row-menu-danger" data-open-account-modal="lock" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}">Khóa tài khoản</button>
                 {% elif canManage and user.status == 'LOCKED' %}
@@ -156,9 +151,11 @@
                     <button type="submit">Mở tài khoản</button>
                   </form>
                 {% endif %}
-                {% if currentUser.role == 'SUPER_ADMIN' and user.id != currentUser.id and user.role != 'SUPER_ADMIN' and not user.deleted_at %}
+                {% if currentUser.role == 'ADMIN' and user.id != currentUser.id and not user.deleted_at %}
                   <button type="button" data-open-account-modal="role" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}" data-user-role="{{ user.role }}">Đổi quyền</button>
+                  {% if user.role != 'ADMIN' %}
                   <button type="button" class="row-menu-danger" data-open-account-modal="delete" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}" data-user-email="{{ user.email }}">Xóa tài khoản</button>
+                  {% endif %}
                 {% endif %}
               </div>
             </div>
@@ -168,7 +165,7 @@
     {% else %}{{ empty_state("Không tìm thấy tài khoản", "Hãy thử đổi từ khóa hoặc bộ lọc.") }}{% endif %}
   </section>
 
-  {% if currentUser.role == 'SUPER_ADMIN' %}
+  {% if currentUser.role == 'ADMIN' %}
     <div class="st-dialog-scrim" id="create-user-modal" hidden>
       <section class="st-dialog import-modal" role="dialog" aria-modal="true" aria-labelledby="create-user-modal-title">
         <header class="panel-heading">
@@ -201,10 +198,7 @@
             <label>Quyền
               <select name="role">
                 <option value="USER">Người dùng</option>
-                <option value="SUPPORT">Chăm sóc khách hàng</option>
-                <option value="FINANCE">Tài chính</option>
-                <option value="RISK">Kiểm soát rủi ro</option>
-                <option value="AUDITOR">Chỉ xem / kiểm toán</option>
+                <option value="ADMIN">Quản trị</option>
               </select>
             </label>
           </fieldset>
@@ -251,11 +245,7 @@
         <label>Quyền mới
           <select name="role">
             <option value="USER">Người dùng</option>
-            <option value="SUPPORT">Chăm sóc người dùng</option>
-            <option value="FINANCE">Kế toán</option>
-            <option value="RISK">Kiểm soát rủi ro</option>
-            <option value="AUDITOR">Chỉ xem báo cáo</option>
-            <option value="ADMIN">Quản trị viên</option>
+            <option value="ADMIN">Quản trị</option>
           </select>
         </label>
         <label for="role-account-reason-input">Lý do thay đổi
