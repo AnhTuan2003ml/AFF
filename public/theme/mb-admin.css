@@ -121,7 +121,7 @@
   background: var(--surface);
 }
 
-.backoffice-shell .st-sidebar-collapse {
+.backoffice-shell :is(.st-sidebar-collapse, .st-sidebar-reopen) {
   display: none;
 }
 
@@ -136,12 +136,52 @@
   }
 
   .backoffice-shell .st-sidebar-collapse {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: var(--bo-radius-s);
+    color: rgba(255, 255, 255, .75);
+    background: rgba(255, 255, 255, .04);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+  }
+
+  .backoffice-shell .st-sidebar-collapse-icon {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .backoffice-shell :is(.st-sidebar-collapse, .st-sidebar-reopen):hover {
+    border-color: var(--brand);
+    color: #fff;
+    background: var(--brand);
+  }
+
+  .backoffice-shell :is(.st-sidebar-collapse, .st-sidebar-reopen):focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand) 48%, transparent);
+    outline-offset: 3px;
+  }
+
+  .backoffice-shell .st-sidebar-reopen {
     position: fixed;
     z-index: 140;
     top: 76px;
-    left: calc(var(--sh-sidebar-w) - 20px);
-    display: grid;
-    width: 40px;
+    left: 12px;
+    width: 44px;
     height: 44px;
     place-items: center;
     padding: 0;
@@ -153,22 +193,7 @@
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
-    transition: left .18s ease, color .15s ease, background .15s ease, border-color .15s ease;
-  }
-
-  .backoffice-shell .st-sidebar-collapse span {
-    transition: transform .18s ease;
-  }
-
-  .backoffice-shell .st-sidebar-collapse:hover {
-    border-color: var(--brand);
-    color: #fff;
-    background: var(--brand);
-  }
-
-  .backoffice-shell .st-sidebar-collapse:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--brand) 48%, transparent);
-    outline-offset: 3px;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-layout {
@@ -178,15 +203,12 @@
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar {
     transform: translateX(-100%);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
   }
 
-  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse {
-    left: 12px;
-  }
-
-  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse span {
-    transform: rotate(180deg);
+  body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-reopen {
+    display: grid;
   }
 }
 
@@ -194,7 +216,7 @@
   .backoffice-shell .st-layout,
   .backoffice-shell .st-sidebar,
   .backoffice-shell .st-sidebar-collapse,
-  .backoffice-shell .st-sidebar-collapse span {
+  .backoffice-shell .st-sidebar-reopen {
     transition: none;
   }
 }
