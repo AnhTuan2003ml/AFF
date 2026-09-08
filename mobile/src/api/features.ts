@@ -120,6 +120,8 @@ export function layGioiThieu() {
       customized: boolean;
       pendingCode: string | null;
     };
+    /** Hoa hồng giới thiệu 8 tháng gần nhất (nhãn "ThN", value VND). */
+    monthlyEarnings: { label: string; value: number }[];
     data: Referral[];
   }>('/api/v1/referrals');
 }

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireApiUser } from "../../auth/guards.js";
 import { query } from "../../db.js";
+import { buildMonthlySeries } from "../../services/chart-data.js";
 import { parseInput } from "../../lib/validation.js";
 import { getCheckinState, recordDailyCheckin } from "../../services/checkin.js";
 import {
@@ -103,7 +104,7 @@ export async function registerFeatureApiRoutes(
 
   app.get("/referrals", { preHandler: requireApiUser }, async (request) => {
     const id = request.currentUser!.id;
-    const [nguoiGioiThieu, tongThuong] = await Promise.all([
+    const [nguoiGioiThieu, tongThuong, thangThuong] = await Promise.all([
       query<{
         full_name: string;
         status: string;
@@ -140,7 +141,23 @@ export async function registerFeatureApiRoutes(
         `,
         [id],
       ),
+      query<{ ym: string; total: string }>(
+        deps.db,
+        `
+          SELECT to_char(date_trunc('month', ce.created_at), 'YYYY-MM') AS ym,
+            COALESCE(sum(ce.referral_amount_vnd), 0)::text AS total
+          FROM commission_entries ce
+          WHERE ce.sharer_user_id = $1
+            AND ce.status <> 'REVERSED'
+            AND ce.created_at >= date_trunc('month', now()) - interval '7 months'
+          GROUP BY 1
+        `,
+        [id],
+      ),
     ]);
+    const monthlyEarnings = buildMonthlySeries(
+      thangThuong.rows.map((row) => ({ ym: row.ym, value: Number(row.total) })),
+    ).map((point) => ({ label: point.label, value: point.value }));
 
     const me = await query<{
       referral_code: string;
@@ -169,6 +186,8 @@ export async function registerFeatureApiRoutes(
       // bè nhập vào không khớp ai cả — người giới thiệu mất thưởng trong im lặng.
       referralCode: me.rows[0]?.referral_code ?? null,
       totalEarnedVnd: Number(tongThuong.rows[0]?.total ?? 0),
+      // Hoa hồng giới thiệu 8 tháng gần nhất — app vẽ biểu đồ cột.
+      monthlyEarnings,
       data: nguoiGioiThieu.rows.map((r) => ({
         fullName: r.full_name,
         status: r.status,
