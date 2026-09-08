@@ -29,7 +29,7 @@
     </div>
   </section>
 
-  {% if not (refCodeState and refCodeState.isPartner) %}
+  {% if not (refCodeState and (refCodeState.isPartner or refCodeState.isAdmin)) %}
     <section class="panel kol-cta">
       <div class="kol-cta-copy">
         <span class="eyebrow">{{ t('DÀNH CHO NGƯỜI SÁNG TẠO', 'FOR CREATORS') }}</span>
@@ -52,23 +52,27 @@
     </section>
   {% endif %}
 
-  {% if refCodeState and refCodeState.isPartner %}
+  {% if refCodeState and (refCodeState.isPartner or refCodeState.isAdmin) %}
     <section class="panel referral-code-panel">
       <header class="panel-heading">
-        <div><span class="eyebrow">{{ t('QUYỀN CỦA ĐỐI TÁC', 'PARTNER PERK') }}</span><h2>{{ t('Đổi mã giới thiệu tự chọn', 'Set a custom referral code') }}</h2></div>
+        <div><span class="eyebrow">{% if refCodeState.isAdmin %}{{ t('QUYỀN QUẢN TRỊ', 'ADMIN PERK') }}{% else %}{{ t('QUYỀN CỦA ĐỐI TÁC', 'PARTNER PERK') }}{% endif %}</span><h2>{{ t('Đổi mã giới thiệu tự chọn', 'Set a custom referral code') }}</h2></div>
       </header>
       {% if refCodeState.pendingCode %}
         <aside class="info-strip"><span>⏳</span><div><b>{{ t('Đang chờ duyệt', 'Under review') }}</b><p>{{ t('Yêu cầu đổi sang mã', 'Your request to change to code') }} <b>{{ refCodeState.pendingCode }}</b> {{ t('đã gửi tới admin. Được duyệt bạn sẽ nhận thông báo ngay.', 'has been sent to the admin. You’ll be notified once approved.') }}</p></div></aside>
       {% elif refCodeState.customizedAt %}
-        <aside class="info-strip"><span>✓</span><div><b>{{ t('Đã dùng quyền đổi mã', 'Code change used') }}</b><p>{{ t('Mỗi đối tác được đổi mã một lần. Mã hiện tại của bạn là', 'Each partner may change the code once. Your current code is') }} <b>{{ referralCode }}</b>; {{ t('dữ liệu và link cũ vẫn quy về bạn.', 'old data and links still attribute to you.') }}</p></div></aside>
+        <aside class="info-strip"><span>✓</span><div><b>{{ t('Đã dùng quyền đổi mã', 'Code change used') }}</b><p>{{ t('Bạn được đổi mã một lần. Mã hiện tại của bạn là', 'You may change the code once. Your current code is') }} <b>{{ referralCode }}</b>; {{ t('dữ liệu và link cũ vẫn quy về bạn.', 'old data and links still attribute to you.') }}</p></div></aside>
       {% else %}
+        {% if refCodeState.isAdmin %}
+        <p class="panel-note">{{ t('Bạn được đổi mã', 'You can change your code') }} <b>{{ t('một lần duy nhất', 'only once') }}</b>: {{ t('3–9 ký tự gồm chữ và số (VD: NamDong). Mã có hiệu lực NGAY (không cần duyệt); link và toàn bộ dữ liệu giới thiệu cũ vẫn quy về bạn.', '3–9 letters and numbers (e.g. NamDong). It takes effect IMMEDIATELY (no approval); old links and all existing referral data still attribute to you.') }}</p>
+        {% else %}
         <p class="panel-note">{{ t('Bạn được đổi mã', 'You can change your code') }} <b>{{ t('một lần duy nhất', 'only once') }}</b>: {{ t('3–9 ký tự gồm chữ và số (VD: NamDong). Mã mới có hiệu lực sau khi admin phê duyệt; toàn bộ dữ liệu giới thiệu cũ giữ nguyên.', '3–9 letters and numbers (e.g. NamDong). The new code takes effect after admin approval; all existing referral data is preserved.') }}</p>
+        {% endif %}
         <form method="post" action="/app/referrals/doi-ma" class="referral-code-form">
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
           <input type="text" name="newCode" maxlength="9" minlength="3" required
                  pattern="[A-Za-z0-9]{3,9}" placeholder="{{ t('Mã mới (3–9 chữ/số)', 'New code (3–9 chars)') }}"
                  aria-label="{{ t('Mã giới thiệu mới', 'New referral code') }}">
-          <button class="button button-primary" type="submit">{{ t('Gửi admin duyệt', 'Send for approval') }}</button>
+          <button class="button button-primary" type="submit">{% if refCodeState.isAdmin %}{{ t('Đổi mã ngay', 'Change now') }}{% else %}{{ t('Gửi admin duyệt', 'Send for approval') }}{% endif %}</button>
         </form>
       {% endif %}
     </section>

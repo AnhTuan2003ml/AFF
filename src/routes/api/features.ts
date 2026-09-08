@@ -20,7 +20,9 @@ import { registerPushToken } from "../../services/push.js";
 import { listShopeeVouchers } from "../../services/shopee-voucher.js";
 import {
   applyReferralToUser,
+  changeOwnReferralCodeByAdmin,
   getReferralCodeState,
+  isAdminRole,
   requestReferralCodeChange,
 } from "../../services/referral-code.js";
 import { AppError } from "../../lib/errors.js";
@@ -156,6 +158,7 @@ export async function registerFeatureApiRoutes(
       // Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app dựa vào đây để hiện form.
       codeState: {
         isPartner: codeState.isPartner,
+        isAdmin: codeState.isAdmin,
         customized: Boolean(codeState.customizedAt),
         pendingCode: codeState.pendingCode,
       },
@@ -250,12 +253,21 @@ export async function registerFeatureApiRoutes(
     return { status: "APPLIED" };
   });
 
-  // Đối tác/KOL gửi yêu cầu đổi mã giới thiệu (admin duyệt mới hiệu lực).
+  // Đổi mã giới thiệu. Admin: đổi NGAY 1 lần (không cần duyệt). Đối tác/KOL:
+  // gửi yêu cầu, admin duyệt mới hiệu lực.
   app.post("/referrals/code-change", { preHandler: requireApiUser }, async (request) => {
     const input = parseInput(
       z.object({ newCode: z.string().trim().min(1).max(20) }),
       request.body,
     );
+    if (isAdminRole(request.currentUser!.role)) {
+      const { newCode } = await changeOwnReferralCodeByAdmin(
+        deps.db,
+        request.currentUser!.id,
+        input.newCode,
+      );
+      return { status: "APPLIED", code: newCode };
+    }
     await requestReferralCodeChange(
       deps.db,
       request.currentUser!.id,

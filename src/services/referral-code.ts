@@ -15,6 +15,13 @@ import { createNotification } from "./mission.js";
 
 const CUSTOM_CODE_PATTERN = /^[A-Za-z0-9]{3,9}$/;
 
+/** Vai trò được coi là quản trị — dùng cho quyền tự đổi mã ngay. */
+const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN"]);
+
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role != null && ADMIN_ROLES.has(role);
+}
+
 export interface ReferralCodeRequestRow {
   id: string;
   user_id: string;
@@ -122,15 +129,17 @@ export async function getReferralCodeState(
   userId: string,
 ): Promise<{
   isPartner: boolean;
+  isAdmin: boolean;
   customizedAt: Date | null;
   pendingCode: string | null;
 }> {
   const user = await query<{
+    role: string;
     is_special_partner: boolean;
     referral_code_customized_at: Date | null;
   }>(
     db,
-    "SELECT is_special_partner, referral_code_customized_at FROM users WHERE id = $1",
+    "SELECT role, is_special_partner, referral_code_customized_at FROM users WHERE id = $1",
     [userId],
   );
   const pending = await query<{ requested_code: string }>(
@@ -140,9 +149,80 @@ export async function getReferralCodeState(
   );
   return {
     isPartner: Boolean(user.rows[0]?.is_special_partner),
+    isAdmin: isAdminRole(user.rows[0]?.role),
     customizedAt: user.rows[0]?.referral_code_customized_at ?? null,
     pendingCode: pending.rows[0]?.requested_code ?? null,
   };
+}
+
+/**
+ * Admin đổi mã giới thiệu CỦA CHÍNH MÌNH — áp dụng NGAY (không cần duyệt),
+ * nhưng CHỈ MỘT lần (khóa bằng referral_code_customized_at). Mã cũ được ghi
+ * vào referral_code_requests (APPROVED) để link/đăng ký bằng mã cũ vẫn quy về
+ * đúng người; quan hệ đã mời (referred_by_user_id, referrals) lưu theo user id
+ * nên không mất dữ liệu.
+ */
+export async function changeOwnReferralCodeByAdmin(
+  db: Database,
+  userId: string,
+  rawCode: string,
+): Promise<{ oldCode: string; newCode: string }> {
+  const code = normalizeCustomReferralCode(rawCode);
+  return withTransaction(db, async (client) => {
+    const user = await query<{
+      role: string;
+      referral_code: string;
+      referral_code_customized_at: Date | null;
+    }>(
+      client,
+      `SELECT role, referral_code, referral_code_customized_at
+       FROM users WHERE id = $1 FOR UPDATE`,
+      [userId],
+    );
+    const row = user.rows[0];
+    if (!row) throw new AppError("USER_NOT_FOUND", "Không tìm thấy tài khoản.", 404);
+    if (!isAdminRole(row.role)) {
+      throw new AppError(
+        "REFERRAL_CODE_FORBIDDEN",
+        "Chỉ tài khoản quản trị mới được tự đổi mã ngay.",
+        403,
+      );
+    }
+    if (row.referral_code_customized_at) {
+      throw new AppError(
+        "REFERRAL_CODE_ALREADY_CHANGED",
+        "Bạn đã dùng quyền đổi mã giới thiệu (chỉ được đổi 1 lần).",
+        409,
+      );
+    }
+    if (row.referral_code.toUpperCase() === code.toUpperCase()) {
+      throw new AppError("REFERRAL_CODE_SAME", "Mã mới trùng mã hiện tại.", 400);
+    }
+    if (await codeAlreadyTaken(client, code)) {
+      throw new AppError(
+        "REFERRAL_CODE_TAKEN",
+        "Mã này đã có người dùng. Hãy chọn mã khác.",
+        409,
+      );
+    }
+    // Ghi mã cũ (APPROVED) để resolveReferrerByCode fallback vẫn tìm ra người
+    // giới thiệu khi có ai đăng ký bằng link mang mã cũ.
+    await query(
+      client,
+      `INSERT INTO referral_code_requests
+         (user_id, old_code, requested_code, status, decided_by, decided_at)
+       VALUES ($1, $2, $3, 'APPROVED', $1, now())`,
+      [userId, row.referral_code, code],
+    );
+    await query(
+      client,
+      `UPDATE users
+       SET referral_code = $2, referral_code_customized_at = now()
+       WHERE id = $1`,
+      [userId, code],
+    );
+    return { oldCode: row.referral_code, newCode: code };
+  });
 }
 
 /** Đối tác gửi yêu cầu đổi mã — chờ admin duyệt. */

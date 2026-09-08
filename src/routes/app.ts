@@ -93,7 +93,9 @@ import { isSlackSupportEnabled } from "../services/slack.js";
 import { resolveEntryPromo } from "../services/entry-promo.js";
 import {
   applyReferralToUser,
+  changeOwnReferralCodeByAdmin,
   getReferralCodeState,
+  isAdminRole,
   requestReferralCodeChange,
 } from "../services/referral-code.js";
 import {
@@ -1250,20 +1252,35 @@ export async function registerAppRoutes(
     });
   });
 
-  // Đối tác/KOL xin đổi mã giới thiệu tự chọn (chờ admin duyệt).
+  // Đổi mã giới thiệu tự chọn. Admin: đổi NGAY 1 lần (không cần duyệt).
+  // Đối tác/KOL: gửi yêu cầu chờ admin duyệt.
   app.post("/referrals/doi-ma", async (request, reply) => {
     try {
       const input = parseInput(
         z.object({ newCode: z.string().trim().min(1).max(20) }),
         request.body,
       );
-      await requestReferralCodeChange(deps.db, userId(request), input.newCode);
-      setFlash(
-        reply,
-        deps.config,
-        "success",
-        "Đã gửi yêu cầu đổi mã. Admin duyệt xong bạn sẽ nhận được thông báo.",
-      );
+      if (isAdminRole(request.currentUser?.role)) {
+        const { newCode } = await changeOwnReferralCodeByAdmin(
+          deps.db,
+          userId(request),
+          input.newCode,
+        );
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          `Đã đổi mã giới thiệu thành ${newCode}. Link và dữ liệu cũ vẫn quy về bạn.`,
+        );
+      } else {
+        await requestReferralCodeChange(deps.db, userId(request), input.newCode);
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          "Đã gửi yêu cầu đổi mã. Admin duyệt xong bạn sẽ nhận được thông báo.",
+        );
+      }
     } catch (error) {
       flashError(reply, deps.config, error);
     }

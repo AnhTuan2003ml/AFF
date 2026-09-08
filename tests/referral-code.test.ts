@@ -3,6 +3,7 @@ import { query, type Database } from "../src/db.js";
 import { randomReferralCode } from "../src/lib/crypto.js";
 import {
   applyReferralToUser,
+  changeOwnReferralCodeByAdmin,
   decideReferralCodeRequest,
   getReferralCodeState,
   listReferralCodeRequests,
@@ -154,6 +155,61 @@ describe("mã giới thiệu — quyền đổi của đối tác", () => {
       partner: true,
     });
     await expect(requestReferralCodeChange(db, kol, "namdong")).rejects.toThrow(
+      /đã có người dùng/,
+    );
+  });
+});
+
+describe("mã giới thiệu — quyền tự đổi của admin", () => {
+  it("admin đổi mã của mình NGAY, 1 lần; mã cũ vẫn quy về đúng người", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const admin = await seedUser(db, {
+      email: "boss@example.com",
+      code: "100200",
+      role: "SUPER_ADMIN",
+    });
+
+    const stateBefore = await getReferralCodeState(db, admin);
+    expect(stateBefore.isAdmin).toBe(true);
+
+    const result = await changeOwnReferralCodeByAdmin(db, admin, "BossDong");
+    expect(result).toEqual({ oldCode: "100200", newCode: "BossDong" });
+
+    // Áp dụng NGAY, không tạo yêu cầu chờ duyệt.
+    expect((await listReferralCodeRequests(db)).pending).toHaveLength(0);
+    const state = await getReferralCodeState(db, admin);
+    expect(state.customizedAt).not.toBeNull();
+
+    // Mã mới và mã CŨ đều quy về admin — link cũ không mất "data".
+    expect(await resolveReferrerByCode(db, "BossDong")).toBe(admin);
+    expect(await resolveReferrerByCode(db, "100200")).toBe(admin);
+
+    // Chỉ được đổi MỘT lần.
+    await expect(changeOwnReferralCodeByAdmin(db, admin, "BossKhac")).rejects.toThrow(
+      /đổi 1 lần/,
+    );
+  });
+
+  it("khách thường KHÔNG dùng được quyền tự đổi ngay", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const user = await seedUser(db, { email: "u@example.com", code: "800900" });
+    await expect(changeOwnReferralCodeByAdmin(db, user, "TenRieng")).rejects.toThrow(
+      /tài khoản quản trị/,
+    );
+  });
+
+  it("admin đổi trùng mã người khác bị chặn", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    await seedUser(db, { email: "x@example.com", code: "TrungRoi" });
+    const admin = await seedUser(db, {
+      email: "boss2@example.com",
+      code: "101202",
+      role: "ADMIN",
+    });
+    await expect(changeOwnReferralCodeByAdmin(db, admin, "trungroi")).rejects.toThrow(
       /đã có người dùng/,
     );
   });
