@@ -97,8 +97,7 @@
 .discover-editor-heading,
 .discover-editor-actions,
 .discover-preview-label,
-.discover-admin-badges,
-.discover-admin-actions {
+.discover-admin-badges {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -554,18 +553,74 @@
 }
 
 .discover-admin-actions {
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding-top: 13px;
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--admin-border);
 }
 
+.discover-admin-action-section {
+  display: grid;
+  gap: 7px;
+}
+
+.discover-admin-action-section + .discover-admin-action-section,
+.discover-admin-danger-zone {
+  padding-top: 11px;
+  border-top: 1px dashed color-mix(in srgb, var(--admin-border) 78%, transparent);
+}
+
+.discover-admin-action-label {
+  color: var(--admin-muted);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .075em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.discover-admin-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.discover-admin-action-grid-management {
+  grid-template-columns: minmax(84px, .7fr) minmax(0, 1.8fr);
+}
+
 .discover-admin-status-form,
-.discover-admin-delete-form {
+.discover-admin-delete-form,
+.discover-admin-edit-action {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.discover-admin-action-grid .discover-admin-status-form,
+.discover-admin-action-grid .discover-admin-edit-action {
+  min-width: 0;
+}
+
+.discover-admin-action-grid-management .discover-admin-status-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+}
+
+.discover-admin-action-grid .button {
+  width: 100%;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.discover-admin-danger-zone {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.discover-admin-danger-zone .button {
+  min-height: 38px;
 }
 
 .discover-admin-media img.is-placeholder {
@@ -637,6 +692,20 @@
   .entry-promo-settings-form {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .discover-admin-action-grid-management {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-admin-danger-zone,
+  .discover-admin-delete-form {
+    width: 100%;
+  }
+
+  .discover-admin-danger-zone .button {
+    width: 100%;
+    min-height: 44px;
   }
 }
 

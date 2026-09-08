@@ -279,67 +279,81 @@
 
                 {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
                   <div class="discover-admin-actions">
-                    <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo/activate" class="discover-admin-status-form">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button
-                        class="button button-small button-primary"
-                        type="submit"
-                        aria-label="Hiển thị {{ item.title }} làm popup ngay"
-                        {% if entryPromo.currentContentItemId == item.id %}disabled aria-current="true"{% endif %}
-                      >{% if entryPromo.currentContentItemId == item.id %}Đang làm popup{% else %}Chọn làm popup{% endif %}</button>
-                    </form>
-                    <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo" class="discover-admin-status-form">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button
-                        class="button button-small {% if item.entry_promo_enabled %}button-ghost{% else %}button-primary{% endif %}"
-                        type="submit"
-                        name="enabled"
-                        value="{% if item.entry_promo_enabled %}false{% else %}true{% endif %}"
-                      >{% if item.entry_promo_enabled %}Bỏ khỏi kho{% else %}Thêm vào kho{% endif %}</button>
-                    </form>
-                    <form method="post" action="/backoffice/products/{{ item.id }}/status" class="discover-admin-status-form">
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      {% if item.status != 'PUBLISHED' %}
-                        <button class="button button-small button-primary" type="submit" name="status" value="PUBLISHED">Đăng</button>
-                      {% endif %}
-                      {% if item.status != 'DRAFT' %}
-                        <button class="button button-small button-ghost" type="submit" name="status" value="DRAFT">Ẩn</button>
-                      {% endif %}
-                      {% if item.status != 'ARCHIVED' %}
-                        <button class="button button-small button-ghost" type="submit" name="status" value="ARCHIVED">Lưu trữ</button>
-                      {% endif %}
-                    </form>
-                    <div class="discover-admin-delete-form">
-                      <button
-                        type="button"
-                        class="button button-small button-ghost"
-                        data-edit-content
-                        data-edit-id="{{ item.id }}"
-                        data-edit-type="{{ item.type }}"
-                        data-edit-title="{{ item.title }}"
-                        data-edit-description="{{ item.description }}"
-                        data-edit-target-url="{{ item.target_url or '' }}"
-                        data-edit-image-url="{{ item.image_url or '' }}"
-                        data-edit-badge="{{ item.badge or '' }}"
-                        data-edit-category="{{ item.category }}"
-                        data-edit-sort-order="{{ item.sort_order }}"
-                        data-edit-platform="{{ item.platform or '' }}"
-                        data-edit-price-vnd="{{ item.price_vnd or '' }}"
-                        data-edit-original-price-vnd="{{ item.original_price_vnd or '' }}"
-                        data-edit-cashback-rate-percent="{{ (item.cashback_rate_bps / 100) if item.cashback_rate_bps else '' }}"
-                        data-edit-entry-promo-enabled="{% if item.entry_promo_enabled %}true{% else %}false{% endif %}"
-                      >Sửa</button>
+                    <div class="discover-admin-action-section" role="group" aria-labelledby="promo-actions-{{ item.id }}">
+                      <span class="discover-admin-action-label" id="promo-actions-{{ item.id }}">Quảng cáo popup</span>
+                      <div class="discover-admin-action-grid">
+                        <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo/activate" class="discover-admin-status-form">
+                          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                          <button
+                            class="button button-small button-primary"
+                            type="submit"
+                            aria-label="Hiển thị {{ item.title }} làm popup ngay"
+                            {% if entryPromo.currentContentItemId == item.id %}disabled aria-current="true"{% endif %}
+                          >{% if entryPromo.currentContentItemId == item.id %}Đang làm popup{% else %}Chọn làm popup{% endif %}</button>
+                        </form>
+                        <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo" class="discover-admin-status-form">
+                          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                          <button
+                            class="button button-small {% if item.entry_promo_enabled %}button-ghost{% else %}button-primary{% endif %}"
+                            type="submit"
+                            name="enabled"
+                            value="{% if item.entry_promo_enabled %}false{% else %}true{% endif %}"
+                          >{% if item.entry_promo_enabled %}Bỏ khỏi kho{% else %}Thêm vào kho{% endif %}</button>
+                        </form>
+                      </div>
                     </div>
-                    <form
-                      method="post"
-                      action="/backoffice/products/{{ item.id }}/delete"
-                      class="discover-admin-delete-form"
-                      data-confirm-form
-                      data-confirm-message="Xóa hẳn bài đăng &quot;{{ item.title }}&quot;? Không thể khôi phục."
-                    >
-                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                      <button class="button button-small button-danger" type="submit">Xóa</button>
-                    </form>
+
+                    <div class="discover-admin-action-section" role="group" aria-labelledby="content-actions-{{ item.id }}">
+                      <span class="discover-admin-action-label" id="content-actions-{{ item.id }}">Quản lý nội dung</span>
+                      <div class="discover-admin-action-grid discover-admin-action-grid-management">
+                        <div class="discover-admin-edit-action">
+                          <button
+                            type="button"
+                            class="button button-small button-ghost"
+                            data-edit-content
+                            data-edit-id="{{ item.id }}"
+                            data-edit-type="{{ item.type }}"
+                            data-edit-title="{{ item.title }}"
+                            data-edit-description="{{ item.description }}"
+                            data-edit-target-url="{{ item.target_url or '' }}"
+                            data-edit-image-url="{{ item.image_url or '' }}"
+                            data-edit-badge="{{ item.badge or '' }}"
+                            data-edit-category="{{ item.category }}"
+                            data-edit-sort-order="{{ item.sort_order }}"
+                            data-edit-platform="{{ item.platform or '' }}"
+                            data-edit-price-vnd="{{ item.price_vnd or '' }}"
+                            data-edit-original-price-vnd="{{ item.original_price_vnd or '' }}"
+                            data-edit-cashback-rate-percent="{{ (item.cashback_rate_bps / 100) if item.cashback_rate_bps else '' }}"
+                            data-edit-entry-promo-enabled="{% if item.entry_promo_enabled %}true{% else %}false{% endif %}"
+                          >Sửa</button>
+                        </div>
+                        <form method="post" action="/backoffice/products/{{ item.id }}/status" class="discover-admin-status-form">
+                          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                          {% if item.status != 'PUBLISHED' %}
+                            <button class="button button-small button-primary" type="submit" name="status" value="PUBLISHED">Đăng</button>
+                          {% endif %}
+                          {% if item.status != 'DRAFT' %}
+                            <button class="button button-small button-ghost" type="submit" name="status" value="DRAFT">Ẩn</button>
+                          {% endif %}
+                          {% if item.status != 'ARCHIVED' %}
+                            <button class="button button-small button-ghost" type="submit" name="status" value="ARCHIVED">Lưu trữ</button>
+                          {% endif %}
+                        </form>
+                      </div>
+                    </div>
+
+                    <div class="discover-admin-danger-zone">
+                      <form
+                        method="post"
+                        action="/backoffice/products/{{ item.id }}/delete"
+                        class="discover-admin-delete-form"
+                        data-confirm-form
+                        data-confirm-message="Xóa hẳn bài đăng &quot;{{ item.title }}&quot;? Không thể khôi phục."
+                      >
+                        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                        <button class="button button-small button-danger" type="submit">Xóa nội dung</button>
+                      </form>
+                    </div>
                   </div>
                 {% endif %}
               </div>
