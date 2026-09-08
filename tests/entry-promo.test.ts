@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Database } from "../src/db.js";
 import {
+  activateEntryPromo,
   getEntryPromoOverview,
   resolveEntryPromo,
   setEntryPromoSelection,
@@ -103,6 +104,43 @@ describe("entry promo rotation", () => {
 
     expect(await setEntryPromoSelection(db, withImage, false)).toBe("UPDATED");
     expect((await getEntryPromoOverview(db)).selectedCount).toBe(0);
+  });
+
+  it("cho phép admin chọn chính xác sản phẩm hiển thị ngay", async () => {
+    await addPromo("Sản phẩm đang chạy");
+    const selectedId = await addPromo("Sản phẩm admin chọn", { enabled: false });
+    const selectedAt = new Date("2026-09-08T06:00:00Z");
+
+    expect(
+      await activateEntryPromo(db, selectedId, adminId, selectedAt),
+    ).toBe("UPDATED");
+
+    const overview = await getEntryPromoOverview(db);
+    const resolved = await resolveEntryPromo(
+      db,
+      new Date("2026-09-08T06:01:00Z"),
+    );
+    expect(overview.currentContentItemId).toBe(selectedId);
+    expect(overview.currentStartedAt).toEqual(selectedAt);
+    expect(resolved.promo?.id).toBe(selectedId);
+  });
+
+  it("không kích hoạt ngay nội dung thiếu ảnh hoặc chưa đăng", async () => {
+    const withoutImage = await addPromo("Thiếu ảnh", {
+      enabled: false,
+      image: null,
+    });
+    const archived = await addPromo("Đã lưu trữ", {
+      enabled: false,
+      status: "ARCHIVED",
+    });
+
+    expect(await activateEntryPromo(db, withoutImage, adminId)).toBe(
+      "IMAGE_REQUIRED",
+    );
+    expect(await activateEntryPromo(db, archived, adminId)).toBe(
+      "NOT_PUBLISHED",
+    );
   });
 
   it("bỏ qua mục đã ẩn dù vẫn được đánh dấu quảng cáo", async () => {

@@ -57,6 +57,7 @@ import {
   saveAutoReplySettings,
 } from "../services/support-autoreply.js";
 import {
+  activateEntryPromo,
   getEntryPromoOverview,
   setEntryPromoSelection,
   updateEntryPromoRotation,
@@ -1115,6 +1116,47 @@ export async function registerBackofficeRoutes(
     }
     return reply.redirect("/backoffice/products?tab=content");
   });
+
+  app.post<{ Params: { id: string } }>(
+    "/products/:id/entry-promo/activate",
+    async (request, reply) => {
+      if (!["SUPER_ADMIN", "ADMIN"].includes(request.currentUser!.role)) {
+        throw new AppError("FORBIDDEN", "Bạn không có quyền chọn quảng cáo.", 403);
+      }
+      try {
+        const result = await activateEntryPromo(
+          deps.db,
+          request.params.id,
+          request.currentUser!.id,
+        );
+        if (result === "NOT_FOUND") {
+          throw new AppError("CONTENT_NOT_FOUND", "Không tìm thấy nội dung.");
+        }
+        if (result === "IMAGE_REQUIRED") {
+          throw new AppError(
+            "ENTRY_PROMO_IMAGE_REQUIRED",
+            "Cần thêm ảnh trước khi chọn nội dung làm quảng cáo.",
+          );
+        }
+        if (result === "NOT_PUBLISHED") {
+          throw new AppError(
+            "ENTRY_PROMO_NOT_PUBLISHED",
+            "Cần đăng nội dung trước khi hiển thị làm popup.",
+          );
+        }
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: "CONTENT_ITEM_ENTRY_PROMO_ACTIVATED",
+          targetType: "CONTENT_ITEM",
+          targetId: request.params.id,
+          after: { activated: true },
+        });
+        setFlash(reply, deps.config, "success", "Đã đổi popup sang sản phẩm đã chọn.");
+      } catch (error) {
+        flashError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/products?tab=content");
+    },
+  );
 
   app.post<{ Params: { id: string } }>(
     "/products/:id/entry-promo",

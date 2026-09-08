@@ -234,6 +234,49 @@ export type EntryPromoSelectionResult =
   | "NOT_FOUND"
   | "IMAGE_REQUIRED";
 
+export type EntryPromoActivationResult =
+  | "UPDATED"
+  | "NOT_FOUND"
+  | "IMAGE_REQUIRED"
+  | "NOT_PUBLISHED";
+
+/** Đặt chính xác một nội dung làm popup hiện tại và bắt đầu lại chu kỳ. */
+export async function activateEntryPromo(
+  db: Database,
+  contentItemId: string,
+  updatedBy: string,
+  now = new Date(),
+): Promise<EntryPromoActivationResult> {
+  return withTransaction(db, async (client) => {
+    const found = await query<{ image_url: string | null; status: string }>(
+      client,
+      "SELECT image_url, status FROM content_items WHERE id = $1 FOR UPDATE",
+      [contentItemId],
+    );
+    const item = found.rows[0];
+    if (!item) return "NOT_FOUND";
+    if (!item.image_url?.trim()) return "IMAGE_REQUIRED";
+    if (item.status !== "PUBLISHED") return "NOT_PUBLISHED";
+
+    await query(
+      client,
+      "UPDATE content_items SET entry_promo_enabled = true WHERE id = $1",
+      [contentItemId],
+    );
+    await query(
+      client,
+      `
+        UPDATE entry_promo_settings
+        SET current_content_item_id = $1, current_started_at = $2,
+          updated_at = now(), updated_by = $3
+        WHERE id = true
+      `,
+      [contentItemId, now, updatedBy],
+    );
+    return "UPDATED";
+  });
+}
+
 export async function setEntryPromoSelection(
   db: Database,
   contentItemId: string,

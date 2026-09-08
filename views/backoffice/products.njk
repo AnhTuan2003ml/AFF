@@ -247,7 +247,11 @@
                     {% else %}Thông báo
                     {% endif %}
                   </small>
-                  {% if item.entry_promo_enabled %}<small class="entry-promo-selected-badge">Popup</small>{% endif %}
+                  {% if entryPromo.currentContentItemId == item.id %}
+                    <small class="entry-promo-selected-badge">Đang hiển thị</small>
+                  {% elif item.entry_promo_enabled %}
+                    <small class="entry-promo-selected-badge">Trong kho popup</small>
+                  {% endif %}
                   {{ status_badge(item.status) }}
                 </div>
               </div>
@@ -275,6 +279,15 @@
 
                 {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
                   <div class="discover-admin-actions">
+                    <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo/activate" class="discover-admin-status-form">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button
+                        class="button button-small button-primary"
+                        type="submit"
+                        aria-label="Hiển thị {{ item.title }} làm popup ngay"
+                        {% if entryPromo.currentContentItemId == item.id %}disabled aria-current="true"{% endif %}
+                      >{% if entryPromo.currentContentItemId == item.id %}Đang làm popup{% else %}Chọn làm popup{% endif %}</button>
+                    </form>
                     <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo" class="discover-admin-status-form">
                       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
                       <button
@@ -282,7 +295,7 @@
                         type="submit"
                         name="enabled"
                         value="{% if item.entry_promo_enabled %}false{% else %}true{% endif %}"
-                      >{% if item.entry_promo_enabled %}Bỏ quảng cáo{% else %}Chọn quảng cáo{% endif %}</button>
+                      >{% if item.entry_promo_enabled %}Bỏ khỏi kho{% else %}Thêm vào kho{% endif %}</button>
                     </form>
                     <form method="post" action="/backoffice/products/{{ item.id }}/status" class="discover-admin-status-form">
                       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
