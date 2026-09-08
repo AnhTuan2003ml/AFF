@@ -885,10 +885,10 @@ export async function importHarvestedProducts(
         INSERT INTO content_items (
           type, title, description, target_url, image_url, badge, category,
           sort_order, platform, price_vnd, cashback_rate_bps, status,
-          source, external_key, published_at
+          source, external_key, published_at, entry_promo_enabled
         ) VALUES (
           'PRODUCT', $1, $2, $3, $4, 'Đề xuất', 'Đề xuất',
-          $5, 'SHOPEE', $6, $7, 'PUBLISHED', '${HARVEST_SOURCE}', $8, now()
+          $5, 'SHOPEE', $6, $7, 'PUBLISHED', '${HARVEST_SOURCE}', $8, now(), true
         )
         ON CONFLICT (external_key) WHERE external_key IS NOT NULL
         DO UPDATE SET

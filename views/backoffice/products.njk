@@ -21,6 +21,34 @@
   </nav>
 
   {% if activeTab == 'content' %}
+    <section class="panel entry-promo-settings-panel">
+      <header class="panel-heading">
+        <div><span class="eyebrow">POPUP QUẢNG CÁO</span><h2>Kho quảng cáo xoay vòng</h2></div>
+        <p>{{ entryPromo.selectedCount }} mục sẵn sàng</p>
+      </header>
+      <div class="entry-promo-settings-layout">
+        <div class="entry-promo-status">
+          <span>Đang hiển thị</span>
+          <b>{{ entryPromo.currentTitle or "Sẽ chọn ngẫu nhiên khi có lượt xem" }}</b>
+          {% if entryPromo.nextRotationAt %}
+            <small>Đổi quảng cáo sau mốc {{ entryPromo.nextRotationAt | datetime }}</small>
+          {% else %}
+            <small>Chọn các mục có ảnh bên dưới để bắt đầu.</small>
+          {% endif %}
+        </div>
+        {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
+          <form method="post" action="/backoffice/products/entry-promo/settings" class="entry-promo-settings-form">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <label for="entry-promo-rotation-minutes">Thời gian mỗi quảng cáo (phút)
+              <input id="entry-promo-rotation-minutes" type="number" name="rotationMinutes" min="15" max="10080" step="15" value="{{ entryPromo.rotationMinutes }}" required aria-describedby="entry-promo-rotation-hint">
+              <small id="entry-promo-rotation-hint">Từ 15 đến 10.080 phút · 120 phút = 2 giờ · 180 phút = 3 giờ.</small>
+            </label>
+            <button class="button button-primary" type="submit">Lưu thời gian</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+
     {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
       <section class="panel discover-editor-panel">
         <header class="discover-editor-heading">
@@ -145,6 +173,11 @@
                 <input type="number" name="sortOrder" min="0" max="1000" value="10">
                 <small>Số nhỏ sẽ hiển thị trước.</small>
               </label>
+
+              <label class="entry-promo-editor-check">
+                <input type="checkbox" name="entryPromoEnabled" value="true" data-entry-promo-enabled>
+                <span><b>Dùng làm quảng cáo popup</b><small>Nội dung cần có ảnh; có thể bỏ chọn lại ở danh sách bên dưới.</small></span>
+              </label>
             </div>
 
             <aside class="discover-live-preview" aria-label="Xem trước thẻ nội dung">
@@ -214,6 +247,7 @@
                     {% else %}Thông báo
                     {% endif %}
                   </small>
+                  {% if item.entry_promo_enabled %}<small class="entry-promo-selected-badge">Popup</small>{% endif %}
                   {{ status_badge(item.status) }}
                 </div>
               </div>
@@ -226,6 +260,8 @@
                 </div>
                 <dl>
                   <div><dt>Danh mục</dt><dd>{{ item.category }}</dd></div>
+                  <div><dt>Nguồn</dt><dd>{% if item.source == 'SHOPEE_AUTO' %}Kho Đề xuất{% else %}Thêm thủ công{% endif %}</dd></div>
+                  <div><dt>Quảng cáo</dt><dd>{% if item.entry_promo_enabled %}Đã chọn{% else %}Không chọn{% endif %}</dd></div>
                   {% if item.type == 'PRODUCT' %}
                     <div><dt>Sàn</dt><dd>{{ item.platform or "Chưa chọn" }}</dd></div>
                     <div><dt>Giá bán</dt><dd>{% if item.price_vnd %}{{ item.price_vnd | vnd }}{% else %}Chưa nhập{% endif %}</dd></div>
@@ -239,6 +275,15 @@
 
                 {% if currentUser.role in ['SUPER_ADMIN', 'ADMIN'] %}
                   <div class="discover-admin-actions">
+                    <form method="post" action="/backoffice/products/{{ item.id }}/entry-promo" class="discover-admin-status-form">
+                      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                      <button
+                        class="button button-small {% if item.entry_promo_enabled %}button-ghost{% else %}button-primary{% endif %}"
+                        type="submit"
+                        name="enabled"
+                        value="{% if item.entry_promo_enabled %}false{% else %}true{% endif %}"
+                      >{% if item.entry_promo_enabled %}Bỏ quảng cáo{% else %}Chọn quảng cáo{% endif %}</button>
+                    </form>
                     <form method="post" action="/backoffice/products/{{ item.id }}/status" class="discover-admin-status-form">
                       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
                       {% if item.status != 'PUBLISHED' %}
@@ -269,6 +314,7 @@
                         data-edit-price-vnd="{{ item.price_vnd or '' }}"
                         data-edit-original-price-vnd="{{ item.original_price_vnd or '' }}"
                         data-edit-cashback-rate-percent="{{ (item.cashback_rate_bps / 100) if item.cashback_rate_bps else '' }}"
+                        data-edit-entry-promo-enabled="{% if item.entry_promo_enabled %}true{% else %}false{% endif %}"
                       >Sửa</button>
                     </div>
                     <form

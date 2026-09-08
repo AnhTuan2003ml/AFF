@@ -193,18 +193,28 @@ describe("importHarvestedProducts", () => {
       cashback_rate_bps: number;
       source: string;
       status: string;
+      entry_promo_enabled: boolean;
     }>(
-      `SELECT title, cashback_rate_bps, source, status FROM content_items
+      `SELECT title, cashback_rate_bps, source, status, entry_promo_enabled
+       FROM content_items
        WHERE external_key = 'SHOPEE:1'`,
     );
     expect(rows.rows[0]).toMatchObject({
       title: "Sản phẩm A",
       source: "SHOPEE_AUTO",
       status: "PUBLISHED",
+      entry_promo_enabled: true,
       cashback_rate_bps: Math.floor(
         (1000 * businessConfig.buyerCashbackPercent) / 100,
       ),
     });
+
+    // Admin bỏ sản phẩm B khỏi kho quảng cáo; lần đồng bộ sau phải giữ lựa chọn
+    // này, không tự bật lại chỉ vì sản phẩm vẫn còn trong nguồn Đề xuất.
+    await db.query(
+      `UPDATE content_items SET entry_promo_enabled = false
+       WHERE external_key = 'SHOPEE:2'`,
+    );
 
     // Đợt sau chỉ còn sản phẩm 2 (đổi tên) — sản phẩm 1 phải bị ẩn.
     const second = parseShopeeOfferPage(
@@ -216,8 +226,13 @@ describe("importHarvestedProducts", () => {
     expect(resultB.imported).toBe(1);
     expect(resultB.archived).toBe(1);
 
-    const after = await db.query<{ external_key: string; status: string; title: string }>(
-      `SELECT external_key, status, title FROM content_items
+    const after = await db.query<{
+      external_key: string;
+      status: string;
+      title: string;
+      entry_promo_enabled: boolean;
+    }>(
+      `SELECT external_key, status, title, entry_promo_enabled FROM content_items
        WHERE source = 'SHOPEE_AUTO' ORDER BY external_key`,
     );
     expect(after.rows).toEqual([
@@ -226,6 +241,7 @@ describe("importHarvestedProducts", () => {
         external_key: "SHOPEE:2",
         status: "PUBLISHED",
         title: "Sản phẩm B mới",
+        entry_promo_enabled: false,
       }),
     ]);
   });

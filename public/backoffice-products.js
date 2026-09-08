@@ -12,6 +12,7 @@
   const imageUrlInput = form.querySelector("[data-preview-image-url]");
   const imageFileInput = form.querySelector("[data-preview-image-file]");
   const selectedFile = form.querySelector("[data-selected-file]");
+  const entryPromoEnabledInput = form.querySelector("[data-entry-promo-enabled]");
 
   const card = form.querySelector("[data-preview-card]");
   const previewImage = form.querySelector("[data-preview-image]");
@@ -228,6 +229,10 @@
     }
   };
 
+  const setChecked = (input, value) => {
+    if (input instanceof HTMLInputElement) input.checked = value === "true";
+  };
+
   const setCurrencyValue = (displayInput, value) => {
     if (!(displayInput instanceof HTMLInputElement)) return;
     displayInput.value = value ?? "";
@@ -254,6 +259,7 @@
     setCurrencyValue(priceVndDisplay, data.editPriceVnd);
     setCurrencyValue(originalPriceVndDisplay, data.editOriginalPriceVnd);
     setValue(cashbackRatePercentInput, data.editCashbackRatePercent);
+    setChecked(entryPromoEnabledInput, data.editEntryPromoEnabled);
     if (imageFileInput instanceof HTMLInputElement) imageFileInput.value = "";
 
     form.action = `/backoffice/products/${data.editId}/edit`;

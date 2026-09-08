@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -12,8 +13,8 @@ import { colors, shadow } from '@/theme/tokens';
  * Popup quảng cáo khi mở app — bản native của `entry-promo` trên web:
  * lấy đúng nội dung admin đăng (GET /app/entry-promo, mục PUBLISHED có ảnh),
  * kích thước theo bản 60% của web (khung hẹp, ảnh 216, chữ nhỏ), nút ✕ ở
- * CHÂN popup là cách đóng duy nhất; đã đóng thì không hiện lại đến hết ngày
- * (giống localStorage theo ngày của web — ở app lưu SecureStore).
+ * CHÂN popup là cách đóng duy nhất; mỗi vòng xoay chỉ hiện một lần trên thiết
+ * bị (giống localStorage của web — ở app lưu SecureStore).
  */
 
 interface EntryPromo {
@@ -30,6 +31,7 @@ interface EntryPromo {
 // Hiện MỘT LẦN mỗi lần mở app: cờ nằm ở cấp module nên sống trọn phiên chạy
 // (chuyển tab/màn không hiện lại), mở app lần sau reset và hiện lại.
 let daHienTrongPhien = false;
+const SEEN_ROTATION_KEY = 'shoptik-entry-promo-seen-rotation';
 
 export function EntryPromoModal() {
   const t = useT();
@@ -41,11 +43,25 @@ export function EntryPromoModal() {
     (async () => {
       try {
         if (daHienTrongPhien) return;
-        const data = await apiFetch<{ promo: EntryPromo | null }>('/app/entry-promo', {
-          auth: false,
-        });
+        const data = await apiFetch<{
+          promo: EntryPromo | null;
+          rotationKey: string | null;
+        }>('/app/entry-promo', { auth: false });
         if (dangSong && data.promo) {
+          const currentRotationKey = data.rotationKey ?? data.promo.id;
+          let seenRotationKey: string | null = null;
+          try {
+            seenRotationKey = await SecureStore.getItemAsync(SEEN_ROTATION_KEY);
+          } catch {
+            // SecureStore không khả dụng: vẫn cho quảng cáo hiển thị bình thường.
+          }
+          if (!dangSong) return;
+          if (seenRotationKey === currentRotationKey) {
+            daHienTrongPhien = true;
+            return;
+          }
           daHienTrongPhien = true;
+          void SecureStore.setItemAsync(SEEN_ROTATION_KEY, currentRotationKey).catch(() => {});
           setPromo(data.promo);
           setMo(true);
         }

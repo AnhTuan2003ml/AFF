@@ -90,6 +90,7 @@ import {
   type StoredOfferProduct,
 } from "../services/discover-harvest.js";
 import { isSlackSupportEnabled } from "../services/slack.js";
+import { resolveEntryPromo } from "../services/entry-promo.js";
 import {
   applyReferralToUser,
   getReferralCodeState,
@@ -147,37 +148,7 @@ export async function registerAppRoutes(
   });
 
   app.get("/entry-promo", async (_request, reply) => {
-    const result = await query<{
-      id: string;
-      type: string;
-      title: string;
-      description: string;
-      target_url: string | null;
-      image_url: string | null;
-      badge: string | null;
-    }>(
-      deps.db,
-      `
-        SELECT id, type, title, description, target_url, image_url, badge
-        FROM content_items
-        WHERE status = 'PUBLISHED'
-          AND COALESCE(NULLIF(trim(image_url), ''), '') <> ''
-        ORDER BY
-          CASE type
-            WHEN 'VOUCHER' THEN 0
-            WHEN 'ANNOUNCEMENT' THEN 1
-            WHEN 'TRENDING' THEN 2
-            WHEN 'GUIDE' THEN 3
-            WHEN 'PRODUCT' THEN 4
-            ELSE 9
-          END,
-          sort_order ASC,
-          published_at DESC
-        LIMIT 1
-      `,
-    );
-
-    const promo = result.rows[0] ?? null;
+    const result = await resolveEntryPromo(deps.db);
     const typeLabels: Record<string, string> = {
       VOUCHER: 'Voucher',
       TRENDING: 'Xu hướng',
@@ -188,16 +159,13 @@ export async function registerAppRoutes(
 
     reply.header('cache-control', 'private, no-store');
     return reply.send({
-      promo: promo
+      rotationKey: result.rotationKey,
+      rotationMinutes: result.rotationMinutes,
+      promo: result.promo
         ? {
-            id: promo.id,
-            type: promo.type,
-            typeLabel: typeLabels[promo.type] ?? promo.type,
-            title: promo.title,
-            description: promo.description,
-            targetUrl: promo.target_url,
-            imageUrl: promo.image_url,
-            badge: promo.badge,
+            ...result.promo,
+            typeLabel:
+              typeLabels[result.promo.type] ?? result.promo.type,
           }
         : null,
     });

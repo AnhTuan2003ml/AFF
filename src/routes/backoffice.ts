@@ -56,6 +56,11 @@ import {
   listKbDocuments,
   saveAutoReplySettings,
 } from "../services/support-autoreply.js";
+import {
+  getEntryPromoOverview,
+  setEntryPromoSelection,
+  updateEntryPromoRotation,
+} from "../services/entry-promo.js";
 
 interface BackofficeDeps {
   db: Database;
@@ -111,6 +116,10 @@ const CONTENT_ITEM_SCHEMA = z.object({
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.coerce.number().min(0).max(100).optional(),
   ),
+  entryPromoEnabled: z.preprocess(
+    (value) => value === true || value === "true" || value === "1" || value === "on",
+    z.boolean(),
+  ),
 });
 
 function parseContentItemInput(rawBody: Record<string, unknown>): {
@@ -132,6 +141,7 @@ function parseContentItemInput(rawBody: Record<string, unknown>): {
     priceVnd: textValue(rawBody.priceVnd),
     originalPriceVnd: textValue(rawBody.originalPriceVnd),
     cashbackRatePercent: textValue(rawBody.cashbackRatePercent),
+    entryPromoEnabled: rawBody.entryPromoEnabled,
   });
   const cashbackRateBps =
     input.cashbackRatePercent !== undefined
@@ -145,6 +155,14 @@ function parseContentItemInput(rawBody: Record<string, unknown>): {
   }
   return { input, cashbackRateBps };
 }
+
+const ENTRY_PROMO_SETTINGS_SCHEMA = z.object({
+  rotationMinutes: z.coerce.number().int().min(15).max(10080),
+});
+
+const ENTRY_PROMO_SELECTION_SCHEMA = z.object({
+  enabled: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
 
 const MISSION_DEFINITION_SCHEMA = z.object({
   type: z.enum(["REFERRAL_MILESTONE", "PURCHASE_MILESTONE"]),
@@ -986,7 +1004,7 @@ export async function registerBackofficeRoutes(
     const activeTab = params.tab === "top-products" ? "top-products" : "content";
     const perPage = perPageNumber(params.perPage);
     const page = pageNumber(params.page);
-    const [content, topProducts] = await Promise.all([
+    const [content, topProducts, entryPromo] = await Promise.all([
       query<{
         id: string;
         type: string;
@@ -1003,6 +1021,8 @@ export async function registerBackofficeRoutes(
         price_vnd: string | null;
         original_price_vnd: string | null;
         cashback_rate_bps: number | null;
+        source: string;
+        entry_promo_enabled: boolean;
         total_count: string;
       }>(
         deps.db,
@@ -1010,6 +1030,7 @@ export async function registerBackofficeRoutes(
           SELECT id, type, title, description, target_url, image_url, badge,
             category, status, sort_order, published_at, platform,
             price_vnd::text, original_price_vnd::text, cashback_rate_bps,
+            source, entry_promo_enabled,
             count(*) OVER()::text AS total_count
           FROM content_items
           ORDER BY
@@ -1045,6 +1066,7 @@ export async function registerBackofficeRoutes(
           LIMIT 20
         `,
       ),
+      getEntryPromoOverview(deps.db),
     ]);
 
     const topProductsByRevenue = buildBarList(
@@ -1067,8 +1089,73 @@ export async function registerBackofficeRoutes(
       ),
       topProducts: topProducts.rows,
       topProductsByRevenue,
+      entryPromo,
     });
   });
+
+  app.post("/products/entry-promo/settings", async (request, reply) => {
+    if (!["SUPER_ADMIN", "ADMIN"].includes(request.currentUser!.role)) {
+      throw new AppError("FORBIDDEN", "Bạn không có quyền sửa cấu hình quảng cáo.", 403);
+    }
+    try {
+      const input = parseInput(ENTRY_PROMO_SETTINGS_SCHEMA, request.body);
+      await updateEntryPromoRotation(
+        deps.db,
+        input.rotationMinutes,
+        request.currentUser!.id,
+      );
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "ENTRY_PROMO_SETTINGS_UPDATED",
+        targetType: "ENTRY_PROMO_SETTINGS",
+        after: { rotationMinutes: input.rotationMinutes },
+      });
+      setFlash(reply, deps.config, "success", "Đã cập nhật chu kỳ đổi quảng cáo.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/products?tab=content");
+  });
+
+  app.post<{ Params: { id: string } }>(
+    "/products/:id/entry-promo",
+    async (request, reply) => {
+      if (!["SUPER_ADMIN", "ADMIN"].includes(request.currentUser!.role)) {
+        throw new AppError("FORBIDDEN", "Bạn không có quyền chọn quảng cáo.", 403);
+      }
+      try {
+        const input = parseInput(ENTRY_PROMO_SELECTION_SCHEMA, request.body);
+        const result = await setEntryPromoSelection(
+          deps.db,
+          request.params.id,
+          input.enabled,
+        );
+        if (result === "NOT_FOUND") {
+          throw new AppError("CONTENT_NOT_FOUND", "Không tìm thấy nội dung.");
+        }
+        if (result === "IMAGE_REQUIRED") {
+          throw new AppError(
+            "ENTRY_PROMO_IMAGE_REQUIRED",
+            "Cần thêm ảnh trước khi chọn nội dung làm quảng cáo.",
+          );
+        }
+        await writeAuditLog(deps.db, deps.config, request, {
+          action: "CONTENT_ITEM_ENTRY_PROMO_CHANGED",
+          targetType: "CONTENT_ITEM",
+          targetId: request.params.id,
+          after: { enabled: input.enabled },
+        });
+        setFlash(
+          reply,
+          deps.config,
+          "success",
+          input.enabled ? "Đã thêm vào kho quảng cáo." : "Đã bỏ khỏi kho quảng cáo.",
+        );
+      } catch (error) {
+        flashError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/products?tab=content");
+    },
+  );
 
   app.post("/products", async (request, reply) => {
     if (!["SUPER_ADMIN", "ADMIN"].includes(request.currentUser!.role)) {
@@ -1093,6 +1180,12 @@ export async function registerBackofficeRoutes(
       storedImagePath = storedImage?.absolutePath ?? null;
       const imageUrl = storedImage?.url ?? normalizeContentImageUrl(input.imageUrl);
       const targetUrl = normalizeContentTargetUrl(input.targetUrl);
+      if (input.entryPromoEnabled && !imageUrl) {
+        throw new AppError(
+          "ENTRY_PROMO_IMAGE_REQUIRED",
+          "Cần thêm ảnh trước khi chọn nội dung làm quảng cáo.",
+        );
+      }
 
       await query(
         deps.db,
@@ -1100,10 +1193,10 @@ export async function registerBackofficeRoutes(
           INSERT INTO content_items (
             type, title, description, target_url, image_url, badge, category,
             sort_order, platform, price_vnd, original_price_vnd,
-            cashback_rate_bps, status
+            cashback_rate_bps, entry_promo_enabled, status
           ) VALUES (
             $1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), $7, $8,
-            $9, $10, $11, $12, 'PUBLISHED'
+            $9, $10, $11, $12, $13, 'PUBLISHED'
           )
         `,
         [
@@ -1119,6 +1212,7 @@ export async function registerBackofficeRoutes(
           input.priceVnd ?? null,
           input.originalPriceVnd ?? null,
           cashbackRateBps ?? null,
+          input.entryPromoEnabled,
         ],
       );
       await writeAuditLog(deps.db, deps.config, request, {
@@ -1129,6 +1223,7 @@ export async function registerBackofficeRoutes(
           type: input.type,
           category: input.category,
           hasImage: Boolean(imageUrl),
+          entryPromoEnabled: input.entryPromoEnabled,
         },
       });
       setFlash(reply, deps.config, "success", "Đã đăng nội dung Khám phá.");
@@ -1178,6 +1273,12 @@ export async function registerBackofficeRoutes(
           storedImage?.url ?? normalizeContentImageUrl(input.imageUrl);
         const imageUrl = newImageUrl ?? currentRow.image_url;
         const targetUrl = normalizeContentTargetUrl(input.targetUrl);
+        if (input.entryPromoEnabled && !imageUrl) {
+          throw new AppError(
+            "ENTRY_PROMO_IMAGE_REQUIRED",
+            "Cần thêm ảnh trước khi chọn nội dung làm quảng cáo.",
+          );
+        }
 
         await query(
           deps.db,
@@ -1186,7 +1287,7 @@ export async function registerBackofficeRoutes(
               type = $2, title = $3, description = $4, target_url = $5,
               image_url = $6, badge = $7, category = $8, sort_order = $9,
               platform = $10, price_vnd = $11, original_price_vnd = $12,
-              cashback_rate_bps = $13
+              cashback_rate_bps = $13, entry_promo_enabled = $14
             WHERE id = $1
           `,
           [
@@ -1203,8 +1304,18 @@ export async function registerBackofficeRoutes(
             input.priceVnd ?? null,
             input.originalPriceVnd ?? null,
             cashbackRateBps ?? null,
+            input.entryPromoEnabled,
           ],
         );
+        if (!input.entryPromoEnabled) {
+          await query(
+            deps.db,
+            `UPDATE entry_promo_settings
+             SET current_content_item_id = NULL, current_started_at = NULL
+             WHERE id = true AND current_content_item_id = $1`,
+            [request.params.id],
+          );
+        }
 
         // Ảnh cũ do hệ thống lưu và đã bị thay bằng ảnh mới → dọn file cũ.
         const uploadPrefix = "/assets/uploads/discover/";
@@ -1228,6 +1339,7 @@ export async function registerBackofficeRoutes(
             type: input.type,
             category: input.category,
             hasImage: Boolean(imageUrl),
+            entryPromoEnabled: input.entryPromoEnabled,
           },
         });
         setFlash(reply, deps.config, "success", "Đã cập nhật nội dung Khám phá.");
@@ -1257,6 +1369,15 @@ export async function registerBackofficeRoutes(
         );
         if (!updated.rowCount) {
           throw new AppError("CONTENT_NOT_FOUND", "Không tìm thấy nội dung.");
+        }
+        if (input.status !== "PUBLISHED") {
+          await query(
+            deps.db,
+            `UPDATE entry_promo_settings
+             SET current_content_item_id = NULL, current_started_at = NULL
+             WHERE id = true AND current_content_item_id = $1`,
+            [request.params.id],
+          );
         }
         await writeAuditLog(deps.db, deps.config, request, {
           action: "CONTENT_ITEM_STATUS_CHANGED",

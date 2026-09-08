@@ -17,18 +17,10 @@
     return;
   }
 
-  // Hiện MỘT LẦN mỗi lần mở web (theo phiên trình duyệt): đánh dấu ngay khi
-  // hiện nên đóng xong, chuyển trang/tab menu trong cùng phiên không hiện lại;
-  // mở web lần sau (phiên mới) lại hiện.
-  const SEEN_KEY = "shoptik-entry-promo-seen";
-  let daHien = false;
-  try {
-    daHien = sessionStorage.getItem(SEEN_KEY) === "1";
-  } catch (e) {}
-  if (daHien) {
-    signalDone();
-    return;
-  }
+  // Mỗi vòng xoay quảng cáo chỉ hiện một lần trên trình duyệt. Phải lấy API
+  // trước để biết rotationKey hiện tại; khi server đổi sản phẩm sau 2–3 giờ
+  // (hoặc thời gian admin đặt), key đổi và popup được phép hiện lại.
+  const SEEN_KEY = "shoptik-entry-promo-seen-rotation";
 
   const closeButton = root.querySelector("[data-entry-promo-close]");
   const imageLink = root.querySelector("[data-entry-promo-image-link]");
@@ -68,7 +60,7 @@
   const body = document.body;
   let previousFocus = null;
 
-  const show = () => {
+  const show = (seenRotationKey) => {
     previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
@@ -77,7 +69,7 @@
     root.removeAttribute("inert");
     body.classList.add("is-entry-promo-open");
     try {
-      sessionStorage.setItem(SEEN_KEY, "1");
+      localStorage.setItem(SEEN_KEY, seenRotationKey);
     } catch (e) {}
 
     window.requestAnimationFrame(() => {
@@ -234,10 +226,21 @@
         return;
       }
 
+      const currentRotationKey =
+        typeof payload.rotationKey === "string" && payload.rotationKey.length > 0
+          ? payload.rotationKey
+          : promo.id;
+      try {
+        if (localStorage.getItem(SEEN_KEY) === currentRotationKey) {
+          signalDone();
+          return;
+        }
+      } catch (e) {}
+
       bindPromo(promo);
       // Hiện thẳng overlay giữa màn hình khi vào trang — không cần nút "Ưu đãi"
       // nổi để bấm mở. Người dùng có thể đóng qua nút X (data-entry-promo-close).
-      show();
+      show(currentRotationKey);
     })
     .catch(() => {
       // Không chặn giao diện chính nếu tải quảng cáo thất bại.
