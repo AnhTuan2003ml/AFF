@@ -145,13 +145,26 @@ describe("buildMonthlySeries + buildMonthlyBarChart", () => {
     expect(chart.bars[1]!.negative).toBe(true);
   });
 
-  it("toàn 0 => hasData=false, không lỗi chia cho 0", () => {
+  it("toàn 0 => hasData=false, nhãn trục 0…1tr (KHÔNG ra 0,-0,-1)", () => {
     const chart = buildMonthlyBarChart([
       { label: "Th8", value: 0 },
       { label: "Th9", value: 0 },
     ]);
     expect(chart.hasData).toBe(false);
     expect(chart.bars).toHaveLength(2);
+    expect(chart.gridLines.map((g) => g.label)).toEqual([
+      "1tr",
+      "750k",
+      "500k",
+      "250k",
+      "0",
+    ]);
+  });
+
+  it("làm tròn lên số đẹp: 900k => trục đỉnh 1tr", () => {
+    const chart = buildMonthlyBarChart([{ label: "Th9", value: 900000 }]);
+    expect(chart.gridLines[0]!.label).toBe("1tr");
+    expect(chart.gridLines.at(-1)!.label).toBe("0");
   });
 });
 

@@ -61,9 +61,23 @@ function formatDayLabel(date: Date): string {
 }
 
 function formatCompactValue(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}tr`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`;
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    const n = value / 1_000_000;
+    return `${Number.isInteger(n) ? n : n.toFixed(1)}tr`;
+  }
+  if (abs >= 1_000) return `${Math.round(value / 1_000)}k`;
   return `${Math.round(value)}`;
+}
+
+/** Làm tròn LÊN số "đẹp" (1/2/5 × 10^k) để nhãn trục ra chẵn: 500k, 1tr… */
+function niceCeil(value: number): number {
+  if (value <= 0) return 0;
+  const exponent = Math.floor(Math.log10(value));
+  const base = 10 ** exponent;
+  const fraction = value / base;
+  const nice = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  return nice * base;
 }
 
 export function buildTrendChart(
@@ -291,10 +305,16 @@ export function buildMonthlyBarChart(
   const plotWidth = TREND_WIDTH - TREND_PAD_LEFT - TREND_PAD_RIGHT;
   const plotHeight = TREND_HEIGHT - TREND_PAD_TOP - TREND_PAD_BOTTOM;
   const values = points.map((point) => point.value);
-  const maxPos = Math.max(0, ...values);
-  const minNeg = Math.min(0, ...values);
-  const range = Math.max(1, maxPos - minNeg);
-  const baselineY = TREND_PAD_TOP + (maxPos / range) * plotHeight;
+  const rawMax = Math.max(0, ...values);
+  const rawMin = Math.min(0, ...values);
+  // Trục dương: làm tròn lên số đẹp. Không có dữ liệu dương và không âm → mặc
+  // định 1tr để trục ra 0…1tr thay vì nhảy về âm.
+  const top =
+    rawMax > 0 ? niceCeil(rawMax) : rawMin < 0 ? 0 : 1_000_000;
+  const bottom = rawMin < 0 ? -niceCeil(-rawMin) : 0;
+  const range = Math.max(1, top - bottom);
+  const maxPos = top;
+  const baselineY = TREND_PAD_TOP + (top / range) * plotHeight;
   const slot = points.length > 0 ? plotWidth / points.length : plotWidth;
   const barWidth = Math.max(6, slot * 0.55);
 
