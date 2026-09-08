@@ -177,11 +177,23 @@
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-layout {
-    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-columns: 92px minmax(0, 1fr);
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar {
     padding-inline: 14px;
+  }
+
+  /* Ẩn thanh cuộn khi thu gọn: rail hẹp, thanh cuộn Windows chiếm chỗ và
+     đè cạnh icon làm lệch tâm, nhìn rất chật. Vẫn cuộn được bằng con lăn. */
+  body.st-sidebar-is-collapsed .backoffice-shell .st-nav {
+    scrollbar-width: none;
+  }
+
+  body.st-sidebar-is-collapsed .backoffice-shell .st-nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-head {
@@ -234,9 +246,9 @@
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav a {
     position: relative;
-    width: 46px;
-    height: 46px;
-    min-height: 46px;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
     justify-content: center;
     gap: 0;
     margin-inline: auto;
@@ -245,8 +257,8 @@
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav a svg,
   body.st-sidebar-is-collapsed .backoffice-shell .bo-side-foot-link svg {
-    width: 21px;
-    height: 21px;
+    width: 22px;
+    height: 22px;
   }
 
   body.st-sidebar-is-collapsed .backoffice-shell .st-nav-badge {
@@ -264,8 +276,8 @@
   body.st-sidebar-is-collapsed .backoffice-shell .bo-side-foot-link,
   body.st-sidebar-is-collapsed .backoffice-shell .st-sidebar-collapse {
     position: relative;
-    width: 46px;
-    min-height: 46px;
+    width: 48px;
+    min-height: 48px;
     justify-content: center;
     gap: 0;
     margin-inline: auto;
