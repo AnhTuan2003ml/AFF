@@ -2801,6 +2801,21 @@ select:not([multiple])::-ms-expand {
   font-size: 9px;
 }
 
+.trend-chart .trend-grid-label {
+  fill: var(--muted);
+  font-family: var(--font-data);
+  font-size: 9px;
+}
+
+/* Biểu đồ cột hoa hồng/giới thiệu theo tháng: cột tiền xanh, cột âm đỏ. */
+.trend-chart .trend-bar {
+  fill: #16a34a;
+}
+
+.trend-chart .trend-bar.is-negative {
+  fill: #ef4444;
+}
+
 /* Thanh chồng ngang biểu diễn phần-trong-tổng: hoa hồng chia cho buyer/sharer/platform.
    Độ rộng đi qua class .w-N (CSP style-src 'self' chặn style="width:..." nội tuyến),
    khoảng cách 2px giữa các phần dùng flex gap thay vì border. */

@@ -1,4 +1,5 @@
 {% extends "backoffice/base.njk" %}
+{% from "partials/charts.njk" import bar_chart %}
 
 {% block backoffice_content %}
   <section class="page-heading">
@@ -8,6 +9,15 @@
       <p>Sản phẩm/ngành hàng user dán nhiều nhất và đối tác mạnh nhất theo mạng lưới, doanh số.</p>
     </div>
   </section>
+
+  {% if commissionChart %}
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">HOA HỒNG THEO THÁNG</span><h2>Hoa hồng đơn đã duyệt</h2></div>
+      </header>
+      {{ bar_chart(commissionChart, 'Biểu đồ hoa hồng theo tháng', 'Chưa có hoa hồng đơn duyệt trong các tháng gần đây.') }}
+    </section>
+  {% endif %}
 
   <div class="stats-grid">
 

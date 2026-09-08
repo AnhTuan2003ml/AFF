@@ -228,6 +228,115 @@ export function buildSeriesLineChart(
 }
 
 /**
+ * Gom các dòng {ym: 'YYYY-MM', value} thành chuỗi liên tục N tháng gần nhất
+ * (điền 0 cho tháng thiếu), nhãn dạng "Th9". Dùng cho biểu đồ cột theo tháng.
+ */
+export function buildMonthlySeries(
+  rows: { ym: string; value: number }[],
+  monthsBack = 8,
+  referenceDate: Date = new Date(),
+): SeriesPoint[] {
+  const map = new Map(rows.map((row) => [row.ym, row.value]));
+  const out: SeriesPoint[] = [];
+  for (let index = monthsBack - 1; index >= 0; index -= 1) {
+    const date = new Date(
+      Date.UTC(
+        referenceDate.getUTCFullYear(),
+        referenceDate.getUTCMonth() - index,
+        1,
+      ),
+    );
+    const month = date.getUTCMonth() + 1;
+    const ym = `${date.getUTCFullYear()}-${String(month).padStart(2, "0")}`;
+    out.push({ label: `Th${month}`, value: map.get(ym) ?? 0 });
+  }
+  return out;
+}
+
+export interface BarChartBar {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  negative: boolean;
+  label: string;
+  valueLabel: string;
+}
+
+export interface BarChartData {
+  viewBoxWidth: number;
+  viewBoxHeight: number;
+  baselineY: number;
+  gridLines: TrendGridLine[];
+  bars: BarChartBar[];
+  axisLabels: TrendAxisLabel[];
+  hasData: boolean;
+}
+
+function formatCompactSigned(value: number): string {
+  return value < 0
+    ? `-${formatCompactValue(-value)}`
+    : formatCompactValue(value);
+}
+
+/**
+ * Biểu đồ CỘT dọc theo mốc (tháng): trục dọc là tiền, trục ngang là mốc.
+ * Cột dương màu thương hiệu, cột âm (đảo khoản) màu đỏ — dùng cho thống kê
+ * hoa hồng/giới thiệu theo tháng.
+ */
+export function buildMonthlyBarChart(
+  points: SeriesPoint[],
+  formatValue: (value: number) => string = (value) => `${value}`,
+): BarChartData {
+  const plotWidth = TREND_WIDTH - TREND_PAD_LEFT - TREND_PAD_RIGHT;
+  const plotHeight = TREND_HEIGHT - TREND_PAD_TOP - TREND_PAD_BOTTOM;
+  const values = points.map((point) => point.value);
+  const maxPos = Math.max(0, ...values);
+  const minNeg = Math.min(0, ...values);
+  const range = Math.max(1, maxPos - minNeg);
+  const baselineY = TREND_PAD_TOP + (maxPos / range) * plotHeight;
+  const slot = points.length > 0 ? plotWidth / points.length : plotWidth;
+  const barWidth = Math.max(6, slot * 0.55);
+
+  const bars: BarChartBar[] = points.map((point, index) => {
+    const centerX = TREND_PAD_LEFT + slot * (index + 0.5);
+    const rawHeight = (Math.abs(point.value) / range) * plotHeight;
+    const negative = point.value < 0;
+    const height = point.value === 0 ? 0 : Math.max(rawHeight, 2);
+    return {
+      x: centerX - barWidth / 2,
+      y: negative ? baselineY : baselineY - height,
+      width: barWidth,
+      height,
+      negative,
+      label: point.label,
+      valueLabel: point.tooltip ?? formatValue(point.value),
+    };
+  });
+
+  const gridLines: TrendGridLine[] = Array.from(
+    { length: TREND_GRID_STEPS + 1 },
+    (_, step) => ({
+      y: TREND_PAD_TOP + (plotHeight / TREND_GRID_STEPS) * step,
+      label: formatCompactSigned(maxPos - (range / TREND_GRID_STEPS) * step),
+    }),
+  );
+
+  return {
+    viewBoxWidth: TREND_WIDTH,
+    viewBoxHeight: TREND_HEIGHT,
+    baselineY,
+    gridLines,
+    bars,
+    axisLabels: bars.map((bar) => ({
+      x: bar.x + bar.width / 2,
+      label: bar.label,
+    })),
+    hasData: values.some((value) => value !== 0),
+  };
+}
+
+/**
  * CSP không cho phép style nội tuyến, vì vậy độ rộng biểu đồ dùng các class
  * `.w-5` đến `.w-100` có sẵn trong stylesheet của dashboard.
  */

@@ -1,5 +1,6 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/charts.njk" import bar_chart %}
 {% from "partials/icons.njk" import icon %}
 
 {% block app_content %}
@@ -75,6 +76,13 @@
           <button class="button button-primary" type="submit">{% if refCodeState.isAdmin %}{{ t('Đổi mã ngay', 'Change now') }}{% else %}{{ t('Gửi admin duyệt', 'Send for approval') }}{% endif %}</button>
         </form>
       {% endif %}
+    </section>
+  {% endif %}
+
+  {% if referralMonthlyChart %}
+    <section class="panel referral-chart-panel">
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('HOA HỒNG GIỚI THIỆU', 'REFERRAL COMMISSION') }}</span><h2>{{ t('Thu nhập theo tháng', 'Monthly earnings') }}</h2></div></header>
+      {{ bar_chart(referralMonthlyChart, t('Biểu đồ hoa hồng giới thiệu theo tháng', 'Monthly referral commission chart'), t('Chưa có hoa hồng giới thiệu trong các tháng gần đây.', 'No referral commission in recent months.')) }}
     </section>
   {% endif %}
 

@@ -143,9 +143,11 @@
                     <i aria-hidden="true">•</i>
                     <span>{{ t('Sàn chưa ghi nhận đơn nào cho lượt mua này', 'The platform has not recorded any order for this click') }}</span>
                   {% elif order.status in ['CANCELLED', 'INVALID', 'REVERSED'] %}
+                    <i aria-hidden="true">•</i>
                     {% if order.cancel_reason %}
-                      <i aria-hidden="true">•</i>
-                      <span>{{ t('Lý do', 'Reason') }}: <b>{{ order.cancel_reason }}</b></span>
+                      <span>{{ t('Đơn hàng đã bị hủy', 'Order cancelled') }} · {{ t('lý do', 'reason') }}: <b>{{ order.cancel_reason }}</b></span>
+                    {% else %}
+                      <span><b>{{ t('Đơn hàng đã bị hủy', 'Order was cancelled') }}</b></span>
                     {% endif %}
                   {% elif order.cashback_released_at %}
                     <i aria-hidden="true">•</i>

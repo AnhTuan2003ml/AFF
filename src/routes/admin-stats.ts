@@ -1,5 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { query } from "../db.js";
+import { formatVnd } from "../lib/format.js";
+import {
+  buildMonthlyBarChart,
+  buildMonthlySeries,
+} from "../services/chart-data.js";
 import type { AdminConsoleDeps } from "./admin-console-shared.js";
 
 /**
@@ -15,7 +20,7 @@ export async function registerAdminStatsRoutes(
   deps: AdminConsoleDeps,
 ): Promise<void> {
   app.get("/stats", async (_request, reply) => {
-    const [topProducts, topCategories, topNetwork, topRevenue] =
+    const [topProducts, topCategories, topNetwork, topRevenue, monthlyCommission] =
       await Promise.all([
         // 1. Sản phẩm dán nhiều nhất (gộp theo platform+product_id).
         query<{
@@ -114,11 +119,36 @@ export async function registerAdminStatsRoutes(
            ORDER BY SUM(ce.referral_amount_vnd) DESC
            LIMIT 25`,
         ),
+        // 5. Hoa hồng theo tháng (đơn đã duyệt) — cho biểu đồ cột.
+        query<{ ym: string; total: string }>(
+          deps.db,
+          `SELECT to_char(
+               date_trunc('month', COALESCE(o.completed_at, o.purchased_at, o.created_at)),
+               'YYYY-MM'
+             ) AS ym,
+             COALESCE(sum(o.commission_vnd), 0)::text AS total
+           FROM orders o
+           WHERE o.status = 'APPROVED'
+             AND COALESCE(o.completed_at, o.purchased_at, o.created_at)
+               >= date_trunc('month', now()) - interval '7 months'
+           GROUP BY 1`,
+        ),
       ]);
+
+    const commissionChart = buildMonthlyBarChart(
+      buildMonthlySeries(
+        monthlyCommission.rows.map((row) => ({
+          ym: row.ym,
+          value: Number(row.total),
+        })),
+      ),
+      (value) => formatVnd(value),
+    );
 
     return reply.view("backoffice/stats.njk", {
       pageTitle: "Thống kê",
       backofficeSection: "stats",
+      commissionChart,
       topProducts: topProducts.rows,
       topCategories: topCategories.rows,
       topNetwork: topNetwork.rows,

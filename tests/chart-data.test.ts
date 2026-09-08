@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildBarList,
   buildCommissionStackedBar,
+  buildMonthlyBarChart,
+  buildMonthlySeries,
   buildStatusBar,
   buildTrendChart,
 } from "../src/services/chart-data.js";
@@ -99,6 +101,57 @@ describe("buildCommissionStackedBar", () => {
     }
     const sharer = segments.find((s) => s.key === "sharer");
     expect(sharer?.widthClass).toBe("w-5");
+  });
+});
+
+describe("buildMonthlySeries + buildMonthlyBarChart", () => {
+  it("điền đủ 8 tháng liên tục, gán 0 cho tháng thiếu, nhãn ThN", () => {
+    const ref = new Date("2026-09-15T00:00:00Z");
+    const series = buildMonthlySeries(
+      [{ ym: "2026-09", value: 500000 }, { ym: "2026-07", value: 120000 }],
+      8,
+      ref,
+    );
+    expect(series).toHaveLength(8);
+    expect(series.at(-1)).toEqual({ label: "Th9", value: 500000 });
+    expect(series.find((p) => p.label === "Th7")?.value).toBe(120000);
+    // Tháng 8 không có dữ liệu → 0.
+    expect(series.find((p) => p.label === "Th8")?.value).toBe(0);
+  });
+
+  it("bar chart: mỗi mốc một cột, cột dương không âm, hasData đúng", () => {
+    const chart = buildMonthlyBarChart(
+      [
+        { label: "Th7", value: 0 },
+        { label: "Th8", value: 300000 },
+        { label: "Th9", value: 900000 },
+      ],
+      (v) => `${v}`,
+    );
+    expect(chart.bars).toHaveLength(3);
+    expect(chart.hasData).toBe(true);
+    // Cột giá trị 0 có chiều cao 0; cột lớn hơn thì cao hơn.
+    expect(chart.bars[0]!.height).toBe(0);
+    expect(chart.bars[2]!.height).toBeGreaterThan(chart.bars[1]!.height);
+    expect(chart.bars.every((b) => b.negative === false)).toBe(true);
+    expect(chart.axisLabels.map((a) => a.label)).toEqual(["Th7", "Th8", "Th9"]);
+  });
+
+  it("cột âm (đảo khoản) được đánh dấu negative", () => {
+    const chart = buildMonthlyBarChart([
+      { label: "Th8", value: 200000 },
+      { label: "Th9", value: -50000 },
+    ]);
+    expect(chart.bars[1]!.negative).toBe(true);
+  });
+
+  it("toàn 0 => hasData=false, không lỗi chia cho 0", () => {
+    const chart = buildMonthlyBarChart([
+      { label: "Th8", value: 0 },
+      { label: "Th9", value: 0 },
+    ]);
+    expect(chart.hasData).toBe(false);
+    expect(chart.bars).toHaveLength(2);
   });
 });
 

@@ -120,6 +120,48 @@ describe("importOrderRow — chia hoa hồng và bất biến không trả theo 
     });
   });
 
+  it("đơn PENDING rồi CANCELLED: tạo thông báo ORDER_CANCELLED (không kẹt 'đang duyệt')", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const buyerId = await seedUser(db, "cancel@example.com", "CANCELREF1");
+    const config = testConfig();
+    await seedDirectLink(db, buyerId, "CancelClick001");
+
+    await importOrderRow(
+      db,
+      config,
+      {
+        platform_order_id: "ORDER-CANCEL-1",
+        status: "PENDING",
+        order_amount_vnd: "500000",
+        commission_vnd: "50000",
+        click_id: "CancelClick001",
+      },
+      buyerId,
+    );
+
+    const res = await importOrderRow(
+      db,
+      config,
+      {
+        platform_order_id: "ORDER-CANCEL-1",
+        status: "CANCELLED",
+        order_amount_vnd: "500000",
+        commission_vnd: "0",
+        click_id: "CancelClick001",
+        cancel_reason: "Người mua hủy",
+      },
+      buyerId,
+    );
+
+    expect(res.notify?.kind).toBe("CANCELLED");
+    const notes = await db.query<{ type: string }>(
+      "SELECT type FROM notifications WHERE user_id = $1",
+      [buyerId],
+    );
+    expect(notes.rows.map((r) => r.type)).toContain("ORDER_CANCELLED");
+  });
+
   it("B do A giới thiệu: mọi đơn của B, A nhận 6% hoa hồng (trích từ phần B)", async () => {
     const { db, close } = await createTestDb();
     cleanup = close;

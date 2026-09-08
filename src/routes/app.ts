@@ -52,7 +52,12 @@ import { listViewedProducts } from "../services/viewed-products.js";
 import { createPurchaseIntent } from "../services/affiliate.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
 import { getCheckinState, recordDailyCheckin } from "../services/checkin.js";
-import { buildSeriesLineChart } from "../services/chart-data.js";
+import {
+  buildMonthlyBarChart,
+  buildMonthlySeries,
+  buildSeriesLineChart,
+} from "../services/chart-data.js";
+import { formatVnd } from "../lib/format.js";
 import { lookupProductPreview } from "../services/product-preview.js";
 import type { EmailService } from "../services/email.js";
 import {
@@ -1172,7 +1177,7 @@ export async function registerAppRoutes(
   // nhận được bao nhiêu từ từng người, cộng tóm tắt mua sắm của chính mình.
   app.get("/referrals", async (request, reply) => {
     const id = userId(request);
-    const [referrals, mySource, myEarnings, myShopping, kolStatus] =
+    const [referrals, mySource, myEarnings, myShopping, referralMonthly, kolStatus] =
       await Promise.all([
       query<{
         full_name: string;
@@ -1234,12 +1239,35 @@ export async function registerAppRoutes(
         `,
         [id],
       ),
+      query<{ ym: string; total: string }>(
+        deps.db,
+        `
+          SELECT to_char(date_trunc('month', ce.created_at), 'YYYY-MM') AS ym,
+            COALESCE(sum(ce.referral_amount_vnd), 0)::text AS total
+          FROM commission_entries ce
+          WHERE ce.sharer_user_id = $1
+            AND ce.status <> 'REVERSED'
+            AND ce.created_at >= date_trunc('month', now()) - interval '7 months'
+          GROUP BY 1
+        `,
+        [id],
+      ),
       getUserKolStatus(deps.db, id),
     ]);
+    const referralMonthlyChart = buildMonthlyBarChart(
+      buildMonthlySeries(
+        referralMonthly.rows.map((row) => ({
+          ym: row.ym,
+          value: Number(row.total),
+        })),
+      ),
+      (value) => formatVnd(value),
+    );
     return reply.view("app/referrals.njk", {
       pageTitle: "Mạng lưới của tôi",
       appSection: "referrals",
       kolStatus,
+      referralMonthlyChart,
       referrals: referrals.rows,
       referredByName: mySource.rows[0]?.full_name ?? null,
       networkEarnings: myEarnings.rows[0] ?? {

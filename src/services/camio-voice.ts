@@ -68,6 +68,24 @@ export const camioVoice = {
     };
   },
 
+  /** Sàn HỦY đơn (hoặc đơn không hợp lệ/đảo khoản) — báo để người dùng khỏi
+   *  chờ; thay cho thông báo "đang duyệt" cũ bị kẹt lại. */
+  orderCancelled(p: { orderCode: string; platform: string; reason?: string }): CamioNotice {
+    const san = platformName(p.platform);
+    const ly = p.reason ? ` Lý do: ${p.reason}.` : "";
+    return {
+      title: pick([
+        "Đơn này bị hủy rồi 😔",
+        "Camio báo tin chưa vui…",
+        "Một đơn vừa bị hủy",
+      ]),
+      body: pick([
+        `Đơn ${p.orderCode} trên ${san} đã bị hủy nên không có tiền hoàn.${ly}`,
+        `${san} báo đơn ${p.orderCode} bị hủy — khoản hoàn (nếu có) đã được hoàn tác.${ly}`,
+      ]),
+    };
+  },
+
   /** Tiền hoàn chuyển từ ví CHỜ sang KHẢ DỤNG — nhóm "dopamine" mạnh nhất. */
   cashbackReleased(p: { amount: string; orderCode?: string | undefined }): CamioNotice {
     const don = p.orderCode ? `Đơn ${p.orderCode}` : "Đơn của bạn";

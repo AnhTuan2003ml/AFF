@@ -252,9 +252,11 @@ export default function OrdersScreen() {
                   </View>
                 </View>
 
-                {item.status === 'CANCELLED' && item.cancel_reason ? (
+                {['CANCELLED', 'INVALID', 'REVERSED'].includes(item.status) ? (
                   <Text style={styles.reason}>
-                    {t('Lý do hủy', 'Cancellation reason')}: {item.cancel_reason}
+                    {item.cancel_reason
+                      ? `${t('Đơn hàng đã bị hủy', 'Order cancelled')} · ${t('lý do', 'reason')}: ${item.cancel_reason}`
+                      : t('Đơn hàng đã bị hủy', 'Order was cancelled')}
                   </Text>
                 ) : null}
 

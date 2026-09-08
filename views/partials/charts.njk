@@ -25,6 +25,33 @@
   </div>
 {% endmacro %}
 
+{# Biểu đồ CỘT dọc — nhận BarChartData từ buildMonthlyBarChart.
+   Trục dọc = tiền (nhãn lưới trái), trục ngang = mốc/tháng. #}
+{% macro bar_chart(chart, ariaLabel, emptyCopy) %}
+  <div class="trend-chart admin-mini-chart column-chart" role="img" aria-label="{{ ariaLabel }}">
+    <svg viewBox="0 0 {{ chart.viewBoxWidth }} {{ chart.viewBoxHeight }}" preserveAspectRatio="none">
+      {% for grid in chart.gridLines %}
+        <line x1="54" y1="{{ grid.y }}" x2="{{ chart.viewBoxWidth - 18 }}" y2="{{ grid.y }}" class="trend-gridline"/>
+        <text x="48" y="{{ grid.y + 4 }}" text-anchor="end" class="trend-grid-label">{{ grid.label }}</text>
+      {% endfor %}
+      {% if chart.hasData %}
+        {% for bar in chart.bars %}
+          <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="2"
+                class="trend-bar{% if bar.negative %} is-negative{% endif %}">
+            <title>{{ bar.label }} · {{ bar.valueLabel }}</title>
+          </rect>
+        {% endfor %}
+      {% endif %}
+      {% for tick in chart.axisLabels %}
+        <text x="{{ tick.x }}" y="{{ chart.viewBoxHeight - 4 }}" text-anchor="middle" class="trend-axis-label">{{ tick.label }}</text>
+      {% endfor %}
+    </svg>
+    {% if not chart.hasData %}
+      <p class="chart-empty-copy">{{ emptyCopy or "Chưa có dữ liệu." }}</p>
+    {% endif %}
+  </div>
+{% endmacro %}
+
 {# Danh sách thanh ngang — nhận BarListItem[] từ buildBarList. #}
 {% macro bar_list(items, emptyCopy) %}
   {% if items.length %}

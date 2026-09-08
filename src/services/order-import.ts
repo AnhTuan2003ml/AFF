@@ -24,7 +24,7 @@ import {
 export interface OrderStatusNotify {
   userId: string;
   orderCode: string;
-  kind: "PENDING" | "APPROVED";
+  kind: "PENDING" | "APPROVED" | "CANCELLED";
 }
 
 /**
@@ -43,7 +43,7 @@ export async function flushOrderStatusPushes(
     byUser.set(n.userId, list);
   }
   const label = (kind: OrderStatusNotify["kind"]): string =>
-    kind === "APPROVED" ? "đã duyệt" : "đang duyệt";
+    kind === "APPROVED" ? "đã duyệt" : kind === "CANCELLED" ? "đã hủy" : "đang duyệt";
   for (const [userId, list] of byUser) {
     const lines = list
       .slice(0, 3)
@@ -1230,11 +1230,29 @@ export async function importOrderRow(
     // nhiều đơn thành MỘT push ngoài app). "đang chờ"→"đang duyệt" (đơn mới hiện
     // trên sàn, PENDING) và "đang duyệt"→"đã duyệt" (APPROVED).
     let notify: OrderStatusNotify | undefined;
+    const cancelledSet = ["INVALID", "CANCELLED", "REVERSED"];
     const toApproved =
       row.status === "APPROVED" && (!existing || existing.status !== "APPROVED");
     const toPending =
       row.status === "PENDING" && (!existing || existing.status !== "PENDING");
-    if (toApproved && split.buyerVnd > 0) {
+    // Đơn chuyển sang HỦY (hoặc không hợp lệ/đảo khoản): báo "đơn bị hủy" để
+    // thay thông báo "đang duyệt" cũ, đừng để người dùng chờ vô ích.
+    const toCancelled =
+      cancelledSet.includes(row.status) &&
+      (!existing || !cancelledSet.includes(existing.status));
+    if (toCancelled) {
+      await createNotification(db, {
+        userId: owner.userId,
+        type: "ORDER_CANCELLED",
+        skipPush: true,
+        ...camioVoice.orderCancelled({
+          orderCode: platformOrderId,
+          platform,
+          ...(row.cancel_reason ? { reason: row.cancel_reason } : {}),
+        }),
+      });
+      notify = { userId: owner.userId, orderCode: platformOrderId, kind: "CANCELLED" };
+    } else if (toApproved && split.buyerVnd > 0) {
       await createNotification(db, {
         userId: owner.userId,
         type: "ORDER_APPROVED",

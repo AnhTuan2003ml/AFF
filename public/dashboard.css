@@ -1164,6 +1164,10 @@
 .backoffice-shell .trend-line { fill: none; stroke: var(--admin-brand); stroke-width: 3; }
 .backoffice-shell .trend-area { fill: color-mix(in srgb, var(--admin-brand) 12%, transparent); }
 .backoffice-shell .trend-dot { fill: var(--admin-surface); stroke: var(--admin-brand); stroke-width: 3; }
+/* Biểu đồ cột (bar_chart): cột tiền màu xanh, cột âm (đảo khoản) màu đỏ. */
+.backoffice-shell .trend-bar { fill: #16a34a; }
+.backoffice-shell .trend-bar.is-negative { fill: #ef4444; }
+.backoffice-shell .trend-grid-label { fill: var(--admin-muted); font-size: 10px; }
 
 .backoffice-shell .stacked-bar {
   display: flex;
