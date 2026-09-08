@@ -148,21 +148,18 @@
   scrimButtons.forEach((el) => el.addEventListener("click", closeSidebar));
 
   const sidebarCollapseButton = document.querySelector("[data-sidebar-collapse]");
-  const sidebarReopenButton = document.querySelector("[data-sidebar-reopen]");
-  if (sidebar && sidebarCollapseButton && sidebarReopenButton) {
-    const setSidebarCollapsed = (collapsed) => {
-      body.classList.toggle("st-sidebar-is-collapsed", collapsed);
-      sidebarCollapseButton.setAttribute("aria-expanded", String(!collapsed));
-      sidebarReopenButton.setAttribute("aria-expanded", String(!collapsed));
-    };
-
+  if (sidebar && sidebarCollapseButton) {
     sidebarCollapseButton.addEventListener("click", () => {
-      setSidebarCollapsed(true);
-      sidebarReopenButton.focus();
-    });
-    sidebarReopenButton.addEventListener("click", () => {
-      setSidebarCollapsed(false);
-      sidebarCollapseButton.focus();
+      const collapsed = body.classList.toggle("st-sidebar-is-collapsed");
+      sidebarCollapseButton.setAttribute("aria-expanded", String(!collapsed));
+      sidebarCollapseButton.setAttribute(
+        "aria-label",
+        collapsed ? "Mở rộng menu quản trị" : "Thu gọn menu quản trị",
+      );
+      sidebarCollapseButton.setAttribute(
+        "title",
+        collapsed ? "Mở rộng menu quản trị" : "Thu gọn menu quản trị",
+      );
     });
   }
 
