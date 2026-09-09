@@ -13,16 +13,30 @@ import {
 // với system prompt + RAG). Chạy nền sau khi tin của khách đã lưu; lỗi chỉ
 // ghi log, không bao giờ chặn luồng chat.
 
-export type AutoReplyMode = "OFF" | "CANNED" | "AI";
-export type AiProvider = "openai" | "anthropic" | "gemini";
+// Chỉ 2 chế độ: MANUAL (nhân viên tự trả lời) và AUTO (ưu tiên kho đã học,
+// chưa có mẫu thì gọi AI rồi lưu lại).
+export type AutoReplyMode = "MANUAL" | "AUTO";
+export type AiProvider =
+  | "openai"
+  | "anthropic"
+  | "gemini"
+  | "deepseek"
+  | "custom";
 
-export const AI_PROVIDERS: Record<
-  AiProvider,
-  { label: string; suggestedModels: string[] }
-> = {
+interface ProviderMeta {
+  label: string;
+  suggestedModels: string[];
+  /** Base URL mặc định cho API kiểu OpenAI (chat/completions). */
+  defaultBaseUrl?: string;
+  /** true = bắt buộc người dùng dán link API (base URL). */
+  needsBaseUrl?: boolean;
+}
+
+export const AI_PROVIDERS: Record<AiProvider, ProviderMeta> = {
   openai: {
     label: "OpenAI (ChatGPT)",
     suggestedModels: ["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"],
+    defaultBaseUrl: "https://api.openai.com/v1",
   },
   anthropic: {
     label: "Anthropic (Claude)",
@@ -31,6 +45,16 @@ export const AI_PROVIDERS: Record<
   gemini: {
     label: "Google (Gemini)",
     suggestedModels: ["gemini-2.5-pro", "gemini-2.5-flash"],
+  },
+  deepseek: {
+    label: "DeepSeek",
+    suggestedModels: ["deepseek-chat", "deepseek-reasoner"],
+    defaultBaseUrl: "https://api.deepseek.com/v1",
+  },
+  custom: {
+    label: "Tùy chỉnh (API tương thích OpenAI)",
+    suggestedModels: [],
+    needsBaseUrl: true,
   },
 };
 
@@ -47,6 +71,7 @@ export interface AutoReplySettings {
   cannedMessage: string;
   aiProvider: AiProvider;
   aiModel: string;
+  aiBaseUrl: string;
   aiSystemPrompt: string;
   hasApiKey: boolean;
   learnEnabled: boolean;
@@ -59,6 +84,7 @@ interface SettingsRow {
   ai_provider: AiProvider;
   ai_api_key_ciphertext: string;
   ai_model: string;
+  ai_base_url: string;
   ai_system_prompt: string;
   learn_enabled: boolean;
   similarity_threshold: number;
@@ -69,7 +95,8 @@ async function loadSettingsRow(db: Database): Promise<SettingsRow | null> {
     db,
     `
       SELECT mode, canned_message, ai_provider, ai_api_key_ciphertext,
-        ai_model, ai_system_prompt, learn_enabled, similarity_threshold
+        ai_model, ai_base_url, ai_system_prompt, learn_enabled,
+        similarity_threshold
       FROM support_autoreply_settings WHERE id = true
     `,
   );
@@ -82,10 +109,11 @@ export async function getAutoReplySettings(
   const row = await loadSettingsRow(db);
   if (!row) {
     return {
-      mode: "OFF",
+      mode: "MANUAL",
       cannedMessage: "",
       aiProvider: "openai",
       aiModel: "",
+      aiBaseUrl: "",
       aiSystemPrompt: "",
       hasApiKey: false,
       learnEnabled: true,
@@ -97,6 +125,7 @@ export async function getAutoReplySettings(
     cannedMessage: row.canned_message,
     aiProvider: row.ai_provider,
     aiModel: row.ai_model,
+    aiBaseUrl: row.ai_base_url,
     aiSystemPrompt: row.ai_system_prompt,
     hasApiKey: Boolean(row.ai_api_key_ciphertext),
     learnEnabled: row.learn_enabled,
@@ -109,9 +138,10 @@ export async function saveAutoReplySettings(
   config: AppConfig,
   input: {
     mode: AutoReplyMode;
-    cannedMessage: string;
+    cannedMessage?: string;
     aiProvider: AiProvider;
     aiModel: string;
+    aiBaseUrl?: string;
     aiSystemPrompt: string;
     /** Trống = giữ key đã lưu. */
     aiApiKey: string;
@@ -119,22 +149,23 @@ export async function saveAutoReplySettings(
     similarityThreshold?: number;
   },
 ): Promise<void> {
-  if (input.mode === "CANNED" && !input.cannedMessage.trim()) {
-    throw new AppError(
-      "CANNED_MESSAGE_REQUIRED",
-      "Chế độ trả lời mẫu cần nội dung tin nhắn.",
-      400,
-    );
-  }
   const existing = await loadSettingsRow(db);
-  if (input.mode === "AI") {
+  const baseUrl = (input.aiBaseUrl ?? "").trim();
+  if (input.mode === "AUTO") {
     if (!input.aiModel.trim()) {
-      throw new AppError("AI_MODEL_REQUIRED", "Hãy chọn model AI.", 400);
+      throw new AppError("AI_MODEL_REQUIRED", "Hãy chọn tên model AI.", 400);
     }
     if (!input.aiApiKey.trim() && !existing?.ai_api_key_ciphertext) {
       throw new AppError(
         "AI_KEY_REQUIRED",
-        "Hãy dán API key của provider đã chọn.",
+        "Hãy dán API key của nhà cung cấp đã chọn.",
+        400,
+      );
+    }
+    if (AI_PROVIDERS[input.aiProvider]?.needsBaseUrl && !baseUrl) {
+      throw new AppError(
+        "AI_BASE_URL_REQUIRED",
+        "Nhà cung cấp Tùy chỉnh cần link API (base URL).",
         400,
       );
     }
@@ -147,15 +178,16 @@ export async function saveAutoReplySettings(
     `
       INSERT INTO support_autoreply_settings (
         id, mode, canned_message, ai_provider, ai_api_key_ciphertext,
-        ai_model, ai_system_prompt, learn_enabled, similarity_threshold,
-        updated_at
-      ) VALUES (true, $1, $2, $3, $4, $5, $6, $7, $8, now())
+        ai_model, ai_base_url, ai_system_prompt, learn_enabled,
+        similarity_threshold, updated_at
+      ) VALUES (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, now())
       ON CONFLICT (id) DO UPDATE SET
         mode = EXCLUDED.mode,
         canned_message = EXCLUDED.canned_message,
         ai_provider = EXCLUDED.ai_provider,
         ai_api_key_ciphertext = EXCLUDED.ai_api_key_ciphertext,
         ai_model = EXCLUDED.ai_model,
+        ai_base_url = EXCLUDED.ai_base_url,
         ai_system_prompt = EXCLUDED.ai_system_prompt,
         learn_enabled = EXCLUDED.learn_enabled,
         similarity_threshold = EXCLUDED.similarity_threshold,
@@ -163,10 +195,11 @@ export async function saveAutoReplySettings(
     `,
     [
       input.mode,
-      input.cannedMessage.trim(),
+      (input.cannedMessage ?? "").trim(),
       input.aiProvider,
       keyCiphertext,
       input.aiModel.trim(),
+      baseUrl,
       input.aiSystemPrompt.trim(),
       input.learnEnabled ?? true,
       Math.min(100, Math.max(50, Math.round(input.similarityThreshold ?? 82))),
@@ -407,13 +440,17 @@ function buildSystemPrompt(settings: SettingsRow, kbContext: string): string {
   return parts.join("\n\n");
 }
 
-async function callOpenAi(
+/** Gọi API kiểu OpenAI (chat/completions) — dùng cho OpenAI, DeepSeek và mọi
+ *  endpoint tương thích (provider Tùy chỉnh). baseUrl không có đuôi "/". */
+async function callOpenAiCompatible(
+  baseUrl: string,
   apiKey: string,
   model: string,
   systemPrompt: string,
   history: ChatHistoryEntry[],
 ): Promise<string> {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       authorization: `Bearer ${apiKey}`,
@@ -436,7 +473,7 @@ async function callOpenAi(
     error?: { message?: string };
   };
   if (!response.ok) {
-    throw new Error(`OpenAI: ${data.error?.message ?? response.status}`);
+    throw new Error(`AI: ${data.error?.message ?? response.status}`);
   }
   return (data.choices?.[0]?.message?.content ?? "").trim();
 }
@@ -531,7 +568,20 @@ async function generateAiReply(
   const systemPrompt = buildSystemPrompt(settings, kbContext);
   switch (settings.ai_provider) {
     case "openai":
-      return callOpenAi(apiKey, settings.ai_model, systemPrompt, history);
+    case "deepseek":
+    case "custom": {
+      const baseUrl =
+        settings.ai_provider === "custom"
+          ? settings.ai_base_url
+          : (AI_PROVIDERS[settings.ai_provider].defaultBaseUrl ?? "");
+      return callOpenAiCompatible(
+        baseUrl,
+        apiKey,
+        settings.ai_model,
+        systemPrompt,
+        history,
+      );
+    }
     case "anthropic":
       return callAnthropic(apiKey, settings.ai_model, systemPrompt, history);
     case "gemini":
@@ -591,30 +641,8 @@ export async function maybeAutoReply(
 ): Promise<boolean> {
   try {
     const settings = await loadSettingsRow(db);
-    if (!settings || settings.mode === "OFF") return false;
-
-    if (settings.mode === "CANNED") {
-      if (!settings.canned_message) return false;
-      const recentAgent = await query(
-        db,
-        `
-          SELECT 1 FROM support_chat_messages
-          WHERE conversation_id = $1 AND author_role = 'AGENT'
-            AND created_at > now() - interval '${CANNED_COOLDOWN_HOURS} hours'
-          LIMIT 1
-        `,
-        [input.conversationId],
-      );
-      if (recentAgent.rows.length) return false;
-      await insertAutoMessage(
-        db,
-        config,
-        input.conversationId,
-        settings.canned_message,
-        input.logger,
-      );
-      return true;
-    }
+    // Chỉ tự trả lời ở chế độ AUTO. MANUAL = nhân viên tự xử lý.
+    if (!settings || settings.mode !== "AUTO") return false;
 
     if (!settings.ai_api_key_ciphertext || !settings.ai_model) return false;
     const recentHuman = await query(

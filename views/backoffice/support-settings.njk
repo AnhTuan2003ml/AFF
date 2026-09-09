@@ -21,14 +21,10 @@
         <div class="stack-form bo-settings-form">
           <label for="ar-mode">Chế độ
             <select id="ar-mode" name="mode">
-              <option value="OFF" {% if settings.mode == 'OFF' %}selected{% endif %}>Thủ công — nhân viên trả lời qua Slack</option>
-              <option value="CANNED" {% if settings.mode == 'CANNED' %}selected{% endif %}>Trả lời mẫu — gửi 1 tin chào/ghi nhận tự động</option>
-              <option value="AI" {% if settings.mode == 'AI' %}selected{% endif %}>AI — tự trả lời bằng model bạn chọn</option>
+              <option value="MANUAL" {% if settings.mode == 'MANUAL' %}selected{% endif %}>Thủ công — nhân viên tự trả lời</option>
+              <option value="AUTO" {% if settings.mode == 'AUTO' %}selected{% endif %}>Tự động — ưu tiên kho đã học, chưa có mẫu thì gọi AI rồi lưu lại</option>
             </select>
-          </label>
-
-          <label for="ar-canned">Tin trả lời mẫu <small class="bo-muted">(dùng cho chế độ Trả lời mẫu; gửi tối đa 1 lần/24h mỗi khách)</small>
-            <textarea id="ar-canned" name="cannedMessage" rows="3" maxlength="3000" placeholder="Ví dụ: Cảm ơn bạn đã nhắn tin! Đội CSKH đã nhận được và sẽ phản hồi trong giờ làm việc (8h–22h).">{{ settings.cannedMessage }}</textarea>
+            <small class="bo-muted">Tự động: mỗi câu hỏi tra kho câu đã học trước; nếu chưa có mẫu phù hợp mới gọi AI, rồi lưu câu trả lời để lần sau dùng.</small>
           </label>
 
           <fieldset class="bo-fieldset">
@@ -49,7 +45,7 @@
         <header class="panel-heading">
           <div>
             <h2>Cấu hình AI</h2>
-            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý CSKH. Áp dụng khi chế độ = AI.</p>
+            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý CSKH. Áp dụng khi chế độ = Tự động.</p>
           </div>
         </header>
         <div class="stack-form bo-settings-form">
@@ -61,6 +57,11 @@
             </select>
           </label>
 
+          <label for="ar-baseurl">Link API (base URL)
+            <input id="ar-baseurl" type="text" name="aiBaseUrl" maxlength="300" value="{{ settings.aiBaseUrl }}" autocomplete="off" placeholder="Ví dụ: https://api.deepseek.com/v1 (chỉ cần khi chọn Tùy chỉnh)">
+            <small class="bo-muted">Chỉ điền khi chọn <b>Tùy chỉnh</b> (API tương thích OpenAI, ví dụ DeepSeek self-host). OpenAI/DeepSeek/Anthropic/Gemini tự dùng link mặc định — để trống.</small>
+          </label>
+
           <label for="ar-model">Tên model
             <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" autocomplete="off" placeholder="Chọn từ gợi ý hoặc gõ tên model">
             <datalist id="ar-model-list">
@@ -70,7 +71,7 @@
                 {% endfor %}
               {% endfor %}
             </datalist>
-            <small class="bo-muted">Gợi ý: OpenAI (gpt-5, gpt-5-mini) · Anthropic (claude-opus-5, claude-sonnet-5, claude-haiku-4-5) · Google (gemini-2.5-pro, gemini-2.5-flash).</small>
+            <small class="bo-muted">Gợi ý: OpenAI (gpt-5, gpt-5-mini) · Anthropic (claude-opus-5, claude-sonnet-5) · Google (gemini-2.5-flash) · DeepSeek (deepseek-chat, deepseek-reasoner).</small>
           </label>
 
           <label for="ar-key">API key

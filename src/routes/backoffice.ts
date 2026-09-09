@@ -574,10 +574,16 @@ export async function registerBackofficeRoutes(
       requireSupportManager(request.currentUser!.role);
       const input = parseInput(
         z.object({
-          mode: z.enum(["OFF", "CANNED", "AI"]),
-          cannedMessage: z.string().trim().max(3000).optional().default(""),
-          aiProvider: z.enum(["openai", "anthropic", "gemini"]),
+          mode: z.enum(["MANUAL", "AUTO"]),
+          aiProvider: z.enum([
+            "openai",
+            "anthropic",
+            "gemini",
+            "deepseek",
+            "custom",
+          ]),
           aiModel: z.string().trim().max(120).optional().default(""),
+          aiBaseUrl: z.string().trim().max(300).optional().default(""),
           aiSystemPrompt: z.string().trim().max(8000).optional().default(""),
           aiApiKey: z.string().trim().max(500).optional().default(""),
           learnEnabled: z.string().optional(),

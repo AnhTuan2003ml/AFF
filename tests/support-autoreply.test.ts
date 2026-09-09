@@ -59,7 +59,7 @@ afterEach(async () => {
 describe("saveAutoReplySettings / getAutoReplySettings", () => {
   it("lưu cấu hình, mã hóa API key và không trả key ra ngoài", async () => {
     await saveAutoReplySettings(db, config, {
-      mode: "AI",
+      mode: "AUTO",
       cannedMessage: "",
       aiProvider: "anthropic",
       aiModel: "claude-haiku-4-5",
@@ -68,7 +68,7 @@ describe("saveAutoReplySettings / getAutoReplySettings", () => {
     });
     const settings = await getAutoReplySettings(db);
     expect(settings).toMatchObject({
-      mode: "AI",
+      mode: "AUTO",
       aiProvider: "anthropic",
       aiModel: "claude-haiku-4-5",
       hasApiKey: true,
@@ -83,7 +83,7 @@ describe("saveAutoReplySettings / getAutoReplySettings", () => {
 
   it("để trống API key khi cập nhật thì giữ key cũ", async () => {
     await saveAutoReplySettings(db, config, {
-      mode: "AI",
+      mode: "AUTO",
       cannedMessage: "",
       aiProvider: "openai",
       aiModel: "gpt-5-mini",
@@ -91,7 +91,7 @@ describe("saveAutoReplySettings / getAutoReplySettings", () => {
       aiApiKey: "sk-old",
     });
     await saveAutoReplySettings(db, config, {
-      mode: "AI",
+      mode: "AUTO",
       cannedMessage: "",
       aiProvider: "openai",
       aiModel: "gpt-5",
@@ -106,7 +106,7 @@ describe("saveAutoReplySettings / getAutoReplySettings", () => {
   it("bật AI mà chưa từng có key thì báo lỗi", async () => {
     await expect(
       saveAutoReplySettings(db, config, {
-        mode: "AI",
+        mode: "AUTO",
         cannedMessage: "",
         aiProvider: "gemini",
         aiModel: "gemini-2.5-flash",
@@ -152,30 +152,10 @@ describe("rankKbDocuments / buildKbContext", () => {
   });
 });
 
-describe("maybeAutoReply — CANNED", () => {
-  it("gửi tin mẫu một lần, không lặp lại trong 24h", async () => {
-    await seedConversation();
-    await saveAutoReplySettings(db, config, {
-      mode: "CANNED",
-      cannedMessage: "Đã nhận tin nhắn, CSKH sẽ phản hồi sớm!",
-      aiProvider: "openai",
-      aiModel: "",
-      aiSystemPrompt: "",
-      aiApiKey: "",
-    });
-    expect(await maybeAutoReply(db, config, { conversationId })).toBe(true);
-    expect(await maybeAutoReply(db, config, { conversationId })).toBe(false);
-    const messages = await listSupportChatMessages(db, userId);
-    const agentMessages = messages.filter((m) => m.authorRole === "AGENT");
-    expect(agentMessages).toHaveLength(1);
-    expect(agentMessages[0]!.body).toContain("Đã nhận tin nhắn");
-  });
-});
-
 describe("maybeAutoReply — AI", () => {
   async function enableAi(): Promise<void> {
     await saveAutoReplySettings(db, config, {
-      mode: "AI",
+      mode: "AUTO",
       cannedMessage: "",
       aiProvider: "anthropic",
       aiModel: "claude-haiku-4-5",
@@ -320,5 +300,65 @@ describe("tự học Q&A (RAG động)", () => {
     expect(await countLearnedAnswers(db)).toBe(1);
     const hit = await findSimilarLearnedAnswer(db, "Hạn mức rút tối thiểu?", 82);
     expect(hit?.answer).toBe("100.000đ.");
+  });
+});
+
+describe("provider DeepSeek / Custom (OpenAI-compatible)", () => {
+  function stubUrls(urls: string[]): void {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: unknown) => {
+        urls.push(String(url));
+        return {
+          ok: true,
+          json: async () => ({ choices: [{ message: { content: "Chào bạn." } }] }),
+        };
+      }),
+    );
+  }
+
+  it("DeepSeek gọi đúng endpoint mặc định", async () => {
+    await seedConversation();
+    await saveAutoReplySettings(db, config, {
+      mode: "AUTO",
+      aiProvider: "deepseek",
+      aiModel: "deepseek-chat",
+      aiSystemPrompt: "CSKH",
+      aiApiKey: "sk-deepseek",
+      learnEnabled: false,
+    });
+    const urls: string[] = [];
+    stubUrls(urls);
+    expect(await maybeAutoReply(db, config, { conversationId })).toBe(true);
+    expect(urls[0]).toBe("https://api.deepseek.com/v1/chat/completions");
+  });
+
+  it("Custom dùng base URL người dùng dán", async () => {
+    await seedConversation();
+    await saveAutoReplySettings(db, config, {
+      mode: "AUTO",
+      aiProvider: "custom",
+      aiModel: "my-model",
+      aiBaseUrl: "https://ai.mycompany.com/v1/",
+      aiSystemPrompt: "",
+      aiApiKey: "sk-x",
+      learnEnabled: false,
+    });
+    const urls: string[] = [];
+    stubUrls(urls);
+    expect(await maybeAutoReply(db, config, { conversationId })).toBe(true);
+    expect(urls[0]).toBe("https://ai.mycompany.com/v1/chat/completions");
+  });
+
+  it("Custom mà thiếu base URL thì báo lỗi khi lưu", async () => {
+    await expect(
+      saveAutoReplySettings(db, config, {
+        mode: "AUTO",
+        aiProvider: "custom",
+        aiModel: "m",
+        aiSystemPrompt: "",
+        aiApiKey: "sk-x",
+      }),
+    ).rejects.toMatchObject({ code: "AI_BASE_URL_REQUIRED" });
   });
 });
