@@ -25,4 +25,4 @@ COPY public ./public
 COPY templates ./templates
 USER aff
 EXPOSE 3000
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/src/cluster.js"]

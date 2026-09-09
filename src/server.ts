@@ -48,6 +48,8 @@ import { getBackofficeQueueCounts } from "./services/backoffice-queue.js";
 import { hasVerifiedBank } from "./services/app-dashboard.js";
 import { countUnreadSupportReplies } from "./services/support-chat.js";
 import { captchaEnabled } from "./services/captcha.js";
+import cluster from "node:cluster";
+import { Redis } from "ioredis";
 
 const projectRoot = process.cwd();
 // Đổi mỗi lần khởi động để né cache immutable 30 ngày của /assets/*.
@@ -126,10 +128,27 @@ await app.register(helmet, {
       ? { maxAge: 31_536_000, includeSubDomains: true, preload: true }
       : false,
 });
+// Kho đếm rate-limit: dùng Redis để hạn mức DÙNG CHUNG giữa các worker/instance
+// (in-memory thì mỗi worker một bộ đếm riêng → hạn mức bị nhân lên). Redis lỗi
+// thì plugin tự bỏ qua (skipOnError mặc định) nên không chặn nhầm người dùng.
+const rateLimitRedis = config.REDIS_URL
+  ? new Redis(config.REDIS_URL, {
+      connectTimeout: 500,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      lazyConnect: false,
+    })
+  : undefined;
+if (rateLimitRedis) {
+  rateLimitRedis.on("error", (err: Error) =>
+    app.log.warn({ err }, "rate-limit redis lỗi — tạm dùng bộ nhớ"),
+  );
+}
 await app.register(rateLimit, {
   global: true,
   max: 300,
   timeWindow: "1 minute",
+  ...(rateLimitRedis ? { redis: rateLimitRedis } : {}),
   /*
    * allowList dạng MẢNG được so với "key" của bộ đếm (mặc định là IP), không
    * phải đường dẫn — nên khai báo cũ ["/-/live", "/-/ready"] không bao giờ
@@ -409,7 +428,10 @@ try {
    * "Cannot use a pool after calling end on the pool" che mất nguyên nhân
    * thật. clearInterval không cứu được vì nó chỉ chặn các lượt SAU.
    */
-  if (config.ENABLE_SYNC_SCHEDULER) {
+  // Chạy nhiều worker (cluster) thì đồng bộ nền CHỈ được chạy ở MỘT worker,
+  // nếu không mỗi worker lại tick một lượt → đồng bộ/gửi mail trùng N lần.
+  const isSchedulerWorker = !cluster.isWorker || cluster.worker?.id === 1;
+  if (config.ENABLE_SYNC_SCHEDULER && isSchedulerWorker) {
     scheduler = startSyncScheduler(db, config, app.log, emailService);
   }
 } catch (error) {
