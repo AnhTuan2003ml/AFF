@@ -2812,6 +2812,12 @@ select:not([multiple])::-ms-expand {
   fill: #16a34a;
 }
 
+/* Đường kẻ ngang biểu đồ cột: mờ + nét đứt cho nhẹ nhàng, không lấn cột. */
+.trend-chart.column-chart .trend-gridline {
+  stroke-dasharray: 4 5;
+  opacity: 0.4;
+}
+
 .trend-chart .trend-bar.is-negative {
   fill: #ef4444;
 }

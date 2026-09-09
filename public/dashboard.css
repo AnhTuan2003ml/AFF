@@ -1167,6 +1167,8 @@
 /* Biểu đồ cột (bar_chart): cột tiền màu xanh, cột âm (đảo khoản) màu đỏ. */
 .backoffice-shell .trend-bar { fill: #16a34a; }
 .backoffice-shell .trend-bar.is-negative { fill: #ef4444; }
+/* Đường kẻ ngang biểu đồ cột: mờ + nét đứt. */
+.backoffice-shell .trend-chart.column-chart .trend-gridline { stroke-dasharray: 4 5; opacity: 0.4; }
 .backoffice-shell .trend-grid-label { fill: var(--admin-muted); font-size: 10px; }
 
 /* Trang Bảo mật (2FA) */
