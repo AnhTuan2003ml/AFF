@@ -1,0 +1,63 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">KIỂM SOÁT GIAN LẬN</span>
+      <h1>Cảnh báo rủi ro</h1>
+      <p>Các tín hiệu đáng ngờ để đội vận hành xem lại — hệ thống KHÔNG tự khóa/phạt.</p>
+    </div>
+  </section>
+
+  <div class="stats-grid">
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">TỶ LỆ HỦY/HOÀN CAO</span><h2>Mua rồi hủy bất thường</h2></div>
+      </header>
+      <p class="bp-hint">Tài khoản có ≥ {{ risk.thresholds.minOrders }} đơn và tỷ lệ hủy/hoàn ≥ {{ risk.thresholds.cancelRatePercent }}%.</p>
+      {% if risk.highCancel.length %}
+        <div class="stats-scroll">
+          <table class="stats-table">
+            <thead><tr><th>Tài khoản</th><th class="num">Đơn</th><th class="num">Hủy/hoàn</th><th class="num">Tỷ lệ</th></tr></thead>
+            <tbody>
+              {% for r in risk.highCancel %}
+                <tr>
+                  <td><a href="/backoffice/accounts/{{ r.id }}"><b>{{ r.full_name }}</b></a><br><small>{{ r.email }}</small></td>
+                  <td class="num">{{ r.total }}</td>
+                  <td class="num">{{ r.bad }}</td>
+                  <td class="num"><b>{{ r.cancel_rate }}%</b></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="bp-hint">Không có tài khoản nào vượt ngưỡng.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">CHUNG IP</span><h2>Nhiều tài khoản cùng một IP</h2></div>
+      </header>
+      <p class="bp-hint">Một địa chỉ IP (mã hóa) có ≥ {{ risk.thresholds.sharedIpMinAccounts }} tài khoản đăng nhập — dấu hiệu tài khoản ảo.</p>
+      {% if risk.sharedIp.length %}
+        <div class="stats-scroll">
+          <table class="stats-table">
+            <thead><tr><th class="num">Số tài khoản</th><th>Email (tối đa 8)</th></tr></thead>
+            <tbody>
+              {% for r in risk.sharedIp %}
+                <tr>
+                  <td class="num"><b>{{ r.accounts }}</b></td>
+                  <td><small>{{ r.emails | join(', ') }}</small></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="bp-hint">Không phát hiện IP chung bất thường.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

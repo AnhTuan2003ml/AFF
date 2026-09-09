@@ -54,6 +54,7 @@
           <a href="/backoffice/withdrawals" {% if backofficeSection == 'withdrawals' %}class="active" aria-current="page"{% endif %}>{{ icon('withdraw') }}<span>Yêu cầu rút tiền</span>{% if backofficeWithdrawalsPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeWithdrawalsPendingCount }} yêu cầu rút tiền chờ xử lý">{{ backofficeWithdrawalsPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/kol" {% if backofficeSection == 'kol' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Duyệt đối tác</span>{% if backofficeKolPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeKolPendingCount }} hồ sơ đối tác chờ duyệt">{{ backofficeKolPendingCount }}</em>{% endif %}</a>
           <a href="/backoffice/support" {% if backofficeSection == 'support' %}class="active" aria-current="page"{% endif %}>{{ icon('support') }}<span>Hỗ trợ</span></a>
+          <a href="/backoffice/risk" {% if backofficeSection == 'risk' %}class="active" aria-current="page"{% endif %}>{{ icon('shield') }}<span>Cảnh báo rủi ro</span></a>
 
           <p class="st-nav-group">Người dùng</p>
           <a href="/backoffice/accounts" {% if backofficeSection == 'users' %}class="active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Người dùng &amp; quyền</span>{% if backofficeReferralCodesPendingCount > 0 %}<em class="st-nav-badge" aria-label="{{ backofficeReferralCodesPendingCount }} yêu cầu đổi mã giới thiệu chờ duyệt">{{ backofficeReferralCodesPendingCount }}</em>{% endif %}</a>
