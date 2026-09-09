@@ -63,6 +63,18 @@
           </label>
         </fieldset>
 
+        <fieldset class="bo-fieldset">
+          <legend>Tự học từ hội thoại</legend>
+          <label class="bo-check-row">
+            <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
+            <span>Lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> thì trả lời ngay, <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
+          </label>
+          <label for="ar-sim">Ngưỡng tương đồng để tái dùng: <b>{{ settings.similarityThreshold }}%</b>
+            <input id="ar-sim" type="range" name="similarityThreshold" min="50" max="100" step="1" value="{{ settings.similarityThreshold }}">
+            <small class="bo-muted">Cao (90%+): chỉ tái dùng khi câu gần y hệt. Thấp: tái dùng rộng hơn nhưng dễ lệch ngữ cảnh.</small>
+          </label>
+        </fieldset>
+
         <button class="button button-primary" type="submit">Lưu cấu hình</button>
       </form>
     </section>
@@ -104,6 +116,34 @@
         </div>
       {% else %}
         {{ empty_state("Chưa có tài liệu", "Thêm FAQ/chính sách để AI trả lời chính xác hơn.") }}
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <header class="panel-heading">
+        <div>
+          <h2>Câu đã học ({{ learnedCount }})</h2>
+          <p class="bo-muted">Cặp câu hỏi → trả lời do AI sinh, tự lưu lại. Gặp câu tương tự, hệ thống trả lời từ đây, không gọi AI.</p>
+        </div>
+      </header>
+      {% if learnedAnswers.length %}
+        <div class="bo-kb-list">
+          {% for la in learnedAnswers %}
+            <article class="bo-kb-item">
+              <div class="bo-kb-main">
+                <b>{{ la.question }}</b>
+                <small class="bo-muted">Đã dùng lại {{ la.hits }} lần · {{ la.updated_at | datetime }}</small>
+                <p class="bo-cell-clamp">{{ la.answer }}</p>
+              </div>
+              <form method="post" action="/backoffice/support/settings/learned/{{ la.id }}/delete">
+                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                <button class="button button-small" type="submit">Xóa</button>
+              </form>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa học câu nào", "Khi AI trả lời khách, câu hỏi & trả lời sẽ tự lưu vào đây để tái dùng.") }}
       {% endif %}
     </section>
   </div>

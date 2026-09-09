@@ -250,3 +250,6 @@ td.bo-cell-clamp {
   .bo-col-action { width: 150px; }
   .bo-cell-email { width: 170px; }
 }
+
+.bo-check-row { display:flex; gap:8px; align-items:flex-start; line-height:1.5; }
+.bo-check-row input { margin-top:3px; flex:none; }

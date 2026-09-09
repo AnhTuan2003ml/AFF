@@ -2,9 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestDb, testConfig } from "./helpers.js";
 import {
   buildKbContext,
+  countLearnedAnswers,
+  findSimilarLearnedAnswer,
   getAutoReplySettings,
+  learnAnswer,
   listKbDocuments,
   maybeAutoReply,
+  normalizeQuestion,
   rankKbDocuments,
   saveAutoReplySettings,
   addKbDocument,
@@ -266,5 +270,55 @@ describe("kb documents", () => {
     const documents = await listKbDocuments(db);
     expect(documents).toHaveLength(1);
     expect(documents[0]!.title).toBe("FAQ");
+  });
+});
+
+describe("tự học Q&A (RAG động)", () => {
+  it("chuẩn hóa câu hỏi về một dạng", () => {
+    expect(normalizeQuestion("  Khi NÀO tiền về ví??? ")).toBe(
+      "khi nào tiền về ví",
+    );
+    // Khác dấu câu/hoa thường → cùng một dạng chuẩn.
+    expect(normalizeQuestion("Bao lâu rút được tiền!")).toBe(
+      normalizeQuestion("bao lâu rút được tiền"),
+    );
+  });
+
+  it("học rồi khớp CHÍNH XÁC (chuẩn hóa) → trả lời sẵn", async () => {
+    await learnAnswer(db, "Khi nào tiền về ví?", "Tiền về ví sau 7 ngày.");
+    expect(await countLearnedAnswers(db)).toBe(1);
+    const hit = await findSimilarLearnedAnswer(db, "khi nào tiền về VÍ??", 82);
+    expect(hit?.answer).toBe("Tiền về ví sau 7 ngày.");
+    expect(hit?.score).toBe(100);
+  });
+
+  it("khớp câu TƯƠNG TỰ ≥ ngưỡng; dưới ngưỡng thì không", async () => {
+    await learnAnswer(
+      db,
+      "Làm sao để rút tiền hoàn về ngân hàng?",
+      "Vào Ví → Rút tiền → chọn ngân hàng.",
+    );
+    // Gần giống → khớp ở ngưỡng vừa phải.
+    const near = await findSimilarLearnedAnswer(
+      db,
+      "làm sao rút tiền hoàn về ngân hàng",
+      60,
+    );
+    expect(near?.answer).toContain("Rút tiền");
+    // Câu khác hẳn chủ đề → không khớp.
+    const far = await findSimilarLearnedAnswer(
+      db,
+      "phí ship shopee tính thế nào",
+      82,
+    );
+    expect(far).toBeNull();
+  });
+
+  it("học lại cùng câu (chuẩn hóa) thì GHI ĐÈ, không nhân đôi", async () => {
+    await learnAnswer(db, "Hạn mức rút tối thiểu?", "50.000đ.");
+    await learnAnswer(db, "hạn mức rút tối thiểu", "100.000đ.");
+    expect(await countLearnedAnswers(db)).toBe(1);
+    const hit = await findSimilarLearnedAnswer(db, "Hạn mức rút tối thiểu?", 82);
+    expect(hit?.answer).toBe("100.000đ.");
   });
 });

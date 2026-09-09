@@ -51,9 +51,12 @@ import {
 import {
   AI_PROVIDERS,
   addKbDocument,
+  countLearnedAnswers,
   deleteKbDocument,
+  deleteLearnedAnswer,
   getAutoReplySettings,
   listKbDocuments,
+  listLearnedAnswers,
   saveAutoReplySettings,
 } from "../services/support-autoreply.js";
 import {
@@ -533,15 +536,20 @@ export async function registerBackofficeRoutes(
   // lời đều ở đó). Backoffice chỉ giữ MỘT việc: cấu hình cách phản hồi —
   // thủ công qua Slack, trả lời mẫu, hoặc AI (kèm kho tài liệu tham khảo).
   app.get("/support", async (_request, reply) => {
-    const [settings, kbDocuments] = await Promise.all([
-      getAutoReplySettings(deps.db),
-      listKbDocuments(deps.db),
-    ]);
+    const [settings, kbDocuments, learnedAnswers, learnedCount] =
+      await Promise.all([
+        getAutoReplySettings(deps.db),
+        listKbDocuments(deps.db),
+        listLearnedAnswers(deps.db, 50),
+        countLearnedAnswers(deps.db),
+      ]);
     return reply.view("backoffice/support-settings.njk", {
       pageTitle: "Hỗ trợ khách hàng",
       backofficeSection: "support",
       settings,
       kbDocuments,
+      learnedAnswers,
+      learnedCount,
       providers: AI_PROVIDERS,
     });
   });
@@ -572,10 +580,15 @@ export async function registerBackofficeRoutes(
           aiModel: z.string().trim().max(120).optional().default(""),
           aiSystemPrompt: z.string().trim().max(8000).optional().default(""),
           aiApiKey: z.string().trim().max(500).optional().default(""),
+          learnEnabled: z.string().optional(),
+          similarityThreshold: z.coerce.number().min(50).max(100).default(82),
         }),
         request.body,
       );
-      await saveAutoReplySettings(deps.db, deps.config, input);
+      await saveAutoReplySettings(deps.db, deps.config, {
+        ...input,
+        learnEnabled: input.learnEnabled === "on",
+      });
       await writeAuditLog(deps.db, deps.config, request, {
         action: "SUPPORT_AUTOREPLY_UPDATED",
         targetType: "BUSINESS_CONFIG",
@@ -622,6 +635,29 @@ export async function registerBackofficeRoutes(
           deps.config,
           removed ? "success" : "error",
           removed ? "Đã xóa tài liệu." : "Không tìm thấy tài liệu.",
+        );
+      } catch (error) {
+        flashError(reply, deps.config, error);
+      }
+      return reply.redirect("/backoffice/support");
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/support/settings/learned/:id/delete",
+    async (request, reply) => {
+      try {
+        requireSupportManager(request.currentUser!.role);
+        const { id } = parseInput(
+          z.object({ id: z.string().uuid() }),
+          request.params,
+        );
+        const removed = await deleteLearnedAnswer(deps.db, id);
+        setFlash(
+          reply,
+          deps.config,
+          removed ? "success" : "error",
+          removed ? "Đã xóa câu đã học." : "Không tìm thấy câu.",
         );
       } catch (error) {
         flashError(reply, deps.config, error);

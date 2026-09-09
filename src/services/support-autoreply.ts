@@ -49,6 +49,8 @@ export interface AutoReplySettings {
   aiModel: string;
   aiSystemPrompt: string;
   hasApiKey: boolean;
+  learnEnabled: boolean;
+  similarityThreshold: number;
 }
 
 interface SettingsRow {
@@ -58,6 +60,8 @@ interface SettingsRow {
   ai_api_key_ciphertext: string;
   ai_model: string;
   ai_system_prompt: string;
+  learn_enabled: boolean;
+  similarity_threshold: number;
 }
 
 async function loadSettingsRow(db: Database): Promise<SettingsRow | null> {
@@ -65,7 +69,7 @@ async function loadSettingsRow(db: Database): Promise<SettingsRow | null> {
     db,
     `
       SELECT mode, canned_message, ai_provider, ai_api_key_ciphertext,
-        ai_model, ai_system_prompt
+        ai_model, ai_system_prompt, learn_enabled, similarity_threshold
       FROM support_autoreply_settings WHERE id = true
     `,
   );
@@ -84,6 +88,8 @@ export async function getAutoReplySettings(
       aiModel: "",
       aiSystemPrompt: "",
       hasApiKey: false,
+      learnEnabled: true,
+      similarityThreshold: 82,
     };
   }
   return {
@@ -93,6 +99,8 @@ export async function getAutoReplySettings(
     aiModel: row.ai_model,
     aiSystemPrompt: row.ai_system_prompt,
     hasApiKey: Boolean(row.ai_api_key_ciphertext),
+    learnEnabled: row.learn_enabled,
+    similarityThreshold: row.similarity_threshold,
   };
 }
 
@@ -107,6 +115,8 @@ export async function saveAutoReplySettings(
     aiSystemPrompt: string;
     /** Trống = giữ key đã lưu. */
     aiApiKey: string;
+    learnEnabled?: boolean;
+    similarityThreshold?: number;
   },
 ): Promise<void> {
   if (input.mode === "CANNED" && !input.cannedMessage.trim()) {
@@ -137,8 +147,9 @@ export async function saveAutoReplySettings(
     `
       INSERT INTO support_autoreply_settings (
         id, mode, canned_message, ai_provider, ai_api_key_ciphertext,
-        ai_model, ai_system_prompt, updated_at
-      ) VALUES (true, $1, $2, $3, $4, $5, $6, now())
+        ai_model, ai_system_prompt, learn_enabled, similarity_threshold,
+        updated_at
+      ) VALUES (true, $1, $2, $3, $4, $5, $6, $7, $8, now())
       ON CONFLICT (id) DO UPDATE SET
         mode = EXCLUDED.mode,
         canned_message = EXCLUDED.canned_message,
@@ -146,6 +157,8 @@ export async function saveAutoReplySettings(
         ai_api_key_ciphertext = EXCLUDED.ai_api_key_ciphertext,
         ai_model = EXCLUDED.ai_model,
         ai_system_prompt = EXCLUDED.ai_system_prompt,
+        learn_enabled = EXCLUDED.learn_enabled,
+        similarity_threshold = EXCLUDED.similarity_threshold,
         updated_at = now()
     `,
     [
@@ -155,6 +168,8 @@ export async function saveAutoReplySettings(
       keyCiphertext,
       input.aiModel.trim(),
       input.aiSystemPrompt.trim(),
+      input.learnEnabled ?? true,
+      Math.min(100, Math.max(50, Math.round(input.similarityThreshold ?? 82))),
     ],
   );
 }
@@ -241,6 +256,132 @@ export function buildKbContext(documents: KbDocument[]): string {
     remaining -= body.length;
   }
   return parts.join("\n\n");
+}
+
+/* ---------- Tự học Q&A: RAG động, gặp câu tương tự thì khỏi gọi AI ---------- */
+
+export interface LearnedAnswer {
+  id: string;
+  question: string;
+  answer: string;
+  hits: number;
+  updated_at: Date;
+}
+
+/** Chuẩn hóa câu hỏi về MỘT dạng: viết thường, bỏ dấu câu, gộp khoảng trắng. */
+export function normalizeQuestion(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFC")
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Độ tương đồng cosine trên tập token (0..1). */
+function tokenCosine(a: string[], b: string[]): number {
+  const setA = new Set(a);
+  const setB = new Set(b);
+  if (!setA.size || !setB.size) return 0;
+  let inter = 0;
+  for (const t of setA) if (setB.has(t)) inter += 1;
+  return inter / Math.sqrt(setA.size * setB.size);
+}
+
+/**
+ * Tìm câu trả lời đã học cho câu hỏi TƯƠNG TỰ (≥ ngưỡng %). Khớp chính xác
+ * (bản chuẩn hóa) trước, rồi so token cosine với kho gần đây.
+ */
+export async function findSimilarLearnedAnswer(
+  db: Database,
+  question: string,
+  thresholdPercent: number,
+): Promise<{ id: string; answer: string; score: number } | null> {
+  const norm = normalizeQuestion(question);
+  if (!norm) return null;
+  const exact = await query<{ id: string; answer: string }>(
+    db,
+    `SELECT id, answer FROM support_learned_answers WHERE question_norm = $1 LIMIT 1`,
+    [norm],
+  );
+  if (exact.rows[0]) return { ...exact.rows[0], score: 100 };
+
+  const qTokens = tokenize(question);
+  if (!qTokens.length) return null;
+  const rows = await query<{ id: string; answer: string; tokens: string[] }>(
+    db,
+    `SELECT id, answer, tokens FROM support_learned_answers
+     ORDER BY updated_at DESC LIMIT 1000`,
+  );
+  const threshold = thresholdPercent / 100;
+  let best: { id: string; answer: string; score: number } | null = null;
+  for (const row of rows.rows) {
+    const score = tokenCosine(qTokens, row.tokens ?? []);
+    if (score >= threshold && (best === null || score * 100 > best.score)) {
+      best = { id: row.id, answer: row.answer, score: Math.round(score * 100) };
+    }
+  }
+  return best;
+}
+
+/** Lưu/cập nhật cặp câu hỏi (chuẩn hóa) → câu trả lời để tái dùng. */
+export async function learnAnswer(
+  db: Database,
+  question: string,
+  answer: string,
+): Promise<void> {
+  const norm = normalizeQuestion(question);
+  if (!norm || !answer.trim()) return;
+  await query(
+    db,
+    `INSERT INTO support_learned_answers (question, question_norm, tokens, answer)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (question_norm) DO UPDATE SET
+       answer = EXCLUDED.answer, tokens = EXCLUDED.tokens,
+       question = EXCLUDED.question, updated_at = now()`,
+    [question.slice(0, 2000), norm, tokenize(question), answer.slice(0, 3000)],
+  );
+}
+
+export async function recordLearnedHit(db: Database, id: string): Promise<void> {
+  await query(
+    db,
+    `UPDATE support_learned_answers SET hits = hits + 1 WHERE id = $1`,
+    [id],
+  );
+}
+
+export async function listLearnedAnswers(
+  db: Database,
+  limit = 100,
+): Promise<LearnedAnswer[]> {
+  const r = await query<LearnedAnswer>(
+    db,
+    `SELECT id, question, answer, hits, updated_at FROM support_learned_answers
+     ORDER BY hits DESC, updated_at DESC LIMIT $1`,
+    [limit],
+  );
+  return r.rows;
+}
+
+export async function countLearnedAnswers(db: Database): Promise<number> {
+  const r = await query<{ n: string }>(
+    db,
+    `SELECT count(*)::text AS n FROM support_learned_answers`,
+  );
+  return Number(r.rows[0]?.n ?? 0);
+}
+
+export async function deleteLearnedAnswer(
+  db: Database,
+  id: string,
+): Promise<boolean> {
+  const r = await query(
+    db,
+    `DELETE FROM support_learned_answers WHERE id = $1`,
+    [id],
+  );
+  return Boolean(r.rowCount);
 }
 
 export interface ChatHistoryEntry {
@@ -510,6 +651,28 @@ export async function maybeAutoReply(
     }
 
     const question = history[history.length - 1]!.body;
+
+    // Tự học: gặp câu HỎI tương tự đã trả lời trước đó → trả lời NGAY, khỏi
+    // gọi AI (nhanh + tiết kiệm chi phí).
+    if (settings.learn_enabled) {
+      const learned = await findSimilarLearnedAnswer(
+        db,
+        question,
+        settings.similarity_threshold,
+      );
+      if (learned) {
+        await insertAutoMessage(
+          db,
+          config,
+          input.conversationId,
+          learned.answer,
+          input.logger,
+        );
+        await recordLearnedHit(db, learned.id);
+        return true;
+      }
+    }
+
     const kbContext = buildKbContext(
       rankKbDocuments(await listKbDocuments(db), question),
     );
@@ -524,6 +687,10 @@ export async function maybeAutoReply(
       reply,
       input.logger,
     );
+    // Lưu cặp Q&A vừa sinh làm "tài liệu RAG động" cho lần sau.
+    if (settings.learn_enabled) {
+      await learnAnswer(db, question, reply).catch(() => undefined);
+    }
     return true;
   } catch (error) {
     input.logger?.warn({ err: error }, "Tự trả lời hỗ trợ thất bại.");
