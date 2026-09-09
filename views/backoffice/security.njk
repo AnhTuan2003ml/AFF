@@ -9,19 +9,40 @@
     </div>
   </section>
 
+  {% if backupCodes %}
+    <section class="panel security-panel security-backup-panel">
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">MÃ DỰ PHÒNG</span><h2>Lưu lại ngay — chỉ hiện một lần</h2></div>
+      </header>
+      <p class="bp-hint">Nếu mất thiết bị Authenticator, dùng một trong các mã này để đăng nhập (mỗi mã dùng một lần). Chụp màn hình hoặc lưu vào nơi an toàn.</p>
+      <ul class="backup-codes">
+        {% for c in backupCodes %}<li><code>{{ c }}</code></li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   <section class="panel security-panel">
     {% if twoFactor.enabled %}
       <header class="admin-section-heading">
         <div><span class="admin-kicker">TRẠNG THÁI</span><h2>✅ Đang bật</h2></div>
       </header>
-      <p class="bp-hint">Mỗi lần đăng nhập, sau khi nhập đúng mật khẩu bạn sẽ cần nhập thêm mã 6 số.{% if twoFactor.enabledAt %} Bật lúc {{ twoFactor.enabledAt | datetime }}.{% endif %}</p>
-      <form method="post" action="/backoffice/security/2fa/disable" class="stack-form security-form" data-confirm-form data-confirm-message="Tắt xác thực hai lớp cho tài khoản của bạn?">
-        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label>Nhập mã hiện tại để tắt
-          <input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required>
-        </label>
-        <button type="submit" class="button button-danger">Tắt 2FA</button>
-      </form>
+      <p class="bp-hint">Mỗi lần đăng nhập, sau khi nhập đúng mật khẩu bạn sẽ cần nhập thêm mã 6 số.{% if twoFactor.enabledAt %} Bật lúc {{ twoFactor.enabledAt | datetime }}.{% endif %} Mã dự phòng còn lại: <b>{{ backupRemaining }}</b>.</p>
+      <div class="security-actions">
+        <form method="post" action="/backoffice/security/2fa/backup-codes" class="stack-form security-form" data-confirm-form data-confirm-message="Tạo lại mã dự phòng? Toàn bộ mã cũ sẽ hết hiệu lực.">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label>Tạo lại mã dự phòng (nhập mã hiện tại)
+            <input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required>
+          </label>
+          <button type="submit" class="button button-ghost">Tạo lại mã dự phòng</button>
+        </form>
+        <form method="post" action="/backoffice/security/2fa/disable" class="stack-form security-form" data-confirm-form data-confirm-message="Tắt xác thực hai lớp cho tài khoản của bạn?">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label>Tắt 2FA (nhập mã hiện tại)
+            <input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required>
+          </label>
+          <button type="submit" class="button button-danger">Tắt 2FA</button>
+        </form>
+      </div>
     {% elif enroll %}
       <header class="admin-section-heading">
         <div><span class="admin-kicker">THIẾT LẬP</span><h2>Nhập khóa vào Authenticator</h2></div>

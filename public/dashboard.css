@@ -1184,6 +1184,21 @@
 .backoffice-shell .totp-secret-label { display: block; font-size: 12px; color: var(--admin-muted); }
 .backoffice-shell .totp-secret-key { font-size: 18px; font-weight: 800; letter-spacing: 2px; word-break: break-all; }
 .backoffice-shell .totp-uri { word-break: break-all; }
+.backoffice-shell .security-actions { display: flex; flex-wrap: wrap; gap: 24px; }
+.backoffice-shell .security-backup-panel { border: 1px solid var(--admin-brand); }
+.backoffice-shell .backup-codes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.backoffice-shell .backup-codes code {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
 
 .backoffice-shell .stacked-bar {
   display: flex;

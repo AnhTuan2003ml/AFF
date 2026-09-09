@@ -3,8 +3,10 @@ import { z } from "zod";
 import { parseInput } from "../lib/validation.js";
 import {
   confirmEnroll,
+  countBackupCodes,
   disable2fa,
   get2faState,
+  regenerateBackupCodes,
   startEnroll,
   verifyUserTotp,
 } from "../services/admin-2fa.js";
@@ -47,23 +49,71 @@ export async function registerAdminSecurityRoutes(
       backofficeSection: "security",
       twoFactor: state,
       enroll,
+      backupRemaining: await countBackupCodes(deps.db, request.currentUser!.id),
     });
   });
 
   app.post("/security/2fa/enable", async (request, reply) => {
     try {
       const input = parseInput(tokenSchema, request.body);
-      await confirmEnroll(deps.db, deps.config, request.currentUser!.id, input.token);
+      const codes = await confirmEnroll(
+        deps.db,
+        deps.config,
+        request.currentUser!.id,
+        input.token,
+      );
       await writeAuditLog(deps.db, deps.config, request, {
         action: "ADMIN_2FA_ENABLED",
         targetType: "USER",
         targetId: request.currentUser!.id,
       });
-      setFlash(reply, deps.config, "success", "Đã bật xác thực hai lớp cho tài khoản.");
+      // Hiển thị mã dự phòng NGAY (một lần duy nhất) — không redirect.
+      return reply.view("backoffice/security.njk", {
+        pageTitle: "Bảo mật",
+        backofficeSection: "security",
+        twoFactor: await get2faState(deps.db, request.currentUser!.id),
+        enroll: null,
+        backupCodes: codes,
+        backupRemaining: codes.length,
+      });
     } catch (error) {
       flashAdminError(reply, deps.config, error);
+      return reply.redirect("/backoffice/security");
     }
-    return reply.redirect("/backoffice/security");
+  });
+
+  // Tạo lại mã dự phòng (huỷ mã cũ). Cần một mã TOTP hợp lệ.
+  app.post("/security/2fa/backup-codes", async (request, reply) => {
+    try {
+      const input = parseInput(tokenSchema, request.body);
+      const ok = await verifyUserTotp(
+        deps.db,
+        deps.config,
+        request.currentUser!.id,
+        input.token,
+      );
+      if (!ok) {
+        setFlash(reply, deps.config, "error", "Mã xác thực không đúng.");
+        return reply.redirect("/backoffice/security");
+      }
+      const codes = await regenerateBackupCodes(deps.db, request.currentUser!.id);
+      await writeAuditLog(deps.db, deps.config, request, {
+        action: "ADMIN_2FA_BACKUP_REGENERATED",
+        targetType: "USER",
+        targetId: request.currentUser!.id,
+      });
+      return reply.view("backoffice/security.njk", {
+        pageTitle: "Bảo mật",
+        backofficeSection: "security",
+        twoFactor: await get2faState(deps.db, request.currentUser!.id),
+        enroll: null,
+        backupCodes: codes,
+        backupRemaining: codes.length,
+      });
+    } catch (error) {
+      flashAdminError(reply, deps.config, error);
+      return reply.redirect("/backoffice/security");
+    }
   });
 
   app.post("/security/2fa/disable", async (request, reply) => {

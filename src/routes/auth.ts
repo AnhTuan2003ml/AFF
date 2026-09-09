@@ -34,7 +34,11 @@ import {
   verifyLazadaOAuthState,
 } from "../services/lazada-oauth.js";
 import { safeNextPath } from "../auth/guards.js";
-import { requires2fa, verifyUserTotp } from "../services/admin-2fa.js";
+import {
+  consumeBackupCode,
+  requires2fa,
+  verifyUserTotp,
+} from "../services/admin-2fa.js";
 
 interface AuthRouteDeps {
   db: Database;
@@ -396,11 +400,13 @@ export async function registerAuthRoutes(
       const next = safeNextPath(body.next, "/app");
       try {
         const token = String(body.token ?? "").trim();
-        const ok = await verifyUserTotp(deps.db, deps.config, uid!, token);
+        // Chấp nhận mã TOTP 6 số HOẶC mã dự phòng (dùng một lần).
+        let ok = await verifyUserTotp(deps.db, deps.config, uid!, token);
+        if (!ok) ok = await consumeBackupCode(deps.db, uid!, token);
         if (!ok) {
           throw new AppError(
             "TWO_FACTOR_INVALID",
-            "Mã xác thực không đúng. Nhập mã mới nhất trong ứng dụng Authenticator.",
+            "Mã không đúng. Nhập mã mới nhất trong ứng dụng Authenticator, hoặc một mã dự phòng.",
             401,
           );
         }

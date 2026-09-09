@@ -24,7 +24,13 @@ interface UserAuthRow {
   role: CurrentUser["role"];
   referral_code: string;
   avatar_url: string;
+  failed_login_count?: number | null;
+  login_locked_until?: Date | string | null;
 }
+
+// Khóa tạm sau nhiều lần sai liên tiếp — chống dò mật khẩu.
+const LOGIN_MAX_FAILED = 5;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 const DUMMY_PASSWORD_HASH =
   "$argon2id$v=19$m=65536,p=1,t=3$b+LVY5fwUuBVmpq9m+H1fA$3R5LXrwI6U+BxL4KCybFJWg0kZl9icYX8WAPhAP8na0";
@@ -211,12 +217,30 @@ export async function authenticateWithEmail(
   const result = await query<UserAuthRow>(
     db,
     `
-      SELECT id, email, full_name, password_hash, status, role, referral_code, avatar_url
+      SELECT id, email, full_name, password_hash, status, role, referral_code,
+        avatar_url, failed_login_count, login_locked_until
       FROM users WHERE lower(email) = $1 LIMIT 1
     `,
     [email],
   );
   const user = result.rows[0];
+
+  // Đang trong thời gian khóa tạm → chặn ngay, kể cả mật khẩu đúng.
+  const lockedUntil = user?.login_locked_until
+    ? new Date(user.login_locked_until)
+    : null;
+  if (lockedUntil && lockedUntil.getTime() > Date.now()) {
+    const minutes = Math.max(
+      1,
+      Math.ceil((lockedUntil.getTime() - Date.now()) / 60000),
+    );
+    throw new AppError(
+      "ACCOUNT_TEMP_LOCKED",
+      `Tài khoản tạm khóa do đăng nhập sai nhiều lần. Vui lòng thử lại sau ${minutes} phút hoặc đặt lại mật khẩu.`,
+      429,
+    );
+  }
+
   const passwordMatches = await verifyPassword(
     user?.password_hash ?? DUMMY_PASSWORD_HASH,
     password,
@@ -226,6 +250,23 @@ export async function authenticateWithEmail(
   );
 
   if (!user || !valid) {
+    // Chỉ đếm cho tài khoản có thật & đang hoạt động (không lộ email tồn tại).
+    if (user && user.status === "ACTIVE") {
+      const nextCount = (user.failed_login_count ?? 0) + 1;
+      if (nextCount >= LOGIN_MAX_FAILED) {
+        await query(
+          db,
+          "UPDATE users SET failed_login_count = 0, login_locked_until = $2 WHERE id = $1",
+          [user.id, new Date(Date.now() + LOGIN_LOCK_MS)],
+        );
+      } else {
+        await query(
+          db,
+          "UPDATE users SET failed_login_count = $2 WHERE id = $1",
+          [user.id, nextCount],
+        );
+      }
+    }
     throw new AppError(
       "INVALID_CREDENTIALS",
       "Email hoặc mật khẩu không đúng.",
@@ -233,9 +274,12 @@ export async function authenticateWithEmail(
     );
   }
 
-  await query(db, "UPDATE users SET last_login_at = now() WHERE id = $1", [
-    user.id,
-  ]);
+  // Đăng nhập đúng → reset bộ đếm & mở khóa.
+  await query(
+    db,
+    "UPDATE users SET last_login_at = now(), failed_login_count = 0, login_locked_until = NULL WHERE id = $1",
+    [user.id],
+  );
   return {
     id: user.id,
     email: user.email,

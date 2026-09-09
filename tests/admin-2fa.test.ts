@@ -3,6 +3,8 @@ import { query, type Database } from "../src/db.js";
 import { totpToken } from "../src/lib/totp.js";
 import {
   confirmEnroll,
+  consumeBackupCode,
+  countBackupCodes,
   disable2fa,
   get2faState,
   requires2fa,
@@ -67,6 +69,28 @@ describe("admin 2FA (TOTP)", () => {
     // Đăng nhập: verify mã đúng/sai.
     expect(await verifyUserTotp(db, config, admin.id, totpToken(enroll.secret))).toBe(true);
     expect(await verifyUserTotp(db, config, admin.id, "111111")).toBe(false);
+  });
+
+  it("mã dự phòng: sinh 10 mã khi bật, mỗi mã dùng một lần", async () => {
+    const { db, close } = await createTestDb();
+    cleanup = close;
+    const config = testConfig();
+    const admin = await seedAdmin(db);
+    const enroll = await startEnroll(db, config, admin);
+    const codes = await confirmEnroll(db, config, admin.id, totpToken(enroll.secret));
+
+    expect(codes).toHaveLength(10);
+    expect(await countBackupCodes(db, admin.id)).toBe(10);
+
+    // Dùng một mã hợp lệ → true, và bị tiêu thụ.
+    expect(await consumeBackupCode(db, admin.id, codes[0]!)).toBe(true);
+    expect(await countBackupCodes(db, admin.id)).toBe(9);
+    // Dùng lại chính mã đó → false.
+    expect(await consumeBackupCode(db, admin.id, codes[0]!)).toBe(false);
+    // Bỏ dấu gạch vẫn khớp.
+    expect(await consumeBackupCode(db, admin.id, codes[1]!.replace("-", ""))).toBe(true);
+    // Mã bịa → false.
+    expect(await consumeBackupCode(db, admin.id, "zzzzz-zzzzz")).toBe(false);
   });
 
   it("tắt 2FA → xóa secret, requires2fa=false", async () => {
