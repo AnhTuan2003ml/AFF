@@ -1,16 +1,19 @@
 import { formatVnd } from "../lib/format.js";
-import type {
-  UserPolicyDocument,
-  UserPolicyFacts,
-  UserPolicySection,
+import {
+  formatPurchaseTiers,
+  formatReferralTiers,
+  type UserPolicyDocument,
+  type UserPolicyFacts,
+  type UserPolicySection,
 } from "./user-policy.js";
 
 /**
  * Điều khoản sử dụng và Chính sách quyền riêng tư — cùng khuôn với
  * Chính sách người dùng (buildUserPolicy): dữ liệu có cấu trúc, song ngữ, con số
- * lấy từ business_config (không viết cứng). Nội dung theo bản 1.0 (25/08/2026).
+ * lấy từ business_config (không viết cứng). Điều khoản cập nhật 10/09/2026 (bổ
+ * sung mốc thưởng nhiệm vụ và hoa hồng giới thiệu); quyền riêng tư giữ bản 1.0.
  */
-export const TERMS_DOC_VERSION = "2026.08.25";
+export const TERMS_DOC_VERSION = "2026.09.10";
 export const PRIVACY_DOC_VERSION = "2026.08.25";
 
 const TERMS_PATH = "/dieu-khoan";
@@ -191,6 +194,24 @@ export function buildTerms(
         [],
         [
           "Bạn có thể mời người dùng mới bằng mã giới thiệu riêng.",
+          `Hoa hồng giới thiệu: bạn nhận thêm ${facts.referrerSharePercent}% khoản ` +
+            "hoa hồng thực nhận từ mỗi đơn hợp lệ do người bạn giới thiệu phát sinh.",
+          ...(facts.referralTiers.length
+            ? [
+                `Thưởng mốc giới thiệu (mỗi người được mời phải phát sinh ít nhất ` +
+                  `${facts.referralMinOrders} đơn hàng hợp lệ): ` +
+                  `${formatReferralTiers(facts.referralTiers, "vi")}.`,
+              ]
+            : []),
+          ...(facts.purchaseTiers.length
+            ? [
+                `Thưởng nhiệm vụ mua hàng (theo số đơn đã duyệt trong 1 tháng): ` +
+                  `${formatPurchaseTiers(facts.purchaseTiers, "vi")}.`,
+              ]
+            : []),
+          "Chi tiết cách tính và điều kiện của từng mốc thưởng được quy định tại " +
+            "Chính sách người dùng; con số mốc có thể được điều chỉnh theo chương " +
+            "trình và cập nhật tại các tài liệu này.",
           "Thưởng giới thiệu và thưởng nhiệm vụ chỉ được ghi nhận khi đủ điều kiện " +
             "chương trình và giao dịch liên quan đã được sàn xác nhận.",
           "Không dùng nhiều tài khoản do cùng một người kiểm soát để tạo thưởng, tự " +
@@ -381,7 +402,7 @@ export function buildTerms(
         ],
       ),
       sec("hieu-luc", "19. Hiệu lực", [
-        `Điều khoản này có hiệu lực từ 25/08/2026 và được công bố tại trang Điều ` +
+        `Điều khoản này có hiệu lực từ 10/09/2026 và được công bố tại trang Điều ` +
           `khoản sử dụng chính thức của ${app}.`,
         "Bạn nên đọc đồng thời Chính sách người dùng và Chính sách quyền riêng tư " +
           `(liên kết ở chân trang). ${app} có thể cập nhật đường dẫn, thông tin ` +
@@ -549,6 +570,24 @@ function buildTermsEn(facts: UserPolicyFacts): UserPolicyDocument {
         [],
         [
           "You can invite new users with your personal referral code.",
+          `Referral commission: you additionally receive ${facts.referrerSharePercent}% ` +
+            "of the actual commission from each valid order placed by users you referred.",
+          ...(facts.referralTiers.length
+            ? [
+                `Referral milestone rewards (each referred user must generate at least ` +
+                  `${facts.referralMinOrders} valid orders): ` +
+                  `${formatReferralTiers(facts.referralTiers, "en")}.`,
+              ]
+            : []),
+          ...(facts.purchaseTiers.length
+            ? [
+                `Purchase mission rewards (by approved orders within one month): ` +
+                  `${formatPurchaseTiers(facts.purchaseTiers, "en")}.`,
+              ]
+            : []),
+          "The calculation and conditions of each reward tier are set in the User " +
+            "Policy; the milestone figures may be adjusted per program and updated in " +
+            "these documents.",
           "Referral and mission rewards are only recorded when program conditions " +
             "are met and the related transaction is confirmed by the platform.",
           "Do not use multiple accounts under the same control to generate rewards, " +
@@ -739,7 +778,7 @@ function buildTermsEn(facts: UserPolicyFacts): UserPolicyDocument {
         ],
       ),
       sec("hieu-luc", "19. Effect", [
-        `These Terms are effective from 25/08/2026 and published on ${app}'s ` +
+        `These Terms are effective from 10/09/2026 and published on ${app}'s ` +
           "official Terms of Use page.",
         "You should also read the User Policy and Privacy Policy (links in the " +
           `footer). ${app} may update links, contact details or operational ` +

@@ -1,16 +1,23 @@
 import type { AppConfig } from "../config.js";
-import type { Database, Transaction } from "../db.js";
+import { query, type Database, type Transaction } from "../db.js";
 import { formatVnd } from "../lib/format.js";
 import { getBusinessConfig } from "./business-config.js";
+import { REFERRAL_MILESTONE_MIN_ORDERS } from "./mission.js";
 
 /**
  * Chính sách người dùng — nguồn duy nhất cho trang công khai, modal chân trang
  * và email đăng ký. Con số lấy từ cấu hình nghiệp vụ trong DB, không viết cứng.
  * Sửa nội dung ảnh hưởng quyền lợi thì tăng USER_POLICY_VERSION.
  */
-export const USER_POLICY_VERSION = "2026.08.25";
+export const USER_POLICY_VERSION = "2026.09.10";
 
 export const USER_POLICY_PATH = "/chinh-sach-nguoi-dung";
+
+/** Một mốc thưởng nhiệm vụ (số người/đơn cần đạt → tiền thưởng). */
+export interface MissionTierFact {
+  threshold: number;
+  rewardVnd: number;
+}
 
 export interface UserPolicyFacts {
   appName: string;
@@ -21,6 +28,14 @@ export interface UserPolicyFacts {
   cashbackHoldDays: number;
   affiliateAttributionDays: number;
   minWithdrawAmountVnd: number;
+  /** % hoa hồng thực nhận mà người giới thiệu nhận trên đơn của người được mời. */
+  referrerSharePercent: number;
+  /** Số đơn hợp lệ tối thiểu mỗi người được mời phải phát sinh để được tính. */
+  referralMinOrders: number;
+  /** Các mốc thưởng nhiệm vụ MUA HÀNG (theo tháng), tăng dần. */
+  purchaseTiers: MissionTierFact[];
+  /** Các mốc thưởng nhiệm vụ GIỚI THIỆU, tăng dần. */
+  referralTiers: MissionTierFact[];
 }
 
 export async function loadUserPolicyFacts(
@@ -28,6 +43,27 @@ export async function loadUserPolicyFacts(
   config: AppConfig,
 ): Promise<UserPolicyFacts> {
   const business = await getBusinessConfig(db, config);
+  // Mốc thưởng lấy trực tiếp từ mission_definitions đang bật để chính sách luôn
+  // khớp mức thực trả (admin sửa mốc → chính sách tự cập nhật theo).
+  const tierRows = await query<{
+    type: string;
+    threshold: number;
+    reward_amount_vnd: string;
+  }>(
+    db,
+    `SELECT type, threshold, reward_amount_vnd::text
+       FROM mission_definitions
+      WHERE status = 'ACTIVE'
+      ORDER BY type, threshold`,
+  );
+  const tiersOf = (type: string): MissionTierFact[] =>
+    tierRows.rows
+      .filter((row) => row.type === type)
+      .map((row) => ({
+        threshold: row.threshold,
+        rewardVnd: Number(row.reward_amount_vnd),
+      }));
+
   return {
     appName: config.APP_NAME,
     appOrigin: config.APP_ORIGIN,
@@ -37,7 +73,27 @@ export async function loadUserPolicyFacts(
     cashbackHoldDays: business.cashbackHoldDays,
     affiliateAttributionDays: business.affiliateAttributionDays,
     minWithdrawAmountVnd: business.minWithdrawAmountVnd,
+    referrerSharePercent: business.referrerSharePercent,
+    referralMinOrders: REFERRAL_MILESTONE_MIN_ORDERS,
+    purchaseTiers: tiersOf("PURCHASE_MILESTONE"),
+    referralTiers: tiersOf("REFERRAL_MILESTONE"),
   };
+}
+
+/** "20 đơn/tháng → +20.000₫; 80 đơn/tháng → +80.000₫" (hoặc bản EN). */
+export function formatPurchaseTiers(tiers: MissionTierFact[], lang: string): string {
+  const unit = lang === "en" ? "orders/month" : "đơn/tháng";
+  return tiers
+    .map((t) => `${t.threshold.toLocaleString("vi-VN")} ${unit} → +${formatVnd(t.rewardVnd)}`)
+    .join("; ");
+}
+
+/** "5 người → +10.000₫; …; 10.000 người → +50.000.000₫" (hoặc bản EN). */
+export function formatReferralTiers(tiers: MissionTierFact[], lang: string): string {
+  const unit = lang === "en" ? "people" : "người";
+  return tiers
+    .map((t) => `${t.threshold.toLocaleString("vi-VN")} ${unit} → +${formatVnd(t.rewardVnd)}`)
+    .join("; ");
 }
 
 export interface UserPolicySection {
@@ -265,10 +321,30 @@ export function buildUserPolicy(
       ),
       section(
         "gioi-thieu-nhiem-vu",
-        "9. Giới thiệu và nhiệm vụ",
+        "9. Giới thiệu, nhiệm vụ và hoa hồng thưởng",
         [],
         [
           "Bạn có thể mời người dùng mới bằng mã giới thiệu riêng.",
+          `Hoa hồng giới thiệu: bạn nhận thêm ${facts.referrerSharePercent}% khoản ` +
+            "hoa hồng thực nhận từ mỗi đơn hợp lệ do người bạn giới thiệu phát sinh, " +
+            "bên cạnh tiền hoàn của chính bạn.",
+          ...(facts.referralTiers.length
+            ? [
+                `Thưởng mốc giới thiệu: mỗi người được mời phải phát sinh ít nhất ` +
+                  `${facts.referralMinOrders} đơn hàng hợp lệ (đơn đã duyệt và có hoa ` +
+                  `hồng) mới được tính là một lượt giới thiệu hợp lệ. Khi đủ số người, ` +
+                  `bạn được thưởng: ${formatReferralTiers(facts.referralTiers, "vi")}.`,
+              ]
+            : []),
+          ...(facts.purchaseTiers.length
+            ? [
+                `Thưởng nhiệm vụ mua hàng: tính theo số đơn đã duyệt trong 1 tháng ` +
+                  `dương lịch — ${formatPurchaseTiers(facts.purchaseTiers, "vi")}.`,
+              ]
+            : []),
+          "Thưởng nhiệm vụ được cộng tự động vào ví khi đủ điều kiện; các con số mốc " +
+            "trên có thể được điều chỉnh theo chương trình và sẽ cập nhật tại chính " +
+            "sách này.",
           "Thưởng giới thiệu và thưởng nhiệm vụ chỉ được ghi nhận khi đủ điều kiện " +
             "chương trình và đơn/giao dịch liên quan đã được sàn xác nhận.",
           "Không dùng nhiều tài khoản do cùng một người kiểm soát để tạo thưởng, tự " +
@@ -417,7 +493,7 @@ export function buildUserPolicy(
         "hieu-luc",
         "17. Hiệu lực và tài liệu liên quan",
         [
-          `Chính sách này có hiệu lực từ 25/08/2026 và được công bố tại trang chính ` +
+          `Chính sách này có hiệu lực từ 10/09/2026 và được công bố tại trang chính ` +
             `sách chính thức của ${app}.`,
           "Bạn nên đọc đồng thời Điều khoản sử dụng và Chính sách quyền riêng tư " +
             `(liên kết ở chân trang). ${app} có thể cập nhật đường dẫn, thông tin ` +
@@ -628,10 +704,30 @@ function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
       ),
       section(
         "gioi-thieu-nhiem-vu",
-        "9. Referrals and missions",
+        "9. Referrals, missions and reward commission",
         [],
         [
           "You can invite new users with your personal referral code.",
+          `Referral commission: you additionally receive ${facts.referrerSharePercent}% ` +
+            "of the actual commission from each valid order placed by users you " +
+            "referred, on top of your own cashback.",
+          ...(facts.referralTiers.length
+            ? [
+                `Referral milestone rewards: each referred user must generate at least ` +
+                  `${facts.referralMinOrders} valid orders (approved orders with ` +
+                  `commission) to count as a qualified referral. Upon reaching enough ` +
+                  `people you are rewarded: ${formatReferralTiers(facts.referralTiers, "en")}.`,
+              ]
+            : []),
+          ...(facts.purchaseTiers.length
+            ? [
+                `Purchase mission rewards: based on approved orders within one calendar ` +
+                  `month — ${formatPurchaseTiers(facts.purchaseTiers, "en")}.`,
+              ]
+            : []),
+          "Mission rewards are credited to your wallet automatically once conditions " +
+            "are met; the milestone figures above may be adjusted per program and will " +
+            "be updated in this policy.",
           "Referral and mission rewards are only recorded when the program " +
             "conditions are met and the related order/transaction is confirmed by " +
             "the platform.",
@@ -784,7 +880,7 @@ function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
         "hieu-luc",
         "17. Effect and related documents",
         [
-          `This policy is effective from 25/08/2026 and published on ${app}'s ` +
+          `This policy is effective from 10/09/2026 and published on ${app}'s ` +
             "official policy page.",
           "You should also read the Terms of Use and Privacy Policy (links in the " +
             `footer). ${app} may update links, contact details or operational ` +

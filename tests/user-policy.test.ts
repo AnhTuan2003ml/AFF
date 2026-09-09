@@ -16,6 +16,16 @@ function facts(overrides: Partial<UserPolicyFacts> = {}): UserPolicyFacts {
     cashbackHoldDays: 15,
     affiliateAttributionDays: 30,
     minWithdrawAmountVnd: 100_000,
+    referrerSharePercent: 10,
+    referralMinOrders: 5,
+    purchaseTiers: [
+      { threshold: 20, rewardVnd: 20_000 },
+      { threshold: 80, rewardVnd: 80_000 },
+    ],
+    referralTiers: [
+      { threshold: 5, rewardVnd: 10_000 },
+      { threshold: 10_000, rewardVnd: 50_000_000 },
+    ],
     ...overrides,
   };
 }
