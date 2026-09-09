@@ -88,7 +88,7 @@ export function PreviewCard({
           <ActivityIndicator color={colors.onBrand} />
         ) : (
           <Text style={styles.buyText}>
-            {daDangNhap ? t('Mua ngay  →', 'Buy now  →') : t('Đăng nhập để mua', 'Sign in to buy')}
+            {daDangNhap ? t('Mua với voucher  →', 'Buy with voucher  →') : t('Đăng nhập để mua', 'Sign in to buy')}
           </Text>
         )}
       </Pressable>
