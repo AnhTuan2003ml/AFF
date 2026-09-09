@@ -341,6 +341,7 @@ export async function registerAuthRoutes(
     return reply.view("auth/login.njk", {
       pageTitle: "Đăng nhập",
       googleEnabled: googleOAuthEnabled(deps.config),
+      captchaSiteKey: captchaSiteKey(deps.config),
       next: safeNextPath(query.next, ""),
     });
   });
@@ -350,6 +351,13 @@ export async function registerAuthRoutes(
     { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
     async (request, reply) => {
       try {
+        if (!(await verifyCaptcha(deps.config, captchaTokenFrom(request.body), request.ip))) {
+          throw new AppError(
+            "CAPTCHA_FAILED",
+            "Xác minh CAPTCHA thất bại. Vui lòng thử lại.",
+            400,
+          );
+        }
         const input = parseInput(loginSchema, request.body);
         const user = await authenticateWithEmail(
           deps.db,
@@ -385,6 +393,7 @@ export async function registerAuthRoutes(
         return renderAuthError(reply, "auth/login.njk", error, {
           pageTitle: "Đăng nhập",
           googleEnabled: googleOAuthEnabled(deps.config),
+          captchaSiteKey: captchaSiteKey(deps.config),
           next: safeNextPath(body.next, ""),
           values: { email: String(body.email ?? "") },
         });
