@@ -2817,6 +2817,9 @@ select:not([multiple])::-ms-expand {
   stroke-dasharray: 4 5;
   opacity: 0.4;
 }
+/* Hệ trục: trục Y trái + trục X (mức 0) nét LIỀN, có mũi tên. */
+.trend-chart .trend-axis-line { stroke: var(--muted); stroke-width: 1.3; fill: none; }
+.trend-chart .trend-axis-arrow { fill: var(--muted); }
 
 .trend-chart .trend-bar.is-negative {
   fill: #ef4444;

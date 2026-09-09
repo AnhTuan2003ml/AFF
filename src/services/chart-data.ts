@@ -12,6 +12,8 @@ const TREND_GRID_STEPS = 4;
 export interface TrendGridLine {
   y: number;
   label: string;
+  /** true = đường mức 0 (trùng trục hoành) → vẽ nét LIỀN thay vì đứt. */
+  isZero?: boolean;
 }
 
 export interface TrendDot {
@@ -277,6 +279,17 @@ export interface BarChartBar {
   valueLabel: string;
 }
 
+export interface BarChartAxis {
+  /** x của trục tung (đường Y trái, nét liền). */
+  x: number;
+  /** đỉnh trục tung (nơi đặt mũi tên hướng lên). */
+  top: number;
+  /** đáy trục tung = đường mức 0 = trục hoành. */
+  bottom: number;
+  /** mút phải trục hoành (nơi đặt mũi tên hướng phải). */
+  right: number;
+}
+
 export interface BarChartData {
   viewBoxWidth: number;
   viewBoxHeight: number;
@@ -284,6 +297,7 @@ export interface BarChartData {
   gridLines: TrendGridLine[];
   bars: BarChartBar[];
   axisLabels: TrendAxisLabel[];
+  axis: BarChartAxis;
   hasData: boolean;
 }
 
@@ -336,10 +350,14 @@ export function buildMonthlyBarChart(
 
   const gridLines: TrendGridLine[] = Array.from(
     { length: TREND_GRID_STEPS + 1 },
-    (_, step) => ({
-      y: TREND_PAD_TOP + (plotHeight / TREND_GRID_STEPS) * step,
-      label: formatCompactSigned(maxPos - (range / TREND_GRID_STEPS) * step),
-    }),
+    (_, step) => {
+      const value = maxPos - (range / TREND_GRID_STEPS) * step;
+      return {
+        y: TREND_PAD_TOP + (plotHeight / TREND_GRID_STEPS) * step,
+        label: formatCompactSigned(value),
+        isZero: Math.abs(value) < 0.5,
+      };
+    },
   );
 
   return {
@@ -352,6 +370,12 @@ export function buildMonthlyBarChart(
       x: bar.x + bar.width / 2,
       label: bar.label,
     })),
+    axis: {
+      x: TREND_PAD_LEFT + 8,
+      top: TREND_PAD_TOP,
+      bottom: baselineY,
+      right: TREND_WIDTH - 8,
+    },
     hasData: values.some((value) => value !== 0),
   };
 }

@@ -1169,6 +1169,9 @@
 .backoffice-shell .trend-bar.is-negative { fill: #ef4444; }
 /* Đường kẻ ngang biểu đồ cột: mờ + nét đứt. */
 .backoffice-shell .trend-chart.column-chart .trend-gridline { stroke-dasharray: 4 5; opacity: 0.4; }
+/* Hệ trục: trục Y trái + trục X (mức 0) nét LIỀN, có mũi tên. */
+.backoffice-shell .trend-axis-line { stroke: var(--admin-muted); stroke-width: 1.3; fill: none; }
+.backoffice-shell .trend-axis-arrow { fill: var(--admin-muted); }
 .backoffice-shell .trend-grid-label { fill: var(--admin-muted); font-size: 10px; }
 
 /* Trang Bảo mật (2FA) */

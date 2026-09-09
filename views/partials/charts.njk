@@ -29,9 +29,18 @@
    Trục dọc = tiền (nhãn lưới trái), trục ngang = mốc/tháng. #}
 {% macro bar_chart(chart, ariaLabel, emptyCopy) %}
   <div class="trend-chart admin-mini-chart column-chart" role="img" aria-label="{{ ariaLabel }}">
-    <svg viewBox="0 0 {{ chart.viewBoxWidth }} {{ chart.viewBoxHeight }}" preserveAspectRatio="none">
+    <svg viewBox="0 0 {{ chart.viewBoxWidth }} {{ chart.viewBoxHeight }}">
+      <defs>
+        <marker id="tc-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L7,3.5 L0,7 Z" class="trend-axis-arrow"/>
+        </marker>
+      </defs>
+      {# Đường lưới value>0: nét ĐỨT mờ. Đường mức 0 (isZero) không vẽ ở đây —
+         đã có trục hoành nét liền bên dưới. #}
       {% for grid in chart.gridLines %}
-        <line x1="54" y1="{{ grid.y }}" x2="{{ chart.viewBoxWidth - 18 }}" y2="{{ grid.y }}" class="trend-gridline"/>
+        {% if not grid.isZero %}
+          <line x1="{{ chart.axis.x }}" y1="{{ grid.y }}" x2="{{ chart.viewBoxWidth - 18 }}" y2="{{ grid.y }}" class="trend-gridline"/>
+        {% endif %}
         <text x="48" y="{{ grid.y + 4 }}" text-anchor="end" class="trend-grid-label">{{ grid.label }}</text>
       {% endfor %}
       {% if chart.hasData %}
@@ -42,6 +51,12 @@
           </rect>
         {% endfor %}
       {% endif %}
+      {# Trục tung (Y): nét liền, mũi tên hướng lên (vẽ từ đáy lên đỉnh). #}
+      <line x1="{{ chart.axis.x }}" y1="{{ chart.axis.bottom }}" x2="{{ chart.axis.x }}" y2="{{ chart.axis.top }}"
+            class="trend-axis-line" marker-end="url(#tc-arrow)"/>
+      {# Trục hoành (X) = đường mức 0: nét liền, mũi tên hướng phải. #}
+      <line x1="{{ chart.axis.x }}" y1="{{ chart.axis.bottom }}" x2="{{ chart.axis.right }}" y2="{{ chart.axis.bottom }}"
+            class="trend-axis-line" marker-end="url(#tc-arrow)"/>
       {% for tick in chart.axisLabels %}
         <text x="{{ tick.x }}" y="{{ chart.viewBoxHeight - 4 }}" text-anchor="middle" class="trend-axis-label">{{ tick.label }}</text>
       {% endfor %}
