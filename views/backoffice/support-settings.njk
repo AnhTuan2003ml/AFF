@@ -13,27 +13,47 @@
   </section>
 
   <div class="bo-settings-grid">
-    <section class="panel">
-      <header class="panel-heading"><div><h2>Chế độ trả lời</h2></div></header>
-      <form method="post" action="/backoffice/support/settings" class="stack-form bo-settings-form">
-        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <form method="post" action="/backoffice/support/settings" class="bo-settings-formwrap">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
 
-        <label for="ar-mode">Chế độ
-          <select id="ar-mode" name="mode">
-            <option value="OFF" {% if settings.mode == 'OFF' %}selected{% endif %}>Thủ công — nhân viên trả lời qua Slack</option>
-            <option value="CANNED" {% if settings.mode == 'CANNED' %}selected{% endif %}>Trả lời mẫu — gửi 1 tin chào/ghi nhận tự động</option>
-            <option value="AI" {% if settings.mode == 'AI' %}selected{% endif %}>AI — tự trả lời bằng model bạn chọn</option>
-          </select>
-        </label>
+      <section class="panel">
+        <header class="panel-heading"><div><h2>Chế độ trả lời</h2></div></header>
+        <div class="stack-form bo-settings-form">
+          <label for="ar-mode">Chế độ
+            <select id="ar-mode" name="mode">
+              <option value="OFF" {% if settings.mode == 'OFF' %}selected{% endif %}>Thủ công — nhân viên trả lời qua Slack</option>
+              <option value="CANNED" {% if settings.mode == 'CANNED' %}selected{% endif %}>Trả lời mẫu — gửi 1 tin chào/ghi nhận tự động</option>
+              <option value="AI" {% if settings.mode == 'AI' %}selected{% endif %}>AI — tự trả lời bằng model bạn chọn</option>
+            </select>
+          </label>
 
-        <label for="ar-canned">Tin trả lời mẫu <small class="bo-muted">(dùng cho chế độ Trả lời mẫu; gửi tối đa 1 lần/24h mỗi khách)</small>
-          <textarea id="ar-canned" name="cannedMessage" rows="3" maxlength="3000" placeholder="Ví dụ: Cảm ơn bạn đã nhắn tin! Đội CSKH đã nhận được và sẽ phản hồi trong giờ làm việc (8h–22h).">{{ settings.cannedMessage }}</textarea>
-        </label>
+          <label for="ar-canned">Tin trả lời mẫu <small class="bo-muted">(dùng cho chế độ Trả lời mẫu; gửi tối đa 1 lần/24h mỗi khách)</small>
+            <textarea id="ar-canned" name="cannedMessage" rows="3" maxlength="3000" placeholder="Ví dụ: Cảm ơn bạn đã nhắn tin! Đội CSKH đã nhận được và sẽ phản hồi trong giờ làm việc (8h–22h).">{{ settings.cannedMessage }}</textarea>
+          </label>
 
-        <fieldset class="bo-fieldset">
-          <legend>Cấu hình AI</legend>
+          <fieldset class="bo-fieldset">
+            <legend>Tự học từ hội thoại</legend>
+            <label class="bo-check-row">
+              <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
+              <span>Lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> thì trả lời ngay, <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
+            </label>
+            <label for="ar-sim">Ngưỡng tương đồng để tái dùng: <b>{{ settings.similarityThreshold }}%</b>
+              <input id="ar-sim" type="range" name="similarityThreshold" min="50" max="100" step="1" value="{{ settings.similarityThreshold }}">
+              <small class="bo-muted">Cao (90%+): chỉ tái dùng khi câu gần y hệt. Thấp: tái dùng rộng hơn nhưng dễ lệch ngữ cảnh.</small>
+            </label>
+          </fieldset>
+        </div>
+      </section>
 
-          <label for="ar-provider">Provider
+      <section class="panel">
+        <header class="panel-heading">
+          <div>
+            <h2>Cấu hình AI</h2>
+            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý CSKH. Áp dụng khi chế độ = AI.</p>
+          </div>
+        </header>
+        <div class="stack-form bo-settings-form">
+          <label for="ar-provider">Nhà cung cấp (provider)
             <select id="ar-provider" name="aiProvider">
               {% for key, provider in providers %}
                 <option value="{{ key }}" {% if settings.aiProvider == key %}selected{% endif %}>{{ provider.label }}</option>
@@ -41,14 +61,8 @@
             </select>
           </label>
 
-          <label for="ar-key">API key
-            <input id="ar-key" type="password" name="aiApiKey" maxlength="500" autocomplete="off"
-              placeholder="{% if settings.hasApiKey %}•••••••• (đã lưu — để trống nếu giữ nguyên){% else %}Dán API key của provider đã chọn{% endif %}">
-            <small class="bo-muted">Key được mã hóa AES-256 trước khi lưu; không hiển thị lại.</small>
-          </label>
-
-          <label for="ar-model">Model
-            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" placeholder="Chọn hoặc gõ tên model">
+          <label for="ar-model">Tên model
+            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" placeholder="Chọn từ gợi ý hoặc gõ tên model">
             <datalist id="ar-model-list">
               {% for key, provider in providers %}
                 {% for model in provider.suggestedModels %}
@@ -56,28 +70,23 @@
                 {% endfor %}
               {% endfor %}
             </datalist>
+            <small class="bo-muted">Gợi ý: OpenAI (gpt-5, gpt-5-mini) · Anthropic (claude-opus-5, claude-sonnet-5, claude-haiku-4-5) · Google (gemini-2.5-pro, gemini-2.5-flash).</small>
+          </label>
+
+          <label for="ar-key">API key
+            <input id="ar-key" type="password" name="aiApiKey" maxlength="500" autocomplete="off"
+              placeholder="{% if settings.hasApiKey %}•••••••• (đã lưu — để trống nếu giữ nguyên){% else %}Dán API key của provider đã chọn{% endif %}">
+            <small class="bo-muted">Key được mã hóa AES-256 trước khi lưu; không hiển thị lại.{% if settings.hasApiKey %} Hiện đã có key.{% endif %}</small>
           </label>
 
           <label for="ar-skill">Skill / vai trò của AI <small class="bo-muted">(system prompt — mô tả vai trò, giọng điệu, quy tắc nghiệp vụ)</small>
             <textarea id="ar-skill" name="aiSystemPrompt" rows="6" maxlength="8000" placeholder="Ví dụ: Bạn là nhân viên CSKH của ShopTik — nền tảng hoàn tiền mua sắm Shopee/TikTok/Lazada. Luôn xưng 'em', gọi khách là 'anh/chị'...">{{ settings.aiSystemPrompt }}</textarea>
           </label>
-        </fieldset>
 
-        <fieldset class="bo-fieldset">
-          <legend>Tự học từ hội thoại</legend>
-          <label class="bo-check-row">
-            <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
-            <span>Lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> thì trả lời ngay, <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
-          </label>
-          <label for="ar-sim">Ngưỡng tương đồng để tái dùng: <b>{{ settings.similarityThreshold }}%</b>
-            <input id="ar-sim" type="range" name="similarityThreshold" min="50" max="100" step="1" value="{{ settings.similarityThreshold }}">
-            <small class="bo-muted">Cao (90%+): chỉ tái dùng khi câu gần y hệt. Thấp: tái dùng rộng hơn nhưng dễ lệch ngữ cảnh.</small>
-          </label>
-        </fieldset>
-
-        <button class="button button-primary" type="submit">Lưu cấu hình</button>
-      </form>
-    </section>
+          <button class="button button-primary" type="submit">Lưu cấu hình</button>
+        </div>
+      </section>
+    </form>
 
     <section class="panel">
       <header class="panel-heading">

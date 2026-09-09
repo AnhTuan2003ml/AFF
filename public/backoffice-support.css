@@ -253,3 +253,6 @@ td.bo-cell-clamp {
 
 .bo-check-row { display:flex; gap:8px; align-items:flex-start; line-height:1.5; }
 .bo-check-row input { margin-top:3px; flex:none; }
+
+/* Bọc form quanh 2 panel (Chế độ + Cấu hình AI) mà không phá lưới. */
+.bo-settings-formwrap { display: contents; }
