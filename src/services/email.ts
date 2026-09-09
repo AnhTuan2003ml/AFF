@@ -104,6 +104,10 @@ export class EmailService {
       ].join("\n"),
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f2544">
+          <div style="text-align:center;margin:6px 0 18px">
+            <img src="${this.config.APP_ORIGIN}/assets/images/icon.png" width="56" height="56" alt="CamiO - ShopTik" style="border-radius:14px;display:inline-block;vertical-align:middle">
+            <div style="font-weight:800;font-size:16px;color:#ee4d2d;margin-top:6px">CamiO · ShopTik</div>
+          </div>
           <h1 style="font-size:22px">Xác nhận ${safePurpose}</h1>
           <p>Mã xác nhận của bạn:</p>
           <div style="font-size:32px;font-weight:700;letter-spacing:8px;background:#eef4ff;padding:20px;border-radius:12px;text-align:center">${safeCode}</div>
@@ -157,6 +161,10 @@ export class EmailService {
       ].join("\n"),
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f2544">
+          <div style="text-align:center;margin:6px 0 18px">
+            <img src="${this.config.APP_ORIGIN}/assets/images/icon.png" width="56" height="56" alt="CamiO - ShopTik" style="border-radius:14px;display:inline-block;vertical-align:middle">
+            <div style="font-weight:800;font-size:16px;color:#ee4d2d;margin-top:6px">CamiO · ShopTik</div>
+          </div>
           <h1 style="font-size:20px">Đội hỗ trợ đã phản hồi bạn</h1>
           <p>Chào ${safeName},</p>
           ${
