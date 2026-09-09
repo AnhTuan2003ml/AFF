@@ -10373,3 +10373,15 @@ button.cal-cell.is-today:hover:not(:disabled) {
     padding: 24px 26px
   }
 }
+
+/* ── Biểu đồ (trend/bar) trên khu người dùng — app không nạp styles.css nên
+   định nghĩa lại ở đây. Biểu đồ cột "Thu nhập theo tháng" ở /app/referrals. ── */
+.trend-chart { width: 100%; height: auto; }
+.trend-chart .trend-gridline { stroke: var(--lx-line, #e9ded4); stroke-width: 1; }
+.trend-chart .trend-grid-label,
+.trend-chart .trend-axis-label { fill: var(--lx-muted, #81736a); font-size: 10px; }
+.trend-chart .trend-bar { fill: #16a34a; }
+.trend-chart .trend-bar.is-negative { fill: #ef4444; }
+.trend-chart .chart-empty-copy { color: var(--lx-muted, #81736a); font-size: 12px; text-align: center; }
+/* Đường kẻ ngang biểu đồ cột: mờ + nét đứt cho nhẹ, không lấn cột. */
+.trend-chart.column-chart .trend-gridline { stroke-dasharray: 4 5; opacity: 0.4; }
