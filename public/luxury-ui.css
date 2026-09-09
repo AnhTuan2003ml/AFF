@@ -10388,3 +10388,8 @@ button.cal-cell.is-today:hover:not(:disabled) {
 /* Hệ trục biểu đồ cột: trục Y trái + trục X (mức 0) nét LIỀN, có mũi tên. */
 .trend-chart .trend-axis-line { stroke: var(--lx-muted, #81736a); stroke-width: 1.3; fill: none; }
 .trend-chart .trend-axis-arrow { fill: var(--lx-muted, #81736a); }
+/* Biểu đồ cột: khung cao hơn (đỡ dẹt trên mobile), giới hạn cao trên desktop,
+   nhãn to rõ. */
+.trend-chart.column-chart svg { max-height: 300px; }
+.trend-chart.column-chart .trend-grid-label,
+.trend-chart.column-chart .trend-axis-label { font-size: 14px; }

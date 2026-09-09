@@ -39,9 +39,9 @@
          đã có trục hoành nét liền bên dưới. #}
       {% for grid in chart.gridLines %}
         {% if not grid.isZero %}
-          <line x1="{{ chart.axis.x }}" y1="{{ grid.y }}" x2="{{ chart.viewBoxWidth - 18 }}" y2="{{ grid.y }}" class="trend-gridline"/>
+          <line x1="{{ chart.axis.x }}" y1="{{ grid.y }}" x2="{{ chart.axis.right }}" y2="{{ grid.y }}" class="trend-gridline"/>
         {% endif %}
-        <text x="48" y="{{ grid.y + 4 }}" text-anchor="end" class="trend-grid-label">{{ grid.label }}</text>
+        <text x="{{ chart.axis.x - 8 }}" y="{{ grid.y + 4 }}" text-anchor="end" class="trend-grid-label">{{ grid.label }}</text>
       {% endfor %}
       {% if chart.hasData %}
         {% for bar in chart.bars %}

@@ -1172,6 +1172,10 @@
 /* Hệ trục: trục Y trái + trục X (mức 0) nét LIỀN, có mũi tên. */
 .backoffice-shell .trend-axis-line { stroke: var(--admin-muted); stroke-width: 1.3; fill: none; }
 .backoffice-shell .trend-axis-arrow { fill: var(--admin-muted); }
+/* Biểu đồ cột: khung cao hơn, giới hạn cao trên desktop, nhãn to rõ. */
+.backoffice-shell .trend-chart.column-chart svg { max-height: 300px; }
+.backoffice-shell .trend-chart.column-chart .trend-grid-label,
+.backoffice-shell .trend-chart.column-chart .trend-axis-label { font-size: 14px; }
 .backoffice-shell .trend-grid-label { fill: var(--admin-muted); font-size: 10px; }
 
 /* Trang Bảo mật (2FA) */

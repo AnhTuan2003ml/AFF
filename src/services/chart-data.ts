@@ -316,8 +316,18 @@ export function buildMonthlyBarChart(
   points: SeriesPoint[],
   formatValue: (value: number) => string = (value) => `${value}`,
 ): BarChartData {
-  const plotWidth = TREND_WIDTH - TREND_PAD_LEFT - TREND_PAD_RIGHT;
-  const plotHeight = TREND_HEIGHT - TREND_PAD_TOP - TREND_PAD_BOTTOM;
+  // Khung riêng cho biểu đồ CỘT — tỉ lệ cao hơn biểu đồ đường (khoảng 1.7:1)
+  // để trên MOBILE cột không bị dẹt, nhãn không chồng. Desktop giới hạn chiều
+  // cao bằng CSS.
+  const W = 520;
+  const H = 300;
+  const PAD_L = 58;
+  const PAD_R = 20;
+  const PAD_T = 22;
+  const PAD_B = 42;
+  const STEPS = TREND_GRID_STEPS;
+  const plotWidth = W - PAD_L - PAD_R;
+  const plotHeight = H - PAD_T - PAD_B;
   const values = points.map((point) => point.value);
   const rawMax = Math.max(0, ...values);
   const rawMin = Math.min(0, ...values);
@@ -328,12 +338,12 @@ export function buildMonthlyBarChart(
   const bottom = rawMin < 0 ? -niceCeil(-rawMin) : 0;
   const range = Math.max(1, top - bottom);
   const maxPos = top;
-  const baselineY = TREND_PAD_TOP + (top / range) * plotHeight;
+  const baselineY = PAD_T + (top / range) * plotHeight;
   const slot = points.length > 0 ? plotWidth / points.length : plotWidth;
-  const barWidth = Math.max(6, slot * 0.55);
+  const barWidth = Math.max(6, slot * 0.6);
 
   const bars: BarChartBar[] = points.map((point, index) => {
-    const centerX = TREND_PAD_LEFT + slot * (index + 0.5);
+    const centerX = PAD_L + slot * (index + 0.5);
     const rawHeight = (Math.abs(point.value) / range) * plotHeight;
     const negative = point.value < 0;
     const height = point.value === 0 ? 0 : Math.max(rawHeight, 2);
@@ -349,11 +359,11 @@ export function buildMonthlyBarChart(
   });
 
   const gridLines: TrendGridLine[] = Array.from(
-    { length: TREND_GRID_STEPS + 1 },
+    { length: STEPS + 1 },
     (_, step) => {
-      const value = maxPos - (range / TREND_GRID_STEPS) * step;
+      const value = maxPos - (range / STEPS) * step;
       return {
-        y: TREND_PAD_TOP + (plotHeight / TREND_GRID_STEPS) * step,
+        y: PAD_T + (plotHeight / STEPS) * step,
         label: formatCompactSigned(value),
         isZero: Math.abs(value) < 0.5,
       };
@@ -361,8 +371,8 @@ export function buildMonthlyBarChart(
   );
 
   return {
-    viewBoxWidth: TREND_WIDTH,
-    viewBoxHeight: TREND_HEIGHT,
+    viewBoxWidth: W,
+    viewBoxHeight: H,
     baselineY,
     gridLines,
     bars,
@@ -371,10 +381,10 @@ export function buildMonthlyBarChart(
       label: bar.label,
     })),
     axis: {
-      x: TREND_PAD_LEFT + 8,
-      top: TREND_PAD_TOP,
+      x: PAD_L,
+      top: PAD_T - 4,
       bottom: baselineY,
-      right: TREND_WIDTH - 8,
+      right: W - 8,
     },
     hasData: values.some((value) => value !== 0),
   };

@@ -2820,6 +2820,10 @@ select:not([multiple])::-ms-expand {
 /* Hệ trục: trục Y trái + trục X (mức 0) nét LIỀN, có mũi tên. */
 .trend-chart .trend-axis-line { stroke: var(--muted); stroke-width: 1.3; fill: none; }
 .trend-chart .trend-axis-arrow { fill: var(--muted); }
+/* Biểu đồ cột: khung cao hơn, giới hạn cao trên desktop, nhãn to rõ. */
+.trend-chart.column-chart svg { max-height: 300px; }
+.trend-chart.column-chart .trend-grid-label,
+.trend-chart.column-chart .trend-axis-label { font-size: 14px; }
 
 .trend-chart .trend-bar.is-negative {
   fill: #ef4444;
