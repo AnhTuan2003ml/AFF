@@ -14,7 +14,14 @@
         <h1 id="discover-title">{{ t('Sản phẩm đáng để khám phá.', 'Products worth discovering.') }}</h1>
         <p>{{ t('Duyệt sản phẩm, so sánh mức hoàn và đi thẳng đến sàn bạn muốn mua.', 'Browse products, compare cashback and go straight to the platform you want.') }}</p>
       </div>
-      {% if maxCashbackRate > 0 %}<span class="px-rate-pill">{{ t('Hoàn đến', 'Up to') }} {{ maxCashbackRate }}%</span>{% endif %}
+      {% if heroCashbackRate > 0 %}
+      <div class="px-rate-pill" role="img" aria-label="{{ t('Hoàn tiền đến', 'Cashback up to') }} {{ heroCashbackRate }}%">
+        <span class="px-rate-pill-text">
+          <span class="px-rate-pill-label">{{ t('HOÀN ĐẾN', 'UP TO') }}</span>
+          <span class="px-rate-pill-value">{{ heroCashbackRate }}<i>%</i></span>
+        </span>
+      </div>
+      {% endif %}
     </section>
 
     {% if items.length %}

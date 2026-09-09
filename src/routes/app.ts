@@ -888,6 +888,10 @@ export async function registerAppRoutes(
       (maximum, item) => Math.max(maximum, item.cashbackRate ?? 0),
       0,
     );
+    // Số hiển thị ở hero: làm tròn cho gọn (bỏ phần thập phân lẻ như 66.4%) và
+    // đặt mức quảng bá tối thiểu 80% khi đang có sản phẩm hoàn tiền.
+    const heroCashbackRate =
+      maxCashbackRate > 0 ? Math.max(80, Math.round(maxCashbackRate)) : 0;
 
     const featuredStores = featuredStoreRows.rows.map((row) => ({
       name: row.shop_name,
@@ -904,6 +908,7 @@ export async function registerAppRoutes(
       platforms,
       featuredStores,
       maxCashbackRate,
+      heroCashbackRate,
       productCount: items.filter((item) => item.isProduct).length,
       voucherCount: items.filter((item) => item.type === "VOUCHER").length,
       balances,

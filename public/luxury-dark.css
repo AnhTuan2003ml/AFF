@@ -277,7 +277,7 @@
 }
 
 /* Chip ghi chú, viên trạng thái nền kem */
-:root[data-theme="dark"] :is(.mb-pill-note, .mb-chip-glass, .px-rate-pill,
+:root[data-theme="dark"] :is(.mb-pill-note, .mb-chip-glass,
   .kol-cta .badge-pending, .voucher-logo.is-placeholder) {
   background: var(--lx-paper-2);
 }
@@ -377,10 +377,13 @@
   color: var(--lx-muted);
 }
 
-:root[data-theme="dark"] .voucher-btn-copy {
+:root[data-theme="dark"] .voucher-code {
   border-color: var(--lx-orange-2);
-  color: var(--lx-orange-2);
   background: var(--lx-orange-soft);
+}
+:root[data-theme="dark"] .voucher-code-val,
+:root[data-theme="dark"] .voucher-code-hint {
+  color: var(--lx-orange-2);
 }
 
 /* Thẻ giới thiệu ở trang công khai */

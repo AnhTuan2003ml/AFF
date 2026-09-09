@@ -77,22 +77,32 @@
     info.appendChild(el("p", "voucher-title", v.title));
     if (v.expiry_text) info.appendChild(el("p", "voucher-expiry", v.expiry_text));
 
-    var actions = el("div", "voucher-actions");
-    var copy = el("button", "voucher-btn voucher-btn-copy");
-    copy.type = "button";
-    copy.textContent = T("Mã: ", "Code: ") + v.code;
-    copy.addEventListener("click", function () {
+    // Chip mã giảm giá — mã dài tự xuống dòng (break-all), bấm để chép.
+    // Tách khỏi hàng nút để mã dài không kéo giãn/vỡ layout thẻ.
+    var codeChip = el("button", "voucher-code");
+    codeChip.type = "button";
+    codeChip.title = T("Bấm để sao chép mã", "Tap to copy code");
+    var codeTag = el("span", "voucher-code-tag", T("MÃ", "CODE"));
+    var codeVal = el("span", "voucher-code-val", v.code);
+    var codeHint = el("span", "voucher-code-hint", T("Sao chép", "Copy"));
+    codeChip.appendChild(codeTag);
+    codeChip.appendChild(codeVal);
+    codeChip.appendChild(codeHint);
+    codeChip.addEventListener("click", function () {
       try {
         navigator.clipboard.writeText(v.code);
       } catch (e) {}
-      var old = copy.textContent;
-      copy.textContent = T("Đã chép ✓", "Copied ✓");
+      var old = codeHint.textContent;
+      codeChip.classList.add("is-copied");
+      codeHint.textContent = T("Đã chép ✓", "Copied ✓");
       window.setTimeout(function () {
-        copy.textContent = old;
+        codeChip.classList.remove("is-copied");
+        codeHint.textContent = old;
       }, 1400);
     });
-    actions.appendChild(copy);
+    info.appendChild(codeChip);
 
+    var actions = el("div", "voucher-actions");
     var use = el("a", "voucher-btn voucher-btn-use", T("Dùng ngay ↗", "Use now ↗"));
     use.href = v.use_url;
     use.target = "_blank";
