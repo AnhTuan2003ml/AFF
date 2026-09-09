@@ -725,6 +725,20 @@ export async function registerAuthRoutes(
           if (isNew && !daCoNguoiGioiThieu) fragParams.set("isNew", "1");
           return reply.redirect(`${mobileRedirect}#${fragParams.toString()}`);
         }
+        // Tài khoản đã bật 2FA (thường là admin): chặn cả đăng nhập Google,
+        // buộc qua bước nhập mã trước khi tạo phiên.
+        if (await requires2fa(deps.db, userId)) {
+          reply.setCookie(PENDING_2FA_COOKIE, `${userId}:0`, {
+            path: "/",
+            httpOnly: true,
+            secure: deps.config.NODE_ENV === "production",
+            sameSite: "lax",
+            signed: true,
+            maxAge: 5 * 60,
+          });
+          const next = safeNextPath(nextCookie, "/app");
+          return reply.redirect(`/dang-nhap/2fa?next=${encodeURIComponent(next)}`);
+        }
         await createSession(deps.db, deps.config, request, reply, userId);
         setWelcome(reply, deps.config);
         if (isNew && !daCoNguoiGioiThieu) {
