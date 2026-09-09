@@ -1,0 +1,54 @@
+{% extends "backoffice/base.njk" %}
+
+{% block backoffice_content %}
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">BẢO MẬT</span>
+      <h1>Xác thực hai lớp (2FA)</h1>
+      <p>Bảo vệ tài khoản quản trị bằng mã một lần từ ứng dụng Authenticator (Google Authenticator, Microsoft Authenticator, Authy…).</p>
+    </div>
+  </section>
+
+  <section class="panel security-panel">
+    {% if twoFactor.enabled %}
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">TRẠNG THÁI</span><h2>✅ Đang bật</h2></div>
+      </header>
+      <p class="bp-hint">Mỗi lần đăng nhập, sau khi nhập đúng mật khẩu bạn sẽ cần nhập thêm mã 6 số.{% if twoFactor.enabledAt %} Bật lúc {{ twoFactor.enabledAt | datetime }}.{% endif %}</p>
+      <form method="post" action="/backoffice/security/2fa/disable" class="stack-form security-form" data-confirm-form data-confirm-message="Tắt xác thực hai lớp cho tài khoản của bạn?">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label>Nhập mã hiện tại để tắt
+          <input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required>
+        </label>
+        <button type="submit" class="button button-danger">Tắt 2FA</button>
+      </form>
+    {% elif enroll %}
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">THIẾT LẬP</span><h2>Nhập khóa vào Authenticator</h2></div>
+      </header>
+      <ol class="bp-hint security-steps">
+        <li>Mở ứng dụng Authenticator → <b>Thêm tài khoản</b> → <b>Nhập khóa thiết lập</b> (manual).</li>
+        <li>Tên tài khoản: email của bạn. Loại: <b>Theo thời gian (Time-based)</b>.</li>
+        <li>Dán <b>khóa bí mật</b> dưới đây, rồi nhập mã 6 số app hiển thị để xác nhận.</li>
+      </ol>
+      <div class="totp-secret-box">
+        <span class="totp-secret-label">Khóa bí mật</span>
+        <code class="totp-secret-key">{{ enroll.formattedSecret }}</code>
+      </div>
+      <p class="bp-hint totp-uri">Hoặc mở link này trên thiết bị có Authenticator: <a href="{{ enroll.keyUri }}">{{ enroll.keyUri }}</a></p>
+      <form method="post" action="/backoffice/security/2fa/enable" class="stack-form security-form">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <label>Mã 6 số từ ứng dụng
+          <input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required autofocus>
+        </label>
+        <button type="submit" class="button button-primary">Bật 2FA</button>
+      </form>
+    {% else %}
+      <header class="admin-section-heading">
+        <div><span class="admin-kicker">TRẠNG THÁI</span><h2>Chưa bật</h2></div>
+      </header>
+      <p class="bp-hint">Bật 2FA để mỗi lần đăng nhập cần thêm mã một lần — chống bị chiếm tài khoản dù lộ mật khẩu.</p>
+      <a class="button button-primary security-start" href="/backoffice/security?setup=1">Bắt đầu thiết lập</a>
+    {% endif %}
+  </section>
+{% endblock %}

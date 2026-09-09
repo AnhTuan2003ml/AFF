@@ -1169,6 +1169,22 @@
 .backoffice-shell .trend-bar.is-negative { fill: #ef4444; }
 .backoffice-shell .trend-grid-label { fill: var(--admin-muted); font-size: 10px; }
 
+/* Trang Bảo mật (2FA) */
+.backoffice-shell .security-panel { max-width: 640px; }
+.backoffice-shell .security-form { max-width: 320px; margin-top: 14px; }
+.backoffice-shell .security-start { margin-top: 12px; }
+.backoffice-shell .security-steps { line-height: 1.9; }
+.backoffice-shell .totp-secret-box {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px dashed var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface-soft);
+}
+.backoffice-shell .totp-secret-label { display: block; font-size: 12px; color: var(--admin-muted); }
+.backoffice-shell .totp-secret-key { font-size: 18px; font-weight: 800; letter-spacing: 2px; word-break: break-all; }
+.backoffice-shell .totp-uri { word-break: break-all; }
+
 .backoffice-shell .stacked-bar {
   display: flex;
   height: 20px;

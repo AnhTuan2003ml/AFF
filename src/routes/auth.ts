@@ -34,6 +34,7 @@ import {
   verifyLazadaOAuthState,
 } from "../services/lazada-oauth.js";
 import { safeNextPath } from "../auth/guards.js";
+import { requires2fa, verifyUserTotp } from "../services/admin-2fa.js";
 
 interface AuthRouteDeps {
   db: Database;
@@ -82,6 +83,9 @@ const OAUTH_MOBILE_REDIRECT_COOKIE = "aff_oauth_mredir";
 // Mã giới thiệu đi kèm khi bấm "Đăng ký bằng Google" từ link ?ref=... — giữ
 // qua vòng OAuth bằng cookie ký để callback gán đúng người giới thiệu.
 const OAUTH_REF_COOKIE = "aff_oauth_ref";
+// Đăng nhập tài khoản đã bật 2FA: mật khẩu đúng nhưng CHƯA tạo phiên — chờ mã
+// TOTP. Cookie ký giữ tạm userId + cờ "ghi nhớ", hạn 5 phút.
+const PENDING_2FA_COOKIE = "aff_2fa";
 
 /**
  * Chỉ cho phép deep-link về đúng app (scheme của Expo Go và của bản build), tránh
@@ -333,6 +337,25 @@ export async function registerAuthRoutes(
           input.email,
           input.password,
         );
+        // Tài khoản đã bật 2FA: chưa tạo phiên, chuyển sang bước nhập mã TOTP.
+        if (await requires2fa(deps.db, user.id)) {
+          reply.setCookie(
+            PENDING_2FA_COOKIE,
+            `${user.id}:${input.remember ? "1" : "0"}`,
+            {
+              path: "/",
+              httpOnly: true,
+              secure: deps.config.NODE_ENV === "production",
+              sameSite: "lax",
+              signed: true,
+              maxAge: 5 * 60,
+            },
+          );
+          const next = safeNextPath(input.next, "/app");
+          return reply.redirect(
+            `/dang-nhap/2fa?next=${encodeURIComponent(next)}`,
+          );
+        }
         await createSession(deps.db, deps.config, request, reply, user.id, {
           remember: Boolean(input.remember),
         });
@@ -345,6 +368,52 @@ export async function registerAuthRoutes(
           googleEnabled: googleOAuthEnabled(deps.config),
           next: safeNextPath(body.next, ""),
           values: { email: String(body.email ?? "") },
+        });
+      }
+    },
+  );
+
+  // Bước 2 của đăng nhập khi bật 2FA: nhập mã TOTP.
+  app.get("/dang-nhap/2fa", async (request, reply) => {
+    if (!readSignedCookie(request, PENDING_2FA_COOKIE)) {
+      return reply.redirect("/dang-nhap");
+    }
+    const q = (request.query ?? {}) as Record<string, unknown>;
+    return reply.view("auth/login-2fa.njk", {
+      pageTitle: "Xác thực hai lớp",
+      next: safeNextPath(q.next, "/app"),
+    });
+  });
+
+  app.post(
+    "/dang-nhap/2fa",
+    { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const pending = readSignedCookie(request, PENDING_2FA_COOKIE);
+      if (!pending) return reply.redirect("/dang-nhap");
+      const [uid, rememberFlag] = pending.split(":");
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const next = safeNextPath(body.next, "/app");
+      try {
+        const token = String(body.token ?? "").trim();
+        const ok = await verifyUserTotp(deps.db, deps.config, uid!, token);
+        if (!ok) {
+          throw new AppError(
+            "TWO_FACTOR_INVALID",
+            "Mã xác thực không đúng. Nhập mã mới nhất trong ứng dụng Authenticator.",
+            401,
+          );
+        }
+        reply.clearCookie(PENDING_2FA_COOKIE, { path: "/" });
+        await createSession(deps.db, deps.config, request, reply, uid!, {
+          remember: rememberFlag === "1",
+        });
+        setWelcome(reply, deps.config);
+        return reply.redirect(next);
+      } catch (error) {
+        return renderAuthError(reply, "auth/login-2fa.njk", error, {
+          pageTitle: "Xác thực hai lớp",
+          next,
         });
       }
     },

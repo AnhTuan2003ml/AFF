@@ -1,0 +1,33 @@
+{% extends "auth/auth-commerce-base.njk" %}
+
+{% block auth_head_title %}{{ t('Xác thực hai lớp', 'Two-factor authentication') }}{% endblock %}
+{% block auth_head_sub %}{{ t('Nhập mã 6 số trong ứng dụng Authenticator để tiếp tục', 'Enter the 6-digit code from your Authenticator app to continue') }}{% endblock %}
+
+{% block auth_content %}
+  {% if formError %}
+    <div class="flash flash-error" role="alert"><span>{{ formError }}</span></div>
+  {% endif %}
+  <form method="post" action="/dang-nhap/2fa" class="stack-form login-form" data-validate-form novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <input type="hidden" name="next" value="{{ next or '' }}">
+
+    <label class="login-field" for="totp-input">
+      <span class="auth-field-label">{{ t('Mã xác thực', 'Authentication code') }}</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V8a4 4 0 0 1 8 0v2"/></svg>
+        </span>
+        <input id="totp-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code"
+               pattern="\d{6}" maxlength="6" placeholder="000000" required autofocus
+               data-required-message="{{ t('Vui lòng nhập mã 6 số.', 'Please enter the 6-digit code.') }}"
+               data-pattern-message="{{ t('Mã gồm đúng 6 chữ số.', 'The code must be exactly 6 digits.') }}">
+      </span>
+      <small class="field-error" id="totp-input-error" hidden></small>
+    </label>
+
+    <button type="submit" class="px-btn px-btn-dark login-submit">{{ t('Xác nhận', 'Verify') }}</button>
+    <p class="auth-alt-note">
+      <a href="/dang-nhap">{{ t('← Đăng nhập lại', '← Back to sign in') }}</a>
+    </p>
+  </form>
+{% endblock %}
