@@ -6457,3 +6457,5 @@ textarea:focus::placeholder {
   color: transparent;
   opacity: 0;
 }
+
+.auth-captcha { margin: 6px 0 10px; }

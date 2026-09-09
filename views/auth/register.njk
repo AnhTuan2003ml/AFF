@@ -70,6 +70,11 @@
     </label>
     <small class="field-error" id="register-accept-input-error" hidden></small>
 
+    {% if captchaSiteKey %}
+      <div class="cf-turnstile auth-captcha" data-sitekey="{{ captchaSiteKey }}"></div>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    {% endif %}
+
     <button class="button button-primary button-block button-large login-submit" type="submit" data-submit-button>
       <span>{{ t('Gửi mã OTP', 'Send OTP') }}</span>
       <span aria-hidden="true">→</span>

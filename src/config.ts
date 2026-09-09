@@ -127,6 +127,10 @@ const configSchema = z.object({
   LAZADA_PRODUCT_API_URL: httpsUrlOrEmpty,
   LAZADA_PRODUCT_API_TOKEN: z.string().default(""),
   LAZADA_DEFAULT_COMMISSION_RATE_BPS: commissionRateBps,
+  // CAPTCHA chống bot (Cloudflare Turnstile). Đặt cả hai key để BẬT; để trống
+  // thì tắt hoàn toàn (không chặn luồng nào).
+  TURNSTILE_SITE_KEY: z.string().trim().default(""),
+  TURNSTILE_SECRET_KEY: z.string().trim().default(""),
   LAZADA_AFFILIATE_REDIRECT_HOSTS: z.string().default(""),
   // Access token Lazada chưa tự refresh — hết hạn phải dán lại.
   LAZADA_OPEN_API_APP_KEY: z.string().trim().default(""),

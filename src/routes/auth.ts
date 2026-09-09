@@ -39,6 +39,12 @@ import {
   requires2fa,
   verifyUserTotp,
 } from "../services/admin-2fa.js";
+import { captchaSiteKey, verifyCaptcha } from "../services/captcha.js";
+
+function captchaTokenFrom(body: unknown): string | undefined {
+  const v = (body as Record<string, unknown> | null)?.["cf-turnstile-response"];
+  return typeof v === "string" ? v : undefined;
+}
 
 interface AuthRouteDeps {
   db: Database;
@@ -196,6 +202,7 @@ export async function registerAuthRoutes(
     return reply.view("auth/register.njk", {
       pageTitle: "Tạo tài khoản",
       googleEnabled: googleOAuthEnabled(deps.config),
+      captchaSiteKey: captchaSiteKey(deps.config),
       referralCode: String(
         (request.query as Record<string, unknown>).ref ?? "",
       ).slice(0, 30),
@@ -209,6 +216,13 @@ export async function registerAuthRoutes(
     },
     async (request, reply) => {
       try {
+        if (!(await verifyCaptcha(deps.config, captchaTokenFrom(request.body), request.ip))) {
+          throw new AppError(
+            "CAPTCHA_FAILED",
+            "Xác minh CAPTCHA thất bại. Vui lòng thử lại.",
+            400,
+          );
+        }
         const input = parseInput(registerSchema, request.body);
         await registerWithEmail(
           deps.db,
@@ -228,6 +242,7 @@ export async function registerAuthRoutes(
         return renderAuthError(reply, "auth/register.njk", error, {
           pageTitle: "Tạo tài khoản",
           googleEnabled: googleOAuthEnabled(deps.config),
+          captchaSiteKey: captchaSiteKey(deps.config),
           // Cờ để hiện cảnh báo NGAY dưới ô mã giới thiệu.
           referralError:
             error instanceof AppError &&
@@ -433,6 +448,7 @@ export async function registerAuthRoutes(
   app.get("/quen-mat-khau", async (_request, reply) =>
     reply.view("auth/forgot-password.njk", {
       pageTitle: "Quên mật khẩu",
+      captchaSiteKey: captchaSiteKey(deps.config),
     }),
   );
 
@@ -441,6 +457,13 @@ export async function registerAuthRoutes(
     { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
     async (request, reply) => {
       try {
+        if (!(await verifyCaptcha(deps.config, captchaTokenFrom(request.body), request.ip))) {
+          throw new AppError(
+            "CAPTCHA_FAILED",
+            "Xác minh CAPTCHA thất bại. Vui lòng thử lại.",
+            400,
+          );
+        }
         const input = parseInput(z.object({ email: emailSchema }), request.body);
         await requestPasswordReset(
           deps.db,
@@ -464,6 +487,7 @@ export async function registerAuthRoutes(
       } catch (error) {
         return renderAuthError(reply, "auth/forgot-password.njk", error, {
           pageTitle: "Quên mật khẩu",
+          captchaSiteKey: captchaSiteKey(deps.config),
         });
       }
     },

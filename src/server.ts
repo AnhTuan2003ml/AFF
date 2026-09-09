@@ -47,6 +47,7 @@ import { getWalletBalances } from "./services/ledger.js";
 import { getBackofficeQueueCounts } from "./services/backoffice-queue.js";
 import { hasVerifiedBank } from "./services/app-dashboard.js";
 import { countUnreadSupportReplies } from "./services/support-chat.js";
+import { captchaEnabled } from "./services/captcha.js";
 
 const projectRoot = process.cwd();
 // Đổi mỗi lần khởi động để né cache immutable 30 ngày của /assets/*.
@@ -92,6 +93,10 @@ await app.register(multipart, {
   // Cho hồ sơ KOL/KOC: 2 ảnh CCCD + 1 video khuôn mặt (video tối đa ~30MB).
   limits: { fileSize: 30 * 1024 * 1024, files: 3, fields: 30 },
 });
+// Chỉ nới CSP cho Cloudflare Turnstile khi CAPTCHA thực sự bật.
+const turnstileCsp = captchaEnabled(config)
+  ? ["https://challenges.cloudflare.com"]
+  : [];
 await app.register(helmet, {
   global: true,
   contentSecurityPolicy: {
@@ -103,9 +108,11 @@ await app.register(helmet, {
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       // Xem trước ảnh/video KYC trên form dùng URL.createObjectURL (blob:).
       mediaSrc: ["'self'", "blob:"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", ...turnstileCsp],
       styleSrc: ["'self'"],
-      connectSrc: ["'self'", "blob:"],
+      // Widget Turnstile chạy trong iframe của challenges.cloudflare.com.
+      frameSrc: ["'self'", ...turnstileCsp],
+      connectSrc: ["'self'", "blob:", ...turnstileCsp],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests:
