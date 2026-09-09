@@ -1075,3 +1075,81 @@ export async function createPurchaseIntent(
     subId: built.subId,
   };
 }
+
+/**
+ * Chuyển link "Dùng ngay" của voucher Shopee sang link AFFILIATE gắn Sub ID của
+ * đúng người dùng (giống nút Mua), ghi một `affiliate_links` để lượt bấm voucher
+ * cũng được ghi nhận, rồi trả `buyUrl = /go/:clickId` — bấm vào vẫn 302 chuyển
+ * hướng bình thường sang Shopee. Không cần preview/sản phẩm: voucher không gắn
+ * với một mặt hàng cụ thể nên chỉ dùng các cột bắt buộc của affiliate_links.
+ */
+export async function createVoucherAffiliateLink(
+  db: Database,
+  config: AppConfig,
+  params: { userId: string; voucherUrl: string },
+  fetcher: Fetcher = fetch,
+): Promise<{ clickId: string; buyUrl: string; affiliateUrl: string }> {
+  // Voucher đang là kênh Shopee; chỉ nhận link Shopee công khai.
+  const resolved = resolveProductUrl(params.voucherUrl, "SHOPEE");
+  if (!isPlatformPurchaseEnabled(config, "SHOPEE") || !config.SHOPEE_AFFILIATE_ID) {
+    throw new AppError(
+      "AFFILIATE_NOT_CONFIGURED",
+      "Chưa cấu hình đầy đủ Affiliate Shopee.",
+      503,
+    );
+  }
+
+  const clickId = randomClickId();
+  const trackingCode = await query<{ tracking_code: string }>(
+    db,
+    "SELECT tracking_code FROM users WHERE id = $1",
+    [params.userId],
+  );
+  const userCode = trackingCode.rows[0]?.tracking_code;
+  const subParts = buildSubIdParts({
+    clickId,
+    ...(userCode ? { userCode } : {}),
+    source: "voucher",
+    campaign: "voucher",
+  });
+  const subId = subParts.join("-");
+
+  // Ưu tiên short link chính thức (giữ nguyên URL voucher làm origin để không
+  // mất mã); nếu API chưa cấu hình/lỗi thì lùi về an_redir với affiliate_id.
+  let affiliateUrl: string | null = null;
+  if (isShopeeOpenApiConfigured(config)) {
+    const shortLink = await generateShopeeShortLink(
+      config,
+      { originUrl: params.voucherUrl, subIds: subParts.slice(0, 5) },
+      fetcher,
+    );
+    if (shortLink && isSafeAffiliateRedirect(shortLink, "SHOPEE", config)) {
+      affiliateUrl = shortLink;
+    }
+  }
+  if (!affiliateUrl) {
+    const redir = new URL("https://s.shopee.vn/an_redir");
+    redir.searchParams.set("origin_link", params.voucherUrl);
+    redir.searchParams.set("affiliate_id", config.SHOPEE_AFFILIATE_ID);
+    redir.searchParams.set("sub_id", subId);
+    affiliateUrl = redir.toString();
+  }
+
+  await query(
+    db,
+    `INSERT INTO affiliate_links (
+       user_id, platform, click_id, original_url, normalized_url,
+       affiliate_url, sub_id, source, campaign
+     ) VALUES ($1, 'SHOPEE', $2, $3, $4, $5, $6, 'voucher', 'voucher')`,
+    [
+      params.userId,
+      clickId,
+      params.voucherUrl,
+      resolved.normalizedUrl,
+      affiliateUrl,
+      subId,
+    ],
+  );
+
+  return { clickId, buyUrl: `${config.APP_ORIGIN}/go/${clickId}`, affiliateUrl };
+}

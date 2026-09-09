@@ -150,6 +150,23 @@ export interface StoredVoucher {
   detail_url: string | null;
 }
 
+/**
+ * Tra link "Dùng ngay" (shopee.vn) của một voucher theo mã. Dùng khi chuyển voucher
+ * sang link affiliate: client chỉ gửi `code`, server tự lấy URL đích từ DB để tránh
+ * bị lợi dụng chèn URL redirect tuỳ ý.
+ */
+export async function getVoucherUseUrlByCode(
+  db: Database,
+  code: string,
+): Promise<string | null> {
+  const result = await query<{ use_url: string }>(
+    db,
+    "SELECT use_url FROM shopee_vouchers WHERE code = $1 LIMIT 1",
+    [code],
+  );
+  return result.rows[0]?.use_url ?? null;
+}
+
 /** Đọc voucher đã lưu (cho web + app). */
 export async function listShopeeVouchers(
   db: Database,

@@ -104,7 +104,9 @@
 
     var actions = el("div", "voucher-actions");
     var use = el("a", "voucher-btn voucher-btn-use", T("Dùng ngay ↗", "Use now ↗"));
-    use.href = v.use_url;
+    // Đi qua link AFFILIATE gắn Sub ID người dùng (server tra URL đích theo mã)
+    // rồi 302 sang Shopee — bấm vào vẫn chuyển hướng bình thường.
+    use.href = "/app/discover/voucher-go?code=" + encodeURIComponent(v.code);
     use.target = "_blank";
     use.rel = "noopener noreferrer nofollow";
     use.addEventListener("click", function () {

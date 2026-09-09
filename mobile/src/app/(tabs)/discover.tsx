@@ -24,9 +24,11 @@ import {
   layKhamPha,
   layKhamPhaLazada,
   layVoucher,
+  dungVoucher,
   type DiscoverProduct,
   type ShopeeVoucher,
 } from '@/api/features';
+import { apiBaseUrl } from '@/api/client';
 import { BrandHeader } from '@/components/BrandHeader';
 import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
@@ -333,7 +335,16 @@ function TheVoucher({ v }: { v: ShopeeVoucher }) {
   }
   async function dungNgay() {
     await Clipboard.setStringAsync(v.code); // chép sẵn để dán ở Shopee
-    await WebBrowser.openBrowserAsync(v.use_url).catch(() => {});
+    // Đi qua link AFFILIATE gắn Sub ID người dùng (giống nút Mua); lỗi/chưa đăng
+    // nhập thì mở link Shopee gốc để không kẹt thao tác.
+    let url = v.use_url;
+    try {
+      const res = await dungVoucher(v.code);
+      if (res?.buyUrl) url = res.buyUrl.startsWith('http') ? res.buyUrl : `${apiBaseUrl}${res.buyUrl}`;
+    } catch {
+      /* fallback v.use_url */
+    }
+    await WebBrowser.openBrowserAsync(url).catch(() => {});
   }
   // Ảnh placeholder Shopee (nhỏ, ~168px) coi như không có → dùng logo ShopTik.
   const [logoLoi, setLogoLoi] = useState(false);

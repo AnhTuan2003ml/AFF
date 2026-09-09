@@ -180,6 +180,17 @@ export function layVoucher() {
   return apiFetch<{ data: ShopeeVoucher[] }>('/api/v1/vouchers', { auth: false });
 }
 
+/**
+ * "Dùng ngay" voucher → link AFFILIATE gắn Sub ID người dùng. Trả buyUrl
+ * (=/go/:clickId) để mở trong trình duyệt; Shopee 302 bình thường. Cần đăng nhập.
+ */
+export function dungVoucher(code: string) {
+  return apiFetch<{ buyUrl: string; affiliateUrl: string }>(
+    '/api/v1/vouchers/use',
+    { method: 'POST', body: { code } },
+  );
+}
+
 /** Không cần đăng nhập — khách xem sản phẩm đang hoàn tiền được. */
 export function layKhamPha(list: 'hot' | 'best' | 'recommend' | 'exclusive' = 'best', page = 1) {
   return apiFetch<{

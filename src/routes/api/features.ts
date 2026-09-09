@@ -19,7 +19,11 @@ import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getBusinessConfig } from "../../services/business-config.js";
 import { getInterestedProducts } from "../../services/app-dashboard.js";
 import { registerPushToken } from "../../services/push.js";
-import { listShopeeVouchers } from "../../services/shopee-voucher.js";
+import {
+  listShopeeVouchers,
+  getVoucherUseUrlByCode,
+} from "../../services/shopee-voucher.js";
+import { createVoucherAffiliateLink } from "../../services/affiliate.js";
 import {
   applyReferralToUser,
   changeOwnReferralCodeByAdmin,
@@ -362,6 +366,37 @@ export async function registerFeatureApiRoutes(
     reply.header("cache-control", "public, max-age=300");
     return { data: await listShopeeVouchers(deps.db, 300) };
   });
+
+  // "Dùng ngay" voucher trên app → link AFFILIATE gắn Sub ID người dùng. Trả
+  // `buyUrl` (=/go/:clickId) để app mở trong trình duyệt và Shopee 302 bình
+  // thường. Lỗi cấu hình thì trả lại link Shopee gốc để không kẹt thao tác.
+  app.post(
+    "/vouchers/use",
+    { preHandler: requireApiUser },
+    async (request) => {
+      const input = parseInput(
+        z.object({ code: z.string().trim().min(1).max(60) }),
+        request.body,
+      );
+      const useUrl = await getVoucherUseUrlByCode(deps.db, input.code);
+      if (!useUrl) {
+        throw new AppError("NOT_FOUND", "Không tìm thấy voucher này.", 404);
+      }
+      try {
+        const link = await createVoucherAffiliateLink(deps.db, deps.config, {
+          userId: request.currentUser!.id,
+          voucherUrl: useUrl,
+        });
+        return { buyUrl: link.buyUrl, affiliateUrl: link.affiliateUrl };
+      } catch (error) {
+        request.log.warn(
+          { err: error, code: input.code },
+          "Voucher affiliate lỗi — trả link Shopee gốc",
+        );
+        return { buyUrl: useUrl, affiliateUrl: useUrl };
+      }
+    },
+  );
 
   app.get("/discover", async (request, reply) => {
     reply.header("cache-control", "private, no-store");

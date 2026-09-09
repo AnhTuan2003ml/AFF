@@ -31,7 +31,10 @@ import {
   getStoredLazadaOffersCount,
 } from "../services/lazada-offer-store.js";
 import { listOrderHistory } from "../services/order-history.js";
-import { listShopeeVouchers } from "../services/shopee-voucher.js";
+import {
+  listShopeeVouchers,
+  getVoucherUseUrlByCode,
+} from "../services/shopee-voucher.js";
 import {
   getKolFile,
   getUserKolApplication,
@@ -49,7 +52,10 @@ import {
   KOL_AGREEMENT_VERSION,
 } from "../services/kol-agreement.js";
 import { listViewedProducts } from "../services/viewed-products.js";
-import { createPurchaseIntent } from "../services/affiliate.js";
+import {
+  createPurchaseIntent,
+  createVoucherAffiliateLink,
+} from "../services/affiliate.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
 import { getCheckinState, recordDailyCheckin } from "../services/checkin.js";
 import {
@@ -961,6 +967,35 @@ export async function registerAppRoutes(
     reply.header("cache-control", "private, max-age=300");
     return reply.send({ data: await listShopeeVouchers(deps.db, 300) });
   });
+
+  // "Dùng ngay" voucher → chuyển qua link AFFILIATE gắn Sub ID người dùng rồi
+  // 302 sang Shopee (giống nút Mua). Nhận `code`, tự tra URL đích từ DB. Nếu
+  // chưa cấu hình Affiliate hoặc lỗi thì vẫn mở link Shopee gốc để không kẹt.
+  app.get<{ Querystring: { code?: string } }>(
+    "/discover/voucher-go",
+    async (request, reply) => {
+      const code = String(request.query.code ?? "").trim().slice(0, 60);
+      const useUrl = code
+        ? await getVoucherUseUrlByCode(deps.db, code)
+        : null;
+      if (!useUrl) {
+        return reply.redirect("/app/discover");
+      }
+      try {
+        const link = await createVoucherAffiliateLink(deps.db, deps.config, {
+          userId: userId(request),
+          voucherUrl: useUrl,
+        });
+        return reply.redirect(`/go/${link.clickId}`);
+      } catch (error) {
+        request.log.warn(
+          { err: error, code },
+          "Không tạo được link affiliate cho voucher — mở link Shopee gốc",
+        );
+        return reply.redirect(useUrl);
+      }
+    },
+  );
 
   app.get("/discover/offer-products", async (request, reply) => {
     const queryParams = request.query as Record<string, unknown>;
