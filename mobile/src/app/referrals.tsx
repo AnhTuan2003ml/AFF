@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -174,6 +175,32 @@ export default function ReferralsScreen() {
             </Pressable>
           )}
 
+          {data?.hasReferrer && data.referrer && (
+            <View style={styles.referrerCard}>
+              <View style={styles.referrerAvatar}>
+                {data.referrer.avatarUrl ? (
+                  <Image source={{ uri: data.referrer.avatarUrl }} style={styles.referrerAvatarImg} contentFit="cover" />
+                ) : (
+                  <Text style={styles.referrerAvatarText}>
+                    {(data.referrer.fullName || '?').charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.referrerLabel}>{t('Người giới thiệu bạn', 'Who referred you')}</Text>
+                <Text style={styles.referrerName} numberOfLines={1}>
+                  {data.referrer.fullName || t('Đối tác ShopTik', 'ShopTik partner')}
+                </Text>
+                {data.referrer.referralCode ? (
+                  <Text style={styles.referrerCode}>{t('Mã', 'Code')}: {data.referrer.referralCode}</Text>
+                ) : null}
+              </View>
+              <View style={styles.referrerLocked}>
+                <Text style={styles.referrerLockedText}>{t('Đã ghi nhận', 'Locked')}</Text>
+              </View>
+            </View>
+          )}
+
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>{t('Tổng thưởng đã nhận', 'Total rewards earned')}</Text>
             <Text style={styles.totalValue}>{vnd(data?.totalEarnedVnd)}</Text>
@@ -285,6 +312,38 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   enterCodeText: { fontSize: 13.5, color: colors.text },
+  referrerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    marginBottom: 12,
+  },
+  referrerAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    overflow: 'hidden',
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  referrerAvatarImg: { width: '100%', height: '100%' },
+  referrerAvatarText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  referrerLabel: { fontSize: 11, fontWeight: '800', color: colors.muted, letterSpacing: 0.3, textTransform: 'uppercase' },
+  referrerName: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 1 },
+  referrerCode: { fontSize: 12, color: colors.muted, marginTop: 1 },
+  referrerLocked: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: colors.successSoft,
+  },
+  referrerLockedText: { fontSize: 10.5, fontWeight: '800', color: colors.success },
   // Ô nhập một hàng full chiều ngang, nút gửi nằm hàng riêng bên dưới.
   partnerForm: { gap: 10, marginTop: 10 },
   partnerInput: {

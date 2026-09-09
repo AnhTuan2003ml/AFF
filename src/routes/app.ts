@@ -1376,6 +1376,12 @@ export async function registerAppRoutes(
   });
 
   app.post("/nhap-gioi-thieu", async (request, reply) => {
+    // Cho phép form nhúng ở trang khác (vd hồ sơ) quay lại đúng chỗ. Chỉ nhận
+    // đường dẫn nội bộ /app để tránh open-redirect.
+    const rawReturn = String(
+      (request.body as Record<string, unknown> | undefined)?.returnTo ?? "",
+    );
+    const returnTo = /^\/app(\/|$)/.test(rawReturn) ? rawReturn : "/app";
     try {
       const input = parseInput(
         z.object({ referralCode: z.string().trim().min(1).max(20) }),
@@ -1393,13 +1399,15 @@ export async function registerAppRoutes(
           "error",
           "Mã giới thiệu không tồn tại hoặc không dùng được. Kiểm tra lại nhé.",
         );
-        return reply.redirect("/app/nhap-gioi-thieu");
+        return reply.redirect(
+          returnTo === "/app" ? "/app/nhap-gioi-thieu" : returnTo,
+        );
       }
       setFlash(reply, deps.config, "success", "Đã ghi nhận người giới thiệu của bạn.");
     } catch (error) {
       flashError(reply, deps.config, error);
     }
-    return reply.redirect("/app");
+    return reply.redirect(returnTo);
   });
 
   app.get("/nhiem-vu", async (request, reply) => {

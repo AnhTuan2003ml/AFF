@@ -98,9 +98,9 @@
   <section class="mission-panel" data-mission-panel="referral">
     <p class="mission-rule-note">
       {{ icon('gift') }}
-      {{ t('Thưởng tự động cộng vào ví khi đủ số người giới thiệu hợp lệ — mỗi người phải phát sinh ít nhất', 'Rewards are credited automatically once you have enough qualified referrals — each must generate at least') }}
+      <span>{{ t('Thưởng tự động cộng vào ví khi đủ số người giới thiệu hợp lệ — mỗi người phải phát sinh ít nhất', 'Rewards are credited automatically once you have enough qualified referrals — each must generate at least') }}
       <b>{{ referralMinOrders }} {{ t('đơn hàng hợp lệ', 'valid orders') }}</b>
-      {{ t('(đơn đã duyệt và có hoa hồng).', '(approved orders with commission).') }}
+      {{ t('(đơn đã duyệt và có hoa hồng).', '(approved orders with commission).') }}</span>
     </p>
     {{ mission_group(referralGroup, t('người', 'people')) }}
 

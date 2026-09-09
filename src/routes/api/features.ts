@@ -167,16 +167,34 @@ export async function registerFeatureApiRoutes(
     const me = await query<{
       referral_code: string;
       referred_by_user_id: string | null;
+      ref_full_name: string | null;
+      ref_avatar_url: string | null;
+      ref_referral_code: string | null;
     }>(
       deps.db,
-      `SELECT referral_code, referred_by_user_id FROM users WHERE id = $1`,
+      `SELECT u.referral_code, u.referred_by_user_id,
+         r.full_name AS ref_full_name,
+         r.avatar_url AS ref_avatar_url,
+         r.referral_code AS ref_referral_code
+       FROM users u
+       LEFT JOIN users r ON r.id = u.referred_by_user_id
+       WHERE u.id = $1`,
       [id],
     );
     const codeState = await getReferralCodeState(deps.db, id);
+    const meRow = me.rows[0];
 
     return {
       // Chưa có người giới thiệu (vd đăng ký Google) → app hiện ô nhập mã.
-      hasReferrer: Boolean(me.rows[0]?.referred_by_user_id),
+      hasReferrer: Boolean(meRow?.referred_by_user_id),
+      // Người giới thiệu bạn (avatar + tên) để app hiển thị sau khi đã nhập mã.
+      referrer: meRow?.referred_by_user_id
+        ? {
+            fullName: meRow.ref_full_name,
+            avatarUrl: meRow.ref_avatar_url,
+            referralCode: meRow.ref_referral_code,
+          }
+        : null,
       // Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app dựa vào đây để hiện form.
       codeState: {
         isPartner: codeState.isPartner,

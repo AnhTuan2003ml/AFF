@@ -70,9 +70,9 @@
       </form>
     </section>
 
-    {% if referrer %}
-      <section class="panel">
-        <header class="panel-heading"><div><span class="eyebrow">{{ t('GIỚI THIỆU', 'REFERRAL') }}</span><h2>{{ t('Người giới thiệu bạn', 'Who referred you') }}</h2></div></header>
+    <section class="panel">
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('GIỚI THIỆU', 'REFERRAL') }}</span><h2>{{ t('Người giới thiệu bạn', 'Who referred you') }}</h2></div></header>
+      {% if referrer %}
         <div class="referrer-card">
           <span class="referrer-avatar" aria-hidden="true">
             {% if referrer.avatar_url %}<img src="{{ referrer.avatar_url }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (referrer.full_name or '?') | first | upper }}</span>{% endif %}
@@ -81,9 +81,22 @@
             <b>{{ referrer.full_name or t('Đối tác ShopTik', 'ShopTik partner') }}</b>
             <small>{{ t('Mã giới thiệu', 'Referral code') }}: <code>{{ referrer.referral_code }}</code></small>
           </div>
+          <span class="referrer-locked" title="{{ t('Không thể thay đổi', 'Cannot be changed') }}">{{ t('Đã ghi nhận', 'Locked') }}</span>
         </div>
-      </section>
-    {% endif %}
+      {% else %}
+        <form method="post" action="/app/nhap-gioi-thieu" class="referrer-enter">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="returnTo" value="/app/profile">
+          <p class="referrer-enter-hint">{{ t('Nếu bạn được ai đó giới thiệu, nhập mã của họ tại đây. Chỉ nhập được MỘT lần và không thể thay đổi sau khi ghi nhận.', 'If someone referred you, enter their code here. You can enter it only ONCE and it cannot be changed afterwards.') }}</p>
+          <div class="referrer-enter-row">
+            <input type="text" name="referralCode" maxlength="20" autocomplete="off" required
+              placeholder="{{ t('Nhập mã giới thiệu', 'Enter referral code') }}"
+              aria-label="{{ t('Mã giới thiệu', 'Referral code') }}">
+            <button class="button button-primary" type="submit">{{ t('Ghi nhận', 'Apply') }}</button>
+          </div>
+        </form>
+      {% endif %}
+    </section>
 
     <section class="panel settings-security-panel">
       <header class="panel-heading"><div><span class="eyebrow">{{ t('BẢO MẬT', 'SECURITY') }}</span><h2>{{ t('Bảo vệ tài khoản', 'Protect your account') }}</h2></div></header>

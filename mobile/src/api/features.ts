@@ -113,6 +113,12 @@ export function layGioiThieu() {
     referralCode: string | null;
     /** false = chưa có người giới thiệu → app hiện ô nhập mã bổ sung. */
     hasReferrer: boolean;
+    /** Người giới thiệu bạn (avatar + tên) — hiển thị sau khi đã nhập mã. */
+    referrer: {
+      fullName: string | null;
+      avatarUrl: string | null;
+      referralCode: string | null;
+    } | null;
     totalEarnedVnd: number;
     /** Đối tác/KOL: được đổi mã 1 lần (admin duyệt) — app hiện form theo đây. */
     codeState: {
