@@ -39,6 +39,12 @@ const PLATFORM_LABELS: Record<ProductPlatform, string> = {
   LAZADA: "Lazada",
 };
 
+/** Chống spam dán link: khoảng cách tối thiểu (ms) giữa 2 lần tạo link mua của
+ * cùng một người. Ngăn kịch bản dán link/bấm mua liên tục bằng script để tạo
+ * hoạt động ảo (farm click/đơn). Người mua thật gần như không bấm nhanh hơn mức
+ * này giữa hai sản phẩm. */
+const PURCHASE_INTENT_MIN_INTERVAL_MS = 2500;
+
 const PLATFORM_HOSTS: Record<ProductPlatform, ReadonlySet<string>> = {
   SHOPEE: new Set([
     "shopee.vn",
@@ -877,6 +883,29 @@ export async function createPurchaseIntent(
   normalizedUrl: string;
   subId: string;
 }> {
+  // Chống spam dán link (luật chống gian lận): chặn nếu người dùng vừa tạo một
+  // link mua cách đây chưa tới PURCHASE_INTENT_MIN_INTERVAL_MS. Dùng index
+  // affiliate_links (user_id, created_at DESC) nên rất nhẹ.
+  const recentLink = await query<{ created_at: Date }>(
+    db,
+    `SELECT created_at FROM affiliate_links
+     WHERE user_id = $1
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [params.userId],
+  );
+  const lastLinkAt = recentLink.rows[0]?.created_at;
+  if (
+    lastLinkAt &&
+    Date.now() - new Date(lastLinkAt).getTime() < PURCHASE_INTENT_MIN_INTERVAL_MS
+  ) {
+    throw new AppError(
+      "TOO_MANY_REQUESTS",
+      "Bạn thao tác quá nhanh. Vui lòng chờ vài giây rồi thử lại.",
+      429,
+    );
+  }
+
   const resolved = resolveProductUrl(params.productUrl, params.product.platform);
   const integration = integrationConfig(config, resolved.platform);
   // Lazada: nếu có profile Browser Control thì sinh link đúng tài khoản qua

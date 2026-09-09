@@ -115,6 +115,7 @@ import {
   listMissionReferralPeople,
   listNotifications,
   markAllNotificationsRead,
+  REFERRAL_MILESTONE_MIN_ORDERS,
 } from "../services/mission.js";
 
 interface AppRouteDeps {
@@ -1389,6 +1390,7 @@ export async function registerAppRoutes(
       referralGroup: localizeGroup(missions.REFERRAL_MILESTONE),
       purchaseGroup: localizeGroup(missions.PURCHASE_MILESTONE),
       referralPeople,
+      referralMinOrders: REFERRAL_MILESTONE_MIN_ORDERS,
     });
   });
 

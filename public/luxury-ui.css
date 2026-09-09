@@ -3671,6 +3671,29 @@ body.no-scroll {
   color: var(--lx-muted)
 }
 
+/* Ghi chú cơ chế thưởng giới thiệu (tự động cộng + tiêu chí đơn hợp lệ). */
+.mission-rule-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 4px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: rgba(238, 77, 45, .08);
+  border: 1px solid rgba(238, 77, 45, .18);
+  color: var(--lx-ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.mission-rule-note b { color: var(--lx-orange); font-weight: 800; }
+.mission-rule-note svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--lx-orange);
+}
+
 .mission-meter {
   margin: 18px 0
 }

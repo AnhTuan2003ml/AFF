@@ -96,6 +96,12 @@
   </div>
 
   <section class="mission-panel" data-mission-panel="referral">
+    <p class="mission-rule-note">
+      {{ icon('gift') }}
+      {{ t('Thưởng tự động cộng vào ví khi đủ số người giới thiệu hợp lệ — mỗi người phải phát sinh ít nhất', 'Rewards are credited automatically once you have enough qualified referrals — each must generate at least') }}
+      <b>{{ referralMinOrders }} {{ t('đơn hàng hợp lệ', 'valid orders') }}</b>
+      {{ t('(đơn đã duyệt và có hoa hồng).', '(approved orders with commission).') }}
+    </p>
     {{ mission_group(referralGroup, t('người', 'people')) }}
 
     <div class="mission-people">
@@ -110,12 +116,12 @@
               <span class="mission-person-avatar" aria-hidden="true">{{ p.fullName | first | upper }}</span>
               <span class="mission-person-main">
                 <b>{{ p.fullName }}</b>
-                <small>{{ t('Tham gia', 'Joined') }} {{ p.joinedAt | date }}{% if p.approvedOrders %} · {{ p.approvedOrders }} {{ t('đơn đã duyệt', 'approved orders') }}{% endif %}</small>
+                <small>{{ t('Tham gia', 'Joined') }} {{ p.joinedAt | date }} · {{ p.approvedOrders }}/{{ referralMinOrders }} {{ t('đơn hợp lệ', 'valid orders') }}</small>
               </span>
               {% if p.qualified %}
                 <span class="status-badge status-positive">{{ t('Đã tính', 'Counted') }}</span>
               {% else %}
-                <span class="status-badge status-pending">{{ t('Chờ xác nhận', 'Pending') }}</span>
+                <span class="status-badge status-pending">{{ t('Cần thêm đơn', 'Needs more') }}</span>
               {% endif %}
             </li>
           {% endfor %}

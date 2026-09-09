@@ -59,6 +59,14 @@ function currentPurchasePeriodKey(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
+/**
+ * Số đơn hợp lệ tối thiểu mà MỖI người được mời phải phát sinh thì lượt giới
+ * thiệu đó mới được TÍNH vào mốc thưởng. "Đơn hợp lệ" = trạng thái APPROVED và
+ * có hoa hồng > 0 — luật chống gian lận: đơn không sinh hoa hồng (huỷ, trùng,
+ * không hợp lệ) không được tính, để tránh farm đơn ảo lấy thưởng giới thiệu.
+ */
+export const REFERRAL_MILESTONE_MIN_ORDERS = 5;
+
 interface MissionTierSeed {
   threshold: number;
   rewardVnd: number;
@@ -387,15 +395,20 @@ async function computeUserProgress(
 ): Promise<UserProgressCounts> {
   const purchasePeriodKey = currentPurchasePeriodKey();
   const [referralCountResult, purchaseCountResult] = await Promise.all([
-    // Đếm người ĐÃ MỜI thành công = người được mời đã đăng ký xong (status
-    // ACTIVE, tức đã xác thực OTP). Loại các lượt đăng ký bỏ dở. Khớp với danh
-    // sách người mời hiển thị ở trang này và trang "Giới thiệu".
+    // Đếm số lượt giới thiệu HỢP LỆ = người được mời đã phát sinh tối thiểu
+    // REFERRAL_MILESTONE_MIN_ORDERS đơn hợp lệ (APPROVED, hoa hồng > 0). Đây là
+    // tiêu chí cho mốc thưởng giới thiệu (mỗi người phải sinh đủ đơn thật, chống
+    // farm đơn ảo). Khớp với cột "qualified" ở listMissionReferralPeople.
     query<{ count: string }>(
       db,
       `SELECT count(*)::text FROM referrals r
-       JOIN users u ON u.id = r.referred_user_id
-       WHERE r.referrer_user_id = $1 AND u.status = 'ACTIVE'`,
-      [userId],
+       WHERE r.referrer_user_id = $1
+         AND (
+           SELECT count(*) FROM orders o
+           WHERE o.user_id = r.referred_user_id
+             AND o.status = 'APPROVED' AND o.commission_vnd > 0
+         ) >= $2`,
+      [userId, REFERRAL_MILESTONE_MIN_ORDERS],
     ),
     query<{ count: string }>(
       db,
@@ -422,8 +435,9 @@ export interface MissionReferralPerson {
 
 /**
  * Danh sách từng người mà user đã mời — để màn Nhiệm vụ phân biệt được từng
- * người và trạng thái của họ (đã đăng ký / đã phát sinh đơn duyệt). Người đã
- * đăng ký (ACTIVE) mới được TÍNH vào tiến độ nhiệm vụ.
+ * người và trạng thái của họ. `approvedOrders` đếm số ĐƠN HỢP LỆ (APPROVED, hoa
+ * hồng > 0). Một người được TÍNH vào mốc thưởng khi đủ REFERRAL_MILESTONE_MIN_
+ * ORDERS đơn hợp lệ (`qualified`).
  */
 export async function listMissionReferralPeople(
   db: Database,
@@ -438,7 +452,8 @@ export async function listMissionReferralPeople(
     db,
     `SELECT u.full_name, r.created_at, u.status,
        (SELECT count(*) FROM orders o
-         WHERE o.user_id = u.id AND o.status = 'APPROVED')::text AS approved_orders
+         WHERE o.user_id = u.id AND o.status = 'APPROVED'
+           AND o.commission_vnd > 0)::text AS approved_orders
      FROM referrals r
      JOIN users u ON u.id = r.referred_user_id
      WHERE r.referrer_user_id = $1
@@ -454,7 +469,7 @@ export async function listMissionReferralPeople(
       joinedAt: row.created_at,
       active,
       approvedOrders,
-      qualified: active,
+      qualified: approvedOrders >= REFERRAL_MILESTONE_MIN_ORDERS,
     };
   });
 }
@@ -550,6 +565,110 @@ export async function getUserMissionOverview(
   };
 }
 
+/**
+ * Trao MỘT mốc thưởng theo cơ chế TỰ DUYỆT: cộng thẳng vào ví khả dụng
+ * (creditFixedReward) rồi chốt claim APPROVED. Trả về false nếu mốc đã được ghi
+ * nhận trước đó (không trao lại). Idempotent nhiều lớp:
+ *  - UNIQUE(user, mission, period) trên user_mission_claims chặn tạo claim trùng.
+ *  - creditFixedReward dùng idempotencyKey `mission:claim:<claimId>` nên không
+ *    bao giờ cộng tiền hai lần.
+ * Thứ tự cộng-tiền-trước-rồi-mới-APPROVED bảo đảm không có claim APPROVED nào mà
+ * chưa thực cộng tiền. Dùng cho cả tự động (order import) lẫn khi người dùng bấm
+ * "Nhận thưởng" ở mốc giới thiệu.
+ */
+async function creditMilestoneTierNow(
+  db: Database,
+  params: {
+    userId: string;
+    definition: MissionDefinition;
+    progress: number;
+    periodKey: string;
+    actorId?: string;
+  },
+): Promise<boolean> {
+  const inserted = await query<{ id: string }>(
+    db,
+    `INSERT INTO user_mission_claims
+      (user_id, mission_definition_id, period_key, progress_value, reward_amount_vnd)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (user_id, mission_definition_id, period_key) DO NOTHING
+     RETURNING id`,
+    [
+      params.userId,
+      params.definition.id,
+      params.periodKey,
+      params.progress,
+      params.definition.rewardAmountVnd,
+    ],
+  );
+  const claimId = inserted.rows[0]?.id;
+  if (!claimId) return false;
+
+  await creditFixedReward(db, {
+    userId: params.userId,
+    referenceId: claimId,
+    idempotencyKey: `mission:claim:${claimId}`,
+    description: `Thưởng mốc thưởng: ${params.definition.title}`,
+    amountVnd: params.definition.rewardAmountVnd,
+    ...(params.actorId ? { createdBy: params.actorId } : {}),
+    type: "MISSION_REWARD",
+    referenceType: "MISSION_CLAIM",
+  });
+  await query(
+    db,
+    `UPDATE user_mission_claims SET status = 'APPROVED', approved_at = now()
+     WHERE id = $1 AND status = 'PENDING'`,
+    [claimId],
+  );
+  await createNotification(db, {
+    userId: params.userId,
+    type: "MISSION_APPROVED",
+    ...camioVoice.missionApproved({
+      title: params.definition.title,
+      amount: formatVnd(params.definition.rewardAmountVnd),
+    }),
+  });
+  return true;
+}
+
+/**
+ * TỰ ĐỘNG trao thưởng mốc giới thiệu (không cần admin duyệt). Gọi sau khi một
+ * đơn hợp lệ của người ĐƯỢC MỜI được duyệt: đánh giá lại số lượt giới thiệu hợp
+ * lệ của NGƯỜI MỜI và cộng thưởng cho mọi mốc vừa đạt.
+ */
+export async function maybeAwardReferralMilestones(
+  db: Database,
+  params: { referredUserId: string; actorId?: string },
+): Promise<void> {
+  const referrerResult = await query<{ referrer_user_id: string | null }>(
+    db,
+    `SELECT referred_by_user_id AS referrer_user_id FROM users WHERE id = $1`,
+    [params.referredUserId],
+  );
+  const referrerId = referrerResult.rows[0]?.referrer_user_id;
+  if (!referrerId) return;
+
+  // Số lượt giới thiệu hợp lệ hiện tại của người mời (≥ MIN_ORDERS đơn/người).
+  const counts = await computeUserProgress(db, referrerId);
+  const validReferrals = counts.referralCount;
+  if (validReferrals <= 0) return;
+
+  const definitions = (await listMissionDefinitions(db))
+    .filter((def) => def.type === "REFERRAL_MILESTONE" && def.status === "ACTIVE")
+    .sort((left, right) => left.threshold - right.threshold);
+
+  for (const definition of definitions) {
+    if (validReferrals < definition.threshold) continue;
+    await creditMilestoneTierNow(db, {
+      userId: referrerId,
+      definition,
+      progress: validReferrals,
+      periodKey: "LIFETIME",
+      ...(params.actorId ? { actorId: params.actorId } : {}),
+    });
+  }
+}
+
 // Tạo yêu cầu PENDING chờ admin duyệt — tiền chỉ đổi ở approveMissionClaim.
 // Chặn nếu chưa đạt mốc hoặc đã gửi yêu cầu trước đó.
 export async function claimMissionReward(
@@ -577,6 +696,26 @@ export async function claimMissionReward(
     );
   }
 
+  // Mốc GIỚI THIỆU được cộng TỰ ĐỘNG (không qua admin). Thường nó đã tự trao khi
+  // đơn của người được mời được duyệt; nút "Nhận thưởng" chỉ là đường phòng hờ
+  // (vd người dùng đã đạt mốc từ trước khi có cơ chế này) và cộng ngay lập tức.
+  if (definition.type === "REFERRAL_MILESTONE") {
+    const awarded = await creditMilestoneTierNow(db, {
+      userId,
+      definition,
+      progress,
+      periodKey,
+    });
+    if (!awarded) {
+      throw new AppError(
+        "MISSION_ALREADY_CLAIMED",
+        "Bạn đã nhận thưởng cho mốc này rồi.",
+      );
+    }
+    return;
+  }
+
+  // Mốc MUA SẮM: giữ luồng gửi yêu cầu chờ admin duyệt (approveMissionClaim).
   const inserted = await query<{ id: string }>(
     db,
     `INSERT INTO user_mission_claims

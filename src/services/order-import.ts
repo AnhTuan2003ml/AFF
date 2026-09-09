@@ -13,7 +13,7 @@ import {
 } from "./ledger.js";
 import { maybeRewardReferral } from "./referral-reward.js";
 import { camioVoice } from "./camio-voice.js";
-import { createNotification } from "./mission.js";
+import { createNotification, maybeAwardReferralMilestones } from "./mission.js";
 import { sendPushToUser } from "./push.js";
 import {
   PRODUCT_PLATFORMS,
@@ -1188,6 +1188,15 @@ export async function importOrderRow(
         orderId,
         actorId,
       });
+      // Đơn hợp lệ của người được mời vừa duyệt có thể đưa họ vượt ngưỡng đơn
+      // tối thiểu, nâng số lượt giới thiệu hợp lệ của NGƯỜI MỜI → tự động trao
+      // thưởng mọi mốc giới thiệu vừa đạt (idempotent, không cộng trùng).
+      if (businessConfig.enableReferralProgram) {
+        await maybeAwardReferralMilestones(db, {
+          referredUserId: owner.userId,
+          ...(actorId ? { actorId } : {}),
+        });
+      }
     }
     // Đảo khoản phải dùng đúng số tiền ĐÃ ghi nhận trước đó: đơn hủy thường
     // được sàn trả về với hoa hồng bằng 0 nên không thể lấy split mới.
