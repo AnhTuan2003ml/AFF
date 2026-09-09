@@ -62,7 +62,7 @@
           </label>
 
           <label for="ar-model">Tên model
-            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" placeholder="Chọn từ gợi ý hoặc gõ tên model">
+            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" autocomplete="off" placeholder="Chọn từ gợi ý hoặc gõ tên model">
             <datalist id="ar-model-list">
               {% for key, provider in providers %}
                 {% for model in provider.suggestedModels %}
