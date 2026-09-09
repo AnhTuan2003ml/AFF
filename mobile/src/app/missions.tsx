@@ -71,6 +71,18 @@ export default function MissionsScreen() {
         <Text style={styles.loading}>{t('Đang tải…', 'Loading…')}</Text>
       ) : (
         <>
+          {tab === 'referral' && (
+            <View style={styles.ruleNote}>
+              <Ionicons name="gift-outline" size={16} color={colors.brand} style={{ marginTop: 1 }} />
+              <Text style={styles.ruleNoteText}>
+                {t(
+                  `Thưởng tự động cộng vào ví khi đủ số người giới thiệu hợp lệ — mỗi người phải phát sinh ít nhất ${nguoiMoi?.minOrders ?? 5} đơn hàng hợp lệ (đơn đã duyệt và có hoa hồng).`,
+                  `Rewards are credited automatically once you have enough qualified referrals — each must generate at least ${nguoiMoi?.minOrders ?? 5} valid orders (approved orders with commission).`,
+                )}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.meterHead}>
             <Text style={styles.meterValue}>
               {nhom.currentProgress} / {nhom.maxThreshold} {donVi}
@@ -103,7 +115,7 @@ export default function MissionsScreen() {
                 <Text style={styles.peopleCount}>{nguoiMoi.people.length} {t('người', 'people')}</Text>
               </View>
               {nguoiMoi.people.map((p, i) => (
-                <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} />
+                <NguoiMoi key={`${p.fullName}-${i}`} p={p} dau={i === 0} minOrders={nguoiMoi.minOrders} />
               ))}
             </View>
           )}
@@ -155,7 +167,10 @@ function Moc({
 }) {
   const t = useT();
   const { lang } = useLang();
-  const daNhan = m.claimStatus === 'CLAIMED' || m.claimStatus === 'PAID';
+  // Backend trả claimStatus theo MissionClaimStatus: APPROVED (đã cộng thưởng),
+  // PENDING (mốc mua sắm chờ admin), REJECTED. Mốc giới thiệu tự động → APPROVED.
+  const daNhan = m.claimStatus === 'APPROVED';
+  const choDuyet = m.claimStatus === 'PENDING';
   return (
     <View style={styles.item}>
       <View style={[styles.itemIcon, { backgroundColor: daNhan ? colors.successSoft : colors.brandSoft }]}>
@@ -169,7 +184,7 @@ function Moc({
         <Text style={styles.itemTitle}>{localizeMissionTitle(m.definition.title, lang)}</Text>
         <Text style={styles.itemReward}>{t('Thưởng', 'Reward')} {vnd(m.definition.rewardAmountVnd)}</Text>
       </View>
-      {m.claimable && !daNhan ? (
+      {m.claimable ? (
         <Pressable
           onPress={() => onNhan(m.definition.id)}
           disabled={dangNhan}
@@ -178,14 +193,18 @@ function Moc({
         </Pressable>
       ) : (
         <Text style={styles.itemState}>
-          {daNhan ? t('Đã nhận', 'Claimed') : `${m.progress}/${m.definition.threshold}`}
+          {daNhan
+            ? t('Đã nhận', 'Claimed')
+            : choDuyet
+              ? t('Chờ duyệt', 'Pending')
+              : `${m.progress}/${m.definition.threshold}`}
         </Text>
       )}
     </View>
   );
 }
 
-function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
+function NguoiMoi({ p, dau, minOrders }: { p: MissionReferralPerson; dau: boolean; minOrders: number }) {
   const t = useT();
   return (
     <View style={[styles.person, !dau && styles.personDivider]}>
@@ -197,13 +216,12 @@ function NguoiMoi({ p, dau }: { p: MissionReferralPerson; dau: boolean }) {
           {p.fullName}
         </Text>
         <Text style={styles.personMeta}>
-          {t('Tham gia', 'Joined')} {ngay(p.joinedAt)}
-          {p.approvedOrders > 0 ? ` · ${p.approvedOrders} ${t('đơn đã duyệt', 'approved orders')}` : ''}
+          {t('Tham gia', 'Joined')} {ngay(p.joinedAt)} · {p.approvedOrders}/{minOrders} {t('đơn hợp lệ', 'valid orders')}
         </Text>
       </View>
       <View style={[styles.badge, p.qualified ? styles.badgeOk : styles.badgeWait]}>
         <Text style={[styles.badgeText, p.qualified ? styles.badgeTextOk : styles.badgeTextWait]}>
-          {p.qualified ? t('Đã tính', 'Counted') : t('Chờ xác nhận', 'Pending confirmation')}
+          {p.qualified ? t('Đã tính', 'Counted') : t('Cần thêm đơn', 'Needs more')}
         </Text>
       </View>
     </View>
@@ -241,6 +259,19 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: 13.5, fontWeight: '800', color: colors.muted },
   tabTextActive: { color: colors.onBrand },
+
+  ruleNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: 11,
+    marginBottom: 14,
+    borderRadius: radius.md,
+    backgroundColor: colors.brandSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.brand,
+  },
+  ruleNoteText: { flex: 1, fontSize: 12.5, lineHeight: 18, color: colors.text },
 
   meterHead: { marginBottom: 12 },
   meterValue: { fontSize: 27, fontWeight: '900', color: colors.brand, letterSpacing: -0.8 },

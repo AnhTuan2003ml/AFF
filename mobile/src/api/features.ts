@@ -96,7 +96,7 @@ export interface MissionReferralPerson {
 }
 
 export function layNguoiMoi() {
-  return apiFetch<{ people: MissionReferralPerson[] }>(
+  return apiFetch<{ people: MissionReferralPerson[]; minOrders: number }>(
     '/api/v1/missions/referral-people',
   );
 }

@@ -312,7 +312,10 @@ describe("Xóa tài khoản tự phục vụ", () => {
     expect(user.rows[0]?.status).toBe("DISABLED");
     expect(user.rows[0]?.deletion_reason).toMatch(/tự xóa/i);
     expect(user.rows[0]?.email).toBe(`deleted+${userId}@shoptik.invalid`);
-    expect(user.rows[0]?.full_name).toBe("Người dùng đã xóa");
+    // GIỮ NGUYÊN full_name: xóa mềm chỉ gỡ danh tính nhạy cảm (email, mật khẩu,
+    // ngân hàng); tên được giữ để khu quản trị đối soát lịch sử (commit 520cafc
+    // "giữ tên"). Không ẩn danh tên nữa.
+    expect(user.rows[0]?.full_name).toBe("Nguyễn Văn A");
     expect(user.rows[0]?.password_hash).toBeNull();
     expect(user.rows[0]?.deleted_at).not.toBeNull();
 

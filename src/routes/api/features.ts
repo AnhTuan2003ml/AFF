@@ -13,6 +13,7 @@ import {
   clearAllNotifications,
   listNotifications,
   markAllNotificationsRead,
+  REFERRAL_MILESTONE_MIN_ORDERS,
 } from "../../services/mission.js";
 import { getPlatformLeaderboard } from "../../services/platform-stats.js";
 import { getBusinessConfig } from "../../services/business-config.js";
@@ -83,7 +84,7 @@ export async function registerFeatureApiRoutes(
         deps.db,
         request.currentUser!.id,
       );
-      return { people };
+      return { people, minOrders: REFERRAL_MILESTONE_MIN_ORDERS };
     },
   );
 
