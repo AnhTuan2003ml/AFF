@@ -116,10 +116,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 18,
   },
-  // ~60% bản web gốc: hẹp (76% ngang, tối đa 372) — khớp bản web đã thu nhỏ.
+  // Độ rộng khớp popup quảng cáo Shopee (ảnh 438px) — như web: rộng 76% màn
+  // hình, tối đa 438.
   card: {
     width: '76%',
-    maxWidth: 372,
+    maxWidth: 438,
     borderRadius: 20,
     backgroundColor: colors.surface,
     overflow: 'hidden',

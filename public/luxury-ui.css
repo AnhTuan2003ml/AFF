@@ -9785,7 +9785,8 @@ button.cal-cell.is-today:hover:not(:disabled) {
    Desktop: 620px → 372px; mobile: 100% → 60% chiều ngang; ảnh 360 → 216px;
    chữ/đệm/nút đóng thu theo cùng tỷ lệ để bố cục không vỡ. ===== */
 .entry-promo-modal {
-  width: min(372px, 76%);
+  /* Độ rộng khớp popup quảng cáo Shopee (ảnh 438px). */
+  width: min(438px, calc(100vw - 28px));
   max-height: 62vh;
 }
 
