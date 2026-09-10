@@ -4,6 +4,7 @@ import { AppError } from "../lib/errors.js";
 import type { SlackLogger } from "./slack.js";
 import { getBusinessConfig } from "./business-config.js";
 import { listOrderHistory } from "./order-history.js";
+import type { ProductPreview } from "./product-preview.js";
 import {
   sendSupportChatMessage,
   type SupportChatMessage,
@@ -412,6 +413,28 @@ export async function buildCamioOrderContext(
         ? `Còn khoảng ${Number(row.hold_days_left)} ngày nữa tiền hoàn mới khả dụng để rút.`
         : null,
     row.cancel_reason ? `Lý do hủy: ${row.cancel_reason}` : null,
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
+/**
+ * Dựng ngữ cảnh cho Camio từ kết quả tra cứu MỘT link sản phẩm (khách dán link
+ * Shopee/TikTok/Lazada ở "Tìm đơn"). Chỉ là số liệu DỰ KIẾN, chưa phải đơn thật.
+ */
+export function buildCamioProductContext(preview: ProductPreview): string {
+  const vnd = (n: number | null): string | null =>
+    n != null && n > 0 ? `${n.toLocaleString("vi-VN")}₫` : null;
+  const lines: (string | null)[] = [
+    `Nền tảng: ${preview.platformLabel}`,
+    preview.productName ? `Tên sản phẩm: ${preview.productName}` : null,
+    vnd(preview.priceVnd) ? `Giá: ${vnd(preview.priceVnd)}` : null,
+    vnd(preview.buyerCashbackVnd)
+      ? `Tiền hoàn DỰ KIẾN: ${vnd(preview.buyerCashbackVnd)} (khoảng ${preview.buyerCashbackPercent}% hoa hồng thực nhận)`
+      : "Tiền hoàn: đang cập nhật (sàn chưa trả tỷ lệ hoa hồng).",
+    !preview.dataVerified
+      ? "Lưu ý: chưa lấy được dữ liệu giá/hoa hồng thật từ sàn nên số liệu có thể thiếu."
+      : null,
+    "Đây là số DỰ KIẾN cho sản phẩm — chỉ phát sinh tiền hoàn khi khách mua QUA LINK ShopTik và sàn xác nhận.",
   ];
   return lines.filter(Boolean).join("\n");
 }

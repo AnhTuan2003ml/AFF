@@ -32,7 +32,11 @@ import {
 import { createVoucherAffiliateLink } from "../../services/affiliate.js";
 import { listActiveHeroMedia } from "../../services/hero-media.js";
 import { generateCamioReply } from "../../services/support-autoreply.js";
-import { buildCamioOrderContext } from "../../services/support-request.js";
+import { lookupProductPreview } from "../../services/product-preview.js";
+import {
+  buildCamioOrderContext,
+  buildCamioProductContext,
+} from "../../services/support-request.js";
 import {
   applyReferralToUser,
   changeOwnReferralCodeByAdmin,
@@ -446,6 +450,7 @@ export async function registerFeatureApiRoutes(
             .max(16)
             .optional(),
           orderKey: z.string().trim().max(80).optional(),
+          productLink: z.string().trim().max(1000).optional(),
         }),
         request.body,
       );
@@ -454,14 +459,28 @@ export async function registerFeatureApiRoutes(
         body: h.body,
       }));
       history.push({ authorRole: "USER", body: input.message });
-      const orderContext = input.orderKey
-        ? await buildCamioOrderContext(
-            deps.db,
+      let orderContext: string | null = null;
+      if (input.orderKey) {
+        orderContext = await buildCamioOrderContext(
+          deps.db,
+          deps.config,
+          request.currentUser!.id,
+          input.orderKey,
+        );
+      } else if (input.productLink) {
+        const bc = await getBusinessConfig(deps.db, deps.config);
+        try {
+          const preview = await lookupProductPreview(
             deps.config,
-            request.currentUser!.id,
-            input.orderKey,
-          )
-        : null;
+            input.productLink,
+            bc.buyerCashbackPercent,
+          );
+          orderContext = buildCamioProductContext(preview);
+        } catch {
+          orderContext =
+            "Không tra cứu được sản phẩm từ link khách gửi (link sai hoặc sàn chặn). Hãy mời khách kiểm tra lại link sản phẩm.";
+        }
+      }
       const answer = await generateCamioReply(deps.db, deps.config, {
         question: input.message,
         history,

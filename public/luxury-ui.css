@@ -10738,6 +10738,11 @@ button.cal-cell.is-today:hover:not(:disabled) {
   display: flex; flex-direction: column;
   background: var(--lx-ivory, #fbf8f4);
 }
+/* iOS Safari TỰ phóng to khi focus input có font < 16px → phải ≥16px để không
+   zoom/nhảy màn hình khi bấm "Tìm đơn", ô nhập, chọn đơn… */
+.support-screen input,
+.support-screen select,
+.support-screen textarea { font-size: 16px; }
 .support-screen[hidden] { display: none !important; }
 .support-screen-head {
   display: flex; align-items: center; gap: 10px; flex: none;

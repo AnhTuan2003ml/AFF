@@ -68,10 +68,12 @@
     return row;
   }
 
-  function setOrder(label, key) {
-    // key = ORDER:<id>/INTENT:<id> khi chọn từ danh sách (để backend nạp ngữ
-    // cảnh đơn); dán link thì chưa có key → chỉ đính nhãn.
-    attachedOrder = label ? { label: label, key: key || "" } : null;
+  function setOrder(label, key, link) {
+    // key = ORDER:<id>/INTENT:<id> khi chọn từ danh sách (backend nạp ngữ cảnh
+    // đơn); link = URL sản phẩm khi dán link (backend tra cứu sản phẩm).
+    attachedOrder = label
+      ? { label: label, key: key || "", link: link || "" }
+      : null;
     if (attachedOrder) {
       if (orderLabelEl) orderLabelEl.textContent = label;
       if (orderChip) orderChip.hidden = false;
@@ -89,14 +91,17 @@
     pickerDone.addEventListener("click", function () {
       var label = "";
       var key = "";
+      var link = "";
       if (orderSelect && orderSelect.value) {
         var opt = orderSelect.options[orderSelect.selectedIndex];
         label = opt ? (opt.getAttribute("data-label") || opt.textContent) : "";
         key = orderSelect.value;
       } else if (orderLink && orderLink.value.trim()) {
-        label = orderLink.value.trim();
+        link = orderLink.value.trim();
+        // Nhãn gọn cho link (bỏ query cho đỡ dài).
+        label = link.split("?")[0];
       }
-      if (label) setOrder(label, key);
+      if (label) setOrder(label, key, link);
       if (picker) picker.hidden = true;
     });
   }
@@ -127,6 +132,8 @@
         message: message,
         history: history.slice(-16),
         orderKey: attachedOrder && attachedOrder.key ? attachedOrder.key : undefined,
+        productLink:
+          attachedOrder && attachedOrder.link ? attachedOrder.link : undefined,
       }),
     })
       .then(function (r) { return r.json().catch(function () { return {}; }); })

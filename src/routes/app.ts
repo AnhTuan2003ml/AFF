@@ -96,6 +96,7 @@ import {
 import {
   SUPPORT_TOPICS,
   buildCamioOrderContext,
+  buildCamioProductContext,
   localizeSupportTopics,
   platformDisplayName,
   submitSupportRequest,
@@ -1656,6 +1657,8 @@ export async function registerAppRoutes(
           // Đơn khách chọn ở "Tìm đơn" (ORDER:<id> / INTENT:<id>) — để Camio
           // trả lời đúng đơn đó. Chỉ nhận đơn thuộc chính người dùng.
           orderKey: z.string().trim().max(80).optional(),
+          // Link sản phẩm khách dán ở "Tìm đơn" → tra cứu để trả lời tiền hoàn.
+          productLink: z.string().trim().max(1000).optional(),
         }),
         request.body,
       );
@@ -1664,14 +1667,28 @@ export async function registerAppRoutes(
         body: h.body,
       }));
       history.push({ authorRole: "USER", body: input.message });
-      const orderContext = input.orderKey
-        ? await buildCamioOrderContext(
-            deps.db,
+      let orderContext: string | null = null;
+      if (input.orderKey) {
+        orderContext = await buildCamioOrderContext(
+          deps.db,
+          deps.config,
+          userId(request),
+          input.orderKey,
+        );
+      } else if (input.productLink) {
+        const bc = await getBusinessConfig(deps.db, deps.config);
+        try {
+          const preview = await lookupProductPreview(
             deps.config,
-            userId(request),
-            input.orderKey,
-          )
-        : null;
+            input.productLink,
+            bc.buyerCashbackPercent,
+          );
+          orderContext = buildCamioProductContext(preview);
+        } catch {
+          orderContext =
+            "Không tra cứu được sản phẩm từ link khách gửi (link sai hoặc sàn chặn). Hãy mời khách kiểm tra lại link sản phẩm.";
+        }
+      }
       const answer = await generateCamioReply(deps.db, deps.config, {
         question: input.message,
         history,
