@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireApiUser } from "../../auth/guards.js";
 import { query } from "../../db.js";
-import { buildMonthlySeries } from "../../services/chart-data.js";
+import {
+  buildMonthlySeries,
+  buildIncomeSeries,
+  type IncomeUnit,
+} from "../../services/chart-data.js";
 import { parseInput } from "../../lib/validation.js";
 import { getCheckinState, recordDailyCheckin } from "../../services/checkin.js";
 import {
@@ -220,6 +224,73 @@ export async function registerFeatureApiRoutes(
       })),
     };
   });
+
+  // Thu nhập giới thiệu theo khoảng ngày + đơn vị (ngày/tuần/tháng) — cho app vẽ
+  // biểu đồ ĐƯỜNG có bộ chọn thời gian. Mặc định: 1 tháng đến NGÀY HÔM TRƯỚC.
+  app.get(
+    "/referrals/income",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      reply.header("cache-control", "private, no-store");
+      const id = request.currentUser!.id;
+      const q = request.query as Record<string, unknown>;
+      const unit: IncomeUnit = (["day", "week", "month"] as const).includes(
+        String(q.unit) as IncomeUnit,
+      )
+        ? (String(q.unit) as IncomeUnit)
+        : "day";
+      const parseYmd = (value: unknown): Date | null => {
+        const text = String(value ?? "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+        const d = new Date(`${text}T00:00:00Z`);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+      const now = new Date();
+      const yesterday = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
+      );
+      let toDate = parseYmd(q.to) ?? yesterday;
+      const defaultFrom = new Date(toDate);
+      defaultFrom.setUTCMonth(defaultFrom.getUTCMonth() - 1);
+      let fromDate = parseYmd(q.from) ?? defaultFrom;
+      if (fromDate.getTime() > toDate.getTime()) {
+        [fromDate, toDate] = [toDate, fromDate];
+      }
+      const maxSpanMs = 750 * 24 * 60 * 60 * 1000;
+      if (toDate.getTime() - fromDate.getTime() > maxSpanMs) {
+        fromDate = new Date(toDate.getTime() - maxSpanMs);
+      }
+      const ymd = (d: Date): string => d.toISOString().slice(0, 10);
+
+      const rows = await query<{ bucket: string; total: string }>(
+        deps.db,
+        `
+          SELECT to_char(date_trunc($2, ce.created_at), 'YYYY-MM-DD') AS bucket,
+            COALESCE(sum(ce.referral_amount_vnd), 0)::text AS total
+          FROM commission_entries ce
+          WHERE ce.sharer_user_id = $1
+            AND ce.status <> 'REVERSED'
+            AND ce.created_at >= $3::date
+            AND ce.created_at < ($4::date + interval '1 day')
+          GROUP BY 1
+        `,
+        [id, unit, ymd(fromDate), ymd(toDate)],
+      );
+      const points = buildIncomeSeries(
+        rows.rows.map((r) => ({ bucket: r.bucket, value: Number(r.total) })),
+        fromDate,
+        toDate,
+        unit,
+      );
+      return {
+        from: ymd(fromDate),
+        to: ymd(toDate),
+        unit,
+        totalVnd: points.reduce((sum, p) => sum + p.value, 0),
+        points,
+      };
+    },
+  );
 
   // Danh sách LINK CHIA SẺ của người dùng (campaign 'sharelink') + tổng hoa hồng
   // chia sẻ đã nhận. Dùng cho tab Chia sẻ trên app.

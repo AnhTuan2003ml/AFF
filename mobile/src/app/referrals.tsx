@@ -9,6 +9,7 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { guiDoiMaGioiThieu, layGioiThieu } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
+import { IncomeChartCard } from '@/components/IncomeChartCard';
 import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
 import { ngay, vnd } from '@/lib/format';
@@ -16,25 +17,6 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 
 /** Gọn tiền cho nhãn trục: 500000→"500k", 1000000→"1tr". */
-function gonTien(v: number): string {
-  const a = Math.abs(v);
-  if (a >= 1_000_000) {
-    const n = v / 1_000_000;
-    return `${Number.isInteger(n) ? n : n.toFixed(1)}tr`;
-  }
-  if (a >= 1_000) return `${Math.round(v / 1_000)}k`;
-  return `${Math.round(v)}`;
-}
-
-/** Làm tròn LÊN số đẹp (1/2/5×10^k); rỗng → 1tr để trục ra 0…1tr. */
-function nhamTronTruc(v: number): number {
-  if (v <= 0) return 1_000_000;
-  const exp = Math.floor(Math.log10(v));
-  const base = 10 ** exp;
-  const f = v / base;
-  const nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
-  return nice * base;
-}
 
 /**
  * Giới thiệu — mã mời, tổng thưởng và danh sách người đã mời.
@@ -206,37 +188,7 @@ export default function ReferralsScreen() {
             <Text style={styles.totalValue}>{vnd(data?.totalEarnedVnd)}</Text>
           </View>
 
-          {(data?.monthlyEarnings?.length ?? 0) > 0 && (() => {
-            const months = data!.monthlyEarnings;
-            const truc = nhamTronTruc(Math.max(0, ...months.map((m) => m.value)));
-            return (
-              <View style={styles.chartCard}>
-                <Text style={styles.chartTitle}>{t('Hoa hồng theo tháng', 'Monthly commission')}</Text>
-                <View style={styles.chartRow}>
-                  <View style={styles.yAxis}>
-                    <Text style={styles.yLabel}>{gonTien(truc)}</Text>
-                    <Text style={styles.yLabel}>{gonTien(truc / 2)}</Text>
-                    <Text style={styles.yLabel}>0</Text>
-                  </View>
-                  <View style={styles.bars}>
-                    {months.map((m, i) => (
-                      <View key={i} style={styles.barCol}>
-                        <View style={styles.barTrack}>
-                          <View
-                            style={[
-                              styles.barFill,
-                              { height: m.value > 0 ? Math.max(2, Math.min(120, (m.value / truc) * 120)) : 0 },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.barMonth}>{m.label}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            );
-          })()}
+          <IncomeChartCard />
 
           <Text style={styles.h2}>{t('Người bạn đã mời', 'People you invited')} ({data?.data.length ?? 0})</Text>
           {(data?.data.length ?? 0) === 0 ? (

@@ -132,6 +132,27 @@ export function layGioiThieu() {
   }>('/api/v1/referrals');
 }
 
+export type IncomeUnit = 'day' | 'week' | 'month';
+
+export interface IncomePoint {
+  label: string;
+  value: number;
+}
+
+/** Thu nhập giới thiệu theo khoảng ngày + đơn vị — cho biểu đồ đường có bộ lọc. */
+export function layThuNhap(params: { from?: string; to?: string; unit: IncomeUnit }) {
+  const qs = new URLSearchParams({ unit: params.unit });
+  if (params.from) qs.set('from', params.from);
+  if (params.to) qs.set('to', params.to);
+  return apiFetch<{
+    from: string;
+    to: string;
+    unit: IncomeUnit;
+    totalVnd: number;
+    points: IncomePoint[];
+  }>(`/api/v1/referrals/income?${qs.toString()}`);
+}
+
 export interface ShareLink {
   productName: string | null;
   shareUrl: string;
