@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { apiFetch } from '@/api/client';
 import { useT } from '@/i18n';
@@ -86,24 +86,42 @@ export function EntryPromoModal() {
 
   if (!promo) return null;
 
+  const coCta = Boolean(promo.targetUrl);
+  const coND = Boolean(promo.title || promo.description);
+
   return (
     <Modal visible={mo} transparent animationType="fade" onRequestClose={dong}>
-      <View style={styles.scrim}>
-        {/* CHỈ ảnh quảng cáo — bấm vào ảnh là mở; không chữ, không nút CTA. */}
-        <Pressable
-          onPress={moLink}
-          disabled={!promo.targetUrl}
-          accessibilityLabel={promo.title}
-          style={styles.card}>
-          <Image source={{ uri: promo.imageUrl ?? '' }} style={styles.visual} contentFit="cover" />
-        </Pressable>
-        {/* Nút ✕ TÁCH RIÊNG dưới thẻ quảng cáo — nổi trên nền mờ trong suốt. */}
-        <View style={styles.closebar}>
-          <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel={t('Đóng quảng cáo', 'Close ad')}>
-            <Ionicons name="close" size={20} color={colors.text} />
+      <Pressable style={styles.scrim} onPress={dong}>
+        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+          {/* Ảnh quảng cáo — bấm ảnh mở link (nếu có). */}
+          <Pressable onPress={moLink} disabled={!coCta} accessibilityLabel={promo.title}>
+            {promo.imageUrl ? (
+              <Image source={{ uri: promo.imageUrl }} style={styles.visual} contentFit="cover" />
+            ) : null}
+            {promo.badge ? (
+              <View style={styles.badge}><Text style={styles.badgeText}>{promo.badge}</Text></View>
+            ) : null}
           </Pressable>
-        </View>
-      </View>
+
+          {/* Nút ✕ ở GÓC thẻ — gọn, không đè lung tung ra ngoài. */}
+          <Pressable onPress={dong} hitSlop={10} style={styles.close} accessibilityLabel={t('Đóng', 'Close')}>
+            <Ionicons name="close" size={18} color="#fff" />
+          </Pressable>
+
+          {coND ? (
+            <View style={styles.body}>
+              {promo.title ? <Text style={styles.title} numberOfLines={2}>{promo.title}</Text> : null}
+              {promo.description ? <Text style={styles.desc} numberOfLines={3}>{promo.description}</Text> : null}
+              {coCta ? (
+                <Pressable onPress={moLink} style={({ pressed }) => [styles.cta, pressed && { opacity: 0.9 }]}>
+                  <Text style={styles.ctaText}>{t('Xem ngay', 'View now')}</Text>
+                  <Ionicons name="arrow-forward" size={16} color={colors.onBrand} />
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -111,35 +129,38 @@ export function EntryPromoModal() {
 const styles = StyleSheet.create({
   scrim: {
     flex: 1,
-    backgroundColor: 'rgba(57,36,27,0.46)',
+    backgroundColor: 'rgba(18,10,6,0.66)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 18,
+    padding: 24,
   },
-  // Độ rộng khớp popup quảng cáo Shopee (ảnh 438px) — như web: rộng 76% màn
-  // hình, tối đa 438.
   card: {
-    width: '76%',
-    maxWidth: 438,
-    borderRadius: 20,
+    width: '86%',
+    maxWidth: 400,
+    borderRadius: 22,
     backgroundColor: colors.surface,
     overflow: 'hidden',
     ...shadow.card,
   },
-  visual: { width: '100%', height: 300 },
-  // Nút ✕ nằm NGOÀI thẻ, trên nền mờ — nền khu vực này trong suốt.
-  closebar: { alignItems: 'center', marginTop: 14 },
-  close: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+  visual: { width: '100%', aspectRatio: 1, backgroundColor: colors.paper },
+  badge: {
+    position: 'absolute', top: 12, left: 12,
+    backgroundColor: colors.brand, borderRadius: 8,
+    paddingHorizontal: 9, paddingVertical: 4,
   },
+  badgeText: { color: colors.onBrand, fontSize: 11, fontWeight: '900' },
+  close: {
+    position: 'absolute', top: 12, right: 12,
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.42)',
+  },
+  body: { padding: 16, gap: 8 },
+  title: { fontSize: 16, fontWeight: '900', color: colors.text, lineHeight: 22 },
+  desc: { fontSize: 13, color: colors.muted, lineHeight: 19 },
+  cta: {
+    marginTop: 4, height: 46, borderRadius: 12, backgroundColor: colors.brand,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+  },
+  ctaText: { color: colors.onBrand, fontWeight: '800', fontSize: 14.5 },
 });

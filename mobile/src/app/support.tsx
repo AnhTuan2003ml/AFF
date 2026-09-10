@@ -152,6 +152,8 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
   ]);
   const [dangGui, setDangGui] = useState(false);
   const [donDangHoi, setDonDangHoi] = useState<SupportOrderOption | null>(null);
+  const [donLink, setDonLink] = useState<string | null>(null);
+  const [linkNhap, setLinkNhap] = useState('');
   const [moChonDon, setMoChonDon] = useState(false);
   const { data: form } = useQuery({ queryKey: ['support-form'], queryFn: laySupportForm });
   const coDon = (form?.orderOptions.length ?? 0) > 0;
@@ -171,7 +173,10 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
   async function guiTin() {
     const text = noiDung.trim();
     if (!text || dangGui) return;
-    const message = donDangHoi ? `[Về đơn: ${donDangHoi.label}] ${text}` : text;
+    const nhan = donDangHoi ? donDangHoi.label : donLink;
+    const message = nhan
+      ? `[Về ${donDangHoi ? 'đơn' : 'sản phẩm'}: ${nhan}] ${text}`
+      : text;
     const history = tin.slice(-16);
     setTin((cur) => [...cur, { role: 'user', body: text }]);
     setNoiDung('');
@@ -182,6 +187,7 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
         message,
         history,
         ...(donDangHoi ? { orderKey: donDangHoi.key } : {}),
+        ...(donLink ? { productLink: donLink } : {}),
       });
       setTin((cur) => [...cur, { role: 'assistant', body: res.reply }]);
     } catch {
@@ -226,20 +232,22 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
         ) : null}
       />
 
-      {donDangHoi ? (
+      {donDangHoi || donLink ? (
         <View style={styles.attachBar}>
           <Pressable style={styles.attachChip} onPress={() => setMoChonDon(true)}>
-            <Ionicons name="cube-outline" size={14} color={colors.brand} />
-            <Text style={styles.attachText} numberOfLines={1}>{t('Về đơn', 'About order')}: {donDangHoi.label}</Text>
+            <Ionicons name={donDangHoi ? 'cube-outline' : 'link-outline'} size={14} color={colors.brand} />
+            <Text style={styles.attachText} numberOfLines={1}>
+              {donDangHoi ? donDangHoi.label : donLink}
+            </Text>
           </Pressable>
-          <Pressable onPress={() => setDonDangHoi(null)} hitSlop={8} style={styles.attachClear}>
+          <Pressable onPress={() => { setDonDangHoi(null); setDonLink(null); }} hitSlop={8} style={styles.attachClear}>
             <Ionicons name="close" size={14} color={colors.muted} />
           </Pressable>
         </View>
       ) : null}
 
       <View style={[styles.inputBar, { paddingBottom: banPhim ? 10 : insets.bottom + 8 }]}>
-        <Pressable onPress={() => coDon && setMoChonDon(true)} hitSlop={6} style={[styles.findBtn, !coDon && { opacity: 0.4 }]}>
+        <Pressable onPress={() => setMoChonDon(true)} hitSlop={6} style={styles.findBtn}>
           <Ionicons name="search" size={16} color={colors.brand} />
           <Text style={styles.findText}>{t('Tìm đơn', 'Find')}</Text>
         </Pressable>
@@ -257,22 +265,52 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
         </Pressable>
       </View>
 
-      <Modal visible={moChonDon} transparent animationType="fade" onRequestClose={() => setMoChonDon(false)}>
-        <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>{t('Chọn đơn để hỏi', 'Choose an order')}</Text>
-            <ScrollView style={{ maxHeight: 380 }}>
-              {(form?.orderOptions ?? []).map((o) => (
-                <Pressable key={o.key} onPress={() => { setDonDangHoi(o); setMoChonDon(false); }}
-                  style={({ pressed }) => [styles.option, donDangHoi?.key === o.key && styles.optionOn, pressed && { opacity: 0.85 }]}>
-                  <Text style={styles.optionText}>{o.label}</Text>
-                  {donDangHoi?.key === o.key && <Ionicons name="checkmark" size={18} color={colors.brand} />}
-                </Pressable>
-              ))}
-            </ScrollView>
-            <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}><Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text></Pressable>
+      <Modal visible={moChonDon} transparent animationType="slide" onRequestClose={() => setMoChonDon(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
+            <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>{t('Hỏi về một đơn / sản phẩm', 'Ask about an order / product')}</Text>
+
+              {coDon ? (
+                <>
+                  <Text style={styles.sheetLabel}>{t('Chọn đơn của bạn', 'Choose your order')}</Text>
+                  <ScrollView style={{ maxHeight: 220 }}>
+                    {(form?.orderOptions ?? []).map((o) => (
+                      <Pressable key={o.key} onPress={() => { setDonDangHoi(o); setDonLink(null); setMoChonDon(false); }}
+                        style={({ pressed }) => [styles.option, donDangHoi?.key === o.key && styles.optionOn, pressed && { opacity: 0.85 }]}>
+                        <Text style={styles.optionText} numberOfLines={2}>{o.label}</Text>
+                        {donDangHoi?.key === o.key && <Ionicons name="checkmark" size={18} color={colors.brand} />}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                  <View style={styles.orRow}>
+                    <View style={styles.orLine} /><Text style={styles.orText}>{t('hoặc', 'or')}</Text><View style={styles.orLine} />
+                  </View>
+                </>
+              ) : null}
+
+              <Text style={styles.sheetLabel}>{t('Dán link sản phẩm (Shopee/TikTok/Lazada)', 'Paste product link')}</Text>
+              <TextInput
+                value={linkNhap}
+                onChangeText={setLinkNhap}
+                placeholder="https://shopee.vn/..."
+                placeholderTextColor={colors.muted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                style={styles.linkInput}
+              />
+              <Pressable
+                disabled={!linkNhap.trim()}
+                onPress={() => { setDonLink(linkNhap.trim()); setDonDangHoi(null); setLinkNhap(''); setMoChonDon(false); }}
+                style={({ pressed }) => [styles.attachBtn2, !linkNhap.trim() && { opacity: 0.5 }, pressed && linkNhap.trim() && { backgroundColor: colors.brandStrong }]}>
+                <Text style={styles.attachBtn2Text}>{t('Đính kèm', 'Attach')}</Text>
+              </Pressable>
+              <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}><Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text></Pressable>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -1228,17 +1266,35 @@ const styles = StyleSheet.create({
   },
   retryText: { color: colors.brand, fontWeight: '800', fontSize: 13 },
 
-  scrim: { flex: 1, backgroundColor: 'rgba(40,22,14,0.4)', justifyContent: 'flex-end' },
+  scrim: { flex: 1, backgroundColor: 'rgba(30,16,10,0.55)', justifyContent: 'flex-end' },
   sheet: {
     padding: 20,
-    paddingBottom: 34,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    paddingBottom: 30,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     backgroundColor: colors.surface,
     gap: 10,
   },
+  sheetHandle: {
+    alignSelf: 'center', width: 40, height: 4, borderRadius: 2,
+    backgroundColor: colors.line, marginBottom: 4,
+  },
   sheetTitle: { fontSize: 17, fontWeight: '900', color: colors.text },
   sheetSub: { fontSize: 12.5, color: colors.muted, marginTop: -4 },
+  sheetLabel: { fontSize: 12, fontWeight: '800', color: colors.muted, marginBottom: -2 },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 2 },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
+  orText: { fontSize: 11, fontWeight: '800', color: colors.muted, textTransform: 'uppercase' },
+  linkInput: {
+    height: 48, paddingHorizontal: 14, borderRadius: 12,
+    borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper,
+    color: colors.text, fontSize: 14,
+  },
+  attachBtn2: {
+    height: 46, borderRadius: 12, backgroundColor: colors.brand,
+    alignItems: 'center', justifyContent: 'center', marginTop: 2,
+  },
+  attachBtn2Text: { color: colors.onBrand, fontWeight: '800', fontSize: 14.5 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',

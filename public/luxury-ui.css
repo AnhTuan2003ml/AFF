@@ -10682,14 +10682,38 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 .camio-order-chip button { border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; line-height: 1; }
 .camio-picker {
-  display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding: 12px;
-  border: 1px solid var(--lx-line, #eadfce); border-radius: 12px; background: var(--lx-ivory, #fbf6f0);
+  display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; padding: 16px;
+  border: 1px solid var(--lx-line, #eadfce); border-radius: 16px;
+  background: var(--lx-paper, #fff);
+  box-shadow: 0 14px 34px -18px rgba(20, 10, 4, .28);
 }
-.camio-picker label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--lx-muted); }
+.camio-picker-head { display: flex; align-items: center; justify-content: space-between; }
+.camio-picker-head b { font-size: 14px; font-weight: 900; color: var(--lx-ink); }
+.camio-picker-x {
+  width: 30px; height: 30px; flex: none; border: 0; border-radius: 50%;
+  background: var(--lx-ivory, #f6efe6); color: var(--lx-muted); cursor: pointer;
+  display: grid; place-items: center;
+}
+.camio-picker-x svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.camio-picker-field { display: flex; flex-direction: column; gap: 6px; }
+.camio-picker-field > span { font-size: 12px; font-weight: 800; color: var(--lx-muted); }
 .camio-picker select, .camio-picker input {
-  height: 40px; padding: 0 10px; border: 1px solid var(--lx-line-strong, #e1d0c4);
-  border-radius: 10px; background: var(--lx-paper, #fff); color: var(--lx-ink); font: inherit; font-weight: 600;
+  height: 46px; padding: 0 12px; border: 1px solid var(--lx-line-strong, #e1d0c4);
+  border-radius: 12px; background: var(--lx-paper, #fff); color: var(--lx-ink); font: inherit; font-weight: 600;
 }
+.camio-picker select:focus, .camio-picker input:focus {
+  outline: none; border-color: var(--lx-orange, #ee4d2d);
+  box-shadow: 0 0 0 3px rgba(238, 77, 45, .14);
+}
+/* Divider "hoặc" giữa 2 lựa chọn (chọn đơn / dán link). */
+.camio-picker-or {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--lx-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+}
+.camio-picker-or::before, .camio-picker-or::after {
+  content: ""; flex: 1; height: 1px; background: var(--lx-line, #eadfce);
+}
+.camio-picker-done { width: 100%; height: 44px; margin-top: 2px; }
 
 .camio-bar { display: flex; align-items: flex-end; gap: 8px; }
 .camio-find {
@@ -10744,6 +10768,9 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .support-screen select,
 .support-screen textarea { font-size: 16px; }
 .support-screen[hidden] { display: none !important; }
+/* Mobile: wrapper trong suốt (head/body/foot chảy thẳng vào cột flex overlay).
+   Desktop: wrapper thành thẻ card (xem @media ≥961px). */
+.support-screen-card { display: contents; }
 .support-screen-head {
   display: flex; align-items: center; gap: 10px; flex: none;
   padding: 12px 14px calc(12px + env(safe-area-inset-top));
@@ -10785,31 +10812,29 @@ body.support-screen-open { overflow: hidden; }
 @media (min-width: 961px) {
   .support-choices { max-width: 600px; margin-inline: auto; }
 
-  /* Overlay phủ mờ, đưa nội dung về một thẻ giữa màn hình thay vì tràn viền. */
+  /* Nền mờ ĐẬM + blur để thẻ chat nổi bật, tách hẳn khỏi trang phía sau. */
   .support-screen {
-    background: rgba(28, 18, 12, .5);
+    background: rgba(10, 6, 4, .68);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     align-items: center;
     justify-content: center;
     padding: 32px;
   }
-  .support-screen-head,
-  .support-screen-body,
-  .support-screen-foot {
+  /* Gom head/body/foot vào MỘT thẻ bo góc, đổ bóng liền mạch (không còn ghép
+     rời từng mảnh nên hết vệt nối). */
+  .support-screen-card {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 760px;
+    height: min(80vh, 720px);
+    border-radius: 22px;
+    overflow: hidden;
     background: var(--lx-paper, #fff);
+    border: 1px solid rgba(0, 0, 0, .06);
+    box-shadow: 0 40px 90px -28px rgba(20, 10, 4, .62),
+                0 8px 24px -12px rgba(20, 10, 4, .4);
   }
-  .support-screen-head {
-    border-radius: 18px 18px 0 0;
-    padding-top: 14px;
-  }
-  .support-screen-body {
-    background: var(--lx-ivory, #fbf8f4);
-    height: min(74vh, 660px);
-    flex: none;
-  }
-  .support-screen-foot {
-    border-radius: 0 0 18px 18px;
-    padding-bottom: 12px;
-  }
+  .support-screen-card .support-screen-body { flex: 1; }
 }

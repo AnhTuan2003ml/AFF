@@ -49,6 +49,7 @@
 
     {# ─────────── OVERLAY 1: CHAT CAMIO (toàn màn hình) ─────────── #}
     <div class="support-screen" data-support-screen="camio" data-camio data-endpoint="/app/camio/messages" data-csrf="{{ csrfToken }}" hidden>
+      <div class="support-screen-card">
       <header class="support-screen-head">
         <button type="button" class="support-screen-back" data-close-screen>{{ t('‹ Quay lại', '‹ Back') }}</button>
         <span class="support-screen-title"><span class="camio-avatar sm" data-camio-mascot aria-hidden="true"></span>{{ t('Chat với Camio', 'Chat with Camio') }} <span class="camio-ai-tag">AI</span></span>
@@ -69,7 +70,14 @@
           <button type="button" data-camio-order-clear aria-label="{{ t('Bỏ đơn', 'Remove order') }}">×</button>
         </div>
         <div class="camio-picker" data-camio-picker hidden>
-          <label>{{ t('Chọn đơn của bạn', 'Choose your order') }}
+          <div class="camio-picker-head">
+            <b>{{ t('Hỏi về một đơn / sản phẩm', 'Ask about an order / product') }}</b>
+            <button type="button" class="camio-picker-x" data-camio-picker-done aria-label="{{ t('Đóng', 'Close') }}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
+          <label class="camio-picker-field">
+            <span>{{ t('Chọn đơn của bạn', 'Choose your order') }}</span>
             <select data-camio-order-select>
               <option value="">{{ t('— Chọn đơn —', '— Choose an order —') }}</option>
               {% for option in orderOptions %}
@@ -77,10 +85,12 @@
               {% endfor %}
             </select>
           </label>
-          <label>{{ t('Hoặc dán link sản phẩm/đơn', 'Or paste product/order link') }}
-            <input type="text" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
+          <div class="camio-picker-or"><span>{{ t('hoặc', 'or') }}</span></div>
+          <label class="camio-picker-field">
+            <span>{{ t('Dán link sản phẩm (Shopee/TikTok/Lazada)', 'Paste product link') }}</span>
+            <input type="url" inputmode="url" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
           </label>
-          <button type="button" class="button button-small" data-camio-picker-done>{{ t('Xong', 'Done') }}</button>
+          <button type="button" class="button button-primary button-small camio-picker-done" data-camio-picker-done>{{ t('Đính kèm', 'Attach') }}</button>
         </div>
         <form class="camio-bar" data-camio-form novalidate>
           <button type="button" class="camio-find" data-camio-find>
@@ -94,10 +104,12 @@
         </form>
         <p class="field-error" data-camio-error hidden role="alert"></p>
       </div>
+      </div>
     </div>
 
     {# ─────────── OVERLAY 2: CHAT CSKH (toàn màn hình) ─────────── #}
     <div class="support-screen" data-support-screen="cskh" data-reply-panel data-has-reply="{{ '1' if latestReply else '' }}" hidden>
+      <div class="support-screen-card">
       <header class="support-screen-head">
         <button type="button" class="support-screen-back" data-close-screen data-reply-close>{{ t('‹ Quay lại', '‹ Back') }}</button>
         <span class="support-screen-title">{{ t('Chat với CSKH', 'Chat with support') }}</span>
@@ -127,10 +139,12 @@
         </form>
         <p class="field-error" data-chatbar-error hidden role="alert"></p>
       </div>
+      </div>
     </div>
 
     {# ─────────── OVERLAY 3: GỬI YÊU CẦU THEO MẪU (toàn màn hình) ─────────── #}
     <div class="support-screen" data-support-screen="form" hidden>
+      <div class="support-screen-card">
       <header class="support-screen-head">
         <button type="button" class="support-screen-back" data-close-screen>{{ t('‹ Quay lại', '‹ Back') }}</button>
         <span class="support-screen-title">{{ t('Gửi yêu cầu theo mẫu', 'Submit a request') }}</span>
@@ -190,6 +204,7 @@
 
           <button class="button button-primary" type="submit" data-support-submit>{{ t('Gửi yêu cầu', 'Send request') }}</button>
         </form>
+      </div>
       </div>
     </div>
   {% endif %}
