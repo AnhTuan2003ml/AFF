@@ -10573,6 +10573,28 @@ button.cal-cell.is-today:hover:not(:disabled) {
 
 /* ── Biểu đồ (trend/bar) trên khu người dùng — app không nạp styles.css nên
    định nghĩa lại ở đây. Biểu đồ cột "Thu nhập theo tháng" ở /app/referrals. ── */
+/* Biểu đồ ĐƯỜNG lớn (thu nhập giới thiệu) — khung cao, chữ to, tỉ lệ đúng. */
+.income-chart { width: 100%; }
+.income-chart svg { display: block; width: 100%; height: auto; max-height: 340px; }
+.income-chart .trend-gridline {
+  stroke: var(--lx-line, #e9ded4);
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+  opacity: .55;
+}
+.income-chart .trend-grid-label,
+.income-chart .trend-axis-label { fill: var(--lx-muted, #81736a); font-weight: 600; }
+.income-chart .trend-area { fill: rgba(238, 77, 45, .12); }
+.income-chart .trend-line {
+  fill: none;
+  stroke: var(--lx-orange, #ee4d2d);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.income-chart .trend-dot { fill: var(--lx-paper, #fff); stroke: var(--lx-orange, #ee4d2d); stroke-width: 2.4; }
+.income-chart .chart-empty-copy { color: var(--lx-muted, #81736a); font-size: 13px; text-align: center; padding: 10px 0; }
+
 .trend-chart { width: 100%; height: auto; }
 .trend-chart .trend-gridline { stroke: var(--lx-line, #e9ded4); stroke-width: 1; }
 .trend-chart .trend-grid-label,

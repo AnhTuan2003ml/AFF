@@ -244,3 +244,31 @@ export async function getHeroMediaBlob(
     ? { contentType: row.content_type ?? "application/octet-stream", data: row.data }
     : null;
 }
+
+/**
+ * Như getHeroMediaBlob nhưng RESIZE ảnh tĩnh về đúng bề rộng thiết bị yêu cầu
+ * (`width` px, đã nhân devicePixelRatio ở client) trước khi trả — tiết kiệm băng
+ * thông, hiển thị đúng kích thước. GIF động và video KHÔNG đụng (giữ nguyên).
+ */
+export async function getHeroMediaBlobSized(
+  db: Database,
+  id: string,
+  width: number | null,
+): Promise<{ contentType: string; data: Buffer } | null> {
+  const media = await getHeroMediaBlob(db, id);
+  if (!media) return null;
+  const resizable = ["image/jpeg", "image/png", "image/webp"].includes(
+    media.contentType,
+  );
+  if (!width || !resizable) return media;
+  const w = Math.max(160, Math.min(HERO_MAX_W, Math.round(width)));
+  try {
+    const data = await sharp(media.data)
+      .resize(w, null, { withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+    return { contentType: "image/webp", data };
+  } catch {
+    return media;
+  }
+}

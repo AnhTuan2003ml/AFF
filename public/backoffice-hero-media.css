@@ -1,4 +1,5 @@
-/* Trang quản trị: media nền hero trang chủ. */
+/* Trang quản trị: media nền hero trang chủ. Dùng token theme (--surface/--text/
+   --line/--muted...) để hợp cả giao diện sáng và tối, không hardcode #fff. */
 .hero-media-grid {
   display: grid;
   grid-template-columns: minmax(300px, 380px) 1fr;
@@ -17,21 +18,19 @@
   align-items: center;
   margin-top: 6px;
   padding: 20px 14px;
-  border: 1.5px dashed #d8c4b2;
+  border: 1.5px dashed var(--line-strong, #d8c4b2);
   border-radius: 14px;
-  background: #fbf6f0;
+  background: var(--surface-muted, #fbf6f0);
   text-align: center;
 }
-.hero-file-box input[type="file"] {
-  max-width: 100%;
-}
+.hero-file-box input[type="file"] { max-width: 100%; color: var(--text); }
 .hero-file-box input[type="file"]::file-selector-button {
   margin-right: 10px;
   padding: 8px 14px;
   border: 0;
   border-radius: 10px;
-  background: #ee4d2d;
-  color: #fff;
+  background: var(--brand, #ee4d2d);
+  color: var(--on-brand, #fff);
   font-weight: 800;
   cursor: pointer;
 }
@@ -39,16 +38,17 @@
   margin: 2px 0 4px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(238, 77, 45, .06);
-  border: 1px solid rgba(238, 77, 45, .16);
-  color: #6b4a3d;
+  background: var(--surface-muted, rgba(238, 77, 45, .06));
+  border: 1px solid var(--line, rgba(238, 77, 45, .16));
+  color: var(--muted, #6b4a3d);
   font-size: 12px;
   line-height: 1.5;
 }
+.hero-media-specs b { color: var(--text); }
 
 .hero-media-or {
   text-align: center;
-  color: #8d7e74;
+  color: var(--muted, #8d7e74);
   font-size: 12px;
   font-weight: 700;
   margin: 2px 0;
@@ -64,11 +64,12 @@
   align-items: center;
   gap: 14px;
   padding: 12px;
-  border: 1px solid #eadfce;
+  border: 1px solid var(--line, #eadfce);
   border-radius: 14px;
-  background: #fff;
+  /* Khác nền panel để dòng nổi lên, không bị "đồng màu" khó nhìn. */
+  background: var(--surface-muted, #fff);
 }
-.hero-media-item.is-off { opacity: 0.6; }
+.hero-media-item.is-off { opacity: 0.55; }
 .hero-media-preview {
   position: relative;
   flex: 0 0 auto;
@@ -76,7 +77,15 @@
   height: 68px;
   border-radius: 10px;
   overflow: hidden;
-  background: #f3ece3;
+  background: var(--surface, #f3ece3);
+  border: 1px solid var(--line);
+}
+.hero-media-preview img,
+.hero-media-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .hero-media-play {
   position: absolute;
@@ -86,20 +95,13 @@
   color: #fff;
   font-size: 20px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .6);
-  background: rgba(0, 0, 0, .18);
-}
-.hero-media-preview img,
-.hero-media-preview video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  background: rgba(0, 0, 0, .28);
 }
 .hero-media-main { flex: 1; min-width: 0; }
-.hero-media-main b { display: block; font-size: 14px; }
+.hero-media-main b { display: block; font-size: 14px; color: var(--text); }
 .hero-media-main small {
   display: block;
-  color: #8d7e74;
+  color: var(--muted, #8d7e74);
   font-size: 12px;
   margin-top: 2px;
   overflow: hidden;
@@ -114,8 +116,8 @@
   padding: 2px 8px;
   border-radius: 999px;
 }
-.hero-media-state.on { color: #0d7a4a; background: rgba(16, 150, 90, .12); }
-.hero-media-state.off { color: #8d7e74; background: #efeae4; }
+.hero-media-state.on { color: #0d7a4a; background: rgba(16, 150, 90, .16); }
+.hero-media-state.off { color: var(--muted); background: var(--surface-hover, #efeae4); }
 .hero-media-actions {
   flex: 0 0 auto;
   display: flex;

@@ -1349,6 +1349,18 @@ export async function registerAppRoutes(
         unit,
       ),
       (value) => formatVnd(value),
+      // Khung lớn + chữ to để dễ đọc ngày trên mobile (tỉ lệ ~1.75:1, tương tự
+      // biểu đồ cột). Macro income_line_chart vẽ theo tỉ lệ, không kéo méo.
+      {
+        width: 560,
+        height: 320,
+        padLeft: 54,
+        padRight: 16,
+        padTop: 18,
+        padBottom: 40,
+        labelFont: 16,
+        maxXLabels: 7,
+      },
     );
     return reply.view("app/referrals.njk", {
       pageTitle: "Mạng lưới của tôi",

@@ -30,9 +30,20 @@
     return m ? m[1] : null;
   }
 
+  // Gắn ?w theo bề rộng hero × devicePixelRatio để server resize ảnh vừa thiết
+  // bị (chỉ áp cho ảnh tải lên cùng máy chủ /hero-media/; URL ngoài giữ nguyên).
+  function sizedSrc(src) {
+    if (String(src).indexOf("/hero-media/") !== 0) return src;
+    var w = Math.round(
+      hero.getBoundingClientRect().width * (window.devicePixelRatio || 1),
+    );
+    if (!w) return src;
+    return src + (src.indexOf("?") >= 0 ? "&" : "?") + "w=" + w;
+  }
+
   function preload(src) {
     var img = new Image();
-    img.src = src;
+    img.src = sizedSrc(src);
   }
 
   // Kích thước iframe YouTube phủ kín hero (giữ 16:9, cắt phần thừa).
@@ -94,7 +105,7 @@
       stopEmbed();
       stopVideo();
       bg.style.backgroundImage =
-        'url("' + String(item.src).replace(/"/g, "%22") + '")';
+        'url("' + sizedSrc(item.src).replace(/"/g, "%22") + '")';
     }
   }
 

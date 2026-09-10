@@ -1,6 +1,6 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/macros.njk" import status_badge, empty_state %}
-{% from "partials/charts.njk" import line_chart %}
+{% from "partials/charts.njk" import income_line_chart %}
 {% from "partials/icons.njk" import icon %}
 
 {% block app_content %}
@@ -126,7 +126,7 @@
         </label>
         <button type="submit" class="button button-primary button-small income-apply">{{ t('Áp dụng', 'Apply') }}</button>
       </form>
-      {{ line_chart(referralIncomeChart, t('Biểu đồ thu nhập giới thiệu theo thời gian', 'Referral earnings over time chart'), t('Chưa có thu nhập trong khoảng đã chọn.', 'No earnings in the selected range.')) }}
+      {{ income_line_chart(referralIncomeChart, t('Biểu đồ thu nhập giới thiệu theo thời gian', 'Referral earnings over time chart'), t('Chưa có thu nhập trong khoảng đã chọn.', 'No earnings in the selected range.')) }}
     </section>
   {% endif %}
 

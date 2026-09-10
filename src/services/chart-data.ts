@@ -38,6 +38,24 @@ export interface TrendChartData {
   dots: TrendDot[];
   axisLabels: TrendAxisLabel[];
   hasData: boolean;
+  /** Toạ độ trục (cho macro biểu đồ đường lớn); tuỳ chọn. */
+  axisLeft?: number;
+  axisRight?: number;
+  baselineTop?: number;
+  /** Cỡ chữ nhãn theo đơn vị viewBox (nhãn to hơn khi chart lớn). */
+  labelFont?: number;
+}
+
+export interface SeriesLineOptions {
+  width?: number;
+  height?: number;
+  padLeft?: number;
+  padRight?: number;
+  padTop?: number;
+  padBottom?: number;
+  labelFont?: number;
+  /** Số nhãn trục X tối đa (thưa để không chồng chữ). */
+  maxXLabels?: number;
 }
 
 export interface TrendChartRow {
@@ -181,16 +199,26 @@ export interface SeriesPoint {
 export function buildSeriesLineChart(
   points: SeriesPoint[],
   formatValue: (value: number) => string = (value) => `${value}`,
+  options: SeriesLineOptions = {},
 ): TrendChartData {
-  const plotWidth = TREND_WIDTH - TREND_PAD_LEFT - TREND_PAD_RIGHT;
-  const plotHeight = TREND_HEIGHT - TREND_PAD_TOP - TREND_PAD_BOTTOM;
-  const baselineY = TREND_PAD_TOP + plotHeight;
+  const width = options.width ?? TREND_WIDTH;
+  const height = options.height ?? TREND_HEIGHT;
+  const padLeft = options.padLeft ?? TREND_PAD_LEFT;
+  const padRight = options.padRight ?? TREND_PAD_RIGHT;
+  const padTop = options.padTop ?? TREND_PAD_TOP;
+  const padBottom = options.padBottom ?? TREND_PAD_BOTTOM;
+  const labelFont = options.labelFont ?? 10;
+  const maxXLabels = options.maxXLabels ?? 8;
+
+  const plotWidth = width - padLeft - padRight;
+  const plotHeight = height - padTop - padBottom;
+  const baselineY = padTop + plotHeight;
   const maxValue = Math.max(1, ...points.map((point) => point.value));
   const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0;
 
   const positioned = points.map((point, index) => ({
     ...point,
-    x: TREND_PAD_LEFT + stepX * index,
+    x: padLeft + stepX * index,
     y: baselineY - (point.value / maxValue) * plotHeight,
   }));
 
@@ -211,15 +239,15 @@ export function buildSeriesLineChart(
   const gridLines: TrendGridLine[] = Array.from(
     { length: TREND_GRID_STEPS + 1 },
     (_, step) => ({
-      y: TREND_PAD_TOP + (plotHeight / TREND_GRID_STEPS) * step,
+      y: padTop + (plotHeight / TREND_GRID_STEPS) * step,
       label: formatCompactValue(maxValue * (1 - step / TREND_GRID_STEPS)),
     }),
   );
 
-  const labelEvery = Math.max(1, Math.ceil(positioned.length / 8));
+  const labelEvery = Math.max(1, Math.ceil(positioned.length / maxXLabels));
   return {
-    viewBoxWidth: TREND_WIDTH,
-    viewBoxHeight: TREND_HEIGHT,
+    viewBoxWidth: width,
+    viewBoxHeight: height,
     baselineY,
     linePath,
     areaPath,
@@ -240,6 +268,10 @@ export function buildSeriesLineChart(
       })
       .map((point) => ({ x: point.x, label: point.label })),
     hasData: positioned.some((point) => point.value > 0),
+    axisLeft: padLeft,
+    axisRight: width - padRight,
+    baselineTop: padTop,
+    labelFont,
   };
 }
 

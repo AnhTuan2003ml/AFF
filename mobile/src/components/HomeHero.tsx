@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, PixelRatio, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
 import { apiBaseUrl } from '@/api/client';
@@ -52,10 +52,14 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
 
   // Nền hero do admin cấu hình (chỉ dùng ẢNH/GIF; video cần module native nên bỏ).
   const { data: heroData } = useQuery({ queryKey: ['hero-media'], queryFn: layHeroMedia });
+  // Bề rộng thiết bị × mật độ điểm ảnh → server resize ảnh vừa máy (chỉ ảnh tải lên).
+  const deviceW = Math.round(Dimensions.get('window').width * PixelRatio.get());
   const anhNen = (heroData?.items ?? [])
     .filter((m) => m.kind === 'image')
     .map((m) => ({
-      uri: m.src.startsWith('http') ? m.src : `${apiBaseUrl}${m.src}`,
+      uri: m.src.startsWith('http')
+        ? m.src
+        : `${apiBaseUrl}${m.src}${m.src.startsWith('/hero-media/') ? `?w=${deviceW}` : ''}`,
       durationMs: Math.max(500, m.durationMs || 6000),
     }));
   const [idx, setIdx] = useState(0);
