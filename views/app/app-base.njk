@@ -288,10 +288,30 @@
       {# Nút ✕ TÁCH RIÊNG dưới thẻ quảng cáo — nổi trên nền mờ trong suốt. #}
       <div class="entry-promo-closebar"><button class="entry-promo-close" type="button" data-entry-promo-close aria-label="Đóng quảng cáo">×</button></div>
     </div>
+
+    {# Nhắc chọn giới tính cho user chưa có (đăng ký Google / tài khoản cũ) —
+       email đã có sẵn trường giới tính nên không rơi vào đây. #}
+    {% if currentUser and currentUser.gender == 'UNKNOWN' %}
+      <div class="gender-scrim" data-gender-prompt hidden>
+        <div class="gender-card" role="dialog" aria-modal="true" aria-labelledby="gender-prompt-title">
+          <span class="gender-mascot" aria-hidden="true"><img src="/assets/images/mascot/camio-vuive.png?v=3" alt=""></span>
+          <h2 id="gender-prompt-title">{{ t('Cho Camio biết bạn là anh hay chị nhé!', 'Let Camio know how to address you!') }}</h2>
+          <p>{{ t('Để Camio xưng hô đúng khi trò chuyện với bạn.', 'So Camio addresses you correctly in chat.') }}</p>
+          <form method="post" action="/app/settings/gender" class="gender-opts">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+            <input type="hidden" name="returnTo" value="/app">
+            <button class="gender-opt" type="submit" name="gender" value="MALE"><span>👨</span>{{ t('Nam', 'Male') }}</button>
+            <button class="gender-opt" type="submit" name="gender" value="FEMALE"><span>👩</span>{{ t('Nữ', 'Female') }}</button>
+          </form>
+          <button type="button" class="gender-later" data-gender-later>{{ t('Để sau', 'Later') }}</button>
+        </div>
+      </div>
+    {% endif %}
   </div>
   {% if currentUser %}
     {% include "partials/checkin-popup.njk" %}
     <script src="/assets/checkin.js?v={{ assetVersion }}" defer></script>
+    <script src="/assets/gender-prompt.js?v={{ assetVersion }}" defer></script>
   {% endif %}
   <script src="/assets/app-entry-promo.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

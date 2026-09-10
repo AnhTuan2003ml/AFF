@@ -1996,6 +1996,26 @@ export async function registerAppRoutes(
     return reply.redirect("/app/profile");
   });
 
+  // Lưu giới tính từ popup nhắc (user đăng ký Google / tài khoản cũ chưa có).
+  app.post("/settings/gender", async (request, reply) => {
+    const body = (request.body ?? {}) as Record<string, unknown>;
+    const rawReturn = String(body.returnTo ?? "");
+    const returnTo = /^\/app(\/|$)/.test(rawReturn) ? rawReturn : "/app";
+    try {
+      const input = parseInput(
+        z.object({ gender: z.enum(["MALE", "FEMALE"]) }),
+        request.body,
+      );
+      await query(deps.db, "UPDATE users SET gender = $2 WHERE id = $1", [
+        userId(request),
+        input.gender,
+      ]);
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect(returnTo);
+  });
+
   // Đổi ảnh đại diện: tải ảnh (multipart) → chuẩn hóa JPEG vuông → lưu DB.
   app.post("/settings/avatar", async (request, reply) => {
     try {

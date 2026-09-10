@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EntryPromoModal } from '@/components/EntryPromoModal';
+import { GioiTinhModal } from '@/components/GioiTinhModal';
 import { MascotFab } from '@/components/MascotFab';
 import { PushRegistrar } from '@/components/PushRegistrar';
 import { WelcomeToast } from '@/components/WelcomeToast';
@@ -89,6 +90,8 @@ export default function TabsLayout() {
       />
     </Tabs>
       <MascotFab />
+      {/* Nhắc chọn giới tính cho user chưa có (Google / tài khoản cũ). */}
+      <GioiTinhModal />
       {/* Popup quảng cáo khi mở app — cùng nội dung với web, cỡ 60%. */}
       <EntryPromoModal />
       <WelcomeToast />
