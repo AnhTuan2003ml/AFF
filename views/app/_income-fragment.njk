@@ -1,0 +1,20 @@
+{% from "partials/charts.njk" import income_line_chart %}
+<div class="income-breakdown">
+  <div class="income-src">
+    <small>{{ t('Đơn của bạn', 'Your orders') }}</small>
+    <b>{{ incomeBreakdown.ownVnd | vnd }}</b>
+  </div>
+  <div class="income-src">
+    <small>{{ t('Người bạn giới thiệu', 'Referred users') }}</small>
+    <b>{{ incomeBreakdown.referralVnd | vnd }}</b>
+  </div>
+  <div class="income-src">
+    <small>{{ t('Mua qua link chia sẻ', 'Via shared links') }}</small>
+    <b>{{ incomeBreakdown.shareLinkVnd | vnd }}</b>
+  </div>
+  <div class="income-src is-total">
+    <small>{{ t('Tổng doanh thu', 'Total revenue') }}</small>
+    <b>{{ incomeBreakdown.totalVnd | vnd }}</b>
+  </div>
+</div>
+{{ income_line_chart(referralIncomeChart, t('Biểu đồ doanh thu theo thời gian', 'Revenue over time chart'), t('Chưa có doanh thu trong khoảng đã chọn.', 'No revenue in the selected range.')) }}

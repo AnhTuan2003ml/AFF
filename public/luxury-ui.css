@@ -10573,6 +10573,34 @@ button.cal-cell.is-today:hover:not(:disabled) {
 
 /* ── Biểu đồ (trend/bar) trên khu người dùng — app không nạp styles.css nên
    định nghĩa lại ở đây. Biểu đồ cột "Thu nhập theo tháng" ở /app/referrals. ── */
+/* Bảng tách 3 nguồn doanh thu + tổng. */
+.income-breakdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+@media (max-width: 560px) {
+  .income-breakdown { grid-template-columns: repeat(2, 1fr); }
+}
+.income-src {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--lx-ivory, #fbf6f0);
+  border: 1px solid var(--lx-line, #eadfce);
+}
+.income-src small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--lx-muted, #81736a);
+}
+.income-src b { display: block; margin-top: 4px; font-size: 15px; font-weight: 900; color: var(--lx-ink); }
+.income-src.is-total { background: rgba(238, 77, 45, .09); border-color: rgba(238, 77, 45, .22); }
+.income-src.is-total b { color: var(--lx-orange, #ee4d2d); }
+[data-income-body].is-loading { opacity: .5; transition: opacity .15s ease; }
+
 /* Biểu đồ ĐƯỜNG lớn (thu nhập giới thiệu) — khung cao, chữ to, tỉ lệ đúng. */
 .income-chart { width: 100%; }
 .income-chart svg { display: block; width: 100%; height: auto; max-height: 340px; }
