@@ -13,6 +13,14 @@
    kính trên nền cam của trang đăng nhập — GIỮ NGUYÊN.
    ============================================================ */
 
+/* Ô chọn ngày (biểu đồ thu nhập): nền tối + đảo màu icon lịch cho dễ thấy. */
+:root[data-theme="dark"] .income-date {
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .income-date::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 :root[data-theme="dark"] {
   --lx-orange: #ff6a3d;
   --lx-orange-2: #ff8a5f;

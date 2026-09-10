@@ -1,6 +1,6 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/macros.njk" import status_badge, empty_state %}
-{% from "partials/charts.njk" import bar_chart %}
+{% from "partials/charts.njk" import line_chart %}
 {% from "partials/icons.njk" import icon %}
 
 {% block app_content %}
@@ -79,10 +79,29 @@
     </section>
   {% endif %}
 
-  {% if referralMonthlyChart %}
+  {% if referralIncomeChart %}
     <section class="panel referral-chart-panel">
-      <header class="panel-heading"><div><span class="eyebrow">{{ t('HOA HỒNG GIỚI THIỆU', 'REFERRAL COMMISSION') }}</span><h2>{{ t('Thu nhập theo tháng', 'Monthly earnings') }}</h2></div></header>
-      {{ bar_chart(referralMonthlyChart, t('Biểu đồ hoa hồng giới thiệu theo tháng', 'Monthly referral commission chart'), t('Chưa có hoa hồng giới thiệu trong các tháng gần đây.', 'No referral commission in recent months.')) }}
+      <header class="panel-heading"><div><span class="eyebrow">{{ t('HOA HỒNG GIỚI THIỆU', 'REFERRAL COMMISSION') }}</span><h2>{{ t('Thu nhập theo thời gian', 'Earnings over time') }}</h2></div></header>
+      <form method="get" action="/app/referrals" class="income-filter">
+        <label class="income-field">
+          <span>{{ t('Từ ngày', 'From') }}</span>
+          <input type="date" name="from" class="income-date" value="{{ incomeRange.from }}" max="{{ incomeRange.maxDate }}" required>
+        </label>
+        <label class="income-field">
+          <span>{{ t('Đến ngày', 'To') }}</span>
+          <input type="date" name="to" class="income-date" value="{{ incomeRange.to }}" max="{{ incomeRange.maxDate }}" required>
+        </label>
+        <label class="income-field">
+          <span>{{ t('Đơn vị', 'Unit') }}</span>
+          <select name="unit" class="income-unit">
+            <option value="day" {% if incomeRange.unit == 'day' %}selected{% endif %}>{{ t('Ngày', 'Day') }}</option>
+            <option value="week" {% if incomeRange.unit == 'week' %}selected{% endif %}>{{ t('Tuần', 'Week') }}</option>
+            <option value="month" {% if incomeRange.unit == 'month' %}selected{% endif %}>{{ t('Tháng', 'Month') }}</option>
+          </select>
+        </label>
+        <button type="submit" class="button button-primary button-small income-apply">{{ t('Áp dụng', 'Apply') }}</button>
+      </form>
+      {{ line_chart(referralIncomeChart, t('Biểu đồ thu nhập giới thiệu theo thời gian', 'Referral earnings over time chart'), t('Chưa có thu nhập trong khoảng đã chọn.', 'No earnings in the selected range.')) }}
     </section>
   {% endif %}
 

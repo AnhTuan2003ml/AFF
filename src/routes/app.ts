@@ -59,9 +59,9 @@ import {
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
 import { getCheckinState, recordDailyCheckin } from "../services/checkin.js";
 import {
-  buildMonthlyBarChart,
-  buildMonthlySeries,
   buildSeriesLineChart,
+  buildIncomeSeries,
+  type IncomeUnit,
 } from "../services/chart-data.js";
 import { formatVnd } from "../lib/format.js";
 import { lookupProductPreview } from "../services/product-preview.js";
@@ -1218,7 +1218,44 @@ export async function registerAppRoutes(
   // nhận được bao nhiêu từ từng người, cộng tóm tắt mua sắm của chính mình.
   app.get("/referrals", async (request, reply) => {
     const id = userId(request);
-    const [referrals, mySource, myEarnings, myShopping, referralMonthly, kolStatus] =
+
+    // Bộ lọc biểu đồ thu nhập: đơn vị (ngày/tuần/tháng) + khoảng [from, to].
+    // Mặc định: 1 tháng gần nhất tính đến NGÀY HÔM TRƯỚC (không tính hôm nay).
+    const q = request.query as Record<string, unknown>;
+    const unit: IncomeUnit = (["day", "week", "month"] as const).includes(
+      String(q.unit) as IncomeUnit,
+    )
+      ? (String(q.unit) as IncomeUnit)
+      : "day";
+    const parseYmd = (value: unknown): Date | null => {
+      const text = String(value ?? "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+      const d = new Date(`${text}T00:00:00Z`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    const todayUtc = new Date();
+    const yesterday = new Date(
+      Date.UTC(
+        todayUtc.getUTCFullYear(),
+        todayUtc.getUTCMonth(),
+        todayUtc.getUTCDate() - 1,
+      ),
+    );
+    let toDate = parseYmd(q.to) ?? yesterday;
+    const defaultFrom = new Date(toDate);
+    defaultFrom.setUTCMonth(defaultFrom.getUTCMonth() - 1);
+    let fromDate = parseYmd(q.from) ?? defaultFrom;
+    if (fromDate.getTime() > toDate.getTime()) {
+      [fromDate, toDate] = [toDate, fromDate];
+    }
+    // Giới hạn tối đa ~2 năm để khoảng ngày không sinh quá nhiều mốc.
+    const maxSpanMs = 750 * 24 * 60 * 60 * 1000;
+    if (toDate.getTime() - fromDate.getTime() > maxSpanMs) {
+      fromDate = new Date(toDate.getTime() - maxSpanMs);
+    }
+    const ymd = (d: Date): string => d.toISOString().slice(0, 10);
+
+    const [referrals, mySource, myEarnings, myShopping, referralIncome, kolStatus] =
       await Promise.all([
       query<{
         full_name: string;
@@ -1280,27 +1317,31 @@ export async function registerAppRoutes(
         `,
         [id],
       ),
-      query<{ ym: string; total: string }>(
+      query<{ bucket: string; total: string }>(
         deps.db,
         `
-          SELECT to_char(date_trunc('month', ce.created_at), 'YYYY-MM') AS ym,
+          SELECT to_char(date_trunc($2, ce.created_at), 'YYYY-MM-DD') AS bucket,
             COALESCE(sum(ce.referral_amount_vnd), 0)::text AS total
           FROM commission_entries ce
           WHERE ce.sharer_user_id = $1
             AND ce.status <> 'REVERSED'
-            AND ce.created_at >= date_trunc('month', now()) - interval '7 months'
+            AND ce.created_at >= $3::date
+            AND ce.created_at < ($4::date + interval '1 day')
           GROUP BY 1
         `,
-        [id],
+        [id, unit, ymd(fromDate), ymd(toDate)],
       ),
       getUserKolStatus(deps.db, id),
     ]);
-    const referralMonthlyChart = buildMonthlyBarChart(
-      buildMonthlySeries(
-        referralMonthly.rows.map((row) => ({
-          ym: row.ym,
+    const referralIncomeChart = buildSeriesLineChart(
+      buildIncomeSeries(
+        referralIncome.rows.map((row) => ({
+          bucket: row.bucket,
           value: Number(row.total),
         })),
+        fromDate,
+        toDate,
+        unit,
       ),
       (value) => formatVnd(value),
     );
@@ -1308,7 +1349,8 @@ export async function registerAppRoutes(
       pageTitle: "Mạng lưới của tôi",
       appSection: "referrals",
       kolStatus,
-      referralMonthlyChart,
+      referralIncomeChart,
+      incomeRange: { from: ymd(fromDate), to: ymd(toDate), unit, maxDate: ymd(yesterday) },
       referrals: referrals.rows,
       referredByName: mySource.rows[0]?.full_name ?? null,
       networkEarnings: myEarnings.rows[0] ?? {

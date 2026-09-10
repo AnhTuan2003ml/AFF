@@ -269,6 +269,71 @@ export function buildMonthlySeries(
   return out;
 }
 
+export type IncomeUnit = "day" | "week" | "month";
+
+function ymdKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** Đầu mốc (UTC) theo đơn vị: ngày = 00:00; tuần = Thứ Hai; tháng = ngày 1. */
+export function startOfUnitUTC(input: Date, unit: IncomeUnit): Date {
+  const d = new Date(
+    Date.UTC(input.getUTCFullYear(), input.getUTCMonth(), input.getUTCDate()),
+  );
+  if (unit === "month") d.setUTCDate(1);
+  else if (unit === "week") {
+    const mondayOffset = (d.getUTCDay() + 6) % 7; // Thứ Hai = 0
+    d.setUTCDate(d.getUTCDate() - mondayOffset);
+  }
+  return d;
+}
+
+function advanceUnit(input: Date, unit: IncomeUnit): Date {
+  const d = new Date(input);
+  if (unit === "day") d.setUTCDate(d.getUTCDate() + 1);
+  else if (unit === "week") d.setUTCDate(d.getUTCDate() + 7);
+  else d.setUTCMonth(d.getUTCMonth() + 1);
+  return d;
+}
+
+function incomeLabel(date: Date, unit: IncomeUnit): string {
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  if (unit === "month") return `Th${date.getUTCMonth() + 1}`;
+  return `${dd}/${mm}`; // ngày + tuần (mốc đầu tuần)
+}
+
+/**
+ * Chuỗi thu nhập theo đơn vị (ngày/tuần/tháng) trong khoảng [from, to]. Điền 0
+ * cho mốc thiếu để đường liền mạch. `rows.bucket` là ngày đầu mốc (YYYY-MM-DD)
+ * do SQL `date_trunc(unit, created_at)` trả về.
+ */
+export function buildIncomeSeries(
+  rows: { bucket: string; value: number }[],
+  from: Date,
+  to: Date,
+  unit: IncomeUnit,
+): SeriesPoint[] {
+  const byBucket = new Map<string, number>();
+  for (const row of rows) {
+    const start = startOfUnitUTC(new Date(row.bucket), unit);
+    const key = ymdKey(start);
+    byBucket.set(key, (byBucket.get(key) ?? 0) + Number(row.value || 0));
+  }
+  const out: SeriesPoint[] = [];
+  let cursor = startOfUnitUTC(from, unit);
+  const end = startOfUnitUTC(to, unit);
+  // Chặn vòng lặp thoát khỏi tầm kiểm soát nếu khoảng quá rộng ở đơn vị ngày.
+  for (let guard = 0; cursor.getTime() <= end.getTime() && guard < 1000; guard += 1) {
+    out.push({
+      label: incomeLabel(cursor, unit),
+      value: byBucket.get(ymdKey(cursor)) ?? 0,
+    });
+    cursor = advanceUnit(cursor, unit);
+  }
+  return out;
+}
+
 export interface BarChartBar {
   x: number;
   y: number;

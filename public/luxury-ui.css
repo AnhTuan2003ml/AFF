@@ -10459,6 +10459,36 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .referrer-enter-row input:focus { outline: none; border-color: var(--lx-orange, #ee4d2d); }
 .referrer-enter-row .button { height: 46px; flex: none; }
 
+/* Bộ lọc biểu đồ thu nhập: khoảng ngày (có lịch native) + đơn vị. */
+.income-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+  margin: 2px 0 16px;
+}
+.income-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.income-field > span {
+  font-size: 11px; font-weight: 800; letter-spacing: .02em;
+  color: var(--lx-muted, #6b7280);
+}
+.income-date, .income-unit {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--lx-line-strong, #e1d0c4);
+  border-radius: 11px;
+  background: var(--lx-paper, #fff);
+  color: var(--lx-ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.income-date { cursor: pointer; }
+.income-date::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .7; }
+.income-date:hover::-webkit-calendar-picker-indicator { opacity: 1; }
+.income-date:focus, .income-unit:focus { outline: none; border-color: var(--lx-orange, #ee4d2d); }
+.income-apply { align-self: flex-end; height: 42px; }
+
 /* ── Đổi ảnh đại diện (trang Thông tin cá nhân) ─────────────────────── */
 .avatar-edit { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .avatar-edit-preview {
