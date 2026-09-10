@@ -66,6 +66,39 @@ export default function ReferralsScreen() {
         <Text style={styles.loading}>{t('Đang tải…', 'Loading…')}</Text>
       ) : (
         <>
+          <View style={styles.invitedCard}>
+            <View style={styles.invitedHead}>
+              <Text style={styles.invitedTitle}>{t('Người bạn đã mời', 'People you invited')}</Text>
+              <Text style={styles.invitedCount}>{data?.data.length ?? 0} {t('người', 'people')}</Text>
+            </View>
+            {(data?.data.length ?? 0) === 0 ? (
+              <View style={styles.invitedEmpty}>
+                <Text style={styles.invitedEmptyTitle}>{t('Chưa có ai dùng mã của bạn', 'No one has used your code yet')}</Text>
+                <Text style={styles.invitedEmptyText}>
+                  {t('Chép mã và gửi cho bạn bè để bắt đầu tích lũy thưởng.', 'Copy your code and share it with friends to start earning rewards.')}
+                </Text>
+                <Pressable onPress={chep} style={({ pressed }) => [styles.invitedCta, pressed && { opacity: 0.85 }]}>
+                  <Text style={styles.invitedCtaText}>{t('Mời ngay', 'Invite now')}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              data!.data.map((r, i) => (
+                <View key={`${r.fullName}-${i}`} style={[styles.row, i > 0 && styles.rowDivider]}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{(r.fullName || '?').charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.name}>{r.fullName || t('Người dùng', 'User')}</Text>
+                    <Text style={styles.meta}>
+                      {r.approvedOrders} {t('đơn đã duyệt', 'approved orders')} · {t('từ', 'from')} {ngay(r.createdAt)}
+                    </Text>
+                  </View>
+                  <Text style={styles.earned}>{vnd(r.earnedVnd)}</Text>
+                </View>
+              ))
+            )}
+          </View>
+
           <View style={styles.codeBox}>
             <View style={styles.codeHead}>
               <Text style={styles.codeLabel}>{t('Mã giới thiệu của bạn', 'Your referral code')}</Text>
@@ -189,30 +222,6 @@ export default function ReferralsScreen() {
           </View>
 
           <IncomeChartCard />
-
-          <Text style={styles.h2}>{t('Người bạn đã mời', 'People you invited')} ({data?.data.length ?? 0})</Text>
-          {(data?.data.length ?? 0) === 0 ? (
-            <Text style={styles.empty}>
-              {t('Chưa có ai dùng mã của bạn. Gửi mã cho bạn bè để bắt đầu.', 'No one has used your code yet. Share it with friends to get started.')}
-            </Text>
-          ) : (
-            data!.data.map((r, i) => (
-              <View key={`${r.fullName}-${i}`} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {(r.fullName || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{r.fullName || t('Người dùng', 'User')}</Text>
-                  <Text style={styles.meta}>
-                    {r.approvedOrders} {t('đơn đã duyệt', 'approved orders')} · {t('từ', 'from')} {ngay(r.createdAt)}
-                  </Text>
-                </View>
-                <Text style={styles.earned}>{vnd(r.earnedVnd)}</Text>
-              </View>
-            ))
-          )}
         </>
       )}
     </FormScreen>
@@ -221,6 +230,34 @@ export default function ReferralsScreen() {
 
 const styles = StyleSheet.create({
   loading: { fontSize: 13, color: colors.muted, paddingVertical: 20 },
+  invitedCard: {
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    marginBottom: 12,
+  },
+  invitedHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  invitedTitle: { fontSize: 15, fontWeight: '900', color: colors.text },
+  invitedCount: { fontSize: 12.5, fontWeight: '800', color: colors.brand },
+  invitedEmpty: { alignItems: 'center', paddingVertical: 12 },
+  invitedEmptyTitle: { fontSize: 14, fontWeight: '900', color: colors.text, textAlign: 'center' },
+  invitedEmptyText: { fontSize: 12.5, color: colors.muted, textAlign: 'center', marginTop: 6, marginBottom: 14, lineHeight: 18 },
+  invitedCta: {
+    paddingHorizontal: 22,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  invitedCtaText: { color: colors.onBrand, fontWeight: '800', fontSize: 14 },
   codeBox: {
     padding: spacing.md,
     borderRadius: radius.lg,
