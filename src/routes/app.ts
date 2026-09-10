@@ -1676,6 +1676,10 @@ export async function registerAppRoutes(
         question: input.message,
         history,
         orderContext,
+        user: {
+          fullName: request.currentUser?.fullName,
+          gender: request.currentUser?.gender,
+        },
       });
       reply.header("cache-control", "private, no-store");
       return reply.send({

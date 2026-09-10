@@ -30,6 +30,7 @@ import {
 import { chatCamio } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Mascot } from '@/components/Mascot';
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
 import { camio, camioAt } from '@/lib/camio-voice';
@@ -141,6 +142,7 @@ type CamioMsg = { role: 'user' | 'assistant'; body: string };
 
 function ChatCamio({ veLanding }: { veLanding: () => void }) {
   const insets = useSafeAreaInsets();
+  const banPhim = useKeyboardVisible();
   const t = useT();
   const listRef = useRef<FlatList<CamioMsg>>(null);
   const inputRef = useRef<TextInput>(null);
@@ -236,7 +238,7 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
         </View>
       ) : null}
 
-      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+      <View style={[styles.inputBar, { paddingBottom: banPhim ? 10 : insets.bottom + 8 }]}>
         <Pressable onPress={() => coDon && setMoChonDon(true)} hitSlop={6} style={[styles.findBtn, !coDon && { opacity: 0.4 }]}>
           <Ionicons name="search" size={16} color={colors.brand} />
           <Text style={styles.findText}>{t('Tìm đơn', 'Find')}</Text>
@@ -282,6 +284,7 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
 
 function ChatHoTro({ veLanding }: { veLanding: () => void }) {
   const insets = useSafeAreaInsets();
+  const banPhim = useKeyboardVisible();
   const t = useT();
   const qc = useQueryClient();
   const listRef = useRef<FlatList<SupportMessage>>(null);
@@ -419,7 +422,7 @@ function ChatHoTro({ veLanding }: { veLanding: () => void }) {
         </View>
       ) : null}
 
-      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+      <View style={[styles.inputBar, { paddingBottom: banPhim ? 10 : insets.bottom + 8 }]}>
         {/* Chọn đơn hàng cần hỏi */}
         <Pressable
           onPress={() => coDon && setMoChonDon(true)}
@@ -534,6 +537,7 @@ function TinNhan({ m }: { m: SupportMessage }) {
 
 function SupportForm({ veLanding }: { veLanding: () => void }) {
   const insets = useSafeAreaInsets();
+  const banPhim = useKeyboardVisible();
   const t = useT();
   const qc = useQueryClient();
   const { data, isPending, isError, refetch } = useQuery({
@@ -638,7 +642,7 @@ function SupportForm({ veLanding }: { veLanding: () => void }) {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 28 }]}
+          contentContainerStyle={[styles.content, { paddingBottom: banPhim ? 20 : insets.bottom + 28 }]}
           keyboardShouldPersistTaps="handled">
           {/* Lời mở của Camio */}
           <View style={styles.intro}>

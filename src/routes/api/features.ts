@@ -466,6 +466,10 @@ export async function registerFeatureApiRoutes(
         question: input.message,
         history,
         orderContext,
+        user: {
+          fullName: request.currentUser!.fullName,
+          gender: request.currentUser!.gender,
+        },
       });
       return {
         reply:

@@ -10791,7 +10791,7 @@ body.support-screen-open { overflow: hidden; }
   .support-screen-body,
   .support-screen-foot {
     width: 100%;
-    max-width: 680px;
+    max-width: 760px;
     background: var(--lx-paper, #fff);
   }
   .support-screen-head {
@@ -10800,7 +10800,7 @@ body.support-screen-open { overflow: hidden; }
   }
   .support-screen-body {
     background: var(--lx-ivory, #fbf8f4);
-    height: min(58vh, 520px);
+    height: min(74vh, 660px);
     flex: none;
   }
   .support-screen-foot {

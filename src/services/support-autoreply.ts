@@ -1031,6 +1031,13 @@ async function buildPolicyTermsKb(
  * lời ngay không gọi AI; RAG chỉ nạp 3 mục liên quan nhất vào prompt. Trả null
  * nếu chưa cấu hình AI (FE sẽ hiện thông báo hướng dẫn).
  */
+/** Cách xưng hô với khách theo giới tính (Camio gọi khách là gì). */
+export function xungHoTheoGioiTinh(gender: string | null | undefined): string {
+  if (gender === "MALE") return "anh";
+  if (gender === "FEMALE") return "chị";
+  return "anh/chị";
+}
+
 export async function generateCamioReply(
   db: Database,
   config: AppConfig,
@@ -1039,6 +1046,11 @@ export async function generateCamioReply(
     history: ChatHistoryEntry[];
     /** Ngữ cảnh MỘT đơn khách đang hỏi (đã kiểm tra sở hữu ở tầng route). */
     orderContext?: string | null;
+    /** Khách hàng — để Camio xưng hô đúng tên + giới tính trong câu trả lời. */
+    user?: {
+      fullName?: string | null | undefined;
+      gender?: string | null | undefined;
+    } | null;
   },
 ): Promise<string | null> {
   const settings = await loadSettingsRow(db);
@@ -1047,10 +1059,20 @@ export async function generateCamioReply(
   }
   const orderContext = (input.orderContext ?? "").trim();
   const hasOrder = orderContext.length > 0;
-  // Tự học chỉ áp cho câu hỏi CHUNG (chính sách/điều khoản). Câu hỏi gắn đơn là
-  // dữ liệu RIÊNG từng người → KHÔNG đọc/ghi kho học chung (tránh trả nhầm đơn
-  // của người khác cho người này).
-  if (settings.learn_enabled && !hasOrder) {
+
+  // Xưng hô cá nhân hoá: tên gọi + anh/chị theo giới tính. Chỉ coi là "đã cá
+  // nhân hoá" khi biết tên HOẶC giới tính rõ ràng — vì câu trả lời khi đó chứa
+  // dữ liệu riêng của khách, KHÔNG được tự học để trả cho người khác.
+  const ten = firstNameForGreeting(input.user?.fullName);
+  const xung = xungHoTheoGioiTinh(input.user?.gender);
+  const personalized =
+    ten.length > 0 ||
+    input.user?.gender === "MALE" ||
+    input.user?.gender === "FEMALE";
+  const skipLearn = hasOrder || personalized;
+
+  // Tự học chỉ áp cho câu hỏi CHUNG (chính sách/điều khoản), chưa cá nhân hoá.
+  if (settings.learn_enabled && !skipLearn) {
     const learned = await findSimilarLearnedAnswer(
       db,
       input.question,
@@ -1072,9 +1094,14 @@ export async function generateCamioReply(
       `${orderContext}\n\n${kbContext}`;
   }
   const apiKey = decryptField(settings.ai_api_key_ciphertext, config);
+  const basePrompt = hasOrder
+    ? CAMIO_SYSTEM_PROMPT_ORDER
+    : CAMIO_SYSTEM_PROMPT;
+  // Ép Camio xưng hô đúng trong MỌI câu trả lời (không chỉ lời chào).
+  const xungHoLine = `Cách xưng hô BẮT BUỘC: gọi khách là "${xung}${ten ? ` ${ten}` : ""}" (hoặc "${xung}"), tự xưng "em"/"Camio". Tuyệt đối KHÔNG dùng "anh/chị" nếu đã biết là "${xung}".`;
   const camioSettings: SettingsRow = {
     ...settings,
-    ai_system_prompt: hasOrder ? CAMIO_SYSTEM_PROMPT_ORDER : CAMIO_SYSTEM_PROMPT,
+    ai_system_prompt: `${basePrompt}\n\n${xungHoLine}`,
   };
   const reply = await generateAiReply(
     camioSettings,
@@ -1082,7 +1109,7 @@ export async function generateCamioReply(
     input.history,
     kbContext,
   );
-  if (reply && settings.learn_enabled && !hasOrder) {
+  if (reply && settings.learn_enabled && !skipLearn) {
     await learnAnswer(db, input.question, reply).catch(() => undefined);
   }
   return reply || null;
