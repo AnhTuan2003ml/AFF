@@ -1097,8 +1097,17 @@ export async function generateCamioReply(
   const basePrompt = hasOrder
     ? CAMIO_SYSTEM_PROMPT_ORDER
     : CAMIO_SYSTEM_PROMPT;
-  // Ép Camio xưng hô đúng trong MỌI câu trả lời (không chỉ lời chào).
-  const xungHoLine = `Cách xưng hô BẮT BUỘC: gọi khách là "${xung}${ten ? ` ${ten}` : ""}" (hoặc "${xung}"), tự xưng "em"/"Camio". Tuyệt đối KHÔNG dùng "anh/chị" nếu đã biết là "${xung}".`;
+  // Ép Camio xưng hô đúng, và KHÔNG chào/tự giới thiệu lại ở mỗi câu trả lời
+  // (đã có lời chào ở đầu hội thoại rồi).
+  const xungHoLine = [
+    `Cách xưng hô BẮT BUỘC: gọi khách là "${xung}${ten ? ` ${ten}` : ""}" (hoặc "${xung}"), tự xưng "em"/"Camio".`,
+    xung !== "anh/chị"
+      ? `Tuyệt đối KHÔNG dùng "anh/chị" — đã biết khách là "${xung}".`
+      : "",
+    `KHÔNG chào hỏi hay tự giới thiệu lại ("Chào ...", "em là Camio đây ạ", "em xin ...") ở đầu mỗi câu trả lời — lời chào đã có ở đầu hội thoại. Hãy trả lời THẲNG vào câu hỏi.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const camioSettings: SettingsRow = {
     ...settings,
     ai_system_prompt: `${basePrompt}\n\n${xungHoLine}`,
