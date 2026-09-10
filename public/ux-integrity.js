@@ -76,6 +76,10 @@
       .querySelectorAll("[data-validate-form], [data-discover-editor]")
       .forEach((form, formIndex) => {
         if (!(form instanceof HTMLFormElement)) return;
+        // Form "khóa nút đến khi có thay đổi" (vd Hồ sơ) do app.js quản trọn
+        // vẹn — ux-integrity KHÔNG đụng vào để tránh hai script tranh nhau
+        // bật/khóa nút Lưu (khiến nút enable dù giá trị chưa đổi).
+        if (form.hasAttribute("data-disable-until-dirty")) return;
         form.noValidate = true;
         const submit = form.querySelector("[data-submit-button]");
         const dirtyTracked =
