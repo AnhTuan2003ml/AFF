@@ -28,6 +28,7 @@ import {
   getVoucherUseUrlByCode,
 } from "../../services/shopee-voucher.js";
 import { createVoucherAffiliateLink } from "../../services/affiliate.js";
+import { listActiveHeroMedia } from "../../services/hero-media.js";
 import {
   applyReferralToUser,
   changeOwnReferralCodeByAdmin,
@@ -454,6 +455,12 @@ export async function registerFeatureApiRoutes(
   app.get("/vouchers", async (_request, reply) => {
     reply.header("cache-control", "public, max-age=300");
     return { data: await listShopeeVouchers(deps.db, 300) };
+  });
+
+  // Media nền hero (admin cấu hình) cho app dựng nền trang chủ. Công khai như web.
+  app.get("/hero-media", async (_request, reply) => {
+    reply.header("cache-control", "public, max-age=120");
+    return { items: await listActiveHeroMedia(deps.db) };
   });
 
   // "Dùng ngay" voucher trên app → link AFFILIATE gắn Sub ID người dùng. Trả

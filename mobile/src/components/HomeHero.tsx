@@ -1,8 +1,13 @@
+import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
+import { apiBaseUrl } from '@/api/client';
+import { layHeroMedia } from '@/api/features';
 import type { Me } from '@/api/account';
 import { useT } from '@/i18n';
 import { vnd } from '@/lib/format';
@@ -12,7 +17,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * Ba ô số liệu chân hero — `.px-home-hero-meta` của web ĐỔI NỘI DUNG theo trạng
  * thái đăng nhập: khách thấy lời giới thiệu, người đã đăng nhập thấy số dư thật.
  */
-type SoLieu = { chinh: string; phu: string; href?: Href };
+type SoLieu = { chinh: string; phu: string; href?: Href; web?: string };
 
 function soLieu(t: (vi: string, en: string) => string, me?: Me | null): SoLieu[] {
   if (!me)
@@ -28,6 +33,7 @@ function soLieu(t: (vi: string, en: string) => string, me?: Me | null): SoLieu[]
     {
       chinh: `${t('Hoàn tới', 'Up to')} ${me.cashbackPercent ?? 0}%`,
       phu: `${t('Đã mua', 'Bought')} ${me.purchasedProducts ?? 0} ${t('sản phẩm', 'products')}`,
+      web: '/chinh-sach-nguoi-dung', // mở trang chính sách hoàn tiền
     },
   ];
 }
@@ -43,10 +49,28 @@ function soLieu(t: (vi: string, en: string) => string, me?: Me | null): SoLieu[]
 export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null }) {
   const t = useT();
   const SO_LIEU = soLieu(t, me);
+
+  // Nền hero do admin cấu hình (chỉ dùng ẢNH/GIF; video cần module native nên bỏ).
+  const { data: heroData } = useQuery({ queryKey: ['hero-media'], queryFn: layHeroMedia });
+  const anhNen = (heroData?.items ?? [])
+    .filter((m) => m.kind === 'image')
+    .map((m) => ({
+      uri: m.src.startsWith('http') ? m.src : `${apiBaseUrl}${m.src}`,
+      durationMs: Math.max(500, m.durationMs || 6000),
+    }));
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (anhNen.length < 2) return;
+    const cur = anhNen[idx % anhNen.length];
+    const id = setTimeout(() => setIdx((v) => (v + 1) % anhNen.length), cur?.durationMs ?? 6000);
+    return () => clearTimeout(id);
+  }, [idx, anhNen.length]);
+  const anhHienTai = anhNen.length ? anhNen[idx % anhNen.length]?.uri : null;
+
   return (
     <View style={styles.hero}>
       <Image
-        source={require('../../assets/images/hero.webp')}
+        source={anhHienTai ? { uri: anhHienTai } : require('../../assets/images/hero.webp')}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         // Web neo ảnh ở 68% chiều ngang để giữ chiếc điện thoại trong khung.
@@ -79,20 +103,24 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
       <View style={styles.meta}>
         {/* key theo NHÃN (không theo giá trị): hai ô cùng "0đ" từng trùng key. */}
         {SO_LIEU.map((o, i) => {
+          const bamDuoc = Boolean(o.href || o.web);
           const noiDung = (
             <>
               <Text style={styles.metaMain} numberOfLines={1}>
                 {o.chinh}
               </Text>
               <Text style={styles.metaSub} numberOfLines={1}>
-                {o.phu}{o.href ? ' ›' : ''}
+                {o.phu}{bamDuoc ? ' ›' : ''}
               </Text>
             </>
           );
-          return o.href ? (
+          return bamDuoc ? (
             <Pressable
               key={o.phu ?? i}
-              onPress={() => router.push(o.href!)}
+              onPress={() => {
+                if (o.href) router.push(o.href);
+                else if (o.web) WebBrowser.openBrowserAsync(`${apiBaseUrl}${o.web}`).catch(() => {});
+              }}
               style={({ pressed }) => [styles.metaCell, i > 0 && styles.metaDivider, pressed && { opacity: 0.6 }]}>
               {noiDung}
             </Pressable>

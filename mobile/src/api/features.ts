@@ -132,6 +132,18 @@ export function layGioiThieu() {
   }>('/api/v1/referrals');
 }
 
+export interface HeroMediaItem {
+  id: string;
+  kind: 'image' | 'video';
+  src: string;
+  durationMs: number;
+}
+
+/** Media nền hero (admin cấu hình). App dùng ảnh; bỏ qua video. */
+export function layHeroMedia() {
+  return apiFetch<{ items: HeroMediaItem[] }>('/api/v1/hero-media', { auth: false });
+}
+
 export type IncomeUnit = 'day' | 'week' | 'month';
 
 export interface IncomePoint {
