@@ -11,6 +11,29 @@
     function (s) { screens[s.getAttribute("data-support-screen")] = s; }
   );
   var current = null;
+  var vv = window.visualViewport || null;
+
+  // Bàn phím mobile che overlay position:fixed (100vh): trình duyệt cuộn cả
+  // overlay lên để lộ ô nhập → mất header + tin nhắn. Ghim overlay đúng vùng
+  // NHÌN THẤY (trên bàn phím) bằng VisualViewport. (Đặt style qua CSSOM được
+  // phép dù CSP chặn thuộc tính style=).
+  function fitViewport() {
+    if (!current || !vv) return;
+    var s = screens[current];
+    if (!s) return;
+    s.style.height = vv.height + "px";
+    s.style.top = vv.offsetTop + "px";
+    s.style.bottom = "auto";
+  }
+  function clearViewport(s) {
+    s.style.height = "";
+    s.style.top = "";
+    s.style.bottom = "";
+  }
+  if (vv) {
+    vv.addEventListener("resize", fitViewport);
+    vv.addEventListener("scroll", fitViewport);
+  }
 
   function open(name) {
     var s = screens[name];
@@ -20,6 +43,7 @@
     void s.offsetWidth; // reflow để chạy hiệu ứng
     s.classList.add("is-open");
     document.body.classList.add("support-screen-open");
+    fitViewport();
 
     // Mở CSKH → bỏ chấm đỏ "có phản hồi mới" trên thẻ chọn.
     if (name === "cskh") {
@@ -41,6 +65,7 @@
     Object.keys(screens).forEach(function (k) {
       screens[k].classList.remove("is-open");
       screens[k].hidden = true;
+      clearViewport(screens[k]);
     });
     document.body.classList.remove("support-screen-open");
     document.dispatchEvent(new CustomEvent("support-chat:close"));
