@@ -47,7 +47,7 @@
     <div class="px-home-hero-meta">
       <a href="/app/withdrawals" class="px-hero-stat"><b>{{ (balances.available or 0) | vnd }}</b><small>{{ t('Số dư khả dụng', 'Available balance') }} ›</small></a>
       <a href="/app/wallet" class="px-hero-stat"><b>{{ (balances.pending or 0) | vnd }}</b><small>{{ t('Đang chờ về ví', 'Pending to wallet') }} ›</small></a>
-      <a href="/chinh-sach-nguoi-dung" class="px-hero-stat"><b>{{ t('Hoàn tới', 'Up to') }} {{ cashbackRate }}%</b><small>{{ t('Đã mua', 'Bought') }} {{ purchaseStats.products or 0 }} {{ t('sản phẩm', 'products') }} ›</small></a>
+      <a href="/app/orders" class="px-hero-stat"><b>{{ t('Hoàn tới', 'Up to') }} {{ cashbackRate }}%</b><small>{{ t('Đã mua', 'Bought') }} {{ purchaseStats.products or 0 }} {{ t('sản phẩm', 'products') }} ›</small></a>
     </div>
     {% else %}
     <div class="px-home-hero-meta">

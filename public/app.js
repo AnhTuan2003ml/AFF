@@ -489,10 +489,14 @@
         if (snapshot() === initial) submit.disabled = true;
       };
       updateDirty();
-      form.addEventListener("input", () => {
+      const onChange = () => {
         updateSubmitState();
         updateDirty();
-      });
+      };
+      form.addEventListener("input", onChange);
+      // <select> (vd ô Giới tính) đổi/hoàn giá trị chỉ chắc chắn bắn `change`
+      // trên mọi trình duyệt — thiếu nó thì đổi dropdown không cập nhật nút.
+      form.addEventListener("change", onChange);
       form.addEventListener("st:revalidate", updateDirty);
     }
 
