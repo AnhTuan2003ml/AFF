@@ -102,9 +102,16 @@ export default function AccountScreen() {
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={styles.name} numberOfLines={1}>
-              {user.fullName || t('Tài khoản ShopTik', 'ShopTik account')}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
+                {user.fullName || t('Tài khoản ShopTik', 'ShopTik account')}
+              </Text>
+              {user.isSpecialPartner ? (
+                <View style={styles.partnerBadge}>
+                  <Text style={styles.partnerBadgeText}>⭐ {t('Đối tác', 'Partner')}</Text>
+                </View>
+              ) : null}
+            </View>
             <Text style={styles.email} numberOfLines={1}>
               {user.email}
             </Text>
@@ -401,6 +408,17 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#fff', fontSize: 22, fontWeight: '900' },
   name: { fontSize: 17, fontWeight: '900', color: colors.text },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  partnerBadge: {
+    flexShrink: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#ffd75e',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(180,120,0,0.4)',
+  },
+  partnerBadgeText: { fontSize: 10.5, fontWeight: '800', color: '#8a5a00' },
   email: { fontSize: 12.5, color: colors.muted, marginTop: 2 },
 
   balanceRow: {

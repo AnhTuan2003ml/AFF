@@ -1334,9 +1334,19 @@ label small {
   color: #fff
 }
 
-.px-home-hero-meta span {
+.px-home-hero-meta > * {
   padding: 17px 24px;
   border-right: 1px solid rgba(255, 255, 255, .15)
+}
+
+/* Ô số dư có thể bấm: khả dụng → rút tiền, đang chờ → ví. */
+.px-home-hero-meta a.px-hero-stat {
+  color: inherit;
+  text-decoration: none;
+  transition: background .15s ease;
+}
+.px-home-hero-meta a.px-hero-stat:hover {
+  background: rgba(255, 255, 255, .1)
 }
 
 .px-home-hero-meta b,
@@ -4516,7 +4526,7 @@ body.no-scroll {
     background: rgba(56, 27, 18, .9)
   }
 
-  .px-home-hero-meta span {
+  .px-home-hero-meta > * {
     padding: 16px 11px
   }
 
@@ -4907,7 +4917,7 @@ body.no-scroll {
     min-height: 350px
   }
 
-  .px-home-hero-meta span {
+  .px-home-hero-meta > * {
     padding: 15px 8px
   }
 
@@ -10408,6 +10418,24 @@ button.cal-cell.is-today:hover:not(:disabled) {
   color: #fff; display: grid; place-items: center; font-weight: 900;
 }
 .referrer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Huy hiệu Đối tác cạnh tên (trang Thông tin cá nhân). */
+.partner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: #8a5a00;
+  background: linear-gradient(145deg, #ffe08a, #ffc531);
+  border: 1px solid rgba(180, 120, 0, .35);
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
 .referrer-copy b { display: block; font-size: 15px; }
 .referrer-copy small { color: var(--lx-muted, #6b7280); }
 .referrer-copy code { font-weight: 700; }

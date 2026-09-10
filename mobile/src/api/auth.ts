@@ -20,6 +20,8 @@ export interface AuthUser {
   /** Có mật khẩu không. Tài khoản Google thuần = false → xác nhận xóa bằng
    *  email thay vì mật khẩu. Chỉ /api/v1/me trả về (không có ở token login). */
   hasPassword?: boolean;
+  /** Tài khoản đối tác (KOL/đối tác đặc biệt) → hiện huy hiệu ⭐ Đối tác. */
+  isSpecialPartner?: boolean;
 }
 
 interface TokenResponse {

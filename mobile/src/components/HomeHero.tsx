@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
+import { router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Me } from '@/api/account';
@@ -11,7 +12,9 @@ import { colors, radius, spacing } from '@/theme/tokens';
  * Ba ô số liệu chân hero — `.px-home-hero-meta` của web ĐỔI NỘI DUNG theo trạng
  * thái đăng nhập: khách thấy lời giới thiệu, người đã đăng nhập thấy số dư thật.
  */
-function soLieu(t: (vi: string, en: string) => string, me?: Me | null) {
+type SoLieu = { chinh: string; phu: string; href?: Href };
+
+function soLieu(t: (vi: string, en: string) => string, me?: Me | null): SoLieu[] {
   if (!me)
     return [
       { chinh: t('3 sàn', '3 stores'), phu: 'Shopee · TikTok · Lazada' },
@@ -19,8 +22,9 @@ function soLieu(t: (vi: string, en: string) => string, me?: Me | null) {
       { chinh: t('Miễn phí', 'Free'), phu: t('Không phí ẩn', 'No hidden fees') },
     ];
   return [
-    { chinh: vnd(me.balances.available), phu: t('Số dư khả dụng', 'Available balance') },
-    { chinh: vnd(me.balances.pending), phu: t('Đang chờ về ví', 'Pending to wallet') },
+    // Khả dụng → màn rút tiền; Đang chờ → tab Ví (giống web).
+    { chinh: vnd(me.balances.available), phu: t('Số dư khả dụng', 'Available balance'), href: '/withdraw' },
+    { chinh: vnd(me.balances.pending), phu: t('Đang chờ về ví', 'Pending to wallet'), href: '/wallet' },
     {
       chinh: `${t('Hoàn tới', 'Up to')} ${me.cashbackPercent ?? 0}%`,
       phu: `${t('Đã mua', 'Bought')} ${me.purchasedProducts ?? 0} ${t('sản phẩm', 'products')}`,
@@ -74,16 +78,30 @@ export function HomeHero({ onCheck, me }: { onCheck?: () => void; me?: Me | null
 
       <View style={styles.meta}>
         {/* key theo NHÃN (không theo giá trị): hai ô cùng "0đ" từng trùng key. */}
-        {SO_LIEU.map((o, i) => (
-          <View key={o.phu ?? i} style={[styles.metaCell, i > 0 && styles.metaDivider]}>
-            <Text style={styles.metaMain} numberOfLines={1}>
-              {o.chinh}
-            </Text>
-            <Text style={styles.metaSub} numberOfLines={1}>
-              {o.phu}
-            </Text>
-          </View>
-        ))}
+        {SO_LIEU.map((o, i) => {
+          const noiDung = (
+            <>
+              <Text style={styles.metaMain} numberOfLines={1}>
+                {o.chinh}
+              </Text>
+              <Text style={styles.metaSub} numberOfLines={1}>
+                {o.phu}{o.href ? ' ›' : ''}
+              </Text>
+            </>
+          );
+          return o.href ? (
+            <Pressable
+              key={o.phu ?? i}
+              onPress={() => router.push(o.href!)}
+              style={({ pressed }) => [styles.metaCell, i > 0 && styles.metaDivider, pressed && { opacity: 0.6 }]}>
+              {noiDung}
+            </Pressable>
+          ) : (
+            <View key={o.phu ?? i} style={[styles.metaCell, i > 0 && styles.metaDivider]}>
+              {noiDung}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
