@@ -31,6 +31,7 @@ import {
 } from "../../services/shopee-voucher.js";
 import { createVoucherAffiliateLink } from "../../services/affiliate.js";
 import { listActiveHeroMedia } from "../../services/hero-media.js";
+import { generateCamioReply } from "../../services/support-autoreply.js";
 import {
   applyReferralToUser,
   changeOwnReferralCodeByAdmin,
@@ -423,6 +424,46 @@ export async function registerFeatureApiRoutes(
     reply.header("cache-control", "public, max-age=120");
     return { items: await listActiveHeroMedia(deps.db) };
   });
+
+  // Chat với Camio (AI) cho app — trả lời NGAY. Giai đoạn 1: RAG chính sách/điều
+  // khoản. App giữ lịch sử gửi kèm (không lưu DB).
+  app.post(
+    "/camio/messages",
+    { preHandler: requireApiUser },
+    async (request, reply) => {
+      reply.header("cache-control", "private, no-store");
+      const input = parseInput(
+        z.object({
+          message: z.string().trim().min(1).max(3000),
+          history: z
+            .array(
+              z.object({
+                role: z.enum(["user", "assistant"]),
+                body: z.string().max(3000),
+              }),
+            )
+            .max(16)
+            .optional(),
+        }),
+        request.body,
+      );
+      const history = (input.history ?? []).map((h) => ({
+        authorRole: (h.role === "user" ? "USER" : "AGENT") as "USER" | "AGENT",
+        body: h.body,
+      }));
+      history.push({ authorRole: "USER", body: input.message });
+      const answer = await generateCamioReply(deps.db, deps.config, {
+        question: input.message,
+        history,
+      });
+      return {
+        reply:
+          answer ??
+          "Hiện Camio chưa được cấu hình để trả lời tự động. Anh/chị bấm “Chat với CSKH” để nhân viên hỗ trợ nhé!",
+        configured: answer !== null,
+      };
+    },
+  );
 
   // "Dùng ngay" voucher trên app → link AFFILIATE gắn Sub ID người dùng. Trả
   // `buyUrl` (=/go/:clickId) để app mở trong trình duyệt và Shopee 302 bình

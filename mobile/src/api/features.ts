@@ -132,6 +132,17 @@ export function layGioiThieu() {
   }>('/api/v1/referrals');
 }
 
+/** Chat với Camio (AI) — trả lời ngay. history: các lượt trước (user/assistant). */
+export function chatCamio(params: {
+  message: string;
+  history?: { role: 'user' | 'assistant'; body: string }[];
+}) {
+  return apiFetch<{ reply: string; configured: boolean }>('/api/v1/camio/messages', {
+    method: 'POST',
+    body: { message: params.message, history: params.history ?? [] },
+  });
+}
+
 export interface HeroMediaItem {
   id: string;
   kind: 'image' | 'video';

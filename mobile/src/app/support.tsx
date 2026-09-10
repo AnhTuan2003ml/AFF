@@ -27,6 +27,7 @@ import {
   type SupportOrderOption,
   type SupportTopic,
 } from '@/api/account';
+import { chatCamio } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { Mascot } from '@/components/Mascot';
 import { useSession } from '@/hooks/useSession';
@@ -58,10 +59,12 @@ const CAU_HOI_THUONG_GAP: { vi: string; en: string }[] = [
 
 type FieldErrors = Partial<Record<'topic' | 'order' | 'code' | 'description' | 'email', string>>;
 
+type CheDo = 'landing' | 'camio' | 'chat' | 'form';
+
 export default function SupportScreen() {
   const { user } = useSession();
   const t = useT();
-  const [cheDo, setCheDo] = useState<'chat' | 'form'>('chat');
+  const [cheDo, setCheDo] = useState<CheDo>('landing');
 
   if (!user) {
     return (
@@ -76,10 +79,184 @@ export default function SupportScreen() {
       </View>
     );
   }
-  return cheDo === 'chat' ? (
-    <ChatHoTro moForm={() => setCheDo('form')} />
-  ) : (
-    <SupportForm veChat={() => setCheDo('chat')} />
+  const veLanding = () => setCheDo('landing');
+  if (cheDo === 'camio') return <ChatCamio veLanding={veLanding} />;
+  if (cheDo === 'chat') return <ChatHoTro veLanding={veLanding} />;
+  if (cheDo === 'form') return <SupportForm veLanding={veLanding} />;
+  return <LandingChon chon={setCheDo} />;
+}
+
+/* ------------------------------------------------------------------ *
+ * Màn chọn: 3 lựa chọn — mỗi cái mở màn riêng (toàn màn hình)
+ * ------------------------------------------------------------------ */
+
+function LandingChon({ chon }: { chon: (m: CheDo) => void }) {
+  const insets = useSafeAreaInsets();
+  const t = useT();
+  return (
+    <View style={styles.screen}>
+      <Header />
+      <ScrollView contentContainerStyle={[styles.landing, { paddingBottom: insets.bottom + 24 }]}>
+        <Text style={styles.landingLead}>{t('Chọn cách bạn muốn được hỗ trợ.', 'Choose how you’d like help.')}</Text>
+
+        <Pressable style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]} onPress={() => chon('camio')}>
+          <View style={styles.choiceIcoCamio}><Mascot mood="vuive" size={40} /></View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.choiceTitleRow}>
+              <Text style={styles.choiceTitle}>{t('Chat với Camio', 'Chat with Camio')}</Text>
+              <View style={styles.aiTag}><Text style={styles.aiTagText}>AI</Text></View>
+            </View>
+            <Text style={styles.choiceSub}>{t('Trợ lý ảo trả lời ngay về chính sách, điều khoản', 'Instant answers on policies and terms')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        </Pressable>
+
+        <Pressable style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]} onPress={() => chon('chat')}>
+          <View style={styles.choiceIco}><Ionicons name="chatbubble-ellipses-outline" size={24} color={colors.brand} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.choiceTitle}>{t('Chat trực tiếp với CSKH', 'Live chat with support')}</Text>
+            <Text style={styles.choiceSub}>{t('Nhân viên thật trả lời — phản hồi trong ~24 giờ', 'Real staff reply — within ~24h')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        </Pressable>
+
+        <Pressable style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]} onPress={() => chon('form')}>
+          <View style={styles.choiceIco}><Ionicons name="document-text-outline" size={24} color={colors.brand} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.choiceTitle}>{t('Gửi yêu cầu theo mẫu', 'Submit a request form')}</Text>
+            <Text style={styles.choiceSub}>{t('Kèm mã đơn, xử lý theo hồ sơ', 'With order code, handled as a ticket')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Chat với Camio (AI) — trả lời ngay, có nút Tìm đơn
+ * ------------------------------------------------------------------ */
+
+type CamioMsg = { role: 'user' | 'assistant'; body: string };
+
+function ChatCamio({ veLanding }: { veLanding: () => void }) {
+  const insets = useSafeAreaInsets();
+  const t = useT();
+  const listRef = useRef<FlatList<CamioMsg>>(null);
+  const inputRef = useRef<TextInput>(null);
+  const [noiDung, setNoiDung] = useState('');
+  const [tin, setTin] = useState<CamioMsg[]>([
+    { role: 'assistant', body: t('Chào anh/chị! Em là Camio 🧡 Anh/chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?', 'Hi! I’m Camio 🧡 Ask me about cashback policy, terms, or how ShopTik works.') },
+  ]);
+  const [dangGui, setDangGui] = useState(false);
+  const [donDangHoi, setDonDangHoi] = useState<SupportOrderOption | null>(null);
+  const [moChonDon, setMoChonDon] = useState(false);
+  const { data: form } = useQuery({ queryKey: ['support-form'], queryFn: laySupportForm });
+  const coDon = (form?.orderOptions.length ?? 0) > 0;
+
+  async function guiTin() {
+    const text = noiDung.trim();
+    if (!text || dangGui) return;
+    const message = donDangHoi ? `[Về đơn: ${donDangHoi.label}] ${text}` : text;
+    const history = tin.slice(-16);
+    setTin((cur) => [...cur, { role: 'user', body: text }]);
+    setNoiDung('');
+    setDangGui(true);
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+    try {
+      const res = await chatCamio({ message, history });
+      setTin((cur) => [...cur, { role: 'assistant', body: res.reply }]);
+    } catch {
+      setTin((cur) => [...cur, { role: 'assistant', body: t('Xin lỗi, Camio chưa trả lời được. Thử lại sau nhé.', 'Sorry, Camio couldn’t reply. Please try again later.') }]);
+    } finally {
+      setDangGui(false);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+    }
+  }
+
+  return (
+    <KeyboardAvoidingView style={styles.screen} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
+      <Header onBack={veLanding} titleNode={
+        <View style={styles.camioHeadTitle}>
+          <Mascot mood="vuive" size={26} />
+          <Text style={styles.camioTitleText}>Camio</Text>
+          <View style={styles.aiTag}><Text style={styles.aiTagText}>AI</Text></View>
+        </View>
+      } />
+      <FlatList
+        ref={listRef}
+        data={tin}
+        keyExtractor={(_, i) => String(i)}
+        contentContainerStyle={styles.list}
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+        renderItem={({ item }) => {
+          const me = item.role === 'user';
+          return (
+            <View style={[styles.msgRow, me ? styles.msgRight : styles.msgLeft]}>
+              {!me && <View style={styles.agent}><Mascot mood="haohung" size={30} /></View>}
+              <View style={[styles.bubble, me ? styles.bubbleMe : styles.bubbleAgent]}>
+                <Text style={[styles.bubbleText, me && { color: colors.onBrand }]}>{item.body}</Text>
+              </View>
+            </View>
+          );
+        }}
+        ListFooterComponent={dangGui ? (
+          <View style={[styles.msgRow, styles.msgLeft]}>
+            <View style={styles.agent}><Mascot mood="haohung" size={30} /></View>
+            <View style={[styles.bubble, styles.bubbleAgent]}><ActivityIndicator color={colors.brand} size="small" /></View>
+          </View>
+        ) : null}
+      />
+
+      {donDangHoi ? (
+        <View style={styles.attachBar}>
+          <Pressable style={styles.attachChip} onPress={() => setMoChonDon(true)}>
+            <Ionicons name="cube-outline" size={14} color={colors.brand} />
+            <Text style={styles.attachText} numberOfLines={1}>{t('Về đơn', 'About order')}: {donDangHoi.label}</Text>
+          </Pressable>
+          <Pressable onPress={() => setDonDangHoi(null)} hitSlop={8} style={styles.attachClear}>
+            <Ionicons name="close" size={14} color={colors.muted} />
+          </Pressable>
+        </View>
+      ) : null}
+
+      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+        <Pressable onPress={() => coDon && setMoChonDon(true)} hitSlop={6} style={[styles.findBtn, !coDon && { opacity: 0.4 }]}>
+          <Ionicons name="search" size={16} color={colors.brand} />
+          <Text style={styles.findText}>{t('Tìm đơn', 'Find')}</Text>
+        </Pressable>
+        <TextInput
+          ref={inputRef}
+          value={noiDung}
+          onChangeText={setNoiDung}
+          placeholder={t('Hỏi Camio…', 'Ask Camio…')}
+          placeholderTextColor={colors.muted}
+          style={styles.chatInput}
+          multiline
+        />
+        <Pressable onPress={guiTin} disabled={!noiDung.trim() || dangGui} style={({ pressed }) => [styles.send, (!noiDung.trim() || dangGui) && { opacity: 0.5 }, pressed && { backgroundColor: colors.brandStrong }]}>
+          <Ionicons name="send" size={18} color={colors.onBrand} />
+        </Pressable>
+      </View>
+
+      <Modal visible={moChonDon} transparent animationType="fade" onRequestClose={() => setMoChonDon(false)}>
+        <Pressable style={styles.scrim} onPress={() => setMoChonDon(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>{t('Chọn đơn để hỏi', 'Choose an order')}</Text>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {(form?.orderOptions ?? []).map((o) => (
+                <Pressable key={o.key} onPress={() => { setDonDangHoi(o); setMoChonDon(false); }}
+                  style={({ pressed }) => [styles.option, donDangHoi?.key === o.key && styles.optionOn, pressed && { opacity: 0.85 }]}>
+                  <Text style={styles.optionText}>{o.label}</Text>
+                  {donDangHoi?.key === o.key && <Ionicons name="checkmark" size={18} color={colors.brand} />}
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable style={styles.ghost} onPress={() => setMoChonDon(false)}><Text style={styles.ghostText}>{t('Đóng', 'Close')}</Text></Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -87,7 +264,7 @@ export default function SupportScreen() {
  * Chat trực tiếp với tư vấn viên
  * ------------------------------------------------------------------ */
 
-function ChatHoTro({ moForm }: { moForm: () => void }) {
+function ChatHoTro({ veLanding }: { veLanding: () => void }) {
   const insets = useSafeAreaInsets();
   const t = useT();
   const qc = useQueryClient();
@@ -148,7 +325,7 @@ function ChatHoTro({ moForm }: { moForm: () => void }) {
       style={styles.screen}
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
-      <Header nutPhai={{ nhan: t('Theo mẫu', 'Use form'), onPress: moForm }} />
+      <Header onBack={veLanding} title={t('Chat với CSKH', 'Chat with support')} />
 
       {isPending ? (
         <View style={styles.center}>
@@ -339,7 +516,7 @@ function TinNhan({ m }: { m: SupportMessage }) {
  * Gửi yêu cầu theo mẫu (giữ nguyên, vào từ nút "Theo mẫu")
  * ------------------------------------------------------------------ */
 
-function SupportForm({ veChat }: { veChat: () => void }) {
+function SupportForm({ veLanding }: { veLanding: () => void }) {
   const insets = useSafeAreaInsets();
   const t = useT();
   const qc = useQueryClient();
@@ -429,7 +606,7 @@ function SupportForm({ veChat }: { veChat: () => void }) {
       style={styles.screen}
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
-      <Header nutPhai={{ nhan: t('💬 Chat', '💬 Chat'), onPress: veChat }} />
+      <Header onBack={veLanding} title={t('Gửi yêu cầu theo mẫu', 'Submit a request')} />
 
       {isPending ? (
         <View style={styles.center}>
@@ -751,26 +928,23 @@ function PhanHoi({ data }: { data: SupportFormData }) {
 }
 
 function Header({
-  nutPhai,
+  onBack,
+  title,
+  titleNode,
 }: {
-  nutPhai?: { nhan: string; onPress: () => void; dot?: boolean };
+  onBack?: () => void;
+  title?: string;
+  titleNode?: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const t = useT();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-      <Pressable onPress={() => router.back()} hitSlop={10} style={styles.back}>
+      <Pressable onPress={() => (onBack ? onBack() : router.back())} hitSlop={10} style={styles.back}>
         <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
-      <Text style={styles.headerTitle}>{t('Hỗ trợ', 'Support')}</Text>
-      {nutPhai ? (
-        <Pressable onPress={nutPhai.onPress} hitSlop={8} style={styles.replyBtn}>
-          <Text style={styles.replyBtnText}>{nutPhai.nhan}</Text>
-          {nutPhai.dot ? <View style={styles.replyDot} /> : null}
-        </Pressable>
-      ) : (
-        <View style={{ width: 64 }} />
-      )}
+      {titleNode ?? <Text style={styles.headerTitle}>{title ?? t('Hỗ trợ', 'Support')}</Text>}
+      <View style={{ width: 22 }} />
     </View>
   );
 }
@@ -789,7 +963,42 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
   },
   back: { width: 22 },
-  headerTitle: { fontSize: 17, fontWeight: '900', color: colors.text },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '900', color: colors.text },
+  camioHeadTitle: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  camioTitleText: { fontSize: 17, fontWeight: '900', color: colors.text },
+
+  /* ---- Landing 3 lựa chọn ---- */
+  landing: { padding: spacing.md, gap: 12 },
+  landingLead: { fontSize: 13, color: colors.muted, marginBottom: 2 },
+  choice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  choicePressed: { borderColor: colors.brand, opacity: 0.95 },
+  choiceIco: {
+    width: 48, height: 48, borderRadius: 14, flex: 0,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.brandSoft,
+  },
+  choiceIcoCamio: {
+    width: 48, height: 48, borderRadius: 14, flex: 0, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.brand,
+  },
+  choiceTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  choiceTitle: { fontSize: 15, fontWeight: '900', color: colors.text },
+  choiceSub: { fontSize: 12.5, color: colors.muted, marginTop: 2 },
+  aiTag: { backgroundColor: colors.brand, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
+  aiTagText: { color: colors.onBrand, fontSize: 10, fontWeight: '900' },
+  findBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4, height: 42, paddingHorizontal: 11,
+    borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper,
+  },
+  findText: { color: colors.brand, fontWeight: '800', fontSize: 12 },
   replyBtn: {
     minWidth: 64,
     flexDirection: 'row',
