@@ -7,49 +7,38 @@
   <section class="page-heading">
     <div>
       <span class="eyebrow">CHĂM SÓC KHÁCH HÀNG</span>
-      <h1>Hỗ trợ khách hàng</h1>
-      <p>Cấu hình phản hồi tự động (hội thoại qua Slack).</p>
+      <h1>Trợ lý AI &amp; tài liệu</h1>
+      <p>Cấu hình AI cho <b>Camio</b> và nạp tài liệu để trả lời chính sách/điều khoản.</p>
     </div>
   </section>
 
-  <div class="bo-settings-grid">
-    <form method="post" action="/backoffice/support/settings" class="bo-settings-formwrap">
+  <p class="bo-note">
+    <b>Chat với CSKH</b> luôn do nhân viên trả lời thủ công. <b>Chat với Camio</b>
+    (trợ lý AI trên trang Hỗ trợ) trả lời tự động bằng cấu hình dưới đây.
+  </p>
+
+  <script id="ai-providers" type="application/json">{{ providers | dump | safe }}</script>
+
+  <div class="bo-support-grid">
+    <!-- Cột trái: Cấu hình AI (một khối duy nhất) -->
+    <form method="post" action="/backoffice/support/settings" class="panel bo-ai-card"
+      data-ai-config
+      data-provider="{{ settings.aiProvider }}"
+      data-model="{{ settings.aiModel }}"
+      data-test-endpoint="/backoffice/support/settings/test"
+      data-csrf="{{ csrfToken }}">
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
 
-      <section class="panel">
-        <header class="panel-heading"><div><h2>Cách hoạt động</h2></div></header>
-        <div class="stack-form bo-settings-form">
-          <aside class="info-strip">
-            <span>i</span>
-            <div>
-              <b>Không cần chọn chế độ nữa</b>
-              <p><b>Chat với CSKH</b> luôn do <b>nhân viên trả lời thủ công</b>. <b>Chat với Camio</b> (trợ lý AI trên trang Hỗ trợ) <b>luôn tự động</b> — dùng cấu hình AI + tài liệu RAG bên dưới để trả lời về chính sách/điều khoản.</p>
-            </div>
-          </aside>
-
-          <fieldset class="bo-fieldset">
-            <legend>Tự học từ hội thoại (áp dụng cho Camio)</legend>
-            <label class="bo-check-row">
-              <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
-              <span>Lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> thì trả lời ngay, <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
-            </label>
-            <label for="ar-sim">Ngưỡng tương đồng để tái dùng: <b>{{ settings.similarityThreshold }}%</b>
-              <input id="ar-sim" type="range" name="similarityThreshold" min="50" max="100" step="1" value="{{ settings.similarityThreshold }}">
-              <small class="bo-muted">Cao (90%+): chỉ tái dùng khi câu gần y hệt. Thấp: tái dùng rộng hơn nhưng dễ lệch ngữ cảnh.</small>
-            </label>
-          </fieldset>
+      <header class="panel-heading">
+        <div>
+          <h2>Cấu hình AI</h2>
+          <p class="bo-muted">Chọn nhà cung cấp, model và dán API key cho trợ lý Camio.</p>
         </div>
-      </section>
+      </header>
 
-      <section class="panel">
-        <header class="panel-heading">
-          <div>
-            <h2>Cấu hình AI</h2>
-            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý <b>Camio</b> (chat AI trên trang Hỗ trợ).</p>
-          </div>
-        </header>
-        <div class="stack-form bo-settings-form">
-          <label for="ar-provider">Nhà cung cấp (provider)
+      <div class="bo-ai-body">
+        <div class="bo-field-row">
+          <label for="ar-provider">Nhà cung cấp
             <select id="ar-provider" name="aiProvider">
               {% for key, provider in providers %}
                 <option value="{{ key }}" {% if settings.aiProvider == key %}selected{% endif %}>{{ provider.label }}</option>
@@ -57,104 +46,131 @@
             </select>
           </label>
 
-          <label for="ar-baseurl">Link API (base URL)
-            <input id="ar-baseurl" type="text" name="aiBaseUrl" maxlength="300" value="{{ settings.aiBaseUrl }}" autocomplete="off" placeholder="Ví dụ: https://api.deepseek.com/v1 (chỉ cần khi chọn Tùy chỉnh)">
-            <small class="bo-muted">Chỉ điền khi chọn <b>Tùy chỉnh</b> (API tương thích OpenAI, ví dụ DeepSeek self-host). OpenAI/DeepSeek/Anthropic/Gemini tự dùng link mặc định — để trống.</small>
+          <label for="ar-model">Model
+            <input id="ar-model" type="text" name="aiModel" maxlength="120" list="ar-models"
+              value="{{ settings.aiModel }}" autocomplete="off" placeholder="Chọn hoặc gõ tên model">
+            <datalist id="ar-models"></datalist>
           </label>
-
-          <label for="ar-model">Tên model
-            <input id="ar-model" type="text" name="aiModel" maxlength="120" value="{{ settings.aiModel }}" list="ar-model-list" autocomplete="off" placeholder="Chọn từ gợi ý hoặc gõ tên model">
-            <datalist id="ar-model-list">
-              {% for key, provider in providers %}
-                {% for model in provider.suggestedModels %}
-                  <option value="{{ model }}">{{ provider.label }}</option>
-                {% endfor %}
-              {% endfor %}
-            </datalist>
-            <small class="bo-muted">Gợi ý: OpenAI (gpt-5, gpt-5-mini) · Anthropic (claude-opus-5, claude-sonnet-5) · Google (gemini-2.5-flash) · DeepSeek (deepseek-chat, deepseek-reasoner).</small>
-          </label>
-
-          <label for="ar-key">API key
-            <input id="ar-key" type="password" name="aiApiKey" maxlength="500" autocomplete="off"
-              placeholder="{% if settings.hasApiKey %}•••••••• (đã lưu — để trống nếu giữ nguyên){% else %}Dán API key của provider đã chọn{% endif %}">
-            <small class="bo-muted">Key được mã hóa AES-256 trước khi lưu; không hiển thị lại.{% if settings.hasApiKey %} Hiện đã có key.{% endif %}</small>
-          </label>
-
-          <label for="ar-skill">Skill / vai trò của AI <small class="bo-muted">(system prompt — mô tả vai trò, giọng điệu, quy tắc nghiệp vụ)</small>
-            <textarea id="ar-skill" name="aiSystemPrompt" rows="6" maxlength="8000" placeholder="Ví dụ: Bạn là nhân viên CSKH của ShopTik — nền tảng hoàn tiền mua sắm Shopee/TikTok/Lazada. Luôn xưng 'em', gọi khách là 'anh/chị'...">{{ settings.aiSystemPrompt }}</textarea>
-          </label>
-
-          <button class="button button-primary" type="submit">Lưu cấu hình</button>
         </div>
-      </section>
+
+        <label for="ar-baseurl" data-baseurl-wrap hidden>Link API (base URL)
+          <input id="ar-baseurl" type="text" name="aiBaseUrl" maxlength="300"
+            value="{{ settings.aiBaseUrl }}" autocomplete="off" placeholder="https://…/v1">
+          <small class="bo-muted">Endpoint tương thích OpenAI (<code>/chat/completions</code>).</small>
+        </label>
+
+        <label for="ar-key">API key
+          <input id="ar-key" type="password" name="aiApiKey" maxlength="500" autocomplete="off"
+            placeholder="{% if settings.hasApiKey %}•••• đã lưu — để trống nếu giữ nguyên{% else %}Dán API key của nhà cung cấp{% endif %}">
+          <small class="bo-muted">Mã hóa AES-256 trước khi lưu; không hiển thị lại.{% if settings.hasApiKey %} Hiện đã có key.{% endif %}</small>
+        </label>
+
+        <div class="bo-test-row">
+          <button type="button" class="button button-ghost" data-test-btn>Kiểm tra kết nối</button>
+          <span class="bo-muted">Xác nhận key + model chạy được và xem hạn mức (usage/limit).</span>
+        </div>
+        <div class="bo-test-result" data-test-result hidden></div>
+
+        <details class="bo-advanced">
+          <summary>Nâng cao — skill &amp; tự học</summary>
+          <div class="bo-advanced-body">
+            <label for="ar-skill">Skill / vai trò của AI
+              <small class="bo-muted">(system prompt — vai trò, giọng điệu, quy tắc nghiệp vụ)</small>
+              <textarea id="ar-skill" name="aiSystemPrompt" rows="5" maxlength="8000"
+                placeholder="Ví dụ: Bạn là nhân viên CSKH của ShopTik — nền tảng hoàn tiền Shopee/TikTok/Lazada. Xưng 'em', gọi khách 'anh/chị'…">{{ settings.aiSystemPrompt }}</textarea>
+            </label>
+
+            <label class="bo-check-row">
+              <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
+              <span>Tự học: lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> trả lời ngay,
+                <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
+            </label>
+
+            <label for="ar-sim">Ngưỡng tương đồng để tái dùng: <b data-sim-label>{{ settings.similarityThreshold }}%</b>
+              <input id="ar-sim" type="range" name="similarityThreshold" min="50" max="100" step="1"
+                value="{{ settings.similarityThreshold }}" data-sim-range>
+              <small class="bo-muted">Cao (90%+): chỉ tái dùng khi gần y hệt. Thấp: rộng hơn nhưng dễ lệch ngữ cảnh.</small>
+            </label>
+          </div>
+        </details>
+
+        <button class="button button-primary" type="submit">Lưu cấu hình</button>
+      </div>
     </form>
 
-    <section class="panel">
-      <header class="panel-heading">
-        <div>
-          <h2>Tài liệu tham khảo (RAG)</h2>
-          <p class="bo-muted">AI ưu tiên trả lời theo các tài liệu này khi câu hỏi trùng từ khóa — FAQ, chính sách hoàn tiền, hạn mức rút...</p>
-        </div>
-      </header>
+    <!-- Cột phải: Tài liệu RAG + câu đã học -->
+    <div class="bo-side-col">
+      <section class="panel">
+        <header class="panel-heading">
+          <div>
+            <h2>Tài liệu tham khảo (RAG)</h2>
+            <p class="bo-muted">AI ưu tiên trả lời theo tài liệu này khi câu hỏi trùng từ khóa — FAQ, chính sách hoàn tiền, hạn mức rút…</p>
+          </div>
+        </header>
 
-      <form method="post" action="/backoffice/support/settings/kb" class="stack-form bo-settings-form">
-        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-        <label for="kb-title">Tiêu đề
-          <input id="kb-title" type="text" name="title" maxlength="200" required placeholder="Ví dụ: Chính sách thời gian hoàn tiền">
-        </label>
-        <label for="kb-content">Nội dung
-          <textarea id="kb-content" name="content" rows="5" maxlength="20000" required placeholder="Dán nội dung văn bản thuần (FAQ, chính sách...)"></textarea>
-        </label>
-        <button class="button button-primary" type="submit">Thêm tài liệu</button>
-      </form>
+        <form method="post" action="/backoffice/support/settings/kb" class="stack-form bo-settings-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <label for="kb-title">Tiêu đề
+            <input id="kb-title" type="text" name="title" maxlength="200" required
+              placeholder="Ví dụ: Chính sách thời gian hoàn tiền">
+          </label>
+          <label for="kb-content">Nội dung
+            <textarea id="kb-content" name="content" rows="5" maxlength="20000" required
+              placeholder="Dán nội dung văn bản thuần (FAQ, chính sách…)"></textarea>
+          </label>
+          <button class="button button-primary" type="submit">Thêm tài liệu</button>
+        </form>
 
-      {% if kbDocuments.length %}
-        <div class="bo-kb-list">
-          {% for doc in kbDocuments %}
-            <article class="bo-kb-item">
-              <div class="bo-kb-main">
-                <b>{{ doc.title }}</b>
-                <small class="bo-muted">{{ doc.content.length }} ký tự · {{ doc.created_at | datetime }}</small>
-                <p class="bo-cell-clamp">{{ doc.content }}</p>
-              </div>
-              <form method="post" action="/backoffice/support/settings/kb/{{ doc.id }}/delete">
-                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                <button class="button button-small" type="submit">Xóa</button>
-              </form>
-            </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        {{ empty_state("Chưa có tài liệu", "Thêm FAQ/chính sách để AI trả lời chính xác hơn.") }}
-      {% endif %}
-    </section>
+        {% if kbDocuments.length %}
+          <div class="bo-kb-list">
+            {% for doc in kbDocuments %}
+              <article class="bo-kb-item">
+                <div class="bo-kb-main">
+                  <b>{{ doc.title }}</b>
+                  <small class="bo-muted">{{ doc.content.length }} ký tự · {{ doc.created_at | datetime }}</small>
+                  <p class="bo-cell-clamp">{{ doc.content }}</p>
+                </div>
+                <form method="post" action="/backoffice/support/settings/kb/{{ doc.id }}/delete">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <button class="button button-small" type="submit">Xóa</button>
+                </form>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state("Chưa có tài liệu", "Thêm FAQ/chính sách để AI trả lời chính xác hơn.") }}
+        {% endif %}
+      </section>
 
-    <section class="panel">
-      <header class="panel-heading">
-        <div>
-          <h2>Câu đã học ({{ learnedCount }})</h2>
-          <p class="bo-muted">Cặp câu hỏi → trả lời do AI sinh, tự lưu lại. Gặp câu tương tự, hệ thống trả lời từ đây, không gọi AI.</p>
-        </div>
-      </header>
-      {% if learnedAnswers.length %}
-        <div class="bo-kb-list">
-          {% for la in learnedAnswers %}
-            <article class="bo-kb-item">
-              <div class="bo-kb-main">
-                <b>{{ la.question }}</b>
-                <small class="bo-muted">Đã dùng lại {{ la.hits }} lần · {{ la.updated_at | datetime }}</small>
-                <p class="bo-cell-clamp">{{ la.answer }}</p>
-              </div>
-              <form method="post" action="/backoffice/support/settings/learned/{{ la.id }}/delete">
-                <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-                <button class="button button-small" type="submit">Xóa</button>
-              </form>
-            </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        {{ empty_state("Chưa học câu nào", "Khi AI trả lời khách, câu hỏi & trả lời sẽ tự lưu vào đây để tái dùng.") }}
-      {% endif %}
-    </section>
+      <section class="panel">
+        <header class="panel-heading">
+          <div>
+            <h2>Câu đã học ({{ learnedCount }})</h2>
+            <p class="bo-muted">Cặp câu hỏi → trả lời do AI sinh, tự lưu lại để tái dùng, không gọi AI.</p>
+          </div>
+        </header>
+        {% if learnedAnswers.length %}
+          <div class="bo-kb-list">
+            {% for la in learnedAnswers %}
+              <article class="bo-kb-item">
+                <div class="bo-kb-main">
+                  <b>{{ la.question }}</b>
+                  <small class="bo-muted">Đã dùng lại {{ la.hits }} lần · {{ la.updated_at | datetime }}</small>
+                  <p class="bo-cell-clamp">{{ la.answer }}</p>
+                </div>
+                <form method="post" action="/backoffice/support/settings/learned/{{ la.id }}/delete">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <button class="button button-small" type="submit">Xóa</button>
+                </form>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state("Chưa học câu nào", "Khi AI trả lời khách, câu hỏi & trả lời sẽ tự lưu vào đây.") }}
+        {% endif %}
+      </section>
+    </div>
   </div>
+
+  <script src="/assets/backoffice-support-config.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

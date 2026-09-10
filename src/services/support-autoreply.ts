@@ -591,6 +591,183 @@ async function generateAiReply(
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Kiểm tra kết nối AI (nút "Kiểm tra kết nối" ở backoffice)
+ * Gọi một request tối thiểu tới provider để xác nhận key + model chạy được,
+ * đồng thời đọc header rate-limit (usage/limit) nếu provider trả về.
+ * ------------------------------------------------------------------ */
+
+const AI_TEST_TIMEOUT_MS = 15000;
+
+export interface AiTestResult {
+  ok: boolean;
+  message: string;
+  /** Các dòng hạn mức/usage đọc từ header (nếu có). */
+  limits?: { label: string; value: string }[];
+}
+
+function readOpenAiLimits(headers: Headers): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  const reqLimit = headers.get("x-ratelimit-limit-requests");
+  const reqRemain = headers.get("x-ratelimit-remaining-requests");
+  const tokLimit = headers.get("x-ratelimit-limit-tokens");
+  const tokRemain = headers.get("x-ratelimit-remaining-tokens");
+  if (reqLimit) {
+    out.push({ label: "Requests còn lại", value: `${reqRemain ?? "?"} / ${reqLimit}` });
+  }
+  if (tokLimit) {
+    out.push({ label: "Tokens còn lại", value: `${tokRemain ?? "?"} / ${tokLimit}` });
+  }
+  return out;
+}
+
+async function testOpenAiCompatible(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+): Promise<AiTestResult> {
+  const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: "ping" }],
+      max_tokens: 1,
+    }),
+    signal: AbortSignal.timeout(AI_TEST_TIMEOUT_MS),
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    error?: { message?: string };
+  };
+  if (!response.ok) {
+    return { ok: false, message: data.error?.message ?? `HTTP ${response.status}` };
+  }
+  return {
+    ok: true,
+    message: `Kết nối OK — model "${model}" phản hồi bình thường.`,
+    limits: readOpenAiLimits(response.headers),
+  };
+}
+
+async function testAnthropic(apiKey: string, model: string): Promise<AiTestResult> {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1,
+      messages: [{ role: "user", content: "ping" }],
+    }),
+    signal: AbortSignal.timeout(AI_TEST_TIMEOUT_MS),
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    error?: { message?: string };
+  };
+  if (!response.ok) {
+    return { ok: false, message: data.error?.message ?? `HTTP ${response.status}` };
+  }
+  const h = response.headers;
+  const limits: { label: string; value: string }[] = [];
+  const reqLimit = h.get("anthropic-ratelimit-requests-limit");
+  const reqRemain = h.get("anthropic-ratelimit-requests-remaining");
+  const tokLimit = h.get("anthropic-ratelimit-tokens-limit");
+  const tokRemain = h.get("anthropic-ratelimit-tokens-remaining");
+  if (reqLimit) {
+    limits.push({ label: "Requests còn lại", value: `${reqRemain ?? "?"} / ${reqLimit}` });
+  }
+  if (tokLimit) {
+    limits.push({ label: "Tokens còn lại", value: `${tokRemain ?? "?"} / ${tokLimit}` });
+  }
+  return {
+    ok: true,
+    message: `Kết nối OK — model "${model}" phản hồi bình thường.`,
+    limits,
+  };
+}
+
+async function testGemini(apiKey: string, model: string): Promise<AiTestResult> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: "POST",
+      headers: { "x-goog-api-key": apiKey, "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "ping" }] }],
+        generationConfig: { maxOutputTokens: 1 },
+      }),
+      signal: AbortSignal.timeout(AI_TEST_TIMEOUT_MS),
+    },
+  );
+  const data = (await response.json().catch(() => ({}))) as {
+    error?: { message?: string };
+  };
+  if (!response.ok) {
+    return { ok: false, message: data.error?.message ?? `HTTP ${response.status}` };
+  }
+  // Gemini không trả header rate-limit; xem hạn mức ở Google AI Studio.
+  return {
+    ok: true,
+    message: `Kết nối OK — model "${model}" phản hồi bình thường. (Gemini không trả hạn mức qua API; xem ở Google AI Studio.)`,
+  };
+}
+
+/** Kiểm tra key + model. Key trống thì dùng key đã lưu (giải mã). */
+export async function testAiConnection(
+  db: Database,
+  config: AppConfig,
+  input: { provider: AiProvider; model: string; baseUrl: string; apiKey: string },
+): Promise<AiTestResult> {
+  const model = input.model.trim();
+  if (!model) {
+    return { ok: false, message: "Hãy chọn/nhập tên model trước khi kiểm tra." };
+  }
+  const existing = await loadSettingsRow(db);
+  const apiKey = input.apiKey.trim()
+    ? input.apiKey.trim()
+    : existing?.ai_api_key_ciphertext
+      ? decryptField(existing.ai_api_key_ciphertext, config)
+      : "";
+  if (!apiKey) {
+    return { ok: false, message: "Chưa có API key. Hãy dán key rồi kiểm tra lại." };
+  }
+  try {
+    switch (input.provider) {
+      case "openai":
+      case "deepseek":
+      case "custom": {
+        const baseUrl =
+          input.provider === "custom"
+            ? input.baseUrl.trim()
+            : (AI_PROVIDERS[input.provider].defaultBaseUrl ?? "");
+        if (input.provider === "custom" && !baseUrl) {
+          return { ok: false, message: "Nhà cung cấp Tùy chỉnh cần link API (base URL)." };
+        }
+        return await testOpenAiCompatible(baseUrl, apiKey, model);
+      }
+      case "anthropic":
+        return await testAnthropic(apiKey, model);
+      case "gemini":
+        return await testGemini(apiKey, model);
+    }
+  } catch (error) {
+    const msg =
+      error instanceof Error
+        ? error.name === "TimeoutError"
+          ? "Hết thời gian chờ (15s) — kiểm tra base URL/mạng."
+          : error.message
+        : "Lỗi không xác định.";
+    return { ok: false, message: msg };
+  }
+}
+
 async function insertAutoMessage(
   db: Database,
   config: AppConfig,

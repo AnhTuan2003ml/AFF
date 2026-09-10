@@ -67,6 +67,7 @@ import {
   listKbDocuments,
   listLearnedAnswers,
   saveAutoReplySettings,
+  testAiConnection,
 } from "../services/support-autoreply.js";
 import {
   activateEntryPromo,
@@ -617,6 +618,42 @@ export async function registerBackofficeRoutes(
       flashError(reply, deps.config, error);
     }
     return reply.redirect("/backoffice/support");
+  });
+
+  // Kiểm tra kết nối AI (AJAX từ nút "Kiểm tra kết nối"). Trả JSON, không redirect.
+  app.post("/support/settings/test", async (request, reply) => {
+    try {
+      requireSupportManager(request.currentUser!.role);
+      const input = parseInput(
+        z.object({
+          aiProvider: z.enum([
+            "openai",
+            "anthropic",
+            "gemini",
+            "deepseek",
+            "custom",
+          ]),
+          aiModel: z.string().trim().max(120).optional().default(""),
+          aiBaseUrl: z.string().trim().max(300).optional().default(""),
+          aiApiKey: z.string().trim().max(500).optional().default(""),
+        }),
+        request.body,
+      );
+      const result = await testAiConnection(deps.db, deps.config, {
+        provider: input.aiProvider,
+        model: input.aiModel,
+        baseUrl: input.aiBaseUrl,
+        apiKey: input.aiApiKey,
+      });
+      return reply.send(result);
+    } catch (error) {
+      const statusCode = error instanceof AppError ? error.statusCode : 400;
+      return reply.status(statusCode).send({
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Không kiểm tra được kết nối.",
+      });
+    }
   });
 
   app.post("/support/settings/kb", async (request, reply) => {
