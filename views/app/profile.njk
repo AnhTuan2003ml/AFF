@@ -16,7 +16,7 @@
       {% if currentUser.avatarUrl %}<img src="{{ currentUser.avatarUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<span>{{ (currentUser.fullName or currentUser.email or '?') | first | upper }}</span>{% endif %}
     </span>
     <div class="mb-profile-copy">
-      <b>{{ currentUser.fullName or t('Tài khoản ShopTik', 'ShopTik account') }}{% if isPartner %} <span class="partner-badge">⭐ {{ t('Đối tác', 'Partner') }}</span>{% endif %}</b>
+      <b>{{ currentUser.fullName or t('Tài khoản ShopTik', 'ShopTik account') }}{% if currentUser.isSpecialPartner or currentUser.role == 'ADMIN' %} <span class="partner-badge">⭐ {{ t('Đối tác', 'Partner') }}</span>{% endif %}</b>
       <small>{{ currentUser.email }}</small>
     </div>
     {% if profileBalances %}

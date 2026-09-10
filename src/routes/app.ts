@@ -1899,16 +1899,9 @@ export async function registerAppRoutes(
        WHERE u.id = $1`,
       [userId(request)],
     );
-    // Tài khoản đối tác (KOL/đối tác đặc biệt) → hiện huy hiệu ⭐ cạnh tên.
-    const partner = await query<{ is_special_partner: boolean }>(
-      deps.db,
-      "SELECT is_special_partner FROM users WHERE id = $1",
-      [userId(request)],
-    );
     return reply.view("app/profile.njk", {
       pageTitle: "Thông tin cá nhân",
       appSection: "profile",
-      isPartner: Boolean(partner.rows[0]?.is_special_partner),
       referrer: referrer.rows[0] ?? null,
       sessions: sessions.rows.map((row) => ({
         ...row,

@@ -106,7 +106,7 @@ export default function AccountScreen() {
               <Text style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
                 {user.fullName || t('Tài khoản ShopTik', 'ShopTik account')}
               </Text>
-              {user.isSpecialPartner ? (
+              {user.isSpecialPartner || user.role === 'ADMIN' ? (
                 <View style={styles.partnerBadge}>
                   <Text style={styles.partnerBadgeText}>⭐ {t('Đối tác', 'Partner')}</Text>
                 </View>
