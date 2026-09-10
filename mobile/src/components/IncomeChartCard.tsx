@@ -6,6 +6,7 @@ import Svg, { Circle, Line as SvgLine, Path, Text as SvgText } from 'react-nativ
 
 import { layThuNhap, type IncomeUnit } from '@/api/features';
 import { useT } from '@/i18n';
+import { vnd } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { CalendarModal } from '@/components/CalendarModal';
 
@@ -100,7 +101,7 @@ export function IncomeChartCard() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{t('Thu nhập theo thời gian', 'Earnings over time')}</Text>
+      <Text style={styles.title}>{t('Doanh thu theo thời gian', 'Revenue over time')}</Text>
 
       {/* Khoảng ngày — bấm mở lịch popup. */}
       <View style={styles.dateRow}>
@@ -131,6 +132,28 @@ export function IncomeChartCard() {
           </Pressable>
         ))}
       </View>
+
+      {/* Doanh thu 3 nguồn + tổng */}
+      {data?.breakdown ? (
+        <View style={styles.breakdown}>
+          <View style={styles.srcBox}>
+            <Text style={styles.srcLabel}>{t('Đơn của bạn', 'Your orders')}</Text>
+            <Text style={styles.srcValue}>{vnd(data.breakdown.ownVnd)}</Text>
+          </View>
+          <View style={styles.srcBox}>
+            <Text style={styles.srcLabel}>{t('Người giới thiệu', 'Referred')}</Text>
+            <Text style={styles.srcValue}>{vnd(data.breakdown.referralVnd)}</Text>
+          </View>
+          <View style={styles.srcBox}>
+            <Text style={styles.srcLabel}>{t('Link chia sẻ', 'Shared links')}</Text>
+            <Text style={styles.srcValue}>{vnd(data.breakdown.shareLinkVnd)}</Text>
+          </View>
+          <View style={[styles.srcBox, styles.srcTotal]}>
+            <Text style={styles.srcLabel}>{t('Tổng', 'Total')}</Text>
+            <Text style={[styles.srcValue, styles.srcTotalValue]}>{vnd(data.breakdown.totalVnd)}</Text>
+          </View>
+        </View>
+      ) : null}
 
       {/* Biểu đồ đường */}
       <View style={styles.chart} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
@@ -220,6 +243,20 @@ const styles = StyleSheet.create({
   unitBtnActive: { backgroundColor: colors.brand },
   unitText: { fontSize: 12.5, fontWeight: '800', color: colors.muted },
   unitTextActive: { color: colors.onBrand },
+  breakdown: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  srcBox: {
+    flexGrow: 1,
+    flexBasis: '47%',
+    padding: 10,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  srcLabel: { fontSize: 10.5, fontWeight: '700', color: colors.muted },
+  srcValue: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 3 },
+  srcTotal: { backgroundColor: colors.brandSoft, borderColor: colors.brandLine },
+  srcTotalValue: { color: colors.brand },
   chart: { marginTop: 14, minHeight: 176, justifyContent: 'center' },
   chartEmpty: { fontSize: 12.5, color: colors.muted, textAlign: 'center', paddingVertical: 20 },
 });

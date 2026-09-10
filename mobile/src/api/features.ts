@@ -161,6 +161,12 @@ export function layThuNhap(params: { from?: string; to?: string; unit: IncomeUni
     to: string;
     unit: IncomeUnit;
     totalVnd: number;
+    breakdown: {
+      ownVnd: number;
+      referralVnd: number;
+      shareLinkVnd: number;
+      totalVnd: number;
+    };
     points: IncomePoint[];
   }>(`/api/v1/referrals/income?${qs.toString()}`);
 }
