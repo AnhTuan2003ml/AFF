@@ -8,6 +8,8 @@ import {
   postSupportMessage,
   type SlackLogger,
 } from "./slack.js";
+import { loadUserPolicyFacts, buildUserPolicy } from "./user-policy.js";
+import { buildTerms } from "./legal-docs.js";
 
 // Tự trả lời chat hỗ trợ: CANNED (tin mẫu) hoặc AI (OpenAI/Anthropic/Gemini
 // với system prompt + RAG). Chạy nền sau khi tin của khách đã lưu; lỗi chỉ
@@ -724,4 +726,84 @@ export async function maybeAutoReply(
     input.logger?.warn({ err: error }, "Tự trả lời hỗ trợ thất bại.");
     return false;
   }
+}
+
+/* ─────────────────────────── Trợ lý Camio (AI) ─────────────────────────── */
+
+const CAMIO_SYSTEM_PROMPT =
+  "Bạn là Camio — trợ lý ảo của ShopTik, nền tảng hoàn tiền mua sắm qua " +
+  "Shopee/TikTok Shop/Lazada. Xưng 'Camio' (hoặc 'em'), gọi khách là 'anh/chị'. " +
+  "Thân thiện, ngắn gọn, chính xác. Ở giai đoạn này bạn CHỈ trả lời về CHÍNH SÁCH " +
+  "và ĐIỀU KHOẢN của hệ thống dựa trên tài liệu tham khảo bên dưới. Nếu câu hỏi " +
+  "nằm ngoài phạm vi tài liệu, hoặc cần can thiệp tài khoản/đơn hàng/số dư cụ thể, " +
+  "hãy nói rõ và mời khách bấm 'Chat với CSKH' để nhân viên xử lý.";
+
+/** Dựng tài liệu RAG từ Chính sách người dùng + Điều khoản sử dụng (theo mục). */
+async function buildPolicyTermsKb(
+  db: Database,
+  config: AppConfig,
+): Promise<KbDocument[]> {
+  const facts = await loadUserPolicyFacts(db, config);
+  const now = new Date();
+  const docs: KbDocument[] = [];
+  for (const source of [buildUserPolicy(facts), buildTerms(facts)]) {
+    for (const section of source.sections) {
+      docs.push({
+        id: `${source.title}:${section.id}`,
+        title: `${source.title} — ${section.heading}`,
+        content: [...section.paragraphs, ...section.items].join("\n"),
+        created_at: now,
+      });
+    }
+  }
+  return docs;
+}
+
+/**
+ * Sinh câu trả lời của trợ lý Camio (AI) cho một câu hỏi — RAG trên Chính sách/
+ * Điều khoản + tài liệu KB của admin. Tiết kiệm token: câu tương tự đã học trả
+ * lời ngay không gọi AI; RAG chỉ nạp 3 mục liên quan nhất vào prompt. Trả null
+ * nếu chưa cấu hình AI (FE sẽ hiện thông báo hướng dẫn).
+ */
+export async function generateCamioReply(
+  db: Database,
+  config: AppConfig,
+  input: { question: string; history: ChatHistoryEntry[] },
+): Promise<string | null> {
+  const settings = await loadSettingsRow(db);
+  if (!settings || !settings.ai_api_key_ciphertext || !settings.ai_model) {
+    return null;
+  }
+  // Tự học: gặp câu tương tự đã trả lời → trả ngay, KHỎI gọi AI (tiết kiệm).
+  if (settings.learn_enabled) {
+    const learned = await findSimilarLearnedAnswer(
+      db,
+      input.question,
+      settings.similarity_threshold,
+    );
+    if (learned) {
+      await recordLearnedHit(db, learned.id).catch(() => undefined);
+      return learned.answer;
+    }
+  }
+  const kbDocs = [
+    ...(await buildPolicyTermsKb(db, config)),
+    ...(await listKbDocuments(db)),
+  ];
+  const kbContext = buildKbContext(rankKbDocuments(kbDocs, input.question));
+  const apiKey = decryptField(settings.ai_api_key_ciphertext, config);
+  const camioSettings: SettingsRow = {
+    ...settings,
+    ai_system_prompt: CAMIO_SYSTEM_PROMPT,
+  };
+  const reply = await generateAiReply(
+    camioSettings,
+    apiKey,
+    input.history,
+    kbContext,
+  );
+  if (reply && settings.learn_enabled) {
+    await learnAnswer(db, input.question, reply).catch(() => undefined);
+  }
+  return reply || null;
 }

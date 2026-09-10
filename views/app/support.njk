@@ -5,9 +5,63 @@
   <section class="page-heading">
     <div>
       <h1>{{ t('Hỗ trợ', 'Support') }}</h1>
-      <p>{{ t('Chat trực tiếp với CSKH, hoặc gửi yêu cầu theo mẫu.', 'Live chat with support, or submit a request form.') }}</p>
+      <p>{{ t('Hỏi nhanh trợ lý Camio, hoặc chat trực tiếp với CSKH.', 'Ask the Camio assistant, or chat with support.') }}</p>
     </div>
   </section>
+
+  {% if not guest %}
+    {# CHAT VỚI CAMIO (AI) — nằm TRÊN chat CSKH. Trả lời tự động về chính sách/điều khoản. #}
+    <section class="panel camio-panel" data-camio data-endpoint="/app/camio/messages" data-csrf="{{ csrfToken }}">
+      <header class="panel-heading camio-head">
+        <span class="camio-avatar" data-camio-mascot aria-hidden="true"></span>
+        <div>
+          <h2>{{ t('Chat với Camio', 'Chat with Camio') }} <span class="camio-ai-tag">AI</span></h2>
+          <p>{{ t('Trợ lý ảo trả lời ngay về chính sách, điều khoản và cách hoạt động.', 'Virtual assistant — instant answers on policies, terms and how it works.') }}</p>
+        </div>
+      </header>
+
+      <div class="camio-thread" data-camio-thread>
+        <div class="camio-msg is-camio">
+          <span class="camio-msg-avatar" data-camio-msg-mascot aria-hidden="true"></span>
+          <div class="camio-bubble">
+            <p>{{ t('Chào anh/chị! Em là Camio 🧡 Anh/chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?', 'Hi! I’m Camio 🧡 Ask me about cashback policy, terms, or how ShopTik works.') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="camio-order-chip" data-camio-order-chip hidden>
+        <span data-camio-order-label></span>
+        <button type="button" data-camio-order-clear aria-label="{{ t('Bỏ đơn', 'Remove order') }}">×</button>
+      </div>
+
+      <div class="camio-picker" data-camio-picker hidden>
+        <label>{{ t('Chọn đơn của bạn', 'Choose your order') }}
+          <select data-camio-order-select>
+            <option value="">{{ t('— Chọn đơn —', '— Choose an order —') }}</option>
+            {% for option in orderOptions %}
+              <option value="{{ option.key }}" data-label="{{ option.label }}">{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>{{ t('Hoặc dán link sản phẩm/đơn', 'Or paste product/order link') }}
+          <input type="text" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
+        </label>
+        <button type="button" class="button button-small" data-camio-picker-done>{{ t('Xong', 'Done') }}</button>
+      </div>
+
+      <form class="camio-bar" data-camio-form novalidate>
+        <button type="button" class="camio-find" data-camio-find>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+          <span>{{ t('Tìm đơn', 'Find order') }}</span>
+        </button>
+        <textarea data-camio-input rows="1" maxlength="3000" placeholder="{{ t('Hỏi Camio…', 'Ask Camio…') }}" aria-label="{{ t('Nội dung', 'Message') }}"></textarea>
+        <button type="submit" data-camio-send aria-label="{{ t('Gửi', 'Send') }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 20 4l-7.2 16.5-2.1-7.2z"/></svg>
+        </button>
+      </form>
+      <p class="field-error" data-camio-error hidden role="alert"></p>
+    </section>
+  {% endif %}
 
   {% if not guest %}
     {# Hai lối vào ngay đầu trang — khỏi phải cuộn qua form mới bấm được CSKH. #}
@@ -163,6 +217,7 @@
 
 {% block page_scripts %}
   {% if not guest %}
+  <script src="/assets/camio-chat.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/support-request.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/support-reply.js?v={{ assetVersion }}" defer></script>
   {% endif %}

@@ -583,7 +583,6 @@ export async function registerBackofficeRoutes(
       requireSupportManager(request.currentUser!.role);
       const input = parseInput(
         z.object({
-          mode: z.enum(["MANUAL", "AUTO"]),
           aiProvider: z.enum([
             "openai",
             "anthropic",
@@ -600,15 +599,18 @@ export async function registerBackofficeRoutes(
         }),
         request.body,
       );
+      // CSKH luôn THỦ CÔNG (nhân viên tự trả lời). Trợ lý Camio dùng cấu hình AI
+      // này qua đường riêng, không phụ thuộc mode → luôn ép MANUAL.
       await saveAutoReplySettings(deps.db, deps.config, {
         ...input,
+        mode: "MANUAL",
         learnEnabled: input.learnEnabled === "on",
       });
       await writeAuditLog(deps.db, deps.config, request, {
         action: "SUPPORT_AUTOREPLY_UPDATED",
         targetType: "BUSINESS_CONFIG",
         targetId: "support_autoreply",
-        after: { mode: input.mode, provider: input.aiProvider },
+        after: { mode: "MANUAL", provider: input.aiProvider },
       });
       setFlash(reply, deps.config, "success", "Đã lưu cấu hình phản hồi.");
     } catch (error) {

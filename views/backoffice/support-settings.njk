@@ -17,18 +17,18 @@
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
 
       <section class="panel">
-        <header class="panel-heading"><div><h2>Chế độ trả lời</h2></div></header>
+        <header class="panel-heading"><div><h2>Cách hoạt động</h2></div></header>
         <div class="stack-form bo-settings-form">
-          <label for="ar-mode">Chế độ
-            <select id="ar-mode" name="mode">
-              <option value="MANUAL" {% if settings.mode == 'MANUAL' %}selected{% endif %}>Thủ công — nhân viên tự trả lời</option>
-              <option value="AUTO" {% if settings.mode == 'AUTO' %}selected{% endif %}>Tự động — ưu tiên kho đã học, chưa có mẫu thì gọi AI rồi lưu lại</option>
-            </select>
-            <small class="bo-muted">Tự động: mỗi câu hỏi tra kho câu đã học trước; nếu chưa có mẫu phù hợp mới gọi AI, rồi lưu câu trả lời để lần sau dùng.</small>
-          </label>
+          <aside class="info-strip">
+            <span>i</span>
+            <div>
+              <b>Không cần chọn chế độ nữa</b>
+              <p><b>Chat với CSKH</b> luôn do <b>nhân viên trả lời thủ công</b>. <b>Chat với Camio</b> (trợ lý AI trên trang Hỗ trợ) <b>luôn tự động</b> — dùng cấu hình AI + tài liệu RAG bên dưới để trả lời về chính sách/điều khoản.</p>
+            </div>
+          </aside>
 
           <fieldset class="bo-fieldset">
-            <legend>Tự học từ hội thoại</legend>
+            <legend>Tự học từ hội thoại (áp dụng cho Camio)</legend>
             <label class="bo-check-row">
               <input type="checkbox" name="learnEnabled" {% if settings.learnEnabled %}checked{% endif %}>
               <span>Lưu câu trả lời AI làm tài liệu; gặp câu hỏi <b>tương tự</b> thì trả lời ngay, <b>không gọi AI</b> (nhanh + tiết kiệm chi phí).</span>
@@ -45,7 +45,7 @@
         <header class="panel-heading">
           <div>
             <h2>Cấu hình AI</h2>
-            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý CSKH. Áp dụng khi chế độ = Tự động.</p>
+            <p class="bo-muted">Chọn nhà cung cấp, tên model và API key cho trợ lý <b>Camio</b> (chat AI trên trang Hỗ trợ).</p>
           </div>
         </header>
         <div class="stack-form bo-settings-form">

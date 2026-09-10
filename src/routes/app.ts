@@ -88,6 +88,10 @@ import {
   sendSupportChatMessage,
 } from "../services/support-chat.js";
 import {
+  generateCamioReply,
+  type ChatHistoryEntry,
+} from "../services/support-autoreply.js";
+import {
   SUPPORT_TOPICS,
   localizeSupportTopics,
   platformDisplayName,
@@ -1620,6 +1624,52 @@ export async function registerAppRoutes(
       const appError = asAppError(error);
       if (appError.statusCode >= 500) {
         request.log.error({ err: error }, "Lỗi gửi tin nhắn hỗ trợ");
+      }
+      return reply.code(appError.statusCode).send({
+        error: { code: appError.code, message: appError.message },
+      });
+    }
+  });
+
+  // Chat với Camio (AI) — trả lời NGAY trong response (không cần poll). Giai
+  // đoạn 1: RAG về Chính sách/Điều khoản. Không lưu DB (FE giữ lịch sử, gửi kèm).
+  app.post("/camio/messages", async (request, reply) => {
+    try {
+      const input = parseInput(
+        z.object({
+          message: z.string().trim().min(1).max(3000),
+          history: z
+            .array(
+              z.object({
+                role: z.enum(["user", "assistant"]),
+                body: z.string().max(3000),
+              }),
+            )
+            .max(16)
+            .optional(),
+        }),
+        request.body,
+      );
+      const history: ChatHistoryEntry[] = (input.history ?? []).map((h) => ({
+        authorRole: h.role === "user" ? "USER" : "AGENT",
+        body: h.body,
+      }));
+      history.push({ authorRole: "USER", body: input.message });
+      const answer = await generateCamioReply(deps.db, deps.config, {
+        question: input.message,
+        history,
+      });
+      reply.header("cache-control", "private, no-store");
+      return reply.send({
+        reply:
+          answer ??
+          "Hiện Camio chưa được cấu hình để trả lời tự động. Anh/chị bấm “Chat với CSKH” để nhân viên hỗ trợ ngay nhé!",
+        configured: answer !== null,
+      });
+    } catch (error) {
+      const appError = asAppError(error);
+      if (appError.statusCode >= 500) {
+        request.log.error({ err: error }, "Lỗi Camio trả lời");
       }
       return reply.code(appError.statusCode).send({
         error: { code: appError.code, message: appError.message },
