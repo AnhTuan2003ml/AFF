@@ -1,65 +1,19 @@
-/* Bảng "Nhắn CSKH" cạnh form — CHAT TRỰC TIẾP:
-   - Desktop: cạnh form. Mobile: ngăn kéo trượt đè, mở bằng nút, đóng ×.
-   - Hiện ĐỦ hội thoại (không chỉ trao đổi mới nhất), poll tin mới mỗi 15s.
-   - Có ô nhập gửi thẳng vào thread CSKH (POST /app/support/messages). */
+/* Chat CSKH (người) — nằm trong overlay toàn màn hình (đóng/mở do support-screen.js
+   lo). File này chỉ lo: hiện đủ hội thoại, poll tin mới mỗi 15s, gửi tin thẳng
+   vào thread (POST /app/support/messages), và chấm đỏ báo có phản hồi mới. */
 (function () {
   "use strict";
   var panel = document.querySelector("[data-reply-panel]");
   if (!panel) return;
-  var openBtn = document.querySelector("[data-reply-open]");
-  var closeBtn = panel.querySelector("[data-reply-close]");
+  var openBtn = document.querySelector("[data-reply-open]"); // thẻ chọn CSKH (để gắn chấm đỏ)
   var thread = panel.querySelector("[data-support-thread]") || panel.querySelector(".support-thread");
   var chatForm = panel.querySelector("[data-support-chatbar]");
   var chatInput = panel.querySelector("[data-chatbar-input]");
   var chatSend = panel.querySelector("[data-chatbar-send]");
   var chatError = panel.querySelector("[data-chatbar-error]");
   var csrfToken = chatForm ? chatForm.getAttribute("data-csrf") || "" : "";
-  var shell = panel.parentNode; // .support-shell (vị trí gốc cho desktop)
-
-  // MOBILE: đưa drawer ra thẳng <body> để position:fixed bám đúng viewport
-  // (tránh bị tổ tiên có transform/animation "giam" khiến không cuộn được).
-  // DESKTOP: trả về .support-shell để nằm cạnh form như cột thường.
   var mqMobile = window.matchMedia("(max-width: 820px)");
-  function reparent() {
-    if (mqMobile.matches) {
-      if (panel.parentNode !== document.body) document.body.appendChild(panel);
-    } else if (shell && panel.parentNode !== shell) {
-      shell.appendChild(panel);
-    }
-  }
-  reparent();
-  if (mqMobile.addEventListener) mqMobile.addEventListener("change", reparent);
-  else if (mqMobile.addListener) mqMobile.addListener(reparent);
 
-  function open() { panel.classList.add("is-open"); document.body.classList.add("reply-open"); }
-  function close() { panel.classList.remove("is-open"); document.body.classList.remove("reply-open"); }
-  if (openBtn) openBtn.addEventListener("click", open);
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
-
-  // Nút "Gửi yêu cầu theo mẫu": bung/thu form (mobile mặc định thu gọn để CSKH
-  // và form đều bấm được ngay đầu trang, khỏi cuộn).
-  var formToggle = document.querySelector("[data-form-toggle]");
-  var formPanel = document.querySelector("[data-form-panel]");
-  if (formToggle && formPanel) {
-    formToggle.addEventListener("click", function () {
-      var willOpen = formPanel.classList.contains("is-collapsed");
-      formPanel.classList.toggle("is-collapsed", !willOpen);
-      formToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
-      if (willOpen) {
-        formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-        var firstField = formPanel.querySelector("select, textarea, input");
-        if (firstField) window.setTimeout(function () {
-          try { firstField.focus({ preventScroll: true }); } catch (e) {}
-        }, 350);
-      }
-    });
-  }
-
-  // Không tự bung chat khi tải: mặc định hiện 2 nút (Chat / Gửi yêu cầu) cho gọn;
-  // có phản hồi chưa đọc thì chấm đỏ trên nút "Chat trực tiếp" báo hiệu.
-
-  // ===== Dựng bong bóng tin nhắn =====
   function fmt(iso) {
     try {
       return new Date(iso).toLocaleString("vi-VN", {
@@ -69,26 +23,19 @@
   }
   function el(tag, cls) { var n = document.createElement(tag); if (cls) n.className = cls; return n; }
 
-  // Các tin đã có trên màn (server render + đã append) — chống lặp khi poll.
   var knownIds = {};
   Array.prototype.forEach.call(
     panel.querySelectorAll("[data-message-id]"),
     function (node) { knownIds[node.getAttribute("data-message-id")] = true; }
   );
 
-  function scrollCuoi() {
-    if (thread) thread.scrollTop = thread.scrollHeight;
-  }
-
-  function goEmptyNote() {
-    var empty = thread && thread.querySelector("[data-thread-empty]");
-    if (empty) empty.remove();
-  }
+  function scrollCuoi() { if (thread) thread.scrollTop = thread.scrollHeight; }
 
   function appendMessage(message) {
     if (!thread || !message || knownIds[message.id]) return false;
     knownIds[message.id] = true;
-    goEmptyNote();
+    var empty = thread.querySelector("[data-thread-empty]");
+    if (empty) empty.remove();
     var laUser = message.authorRole === "USER";
     var msg = el("div", "support-msg is-" + (laUser ? "user" : "agent"));
     msg.setAttribute("data-message-id", message.id);
@@ -111,20 +58,15 @@
     return true;
   }
 
-  // ===== Poll ĐỦ hội thoại =====
   function poll() {
     fetch("/app/support/messages", { credentials: "same-origin", headers: { accept: "application/json" } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data || !Array.isArray(data.messages)) return;
-        var coTinMoi = false;
-        var coAgentMoi = false;
+        var coTinMoi = false, coAgentMoi = false;
         data.messages.forEach(function (message) {
           var moi = appendMessage(message);
-          if (moi) {
-            coTinMoi = true;
-            if (message.authorRole !== "USER") coAgentMoi = true;
-          }
+          if (moi) { coTinMoi = true; if (message.authorRole !== "USER") coAgentMoi = true; }
         });
         if (coTinMoi) scrollCuoi();
         if (coAgentMoi) {
@@ -134,19 +76,15 @@
             dot.setAttribute("aria-hidden", "true");
             openBtn.appendChild(dot);
           }
-          if (mqMobile.matches && !panel.classList.contains("is-open")) open();
+          // Đang mở overlay CSKH → tự cuộn xuống tin mới.
+          if (panel.classList.contains("is-open")) scrollCuoi();
         }
       })
       .catch(function () {});
   }
 
-  // ===== Gửi tin trực tiếp =====
   var sending = false;
-  function loi(message) {
-    if (!chatError) return;
-    chatError.textContent = message || "";
-    chatError.hidden = !message;
-  }
+  function loi(message) { if (!chatError) return; chatError.textContent = message || ""; chatError.hidden = !message; }
   async function guiTin() {
     if (sending || !chatInput) return;
     var body = chatInput.value.trim();
@@ -158,11 +96,7 @@
       var response = await fetch("/app/support/messages", {
         method: "POST",
         credentials: "same-origin",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json",
-          "x-csrf-token": csrfToken,
-        },
+        headers: { "content-type": "application/json", accept: "application/json", "x-csrf-token": csrfToken },
         body: JSON.stringify({ body: body }),
       });
       var data = await response.json().catch(function () { return {}; });
@@ -183,18 +117,11 @@
     }
   }
   if (chatForm) {
-    chatForm.addEventListener("submit", function (event) {
-      event.preventDefault();
-      guiTin();
-    });
+    chatForm.addEventListener("submit", function (event) { event.preventDefault(); guiTin(); });
   }
   if (chatInput) {
-    // Enter gửi luôn, Shift+Enter xuống dòng (chuẩn các app chat).
     chatInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        guiTin();
-      }
+      if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); guiTin(); }
     });
     chatInput.addEventListener("input", function () {
       chatInput.style.height = "auto";
@@ -202,12 +129,9 @@
     });
   }
 
-  // Form "Gửi yêu cầu theo mẫu" gửi xong → hiện luôn trong thread bên cạnh.
+  // Form "Gửi yêu cầu theo mẫu" gửi xong → hiện luôn trong thread CSKH.
   document.addEventListener("support-chat:append", function (event) {
-    if (event && event.detail) {
-      appendMessage(event.detail);
-      scrollCuoi();
-    }
+    if (event && event.detail) { appendMessage(event.detail); scrollCuoi(); }
   });
 
   scrollCuoi();

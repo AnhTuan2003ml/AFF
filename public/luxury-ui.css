@@ -10709,3 +10709,68 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 .camio-bar [data-camio-send] svg { width: 20px; height: 20px; fill: currentColor; }
 .camio-bar [data-camio-send]:disabled { opacity: .5; }
+
+/* ─────────── Trang Hỗ trợ: 3 lựa chọn + overlay TOÀN MÀN HÌNH ─────────── */
+.support-choices { display: flex; flex-direction: column; gap: 12px; }
+.support-choice {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  padding: 16px; border: 1px solid var(--lx-line, #eadfce); border-radius: 18px;
+  background: var(--lx-paper, #fff); cursor: pointer; position: relative;
+  transition: border-color .15s ease, transform .1s ease;
+}
+.support-choice:hover { border-color: var(--lx-orange, #ee4d2d); }
+.support-choice:active { transform: scale(.995); }
+.support-choice-ico {
+  width: 48px; height: 48px; border-radius: 14px; flex: none; display: grid; place-items: center;
+  background: var(--lx-ivory, #fff4ee); color: var(--lx-orange, #ee4d2d);
+}
+.support-choice-ico svg { width: 24px; height: 24px; }
+.support-choice-ico.camio-ico { background: linear-gradient(145deg, #ff916a, #ee4d2d); overflow: hidden; }
+.support-choice-ico.camio-ico img { width: 100%; height: 100%; object-fit: contain; }
+.support-choice-copy { flex: 1; min-width: 0; }
+.support-choice-copy b { display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--lx-ink); }
+.support-choice-copy small { display: block; color: var(--lx-muted, #81736a); font-size: 12.5px; margin-top: 2px; }
+.support-choice-go { flex: none; color: var(--lx-muted, #81736a); font-size: 22px; line-height: 1; }
+.support-choice .support-reply-dot { position: static; margin-left: 4px; }
+
+.support-screen {
+  position: fixed; inset: 0; z-index: 1200;
+  display: flex; flex-direction: column;
+  background: var(--lx-ivory, #fbf8f4);
+}
+.support-screen[hidden] { display: none !important; }
+.support-screen-head {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  padding: 12px 14px calc(12px + env(safe-area-inset-top));
+  padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--lx-line, #eadfce); background: var(--lx-paper, #fff);
+}
+.support-screen-back {
+  border: 0; background: none; color: var(--lx-orange, #ee4d2d);
+  font-weight: 800; font-size: 15px; cursor: pointer; padding: 6px 4px; flex: none;
+}
+.support-screen-title { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 16px; color: var(--lx-ink); }
+.support-screen-title .camio-avatar.sm { width: 30px; height: 30px; }
+.support-screen-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; }
+.support-screen-foot {
+  flex: none; padding: 10px 14px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--lx-line, #eadfce); background: var(--lx-paper, #fff);
+}
+body.support-screen-open { overflow: hidden; }
+
+/* Trong overlay: thread lấp đầy, không tự giới hạn chiều cao. */
+.support-screen-body .camio-thread { max-height: none; margin: 0; flex: 1; }
+.support-screen-body .support-thread { max-height: none; display: flex; flex-direction: column; gap: 10px; }
+.support-screen-foot .camio-bar,
+.support-screen-foot .support-chatbar { margin: 0; }
+.support-screen-foot .support-chatbar { display: flex; align-items: flex-end; gap: 8px; }
+.support-screen-foot .support-chatbar textarea {
+  flex: 1; min-height: 42px; max-height: 120px; padding: 10px 12px; resize: none;
+  border: 1px solid var(--lx-line-strong, #e1d0c4); border-radius: 12px;
+  background: var(--lx-paper, #fff); color: var(--lx-ink); font: inherit;
+}
+.support-screen-foot .support-chatbar [data-chatbar-send] {
+  flex: none; width: 42px; height: 42px; border: 0; border-radius: 12px;
+  background: var(--lx-orange, #ee4d2d); color: #fff; cursor: pointer; display: grid; place-items: center;
+}
+.support-screen-foot .support-chatbar [data-chatbar-send] svg { width: 20px; height: 20px; fill: currentColor; }

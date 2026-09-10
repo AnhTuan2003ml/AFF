@@ -5,180 +5,104 @@
   <section class="page-heading">
     <div>
       <h1>{{ t('Hỗ trợ', 'Support') }}</h1>
-      <p>{{ t('Hỏi nhanh trợ lý Camio, hoặc chat trực tiếp với CSKH.', 'Ask the Camio assistant, or chat with support.') }}</p>
+      <p>{{ t('Chọn cách bạn muốn được hỗ trợ.', 'Choose how you’d like help.') }}</p>
     </div>
   </section>
 
-  {% if not guest %}
-    {# CHAT VỚI CAMIO (AI) — nằm TRÊN chat CSKH. Trả lời tự động về chính sách/điều khoản. #}
-    <section class="panel camio-panel" data-camio data-endpoint="/app/camio/messages" data-csrf="{{ csrfToken }}">
-      <header class="panel-heading camio-head">
-        <span class="camio-avatar" data-camio-mascot aria-hidden="true"></span>
-        <div>
-          <h2>{{ t('Chat với Camio', 'Chat with Camio') }} <span class="camio-ai-tag">AI</span></h2>
-          <p>{{ t('Trợ lý ảo trả lời ngay về chính sách, điều khoản và cách hoạt động.', 'Virtual assistant — instant answers on policies, terms and how it works.') }}</p>
-        </div>
-      </header>
-
-      <div class="camio-thread" data-camio-thread>
-        <div class="camio-msg is-camio">
-          <span class="camio-msg-avatar" data-camio-msg-mascot aria-hidden="true"></span>
-          <div class="camio-bubble">
-            <p>{{ t('Chào anh/chị! Em là Camio 🧡 Anh/chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?', 'Hi! I’m Camio 🧡 Ask me about cashback policy, terms, or how ShopTik works.') }}</p>
-          </div>
-        </div>
+  {% if guest %}
+    <section class="panel support-request-panel">
+      <div class="px-alert support-guest-alert" role="status">
+        <span class="mb-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+        <div class="mb-alert-copy"><b>{{ t('Đăng nhập để được hỗ trợ', 'Sign in to get support') }}</b><small>{{ t('Cần tài khoản và đơn của bạn để đối soát; phản hồi qua email và thông báo.', 'We need your account and orders to reconcile; replies go by email and notification.') }}</small></div>
+        <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập', 'Sign in') }}</a>
       </div>
-
-      <div class="camio-order-chip" data-camio-order-chip hidden>
-        <span data-camio-order-label></span>
-        <button type="button" data-camio-order-clear aria-label="{{ t('Bỏ đơn', 'Remove order') }}">×</button>
-      </div>
-
-      <div class="camio-picker" data-camio-picker hidden>
-        <label>{{ t('Chọn đơn của bạn', 'Choose your order') }}
-          <select data-camio-order-select>
-            <option value="">{{ t('— Chọn đơn —', '— Choose an order —') }}</option>
-            {% for option in orderOptions %}
-              <option value="{{ option.key }}" data-label="{{ option.label }}">{{ option.label }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>{{ t('Hoặc dán link sản phẩm/đơn', 'Or paste product/order link') }}
-          <input type="text" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
-        </label>
-        <button type="button" class="button button-small" data-camio-picker-done>{{ t('Xong', 'Done') }}</button>
-      </div>
-
-      <form class="camio-bar" data-camio-form novalidate>
-        <button type="button" class="camio-find" data-camio-find>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
-          <span>{{ t('Tìm đơn', 'Find order') }}</span>
-        </button>
-        <textarea data-camio-input rows="1" maxlength="3000" placeholder="{{ t('Hỏi Camio…', 'Ask Camio…') }}" aria-label="{{ t('Nội dung', 'Message') }}"></textarea>
-        <button type="submit" data-camio-send aria-label="{{ t('Gửi', 'Send') }}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 20 4l-7.2 16.5-2.1-7.2z"/></svg>
-        </button>
-      </form>
-      <p class="field-error" data-camio-error hidden role="alert"></p>
     </section>
-  {% endif %}
-
-  {% if not guest %}
-    {# Hai lối vào ngay đầu trang — khỏi phải cuộn qua form mới bấm được CSKH. #}
-    <div class="support-actions">
-      <button type="button" class="support-action support-action-primary" data-reply-open>
-        <span class="support-action-ico" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 20l1.4-4.2A8.5 8.5 0 1 1 21 11.5z"/></svg>
+  {% else %}
+    {# LANDING: 3 lựa chọn — mỗi cái mở TOÀN MÀN HÌNH; đóng (‹) về lại đây. #}
+    <div class="support-choices" data-support-landing>
+      <button type="button" class="support-choice support-choice-camio" data-open-screen="camio">
+        <span class="support-choice-ico camio-ico" aria-hidden="true"><img src="/assets/images/mascot/camio-vuive.png?v=3" alt=""></span>
+        <span class="support-choice-copy">
+          <b>{{ t('Chat với Camio', 'Chat with Camio') }} <span class="camio-ai-tag">AI</span></b>
+          <small>{{ t('Trợ lý ảo trả lời ngay về chính sách, điều khoản', 'Instant answers on policies and terms') }}</small>
         </span>
-        <span class="support-action-copy">
+        <span class="support-choice-go" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="support-choice" data-open-screen="cskh" data-reply-open>
+        <span class="support-choice-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 20l1.4-4.2A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+        <span class="support-choice-copy">
           <b>{{ t('Chat trực tiếp với CSKH', 'Live chat with support') }}</b>
-          <small>{{ t('Đội CSKH trả lời ngay tại đây', 'The team replies right here') }}</small>
+          <small>{{ t('Nhân viên thật trả lời — phản hồi trong ~24 giờ', 'Real staff reply — within ~24h') }}</small>
         </span>
         {% if latestReply %}<span class="support-reply-dot" aria-hidden="true"></span>{% endif %}
-        <span class="support-action-go" aria-hidden="true">›</span>
+        <span class="support-choice-go" aria-hidden="true">›</span>
       </button>
-      <button type="button" class="support-action" data-form-toggle aria-expanded="false" aria-controls="support-form-panel">
-        <span class="support-action-ico" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
-        </span>
-        <span class="support-action-copy">
+      <button type="button" class="support-choice" data-open-screen="form">
+        <span class="support-choice-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
+        <span class="support-choice-copy">
           <b>{{ t('Gửi yêu cầu theo mẫu', 'Submit a request form') }}</b>
           <small>{{ t('Kèm mã đơn, xử lý theo hồ sơ', 'With order code, handled as a ticket') }}</small>
         </span>
-        <span class="support-action-go" aria-hidden="true">›</span>
+        <span class="support-choice-go" aria-hidden="true">›</span>
       </button>
     </div>
-  {% endif %}
 
-  <div class="support-shell {% if latestRequest or latestReply %}has-reply{% endif %}">
-    <section class="panel support-request-panel{% if not guest %} is-collapsed{% endif %}" id="support-form-panel"{% if not guest %} data-form-panel{% endif %}>
-      <header class="panel-heading">
-        <div>
-          <h2>{{ t('Gửi yêu cầu theo mẫu', 'Submit a request') }}</h2>
-          <p>{{ t('Chọn đúng vấn đề và đơn hàng để được xử lý nhanh hơn.', 'Pick the right issue and order for faster handling.') }}</p>
-        </div>
+    {# ─────────── OVERLAY 1: CHAT CAMIO (toàn màn hình) ─────────── #}
+    <div class="support-screen" data-support-screen="camio" data-camio data-endpoint="/app/camio/messages" data-csrf="{{ csrfToken }}" hidden>
+      <header class="support-screen-head">
+        <button type="button" class="support-screen-back" data-close-screen>{{ t('‹ Quay lại', '‹ Back') }}</button>
+        <span class="support-screen-title"><span class="camio-avatar sm" data-camio-mascot aria-hidden="true"></span>{{ t('Chat với Camio', 'Chat with Camio') }} <span class="camio-ai-tag">AI</span></span>
       </header>
-
-      {% if guest %}
-        {# Khách: xem được mẫu yêu cầu nhưng phải đăng nhập mới gửi — đội CSKH
-           cần biết tài khoản/đơn hàng để đối soát, và phản hồi về đúng hộp thư. #}
-        <div class="px-alert support-guest-alert" role="status">
-          <span class="mb-alert-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
-          <div class="mb-alert-copy"><b>{{ t('Đăng nhập để gửi yêu cầu hỗ trợ', 'Sign in to submit a support request') }}</b><small>{{ t('Cần tài khoản và đơn của bạn để đối soát; phản hồi qua email và thông báo.', 'We need your account and orders to reconcile; replies go by email and notification.') }}</small></div>
-          <a class="button button-primary button-small" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập', 'Sign in') }}</a>
-        </div>
-      {% endif %}
-      <form class="stack-form support-request-form"{% if not guest %} data-support-form{% endif %}
-        data-endpoint="/app/support/requests" data-csrf="{{ csrfToken }}" novalidate{% if guest %} aria-disabled="true"{% endif %}>
-        <label for="support-topic-input">{{ t('Vấn đề cần hỗ trợ', 'Issue to get help with') }}
-          <select id="support-topic-input" data-topic-select required{% if guest %} disabled{% endif %}>
-            <option value="" selected disabled>{{ t('Chọn vấn đề…', 'Choose an issue…') }}</option>
-            {% for topic in supportTopics %}
-              <option value="{{ topic.value }}"
-                data-order-mode="{{ topic.orderMode }}"
-                data-order-required="{{ '1' if topic.orderRequired else '0' }}">{{ topic.label }}</option>
-            {% endfor %}
-          </select>
-          <small class="field-error" id="support-topic-input-error" hidden></small>
-        </label>
-
-        <label for="support-order-input" data-order-block="list" hidden>{{ t('Đơn hàng liên quan', 'Related order') }}
-          <select id="support-order-input" data-order-select>
-            <option value="">{{ t('— Chọn đơn hàng —', '— Choose an order —') }}</option>
-            {% for option in orderOptions %}
-              <option value="{{ option.key }}" {% if option.key == preselectOrderKey %}selected{% endif %}>{{ option.label }}</option>
-            {% endfor %}
-          </select>
-          {% if not orderOptions.length %}
-            <small>{{ t('Tài khoản của bạn chưa có đơn nào trong lịch sử.', 'Your account has no orders in history yet.') }}</small>
-          {% endif %}
-          <small class="field-error" id="support-order-input-error" hidden></small>
-        </label>
-
-        <label for="support-order-code-input" data-order-block="code" hidden>{{ t('Mã đơn hàng trên sàn', 'Platform order code') }}
-          <input id="support-order-code-input" data-order-code type="text" maxlength="100"
-            autocomplete="off" placeholder="{{ t('Ví dụ: 2508ABCXYZ123', 'e.g. 2508ABCXYZ123') }}">
-          <small>{{ t('Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.', 'Find it in your Shopee / TikTok Shop / Lazada order history.') }}</small>
-          <small class="field-error" id="support-order-code-input-error" hidden></small>
-        </label>
-
-        <label for="support-description-input">{{ t('Mô tả chi tiết', 'Details') }}
-          <textarea id="support-description-input" data-description rows="4" maxlength="2000"
-            placeholder="{{ t('Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)', 'What’s the issue? (at least 10 characters)') }}"{% if guest %} disabled{% endif %}></textarea>
-          <small class="field-error" id="support-description-input-error" hidden></small>
-        </label>
-
-        <label for="support-email-input">{{ t('Email nhận phản hồi', 'Email for replies') }}
-          <input id="support-email-input" data-notify-email type="email" maxlength="254"
-            autocomplete="email" value="{{ notifyEmail }}"{% if guest %} disabled{% endif %}>
-          <small>{{ t('Phản hồi của đội hỗ trợ cũng được gửi về email này.', 'Support replies are also sent to this email.') }}</small>
-          <small class="field-error" id="support-email-input-error" hidden></small>
-        </label>
-
-        <p class="support-request-success" data-support-success hidden role="status">
-          {{ t('Đã gửi. CSKH sẽ phản hồi qua email và thông báo.', 'Sent. Support will reply by email and notification.') }}
-        </p>
-        <p class="field-error" data-support-error hidden role="alert"></p>
-
-        {% if guest %}
-          <a class="button button-primary" href="/dang-nhap?next=%2Fapp%2Fsupport">{{ t('Đăng nhập để gửi yêu cầu', 'Sign in to submit') }}</a>
-        {% else %}
-          <button class="button button-primary" type="submit" data-support-submit>{{ t('Gửi yêu cầu', 'Send request') }}</button>
-        {% endif %}
-      </form>
-    </section>
-
-    {% if not guest %}
-      <aside class="panel support-thread-panel" data-reply-panel
-        data-has-reply="{{ '1' if latestReply else '' }}" aria-label="{{ t('Phản Hồi', 'Replies') }}">
-        <header class="panel-heading support-thread-head">
-          <div>
-            <h2>{{ t('Nhắn với CSKH', 'Chat with support') }}</h2>
-            <p>{{ t('Chat trực tiếp — đội CSKH trả lời ngay tại đây.', 'Live chat — the support team replies right here.') }}</p>
+      <div class="support-screen-body">
+        <div class="camio-thread" data-camio-thread>
+          <div class="camio-msg is-camio">
+            <span class="camio-msg-avatar" data-camio-msg-mascot aria-hidden="true"></span>
+            <div class="camio-bubble">
+              <p>{{ t('Chào anh/chị! Em là Camio 🧡 Anh/chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?', 'Hi! I’m Camio 🧡 Ask me about cashback policy, terms, or how ShopTik works.') }}</p>
+            </div>
           </div>
-          <button type="button" class="support-reply-close" data-reply-close aria-label="{{ t('Đóng', 'Close') }}">×</button>
-        </header>
+        </div>
+      </div>
+      <div class="support-screen-foot">
+        <div class="camio-order-chip" data-camio-order-chip hidden>
+          <span data-camio-order-label></span>
+          <button type="button" data-camio-order-clear aria-label="{{ t('Bỏ đơn', 'Remove order') }}">×</button>
+        </div>
+        <div class="camio-picker" data-camio-picker hidden>
+          <label>{{ t('Chọn đơn của bạn', 'Choose your order') }}
+            <select data-camio-order-select>
+              <option value="">{{ t('— Chọn đơn —', '— Choose an order —') }}</option>
+              {% for option in orderOptions %}
+                <option value="{{ option.key }}" data-label="{{ option.label }}">{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>{{ t('Hoặc dán link sản phẩm/đơn', 'Or paste product/order link') }}
+            <input type="text" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
+          </label>
+          <button type="button" class="button button-small" data-camio-picker-done>{{ t('Xong', 'Done') }}</button>
+        </div>
+        <form class="camio-bar" data-camio-form novalidate>
+          <button type="button" class="camio-find" data-camio-find>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+            <span>{{ t('Tìm đơn', 'Find') }}</span>
+          </button>
+          <textarea data-camio-input rows="1" maxlength="3000" placeholder="{{ t('Hỏi Camio…', 'Ask Camio…') }}" aria-label="{{ t('Nội dung', 'Message') }}"></textarea>
+          <button type="submit" data-camio-send aria-label="{{ t('Gửi', 'Send') }}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 20 4l-7.2 16.5-2.1-7.2z"/></svg>
+          </button>
+        </form>
+        <p class="field-error" data-camio-error hidden role="alert"></p>
+      </div>
+    </div>
 
+    {# ─────────── OVERLAY 2: CHAT CSKH (toàn màn hình) ─────────── #}
+    <div class="support-screen" data-support-screen="cskh" data-reply-panel data-has-reply="{{ '1' if latestReply else '' }}" hidden>
+      <header class="support-screen-head">
+        <button type="button" class="support-screen-back" data-close-screen data-reply-close>{{ t('‹ Quay lại', '‹ Back') }}</button>
+        <span class="support-screen-title">{{ t('Chat với CSKH', 'Chat with support') }}</span>
+      </header>
+      <div class="support-screen-body">
         <div class="support-thread" data-support-thread>
           {% for m in messages %}
             <div class="support-msg is-{{ 'user' if m.authorRole == 'USER' else 'agent' }}" data-message-id="{{ m.id }}">
@@ -193,8 +117,8 @@
             <p class="support-thread-waiting" data-thread-empty>{{ t('Chưa có trao đổi nào — nhắn cho đội CSKH ngay bên dưới 👇', 'No messages yet — message support below 👇') }}</p>
           {% endfor %}
         </div>
-
-        {# Ô nhắn trực tiếp: Enter gửi, Shift+Enter xuống dòng (support-reply.js). #}
+      </div>
+      <div class="support-screen-foot">
         <form class="support-chatbar" data-support-chatbar data-csrf="{{ csrfToken }}" novalidate>
           <textarea data-chatbar-input rows="1" maxlength="3000" placeholder="{{ t('Nhắn trực tiếp cho đội CSKH…', 'Message the support team…') }}" aria-label="{{ t('Nội dung tin nhắn', 'Message content') }}"></textarea>
           <button type="submit" data-chatbar-send aria-label="{{ t('Gửi tin', 'Send') }}">
@@ -202,21 +126,79 @@
           </button>
         </form>
         <p class="field-error" data-chatbar-error hidden role="alert"></p>
+      </div>
+    </div>
 
-        <div class="support-thread-foot">
-          <span class="support-thread-foot-ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
-          </span>
-          <span>{{ t('Phản hồi trong ~24 giờ, kèm thông báo & email.', 'Replies within ~24h, with a notification & email.') }}</span>
-        </div>
-      </aside>
-    {% endif %}
-  </div>
+    {# ─────────── OVERLAY 3: GỬI YÊU CẦU THEO MẪU (toàn màn hình) ─────────── #}
+    <div class="support-screen" data-support-screen="form" hidden>
+      <header class="support-screen-head">
+        <button type="button" class="support-screen-back" data-close-screen>{{ t('‹ Quay lại', '‹ Back') }}</button>
+        <span class="support-screen-title">{{ t('Gửi yêu cầu theo mẫu', 'Submit a request') }}</span>
+      </header>
+      <div class="support-screen-body">
+        <form class="stack-form support-request-form" data-support-form
+          data-endpoint="/app/support/requests" data-csrf="{{ csrfToken }}" novalidate>
+          <label for="support-topic-input">{{ t('Vấn đề cần hỗ trợ', 'Issue to get help with') }}
+            <select id="support-topic-input" data-topic-select required>
+              <option value="" selected disabled>{{ t('Chọn vấn đề…', 'Choose an issue…') }}</option>
+              {% for topic in supportTopics %}
+                <option value="{{ topic.value }}"
+                  data-order-mode="{{ topic.orderMode }}"
+                  data-order-required="{{ '1' if topic.orderRequired else '0' }}">{{ topic.label }}</option>
+              {% endfor %}
+            </select>
+            <small class="field-error" id="support-topic-input-error" hidden></small>
+          </label>
+
+          <label for="support-order-input" data-order-block="list" hidden>{{ t('Đơn hàng liên quan', 'Related order') }}
+            <select id="support-order-input" data-order-select>
+              <option value="">{{ t('— Chọn đơn hàng —', '— Choose an order —') }}</option>
+              {% for option in orderOptions %}
+                <option value="{{ option.key }}" {% if option.key == preselectOrderKey %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+            {% if not orderOptions.length %}
+              <small>{{ t('Tài khoản của bạn chưa có đơn nào trong lịch sử.', 'Your account has no orders in history yet.') }}</small>
+            {% endif %}
+            <small class="field-error" id="support-order-input-error" hidden></small>
+          </label>
+
+          <label for="support-order-code-input" data-order-block="code" hidden>{{ t('Mã đơn hàng trên sàn', 'Platform order code') }}
+            <input id="support-order-code-input" data-order-code type="text" maxlength="100"
+              autocomplete="off" placeholder="{{ t('Ví dụ: 2508ABCXYZ123', 'e.g. 2508ABCXYZ123') }}">
+            <small>{{ t('Xem trong mục đơn mua của Shopee / TikTok Shop / Lazada.', 'Find it in your Shopee / TikTok Shop / Lazada order history.') }}</small>
+            <small class="field-error" id="support-order-code-input-error" hidden></small>
+          </label>
+
+          <label for="support-description-input">{{ t('Mô tả chi tiết', 'Details') }}
+            <textarea id="support-description-input" data-description rows="4" maxlength="2000"
+              placeholder="{{ t('Bạn gặp vấn đề gì? (tối thiểu 10 ký tự)', 'What’s the issue? (at least 10 characters)') }}"></textarea>
+            <small class="field-error" id="support-description-input-error" hidden></small>
+          </label>
+
+          <label for="support-email-input">{{ t('Email nhận phản hồi', 'Email for replies') }}
+            <input id="support-email-input" data-notify-email type="email" maxlength="254"
+              autocomplete="email" value="{{ notifyEmail }}">
+            <small>{{ t('Phản hồi của đội hỗ trợ cũng được gửi về email này.', 'Support replies are also sent to this email.') }}</small>
+            <small class="field-error" id="support-email-input-error" hidden></small>
+          </label>
+
+          <p class="support-request-success" data-support-success hidden role="status">
+            {{ t('Đã gửi. CSKH sẽ phản hồi qua email và thông báo.', 'Sent. Support will reply by email and notification.') }}
+          </p>
+          <p class="field-error" data-support-error hidden role="alert"></p>
+
+          <button class="button button-primary" type="submit" data-support-submit>{{ t('Gửi yêu cầu', 'Send request') }}</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
 
 {% endblock %}
 
 {% block page_scripts %}
   {% if not guest %}
+  <script src="/assets/support-screen.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/camio-chat.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/support-request.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/support-reply.js?v={{ assetVersion }}" defer></script>
