@@ -108,8 +108,8 @@ await app.register(helmet, {
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      // Xem trước ảnh/video KYC trên form dùng URL.createObjectURL (blob:).
-      mediaSrc: ["'self'", "blob:"],
+      // Xem trước ảnh/video KYC (blob:) + video nền hero do admin dán link ngoài (https:).
+      mediaSrc: ["'self'", "blob:", "https:"],
       scriptSrc: ["'self'", ...turnstileCsp],
       styleSrc: ["'self'"],
       // Widget Turnstile chạy trong iframe của challenges.cloudflare.com.

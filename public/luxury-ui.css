@@ -1277,6 +1277,16 @@ label small {
   transform: scale(1.01)
 }
 
+/* Video nền hero (admin cấu hình) — phủ trên ảnh nền, dưới lớp phủ gradient. */
+.px-home-hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 68% center;
+}
+
 .px-home-hero-shade {
   position: absolute;
   inset: 0;

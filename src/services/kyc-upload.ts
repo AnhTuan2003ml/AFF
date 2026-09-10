@@ -41,6 +41,9 @@ export function sniffMime(buf: Buffer): string {
     return "video/webm";
   if (buf.length >= 12 && buf.toString("ascii", 0, 4) === "RIFF")
     return "image/webp";
+  // GIF87a / GIF89a — ảnh động, giữ nguyên để trình duyệt tự chạy.
+  if (buf.length >= 6 && buf.toString("ascii", 0, 4) === "GIF8")
+    return "image/gif";
   return "application/octet-stream";
 }
 

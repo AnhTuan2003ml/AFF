@@ -3,6 +3,7 @@ import type { AppConfig } from "../config.js";
 import { query, type Database, withTransaction } from "../db.js";
 import { hashSensitiveValue } from "../lib/crypto.js";
 import { getUserAvatar } from "../services/avatar.js";
+import { getHeroMediaBlob } from "../services/hero-media.js";
 import {
   isPlatformPurchaseEnabled,
   isSafeAffiliateRedirect,
@@ -45,6 +46,27 @@ export async function registerPublicRoutes(
       reply.header("content-type", avatar.contentType);
       reply.header("cache-control", "public, max-age=31536000, immutable");
       return reply.send(avatar.data);
+    },
+  );
+
+  // Media nền hero tải lên (ảnh/GIF/video lưu DB). Công khai để hiển thị ở
+  // trang chủ. Không đặt cache immutable vì admin có thể thay media theo id mới.
+  app.get<{ Params: { id: string } }>(
+    "/hero-media/:id",
+    { config: { csrf: false } },
+    async (request, reply) => {
+      if (!/^[0-9a-f-]{36}$/i.test(request.params.id)) {
+        return reply.code(404).send("Not found");
+      }
+      const media = await getHeroMediaBlob(deps.db, request.params.id).catch(
+        () => null,
+      );
+      if (!media) {
+        return reply.code(404).send("Not found");
+      }
+      reply.header("content-type", media.contentType);
+      reply.header("cache-control", "public, max-age=86400");
+      return reply.send(media.data);
     },
   );
 

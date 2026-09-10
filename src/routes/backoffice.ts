@@ -20,6 +20,15 @@ import {
   getBusinessConfig,
   updateBusinessConfig,
 } from "../services/business-config.js";
+import { multipartBuffer } from "../services/kyc-upload.js";
+import {
+  listAllHeroMedia,
+  addHeroMediaUrl,
+  addHeroMediaUpload,
+  deleteHeroMedia,
+  setHeroMediaActive,
+  moveHeroMedia,
+} from "../services/hero-media.js";
 import {
   buildBarList,
   buildCommissionStackedBar,
@@ -840,6 +849,68 @@ export async function registerBackofficeRoutes(
     }
     return reply.redirect("/backoffice/config");
   });
+
+  // ── Media nền hero trang chủ (ảnh/GIF/video xoay vòng) ──────────────────
+  app.get("/hero-media", async (_request, reply) => {
+    return reply.view("backoffice/hero-media.njk", {
+      pageTitle: "Ảnh/video nền trang chủ",
+      backofficeSection: "hero-media",
+      heroMedia: await listAllHeroMedia(deps.db),
+    });
+  });
+
+  app.post("/hero-media", async (request, reply) => {
+    try {
+      const body = request.body as Record<string, unknown>;
+      const durationSeconds = Number(body.durationSeconds ?? 6) || 6;
+      const buffer = multipartBuffer(body.file);
+      if (buffer) {
+        await addHeroMediaUpload(deps.db, { buffer, durationSeconds });
+      } else {
+        const url = String(body.url ?? "").trim();
+        if (!url) {
+          throw new AppError(
+            "HERO_INPUT",
+            "Hãy tải lên một tệp hoặc dán link ảnh/video.",
+            400,
+          );
+        }
+        const kind = String(body.kind) === "video" ? "video" : "image";
+        await addHeroMediaUrl(deps.db, { kind, url, durationSeconds });
+      }
+      setFlash(reply, deps.config, "success", "Đã thêm media nền trang chủ.");
+    } catch (error) {
+      flashError(reply, deps.config, error);
+    }
+    return reply.redirect("/backoffice/hero-media");
+  });
+
+  app.post<{ Params: { id: string } }>(
+    "/hero-media/:id/delete",
+    async (request, reply) => {
+      await deleteHeroMedia(deps.db, request.params.id).catch(() => {});
+      setFlash(reply, deps.config, "success", "Đã xoá media.");
+      return reply.redirect("/backoffice/hero-media");
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+    "/hero-media/:id/toggle",
+    async (request, reply) => {
+      const active = String((request.body as Record<string, unknown>).active) === "true";
+      await setHeroMediaActive(deps.db, request.params.id, active).catch(() => {});
+      return reply.redirect("/backoffice/hero-media");
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+    "/hero-media/:id/move",
+    async (request, reply) => {
+      const dir = String((request.body as Record<string, unknown>).direction) === "up" ? "up" : "down";
+      await moveHeroMedia(deps.db, request.params.id, dir).catch(() => {});
+      return reply.redirect("/backoffice/hero-media");
+    },
+  );
 
   // Xuất doanh thu ra file CSV (UTF-8 BOM — Excel mở trực tiếp, đúng tiếng Việt).
   app.get("/revenue/export", async (_request, reply) => {

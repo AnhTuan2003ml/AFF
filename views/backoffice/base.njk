@@ -69,6 +69,7 @@
 
           <p class="st-nav-group">Cài đặt &amp; hệ thống</p>
           <a href="/backoffice/config" {% if backofficeSection == 'config' %}class="active" aria-current="page"{% endif %}>{{ icon('settings') }}<span>Cấu hình nghiệp vụ</span></a>
+          <a href="/backoffice/hero-media" {% if backofficeSection == 'hero-media' %}class="active" aria-current="page"{% endif %}>{{ icon('upload') }}<span>Nền trang chủ</span></a>
           <a href="/backoffice/sync" {% if backofficeSection == 'sync' %}class="active" aria-current="page"{% endif %}>{{ icon('refresh') }}<span>Kết nối &amp; đồng bộ sàn</span></a>
           <a href="/backoffice/profiles" {% if backofficeSection == 'profiles' %}class="active" aria-current="page"{% endif %}>{{ icon('compass') }}<span>Trình duyệt lấy dữ liệu</span></a>
           <a href="/backoffice/security" {% if backofficeSection == 'security' %}class="active" aria-current="page"{% endif %}>{{ icon('shield') }}<span>Bảo mật (2FA)</span></a>

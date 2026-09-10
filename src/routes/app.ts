@@ -56,6 +56,7 @@ import {
   createPurchaseIntent,
   createVoucherAffiliateLink,
 } from "../services/affiliate.js";
+import { listActiveHeroMedia } from "../services/hero-media.js";
 import { getAppDashboard, getGuestDashboard } from "../services/app-dashboard.js";
 import { getCheckinState, recordDailyCheckin } from "../services/checkin.js";
 import {
@@ -190,13 +191,17 @@ export async function registerAppRoutes(
   });
 
   app.get("/", async (request, reply) => {
-    const dashboard = request.currentUser
-      ? await getAppDashboard(deps.db, deps.config, request.currentUser.id)
-      : await getGuestDashboard(deps.db, deps.config);
+    const [dashboard, heroMedia] = await Promise.all([
+      request.currentUser
+        ? getAppDashboard(deps.db, deps.config, request.currentUser.id)
+        : getGuestDashboard(deps.db, deps.config),
+      listActiveHeroMedia(deps.db),
+    ]);
     return reply.view("app/dashboard.njk", {
       pageTitle: "Mua hoàn tiền",
       appSection: "dashboard",
       ...dashboard,
+      heroMedia,
     });
   });
 

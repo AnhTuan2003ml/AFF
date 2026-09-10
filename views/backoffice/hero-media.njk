@@ -1,0 +1,93 @@
+{% extends "backoffice/base.njk" %}
+{% from "partials/macros.njk" import empty_state %}
+
+{% block backoffice_content %}
+  <link rel="stylesheet" href="/assets/backoffice-hero-media.css?v={{ assetVersion }}">
+
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">TRANG CHỦ</span>
+      <h1>Ảnh/video nền trang chủ</h1>
+      <p>Ảnh, GIF hoặc video làm nền hero. Có nhiều mục sẽ tự xoay vòng theo thứ tự và thời gian đặt bên dưới.</p>
+    </div>
+  </section>
+
+  <div class="hero-media-grid">
+    <section class="panel">
+      <header class="panel-heading"><div><h2>Thêm media</h2></div></header>
+      <form method="post" action="/backoffice/hero-media" enctype="multipart/form-data" class="stack-form">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+
+        <label>Tải tệp lên (ảnh JPG/PNG/WEBP/GIF hoặc video MP4/WEBM, tối đa 30 MB)
+          <input type="file" name="file" accept="image/*,video/*">
+        </label>
+
+        <p class="hero-media-or">— hoặc dán link —</p>
+
+        <label>Link ảnh/video (https)
+          <input type="text" name="url" maxlength="1000" autocomplete="off" placeholder="https://...">
+        </label>
+        <label>Loại (khi dán link)
+          <select name="kind">
+            <option value="image">Ảnh / GIF</option>
+            <option value="video">Video</option>
+          </select>
+        </label>
+
+        <label>Thời gian hiển thị (giây)
+          <input type="number" name="durationSeconds" min="1" max="300" step="1" value="6">
+        </label>
+
+        <button class="button button-primary" type="submit">Thêm vào danh sách</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <header class="panel-heading"><div><h2>Danh sách ({{ heroMedia | length }})</h2></div></header>
+      {% if heroMedia | length %}
+        <div class="hero-media-list">
+          {% for m in heroMedia %}
+            <article class="hero-media-item {{ 'is-off' if not m.active }}">
+              <div class="hero-media-preview">
+                {% if m.kind == 'video' %}
+                  <video src="{{ m.src }}" muted loop playsinline preload="metadata"></video>
+                {% else %}
+                  <img src="{{ m.src }}" alt="" referrerpolicy="no-referrer">
+                {% endif %}
+              </div>
+              <div class="hero-media-main">
+                <b>{{ 'Video' if m.kind == 'video' else 'Ảnh / GIF' }} · {{ (m.durationMs / 1000) | round(1) }}s</b>
+                <small>{{ 'Tệp tải lên' if m.isUpload else m.url }}</small>
+                <span class="hero-media-state {{ 'on' if m.active else 'off' }}">{{ 'Đang bật' if m.active else 'Đang tắt' }}</span>
+              </div>
+              <div class="hero-media-actions">
+                <form method="post" action="/backoffice/hero-media/{{ m.id }}/move">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <input type="hidden" name="direction" value="up">
+                  <button class="button button-small" type="submit" aria-label="Lên">↑</button>
+                </form>
+                <form method="post" action="/backoffice/hero-media/{{ m.id }}/move">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <input type="hidden" name="direction" value="down">
+                  <button class="button button-small" type="submit" aria-label="Xuống">↓</button>
+                </form>
+                <form method="post" action="/backoffice/hero-media/{{ m.id }}/toggle">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <input type="hidden" name="active" value="{{ 'false' if m.active else 'true' }}">
+                  <button class="button button-small" type="submit">{{ 'Tắt' if m.active else 'Bật' }}</button>
+                </form>
+                <form method="post" action="/backoffice/hero-media/{{ m.id }}/delete"
+                  data-confirm-form data-confirm-message="Xoá media này khỏi nền trang chủ?">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                  <button class="button button-small button-danger" type="submit">Xoá</button>
+                </form>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ empty_state("Chưa có media", "Thêm ảnh/GIF/video để làm nền hero trang chủ. Chưa có mục nào thì trang dùng ảnh nền mặc định.") }}
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

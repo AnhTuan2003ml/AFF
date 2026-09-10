@@ -26,9 +26,13 @@
 {% block app_content %}
   {% set defaultPlatform = "SHOPEE" if platformAvailability.SHOPEE else ("TIKTOK" if platformAvailability.TIKTOK else "LAZADA") %}
 
-  <section class="px-home-hero" aria-labelledby="px-home-title">
+  <section class="px-home-hero" aria-labelledby="px-home-title"{% if heroMedia and heroMedia.length %} data-hero-rotate{% endif %}>
     <div class="px-home-hero-bg" aria-hidden="true"></div>
+    <video class="px-home-hero-video" aria-hidden="true" muted loop playsinline hidden></video>
     <div class="px-home-hero-shade" aria-hidden="true"></div>
+    {% if heroMedia and heroMedia.length %}
+      <script type="application/json" data-hero-media>{{ heroMedia | dump | safe }}</script>
+    {% endif %}
     <div class="px-home-hero-copy">
       <span>SHOP · TRACK · CASHBACK</span>
       <h1 id="px-home-title"><span class="lh-part">{{ t('Mua sắm thông minh.', 'Shop smarter.') }}</span> <span class="lh-part">{{ t('Hoàn tiền tối ưu.', 'Maximize cashback.') }}</span></h1>
@@ -206,6 +210,7 @@
 {% endblock %}
 
 {% block page_scripts %}
+  <script src="/assets/hero-rotate.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/purchase.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/promo-carousel.js?v={{ assetVersion }}" defer></script>
   <script src="/assets/leaderboard.js?v={{ assetVersion }}" defer></script>
