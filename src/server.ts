@@ -112,8 +112,13 @@ await app.register(helmet, {
       mediaSrc: ["'self'", "blob:", "https:"],
       scriptSrc: ["'self'", ...turnstileCsp],
       styleSrc: ["'self'"],
-      // Widget Turnstile chạy trong iframe của challenges.cloudflare.com.
-      frameSrc: ["'self'", ...turnstileCsp],
+      // Widget Turnstile + video nền hero nhúng từ YouTube (admin dán link).
+      frameSrc: [
+        "'self'",
+        "https://www.youtube-nocookie.com",
+        "https://www.youtube.com",
+        ...turnstileCsp,
+      ],
       connectSrc: ["'self'", "blob:", ...turnstileCsp],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],

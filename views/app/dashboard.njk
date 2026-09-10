@@ -29,6 +29,7 @@
   <section class="px-home-hero" aria-labelledby="px-home-title"{% if heroMedia and heroMedia.length %} data-hero-rotate{% endif %}>
     <div class="px-home-hero-bg" aria-hidden="true"></div>
     <video class="px-home-hero-video" aria-hidden="true" muted loop playsinline hidden></video>
+    <iframe class="px-home-hero-embed" aria-hidden="true" tabindex="-1" title="" allow="autoplay; encrypted-media" hidden></iframe>
     <div class="px-home-hero-shade" aria-hidden="true"></div>
     {% if heroMedia and heroMedia.length %}
       <script type="application/json" data-hero-media>{{ heroMedia | dump | safe }}</script>

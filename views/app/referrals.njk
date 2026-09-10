@@ -18,7 +18,32 @@
     </div>
   </header>
 
-  <section class="referral-hero">
+  <section class="panel" id="nguoi-da-moi">
+    <header class="panel-heading">
+      <div><span class="eyebrow">{{ t('TỪNG NGƯỜI MANG VỀ BAO NHIÊU', 'WHAT EACH PERSON BRINGS') }}</span><h2>{{ t('Người bạn đã mời', 'People you invited') }}</h2></div>
+      <span>{{ referrals.length }} {{ t('người', 'people') }}</span>
+    </header>
+    {% if referrals.length %}
+      <div class="compact-list">
+        {% for referral in referrals %}
+          <div class="compact-row referral-row">
+            <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
+            <span><b>{{ referral.full_name }}</b><small>{{ t('Tham gia', 'Joined') }} {{ referral.created_at | date }} · {{ referral.approved_orders }} {{ t('đơn đã duyệt', 'approved orders') }}</small></span>
+            <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>{{ t('bạn nhận được', 'you earned') }}</small></span>
+            {{ status_badge(referral.status, lang) }}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="referral-empty">
+        <b>{{ t('Chưa có ai dùng mã của bạn', 'No one has used your code yet') }}</b>
+        <p>{{ t('Gửi link giới thiệu cho bạn bè để bắt đầu tích lũy thưởng.', 'Send your referral link to friends to start earning rewards.') }}</p>
+        <a class="button button-primary" href="#moi-ngay">{{ t('Mời ngay', 'Invite now') }}</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="referral-hero" id="moi-ngay">
     <div>
       <span class="eyebrow">{{ t('MÃ CỦA BẠN', 'YOUR CODE') }}</span>
       <strong>{{ referralCode }}</strong>
@@ -147,27 +172,6 @@
       <p>{{ t('Thưởng ghi nhận một lần, khi đơn hợp lệ đầu tiên của người được mời được duyệt. Có thể cần chờ đối soát.', 'Rewarded once, when the invitee’s first valid order is approved. May require reconciliation.') }}</p>
     </div>
   </aside>
-
-  <section class="panel">
-    <header class="panel-heading">
-      <div><span class="eyebrow">{{ t('TỪNG NGƯỜI MANG VỀ BAO NHIÊU', 'WHAT EACH PERSON BRINGS') }}</span><h2>{{ t('Người bạn đã mời', 'People you invited') }}</h2></div>
-      <span>{{ referrals.length }} {{ t('người', 'people') }}</span>
-    </header>
-    {% if referrals.length %}
-      <div class="compact-list">
-        {% for referral in referrals %}
-          <div class="compact-row referral-row">
-            <span class="avatar-small">{{ referral.full_name | first | upper }}</span>
-            <span><b>{{ referral.full_name }}</b><small>{{ t('Tham gia', 'Joined') }} {{ referral.created_at | date }} · {{ referral.approved_orders }} {{ t('đơn đã duyệt', 'approved orders') }}</small></span>
-            <span class="referral-earned"><b>{{ referral.earned_vnd | vnd }}</b><small>{{ t('bạn nhận được', 'you earned') }}</small></span>
-            {{ status_badge(referral.status, lang) }}
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      {{ empty_state(t("Chưa có người được giới thiệu", "No referrals yet"), t("Sao chép link phía trên và gửi cho bạn bè quan tâm.", "Copy the link above and send it to interested friends.")) }}
-    {% endif %}
-  </section>
 
   <aside class="info-strip"><span>i</span><div><b>{{ t('Không tự tạo nhiều tài khoản', 'Don’t create fake accounts') }}</b><p>{{ t('Referral vòng lặp, tự mua hoặc hành vi gian lận có thể bị loại và khóa rút tiền.', 'Circular referrals, self-buying or fraud may be voided and can lock withdrawals.') }}</p></div></aside>
 {% endblock %}

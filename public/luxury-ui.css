@@ -1287,6 +1287,16 @@ label small {
   object-position: 68% center;
 }
 
+/* Video YouTube nhúng làm nền: căn giữa, phủ kín (JS tính kích thước 16:9). */
+.px-home-hero-embed {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  pointer-events: none;
+}
+
 .px-home-hero-shade {
   position: absolute;
   inset: 0;
@@ -10468,6 +10478,11 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 .referrer-enter-row input:focus { outline: none; border-color: var(--lx-orange, #ee4d2d); }
 .referrer-enter-row .button { height: 46px; flex: none; }
+
+/* Trạng thái rỗng bảng "Người bạn đã mời" — có nút Mời ngay. */
+.referral-empty { text-align: center; padding: 18px 12px; }
+.referral-empty b { display: block; font-size: 15px; color: var(--lx-ink); }
+.referral-empty p { margin: 6px 0 14px; color: var(--lx-muted, #6b7280); font-size: 13px; }
 
 /* Bộ lọc biểu đồ thu nhập: khoảng ngày (có lịch native) + đơn vị. */
 .income-filter {

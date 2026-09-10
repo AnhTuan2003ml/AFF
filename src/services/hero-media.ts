@@ -1,6 +1,12 @@
+import sharp from "sharp";
 import { query, withTransaction, type Database } from "../db.js";
 import { AppError } from "../lib/errors.js";
 import { sniffMime } from "./kyc-upload.js";
+
+// Kích thước hiển thị hero: ~16:9. Ảnh tĩnh tải lên được resize về trong khung
+// này và nén WEBP cho nhẹ. GIF (động) và video KHÔNG đụng để không hỏng.
+const HERO_MAX_W = 1920;
+const HERO_MAX_H = 1080;
 
 export type HeroMediaKind = "image" | "video";
 
@@ -22,6 +28,17 @@ export interface HeroMediaAdminRow {
   durationMs: number;
   sortOrder: number;
   active: boolean;
+  /** Nếu là video YouTube: ảnh thumbnail để xem trước (video tag không load được). */
+  youtubeThumb: string | null;
+}
+
+/** Trích ID video YouTube từ link youtu.be / youtube.com. */
+export function youtubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = String(url).match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/,
+  );
+  return m ? m[1]! : null;
 }
 
 const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
@@ -70,16 +87,20 @@ export async function listAllHeroMedia(db: Database): Promise<HeroMediaAdminRow[
        FROM hero_media
       ORDER BY sort_order, created_at`,
   );
-  return result.rows.map((row) => ({
-    id: row.id,
-    kind: row.kind,
-    src: resolveSrc(row),
-    isUpload: row.has_data,
-    url: row.url,
-    durationMs: row.duration_ms,
-    sortOrder: row.sort_order,
-    active: row.active,
-  }));
+  return result.rows.map((row) => {
+    const yt = youtubeId(row.url);
+    return {
+      id: row.id,
+      kind: row.kind,
+      src: resolveSrc(row),
+      isUpload: row.has_data,
+      url: row.url,
+      durationMs: row.duration_ms,
+      sortOrder: row.sort_order,
+      active: row.active,
+      youtubeThumb: yt ? `https://img.youtube.com/vi/${yt}/hqdefault.jpg` : null,
+    };
+  });
 }
 
 function clampDuration(seconds: number): number {
@@ -125,23 +146,39 @@ export async function addHeroMediaUpload(
     throw new AppError("HERO_TOO_LARGE", "Tệp vượt quá 30 MB.", 400);
   }
   const mime = sniffMime(params.buffer);
-  const kind: HeroMediaKind = mime.startsWith("video/")
-    ? "video"
-    : mime.startsWith("image/")
-      ? "image"
-      : (() => {
-          throw new AppError(
-            "HERO_FORMAT",
-            "Chỉ nhận tệp ảnh (JPG/PNG/WEBP/GIF) hoặc video (MP4/WEBM).",
-            400,
-          );
-        })();
+  if (!mime.startsWith("video/") && !mime.startsWith("image/")) {
+    throw new AppError(
+      "HERO_FORMAT",
+      "Chỉ nhận tệp ảnh (JPG/PNG/WEBP/GIF) hoặc video (MP4/WEBM).",
+      400,
+    );
+  }
+  const kind: HeroMediaKind = mime.startsWith("video/") ? "video" : "image";
+
+  // Ảnh TĨNH (JPG/PNG/WEBP): resize + nén WEBP. GIF động và video giữ nguyên.
+  let data = params.buffer;
+  let contentType = mime;
+  if (["image/jpeg", "image/png", "image/webp"].includes(mime)) {
+    try {
+      data = await sharp(params.buffer)
+        .rotate()
+        .resize(HERO_MAX_W, HERO_MAX_H, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+      contentType = "image/webp";
+    } catch {
+      // Không xử lý được thì lưu ảnh gốc.
+      data = params.buffer;
+      contentType = mime;
+    }
+  }
+
   const sort = await nextSortOrder(db);
   await query(
     db,
     `INSERT INTO hero_media (kind, content_type, data, duration_ms, sort_order)
      VALUES ($1, $2, $3, $4, $5)`,
-    [kind, mime, params.buffer, clampDuration(params.durationSeconds), sort],
+    [kind, contentType, data, clampDuration(params.durationSeconds), sort],
   );
 }
 

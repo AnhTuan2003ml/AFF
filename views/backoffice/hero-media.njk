@@ -18,9 +18,18 @@
       <form method="post" action="/backoffice/hero-media" enctype="multipart/form-data" class="stack-form">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}">
 
-        <label>Tải tệp lên (ảnh JPG/PNG/WEBP/GIF hoặc video MP4/WEBM, tối đa 30 MB)
-          <input type="file" name="file" accept="image/*,video/*">
+        <label class="hero-file-label">Tải tệp lên
+          <span class="hero-file-box">
+            <input type="file" name="file" accept="image/*,video/*">
+          </span>
         </label>
+
+        <p class="hero-media-specs">
+          <b>Thông số ảnh phù hợp:</b> ảnh ngang tỉ lệ 16:9 hoặc 16:10, khuyến nghị
+          <b>1920×1080</b> (hoặc 1600×1000), định dạng JPG/PNG/WEBP/GIF; video MP4/WEBM.
+          Tối đa 30&nbsp;MB. Ảnh tĩnh tải lên sẽ được <b>tự động resize</b> về tối đa 1920px
+          và nén cho nhẹ (GIF/video giữ nguyên).
+        </p>
 
         <p class="hero-media-or">— hoặc dán link —</p>
 
@@ -49,7 +58,10 @@
           {% for m in heroMedia %}
             <article class="hero-media-item {{ 'is-off' if not m.active }}">
               <div class="hero-media-preview">
-                {% if m.kind == 'video' %}
+                {% if m.youtubeThumb %}
+                  <img src="{{ m.youtubeThumb }}" alt="" referrerpolicy="no-referrer">
+                  <span class="hero-media-play" aria-hidden="true">▶</span>
+                {% elif m.kind == 'video' %}
                   <video src="{{ m.src }}" muted loop playsinline preload="metadata"></video>
                 {% else %}
                   <img src="{{ m.src }}" alt="" referrerpolicy="no-referrer">
