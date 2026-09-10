@@ -62,6 +62,18 @@
           <input id="settings-fullname-input" type="text" name="fullName" value="{{ currentUser.fullName }}" minlength="2" maxlength="100" required data-required-message="{{ t('Vui lòng nhập họ và tên.', 'Please enter your full name.') }}" data-minlength-message="{{ t('Họ và tên cần ít nhất 2 ký tự.', 'Your full name needs at least 2 characters.') }}">
           <small class="field-error" id="settings-fullname-input-error" hidden></small>
         </label>
+        <label for="settings-gender-input">{{ t('Giới tính', 'Gender') }}
+          <select id="settings-gender-input" name="gender" required>
+            {% if currentUser.gender != 'MALE' and currentUser.gender != 'FEMALE' %}
+              <option value="" disabled selected>{{ t('Chọn giới tính', 'Choose gender') }}</option>
+            {% endif %}
+            <option value="MALE"{% if currentUser.gender == 'MALE' %} selected{% endif %}>{{ t('Nam', 'Male') }}</option>
+            <option value="FEMALE"{% if currentUser.gender == 'FEMALE' %} selected{% endif %}>{{ t('Nữ', 'Female') }}</option>
+          </select>
+          {% if currentUser.gender != 'MALE' and currentUser.gender != 'FEMALE' %}
+            <small>{{ t('Chọn giới tính để Camio xưng hô đúng (anh/chị).', 'Choose your gender so Camio addresses you correctly.') }}</small>
+          {% endif %}
+        </label>
         <label>Email
           <input type="email" value="{{ currentUser.email }}" readonly disabled>
           <small>{{ t('Email đã xác nhận và dùng để nhận OTP.', 'Your confirmed email, used to receive OTP codes.') }}</small>

@@ -65,8 +65,11 @@ export function xacNhanRut(intentId: string, code: string) {
   );
 }
 
-export function doiTen(fullName: string) {
-  return apiFetch<unknown>('/api/v1/me', { method: 'PATCH', body: { fullName } });
+export function doiTen(fullName: string, gender?: 'MALE' | 'FEMALE') {
+  return apiFetch<unknown>('/api/v1/me', {
+    method: 'PATCH',
+    body: { fullName, ...(gender ? { gender } : {}) },
+  });
 }
 
 /** Đăng xuất trên MỌI thiết bị (thu hồi tất cả phiên). */

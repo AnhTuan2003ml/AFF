@@ -1958,14 +1958,16 @@ export async function registerAppRoutes(
       const input = parseInput(
         z.object({
           fullName: z.string().trim().min(2).max(100),
+          gender: z.enum(["MALE", "FEMALE"]),
         }),
         request.body,
       );
-      await query(deps.db, "UPDATE users SET full_name = $2 WHERE id = $1", [
-        userId(request),
-        input.fullName,
-      ]);
-      setFlash(reply, deps.config, "success", "Đã lưu tên hiển thị.");
+      await query(
+        deps.db,
+        "UPDATE users SET full_name = $2, gender = $3 WHERE id = $1",
+        [userId(request), input.fullName, input.gender],
+      );
+      setFlash(reply, deps.config, "success", "Đã lưu thông tin cá nhân.");
     } catch (error) {
       flashError(reply, deps.config, error);
     }

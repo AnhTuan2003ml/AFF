@@ -22,6 +22,9 @@ export default function ProfileScreen() {
   const t = useT();
   const { user, dangXuat, lamMoiHoSo } = useSession();
   const [ten, setTen] = useState(user?.fullName ?? '');
+  const [gioiTinh, setGioiTinh] = useState<'MALE' | 'FEMALE' | null>(
+    user?.gender === 'MALE' || user?.gender === 'FEMALE' ? user.gender : null,
+  );
   const [dangLuu, setDangLuu] = useState(false);
   const [dangXL, setDangXL] = useState(false);
   const [moXoa, setMoXoa] = useState(false);
@@ -47,11 +50,15 @@ export default function ProfileScreen() {
   async function luuTen() {
     const tenTrim = ten.trim();
     if (tenTrim.length < 2 || dangLuu) return;
+    if (!gioiTinh) {
+      Alert.alert(t('Thiếu giới tính', 'Gender missing'), t('Vui lòng chọn giới tính.', 'Please choose your gender.'));
+      return;
+    }
     setDangLuu(true);
     try {
-      await doiTen(tenTrim);
+      await doiTen(tenTrim, gioiTinh);
       await lamMoiHoSo();
-      Alert.alert(t('Đã lưu', 'Saved'), t('Cập nhật họ tên thành công.', 'Your name has been updated.'));
+      Alert.alert(t('Đã lưu', 'Saved'), t('Cập nhật thông tin thành công.', 'Your information has been updated.'));
     } catch (e) {
       Alert.alert(t('Chưa lưu được', "Couldn't save"), e instanceof Error ? e.message : t('Thử lại sau.', 'Please try again later.'));
     } finally {
@@ -135,6 +142,24 @@ export default function ProfileScreen() {
         placeholder={t('Nguyễn Văn A', 'John Doe')}
         autoCapitalize="words"
       />
+      <View style={styles.gioiWrap}>
+        <Text style={styles.gioiLabel}>{t('Giới tính', 'Gender')}</Text>
+        <View style={styles.gioiOpts}>
+          {(['MALE', 'FEMALE'] as const).map((g) => {
+            const on = gioiTinh === g;
+            return (
+              <Pressable
+                key={g}
+                onPress={() => setGioiTinh(g)}
+                style={[styles.gioiPill, on && styles.gioiPillOn]}>
+                <Text style={[styles.gioiPillText, on && styles.gioiPillTextOn]}>
+                  {g === 'MALE' ? t('Nam', 'Male') : t('Nữ', 'Female')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
       <Field label="Email" icon="mail-outline" value={user.email} editable={false} />
       <Pressable
         onPress={luuTen}
@@ -249,6 +274,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveText: { color: colors.onBrand, fontWeight: '800', fontSize: 15 },
+  gioiWrap: { gap: 7, marginBottom: 4 },
+  gioiLabel: { fontSize: 13, fontWeight: '800', color: colors.text },
+  gioiOpts: { flexDirection: 'row', gap: 10 },
+  gioiPill: {
+    flex: 1,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  gioiPillOn: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
+  gioiPillText: { fontSize: 14, fontWeight: '800', color: colors.muted },
+  gioiPillTextOn: { color: colors.brand },
 
   section: { fontSize: 13, fontWeight: '900', color: colors.text, marginTop: spacing.lg, marginBottom: 8 },
   row: {

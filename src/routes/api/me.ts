@@ -215,7 +215,10 @@ export async function registerMeApiRoutes(
 
   app.patch("/me", { preHandler: requireApiUser }, async (request) => {
     const input = parseInput(
-      z.object({ fullName: z.string().trim().min(2).max(100) }),
+      z.object({
+        fullName: z.string().trim().min(2).max(100),
+        gender: z.enum(["MALE", "FEMALE"]).optional(),
+      }),
       request.body,
     );
     const updated = await query<{
@@ -223,15 +226,18 @@ export async function registerMeApiRoutes(
       email: string;
       full_name: string;
       role: string;
+      gender: "MALE" | "FEMALE" | "UNKNOWN";
     }>(
       deps.db,
       `
         UPDATE users
-        SET full_name = $2, updated_at = now()
+        SET full_name = $2,
+          gender = COALESCE($3, gender),
+          updated_at = now()
         WHERE id = $1
-        RETURNING id, email, full_name, role
+        RETURNING id, email, full_name, role, gender
       `,
-      [request.currentUser!.id, input.fullName],
+      [request.currentUser!.id, input.fullName, input.gender ?? null],
     );
     const row = updated.rows[0];
     if (!row) {
@@ -243,6 +249,7 @@ export async function registerMeApiRoutes(
         email: row.email,
         fullName: row.full_name,
         role: row.role,
+        gender: row.gender,
       },
     };
   });
