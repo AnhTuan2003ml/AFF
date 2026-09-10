@@ -93,6 +93,7 @@ import {
 } from "../services/support-autoreply.js";
 import {
   SUPPORT_TOPICS,
+  buildCamioOrderContext,
   localizeSupportTopics,
   platformDisplayName,
   submitSupportRequest,
@@ -1647,6 +1648,9 @@ export async function registerAppRoutes(
             )
             .max(16)
             .optional(),
+          // Đơn khách chọn ở "Tìm đơn" (ORDER:<id> / INTENT:<id>) — để Camio
+          // trả lời đúng đơn đó. Chỉ nhận đơn thuộc chính người dùng.
+          orderKey: z.string().trim().max(80).optional(),
         }),
         request.body,
       );
@@ -1655,9 +1659,18 @@ export async function registerAppRoutes(
         body: h.body,
       }));
       history.push({ authorRole: "USER", body: input.message });
+      const orderContext = input.orderKey
+        ? await buildCamioOrderContext(
+            deps.db,
+            deps.config,
+            userId(request),
+            input.orderKey,
+          )
+        : null;
       const answer = await generateCamioReply(deps.db, deps.config, {
         question: input.message,
         history,
+        orderContext,
       });
       reply.header("cache-control", "private, no-store");
       return reply.send({

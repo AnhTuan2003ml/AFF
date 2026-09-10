@@ -10774,3 +10774,37 @@ body.support-screen-open { overflow: hidden; }
   background: var(--lx-orange, #ee4d2d); color: #fff; cursor: pointer; display: grid; place-items: center;
 }
 .support-screen-foot .support-chatbar [data-chatbar-send] svg { width: 20px; height: 20px; fill: currentColor; }
+
+/* ─── WEB DESKTOP (≥961px): 3 lựa chọn bó gọn + overlay thành modal canh giữa.
+       Mobile/app giữ nguyên full màn hình (không có media query này). ─── */
+@media (min-width: 961px) {
+  .support-choices { max-width: 600px; margin-inline: auto; }
+
+  /* Overlay phủ mờ, đưa nội dung về một thẻ giữa màn hình thay vì tràn viền. */
+  .support-screen {
+    background: rgba(28, 18, 12, .5);
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  .support-screen-head,
+  .support-screen-body,
+  .support-screen-foot {
+    width: 100%;
+    max-width: 680px;
+    background: var(--lx-paper, #fff);
+  }
+  .support-screen-head {
+    border-radius: 18px 18px 0 0;
+    padding-top: 14px;
+  }
+  .support-screen-body {
+    background: var(--lx-ivory, #fbf8f4);
+    height: min(58vh, 520px);
+    flex: none;
+  }
+  .support-screen-foot {
+    border-radius: 0 0 18px 18px;
+    padding-bottom: 12px;
+  }
+}

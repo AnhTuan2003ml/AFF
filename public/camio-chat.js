@@ -68,8 +68,10 @@
     return row;
   }
 
-  function setOrder(label) {
-    attachedOrder = label ? { label: label } : null;
+  function setOrder(label, key) {
+    // key = ORDER:<id>/INTENT:<id> khi chọn từ danh sách (để backend nạp ngữ
+    // cảnh đơn); dán link thì chưa có key → chỉ đính nhãn.
+    attachedOrder = label ? { label: label, key: key || "" } : null;
     if (attachedOrder) {
       if (orderLabelEl) orderLabelEl.textContent = label;
       if (orderChip) orderChip.hidden = false;
@@ -86,13 +88,15 @@
   if (pickerDone) {
     pickerDone.addEventListener("click", function () {
       var label = "";
+      var key = "";
       if (orderSelect && orderSelect.value) {
         var opt = orderSelect.options[orderSelect.selectedIndex];
         label = opt ? (opt.getAttribute("data-label") || opt.textContent) : "";
+        key = orderSelect.value;
       } else if (orderLink && orderLink.value.trim()) {
         label = orderLink.value.trim();
       }
-      if (label) setOrder(label);
+      if (label) setOrder(label, key);
       if (picker) picker.hidden = true;
     });
   }
@@ -119,7 +123,11 @@
       method: "POST",
       headers: { "content-type": "application/json", "x-csrf-token": csrf, accept: "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ message: message, history: history.slice(-16) }),
+      body: JSON.stringify({
+        message: message,
+        history: history.slice(-16),
+        orderKey: attachedOrder && attachedOrder.key ? attachedOrder.key : undefined,
+      }),
     })
       .then(function (r) { return r.json().catch(function () { return {}; }); })
       .then(function (data) {

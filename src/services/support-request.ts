@@ -354,3 +354,64 @@ export async function listSupportOrderOptions(
   });
   return history.map(toSupportOrderOption);
 }
+
+const CTX_DATE = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  dateStyle: "short",
+});
+
+function ctxVnd(value: string | null): string | null {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) && n > 0 ? `${n.toLocaleString("vi-VN")}₫` : null;
+}
+
+function ctxDate(value: Date | string | null): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : CTX_DATE.format(d);
+}
+
+/**
+ * Dựng khối ngữ cảnh CHỈ-ĐỌC về MỘT đơn của chính người dùng để đưa vào prompt
+ * của Camio (khách bấm "Tìm đơn" rồi hỏi về đơn đó). Chỉ lấy đơn thuộc đúng
+ * `userId` (dùng chung nguồn `listOrderHistory` với trang Đơn nên số liệu khớp).
+ * Trả null nếu orderKey rỗng hoặc không thuộc người dùng — Camio sẽ không bịa.
+ */
+export async function buildCamioOrderContext(
+  db: Database,
+  config: AppConfig,
+  userId: string,
+  orderKey: string,
+): Promise<string | null> {
+  const key = (orderKey ?? "").trim();
+  if (!key || !/^(ORDER|INTENT):/.test(key)) return null;
+  const businessConfig = await getBusinessConfig(db, config);
+  const history = await listOrderHistory(db, {
+    userId,
+    status: "ALL",
+    released: "ALL",
+    searchTerm: "",
+    attributionDays: businessConfig.affiliateAttributionDays,
+    limit: 50,
+  });
+  const row = history.find((r) => `${r.record_kind}:${r.id}` === key);
+  if (!row) return null;
+
+  const lines: (string | null)[] = [
+    `Nền tảng: ${platformDisplayName(row.platform)}`,
+    row.platform_order_id ? `Mã đơn trên sàn: #${row.platform_order_id}` : null,
+    row.product_name ? `Sản phẩm: ${row.product_name}` : null,
+    `Trạng thái: ${ORDER_STATUS_LABELS[row.status] ?? row.status}`,
+    ctxVnd(row.order_amount_vnd) ? `Giá trị đơn: ${ctxVnd(row.order_amount_vnd)}` : null,
+    ctxVnd(row.cashback_vnd) ? `Tiền hoàn dự kiến: ${ctxVnd(row.cashback_vnd)}` : null,
+    ctxDate(row.purchased_at) ? `Ngày mua: ${ctxDate(row.purchased_at)}` : null,
+    ctxDate(row.completed_at) ? `Ngày hoàn tất: ${ctxDate(row.completed_at)}` : null,
+    row.cashback_released_at
+      ? "Tiền hoàn đã khả dụng để rút."
+      : row.hold_days_left && Number(row.hold_days_left) > 0
+        ? `Còn khoảng ${Number(row.hold_days_left)} ngày nữa tiền hoàn mới khả dụng để rút.`
+        : null,
+    row.cancel_reason ? `Lý do hủy: ${row.cancel_reason}` : null,
+  ];
+  return lines.filter(Boolean).join("\n");
+}

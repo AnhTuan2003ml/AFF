@@ -32,6 +32,7 @@ import {
 import { createVoucherAffiliateLink } from "../../services/affiliate.js";
 import { listActiveHeroMedia } from "../../services/hero-media.js";
 import { generateCamioReply } from "../../services/support-autoreply.js";
+import { buildCamioOrderContext } from "../../services/support-request.js";
 import {
   applyReferralToUser,
   changeOwnReferralCodeByAdmin,
@@ -444,6 +445,7 @@ export async function registerFeatureApiRoutes(
             )
             .max(16)
             .optional(),
+          orderKey: z.string().trim().max(80).optional(),
         }),
         request.body,
       );
@@ -452,9 +454,18 @@ export async function registerFeatureApiRoutes(
         body: h.body,
       }));
       history.push({ authorRole: "USER", body: input.message });
+      const orderContext = input.orderKey
+        ? await buildCamioOrderContext(
+            deps.db,
+            deps.config,
+            request.currentUser!.id,
+            input.orderKey,
+          )
+        : null;
       const answer = await generateCamioReply(deps.db, deps.config, {
         question: input.message,
         history,
+        orderContext,
       });
       return {
         reply:

@@ -922,6 +922,18 @@ const CAMIO_SYSTEM_PROMPT =
   "nằm ngoài phạm vi tài liệu, hoặc cần can thiệp tài khoản/đơn hàng/số dư cụ thể, " +
   "hãy nói rõ và mời khách bấm 'Chat với CSKH' để nhân viên xử lý.";
 
+// Khi khách đã chọn một đơn (bấm "Tìm đơn"): được phép trả lời về ĐÚNG đơn đó
+// dựa trên "Thông tin đơn hàng của khách" trong tài liệu tham khảo.
+const CAMIO_SYSTEM_PROMPT_ORDER =
+  "Bạn là Camio — trợ lý ảo của ShopTik, nền tảng hoàn tiền mua sắm qua " +
+  "Shopee/TikTok Shop/Lazada. Xưng 'Camio' (hoặc 'em'), gọi khách là 'anh/chị'. " +
+  "Thân thiện, ngắn gọn, chính xác. Khách đang hỏi về MỘT đơn cụ thể — thông tin " +
+  "đơn đó và các chính sách liên quan nằm trong tài liệu tham khảo bên dưới. Hãy " +
+  "trả lời dựa CHÍNH XÁC vào thông tin đơn đó (trạng thái, tiền hoàn, thời gian về " +
+  "ví, lý do hủy…) kèm chính sách tương ứng. TUYỆT ĐỐI không bịa số liệu ngoài " +
+  "thông tin đã cho. Không hứa thay đổi số dư/duyệt đơn — nếu khách cần can thiệp " +
+  "tài khoản hoặc thông tin không đủ, mời khách bấm 'Chat với CSKH'.";
+
 /** Dựng tài liệu RAG từ Chính sách người dùng + Điều khoản sử dụng (theo mục). */
 async function buildPolicyTermsKb(
   db: Database,
@@ -952,14 +964,23 @@ async function buildPolicyTermsKb(
 export async function generateCamioReply(
   db: Database,
   config: AppConfig,
-  input: { question: string; history: ChatHistoryEntry[] },
+  input: {
+    question: string;
+    history: ChatHistoryEntry[];
+    /** Ngữ cảnh MỘT đơn khách đang hỏi (đã kiểm tra sở hữu ở tầng route). */
+    orderContext?: string | null;
+  },
 ): Promise<string | null> {
   const settings = await loadSettingsRow(db);
   if (!settings || !settings.ai_api_key_ciphertext || !settings.ai_model) {
     return null;
   }
-  // Tự học: gặp câu tương tự đã trả lời → trả ngay, KHỎI gọi AI (tiết kiệm).
-  if (settings.learn_enabled) {
+  const orderContext = (input.orderContext ?? "").trim();
+  const hasOrder = orderContext.length > 0;
+  // Tự học chỉ áp cho câu hỏi CHUNG (chính sách/điều khoản). Câu hỏi gắn đơn là
+  // dữ liệu RIÊNG từng người → KHÔNG đọc/ghi kho học chung (tránh trả nhầm đơn
+  // của người khác cho người này).
+  if (settings.learn_enabled && !hasOrder) {
     const learned = await findSimilarLearnedAnswer(
       db,
       input.question,
@@ -974,11 +995,16 @@ export async function generateCamioReply(
     ...(await buildPolicyTermsKb(db, config)),
     ...(await listKbDocuments(db)),
   ];
-  const kbContext = buildKbContext(rankKbDocuments(kbDocs, input.question));
+  let kbContext = buildKbContext(rankKbDocuments(kbDocs, input.question));
+  if (hasOrder) {
+    kbContext =
+      "Thông tin đơn hàng của khách (chỉ trả lời về đơn này, không suy diễn thêm):\n" +
+      `${orderContext}\n\n${kbContext}`;
+  }
   const apiKey = decryptField(settings.ai_api_key_ciphertext, config);
   const camioSettings: SettingsRow = {
     ...settings,
-    ai_system_prompt: CAMIO_SYSTEM_PROMPT,
+    ai_system_prompt: hasOrder ? CAMIO_SYSTEM_PROMPT_ORDER : CAMIO_SYSTEM_PROMPT,
   };
   const reply = await generateAiReply(
     camioSettings,
@@ -986,7 +1012,7 @@ export async function generateCamioReply(
     input.history,
     kbContext,
   );
-  if (reply && settings.learn_enabled) {
+  if (reply && settings.learn_enabled && !hasOrder) {
     await learnAnswer(db, input.question, reply).catch(() => undefined);
   }
   return reply || null;
