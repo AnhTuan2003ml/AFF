@@ -21,7 +21,7 @@
 
   var providerSel = form.querySelector("#ar-provider");
   var modelInput = form.querySelector("#ar-model");
-  var modelList = form.querySelector("#ar-models");
+  var modelHint = form.querySelector("[data-model-hint]");
   var baseWrap = form.querySelector("[data-baseurl-wrap]");
   var baseInput = form.querySelector("#ar-baseurl");
   var keyInput = form.querySelector("#ar-key");
@@ -30,9 +30,7 @@
   var simRange = form.querySelector("[data-sim-range]");
   var simLabel = form.querySelector("[data-sim-label]");
 
-  var first = true;
-
-  // Dựng gợi ý model (datalist) chỉ gồm model của provider đang chọn.
+  // Ô Model là input gõ/dán tự do; provider chỉ đổi phần GỢI Ý (không ép giá trị).
   function rebuild() {
     var provider = providerSel.value;
     var meta = PROV[provider] || {};
@@ -41,21 +39,29 @@
     if (baseWrap) baseWrap.hidden = !isCustom;
     if (baseInput) baseInput.disabled = !isCustom;
 
-    var list = (meta.suggestedModels || []).slice();
-    modelList.innerHTML = "";
-    list.forEach(function (m) {
-      var o = document.createElement("option");
-      o.value = m;
-      modelList.appendChild(o);
-    });
-
-    if (first) {
-      // Lần đầu: giữ nguyên model đã lưu.
-      first = false;
-    } else if (!isCustom) {
-      // Đổi provider: nếu model hiện tại không thuộc provider mới thì gợi ý model đầu.
-      if (list.indexOf(modelInput.value.trim()) === -1) {
-        modelInput.value = list[0] || "";
+    if (modelHint) {
+      var list = meta.suggestedModels || [];
+      modelHint.textContent = list.length
+        ? "Gợi ý (bấm để điền): "
+        : "Dán tên model của endpoint tùy chỉnh.";
+      modelHint.innerHTML = "";
+      if (list.length) {
+        modelHint.appendChild(document.createTextNode("Gợi ý (bấm để điền): "));
+        list.forEach(function (m, i) {
+          if (i) modelHint.appendChild(document.createTextNode(", "));
+          var a = document.createElement("a");
+          a.href = "#";
+          a.className = "bo-model-pick";
+          a.textContent = m;
+          a.addEventListener("click", function (e) {
+            e.preventDefault();
+            modelInput.value = m;
+            modelInput.focus();
+          });
+          modelHint.appendChild(a);
+        });
+      } else {
+        modelHint.textContent = "Dán tên model của endpoint tùy chỉnh (API tương thích OpenAI).";
       }
     }
   }

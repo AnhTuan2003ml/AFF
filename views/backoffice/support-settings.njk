@@ -47,9 +47,10 @@
           </label>
 
           <label for="ar-model">Model
-            <input id="ar-model" type="text" name="aiModel" maxlength="120" list="ar-models"
-              value="{{ settings.aiModel }}" autocomplete="off" placeholder="Chọn hoặc gõ tên model">
-            <datalist id="ar-models"></datalist>
+            <input id="ar-model" type="text" name="aiModel" maxlength="120"
+              value="{{ settings.aiModel }}" autocomplete="off" spellcheck="false"
+              placeholder="Gõ hoặc dán tên model">
+            <small class="bo-muted" data-model-hint></small>
           </label>
         </div>
 

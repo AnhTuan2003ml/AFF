@@ -45,8 +45,15 @@ export const AI_PROVIDERS: Record<AiProvider, ProviderMeta> = {
     suggestedModels: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
   },
   gemini: {
+    // Model bậc MIỄN PHÍ (Google AI Studio API key). Chỉ là gợi ý — ô Model cho
+    // gõ/dán bất kỳ tên nào, xem danh sách mới nhất ở https://ai.google.dev/models.
     label: "Google (Gemini)",
-    suggestedModels: ["gemini-2.5-pro", "gemini-2.5-flash"],
+    suggestedModels: [
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-2.5-flash-lite",
+      "gemini-flash-latest",
+    ],
   },
   deepseek: {
     label: "DeepSeek",

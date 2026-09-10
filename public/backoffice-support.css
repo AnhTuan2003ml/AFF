@@ -251,20 +251,31 @@ td.bo-cell-clamp {
   border-radius: var(--sh-radius-s, 8px);
   border: 1px solid var(--sh-line, #e5e7eb);
   background: var(--sh-bg, #f8fafc);
+  color: var(--sh-copy, #374151);
   font-size: 0.88rem;
   line-height: 1.5;
 }
 
+/* Ép màu chữ cho CẢ <b>/<li> bên trong, vì dark theme đổi màu <b> mặc định
+   khiến chữ chìm trên nền sáng của hộp cảnh báo. */
+.bo-test-result.is-ok,
+.bo-test-result.is-ok b,
+.bo-test-result.is-ok li {
+  color: #14532d;
+}
 .bo-test-result.is-ok {
   border-color: #86efac;
-  background: #f0fdf4;
-  color: #166534;
+  background: #ecfdf3;
 }
 
+.bo-test-result.is-err,
+.bo-test-result.is-err b,
+.bo-test-result.is-err li {
+  color: #991b1b;
+}
 .bo-test-result.is-err {
   border-color: #fca5a5;
   background: #fef2f2;
-  color: #991b1b;
 }
 
 .bo-test-limits {
@@ -273,6 +284,14 @@ td.bo-cell-clamp {
   display: grid;
   gap: 3px;
 }
+
+/* Gợi ý model: các tên bấm được để điền nhanh (không phải combobox). */
+.bo-model-pick {
+  color: var(--sh-primary, #2563eb);
+  font-weight: 600;
+  text-decoration: none;
+}
+.bo-model-pick:hover { text-decoration: underline; }
 
 /* Khối nâng cao (skill + tự học) gập lại cho đỡ rối. */
 .bo-advanced {
