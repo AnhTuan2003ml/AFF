@@ -109,6 +109,7 @@ export async function registerAuthApiRoutes(
           .object({
             fullName: z.string().trim().min(2).max(100),
             email,
+            gender: z.enum(["MALE", "FEMALE"]).optional(),
             password: passwordSchema,
             passwordConfirm: z.string(),
             referralCode: z.string().trim().max(30).optional().default(""),

@@ -18,6 +18,21 @@
       <small class="field-error" id="register-fullname-input-error" hidden></small>
     </label>
 
+    <label class="login-field" for="register-gender-input">
+      <span class="auth-field-label">{{ t('Giới tính', 'Gender') }}</span>
+      <span class="auth-input-shell">
+        <span class="login-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="9.5" r="3.6"></circle><path d="M12 13.1V20M9 17.4h6"></path></svg>
+        </span>
+        <select id="register-gender-input" name="gender" required data-required-message="{{ t('Vui lòng chọn giới tính.', 'Please choose your gender.') }}">
+          <option value="" disabled{% if not values.gender %} selected{% endif %}>{{ t('Chọn giới tính', 'Choose gender') }}</option>
+          <option value="MALE"{% if values.gender == 'MALE' %} selected{% endif %}>{{ t('Nam', 'Male') }}</option>
+          <option value="FEMALE"{% if values.gender == 'FEMALE' %} selected{% endif %}>{{ t('Nữ', 'Female') }}</option>
+        </select>
+      </span>
+      <small class="field-error" id="register-gender-input-error" hidden></small>
+    </label>
+
     <label class="login-field" for="register-email-input">
       <span class="auth-field-label">Email</span>
       <span class="auth-input-shell">

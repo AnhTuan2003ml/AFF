@@ -14,6 +14,10 @@ import {
 } from "../../services/support-chat.js";
 import { isSlackSupportEnabled } from "../../services/slack.js";
 import {
+  buildCamioGreeting,
+  getAutoReplySettings,
+} from "../../services/support-autoreply.js";
+import {
   SUPPORT_TOPICS,
   listSupportOrderOptions,
   submitSupportRequest,
@@ -155,7 +159,7 @@ export async function registerAccountApiRoutes(
   app.get("/support/form", { preHandler: requireApiUser }, async (request, reply) => {
     reply.header("cache-control", "private, no-store");
     const uid = request.currentUser!.id;
-    const [orderOptions, conversationRow, latest] = await Promise.all([
+    const [orderOptions, conversationRow, latest, arSettings] = await Promise.all([
       listSupportOrderOptions(deps.db, deps.config, uid),
       query<{ notify_email: string }>(
         deps.db,
@@ -163,6 +167,7 @@ export async function registerAccountApiRoutes(
         [uid],
       ),
       getLatestSupportExchange(deps.db, uid),
+      getAutoReplySettings(deps.db),
     ]);
     // Mở form = đã xem mọi phản hồi CSKH tới lúc này (như web).
     await markSupportRead(deps.db, uid);
@@ -173,6 +178,8 @@ export async function registerAccountApiRoutes(
       latestRequest: latest.request,
       latestReply: latest.reply,
       chatOnline: isSlackSupportEnabled(deps.config),
+      // Lời chào Camio theo tên + giới tính (app dùng để seed tin chào).
+      camioGreeting: buildCamioGreeting(arSettings, request.currentUser),
     };
   });
 

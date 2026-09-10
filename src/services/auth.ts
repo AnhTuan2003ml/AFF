@@ -24,6 +24,7 @@ interface UserAuthRow {
   role: CurrentUser["role"];
   referral_code: string;
   avatar_url: string;
+  gender?: CurrentUser["gender"];
   failed_login_count?: number | null;
   login_locked_until?: Date | string | null;
 }
@@ -44,10 +45,12 @@ export async function registerWithEmail(
     fullName: string;
     password: string;
     referralCode?: string;
+    gender?: "MALE" | "FEMALE" | "UNKNOWN" | undefined;
   },
 ): Promise<void> {
   const email = normalizeEmail(params.email);
   const passwordHash = await hashPassword(params.password);
+  const gender = params.gender ?? "UNKNOWN";
 
   await withTransaction(db, async (client) => {
     const existing = await query<UserAuthRow>(
@@ -94,10 +97,11 @@ export async function registerWithEmail(
         `
           UPDATE users
           SET full_name = $2, password_hash = $3,
-            referred_by_user_id = COALESCE(referred_by_user_id, $4)
+            referred_by_user_id = COALESCE(referred_by_user_id, $4),
+            gender = $5
           WHERE id = $1
         `,
-        [current.id, params.fullName.trim(), passwordHash, referredBy],
+        [current.id, params.fullName.trim(), passwordHash, referredBy, gender],
       );
       return;
     }
@@ -117,11 +121,19 @@ export async function registerWithEmail(
       client,
       `
         INSERT INTO users (
-          email, full_name, password_hash, referral_code, referred_by_user_id
-        ) VALUES ($1, $2, $3, $4, $5)
+          email, full_name, password_hash, referral_code, referred_by_user_id,
+          gender
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id
       `,
-      [email, params.fullName.trim(), passwordHash, referralCode, referredBy],
+      [
+        email,
+        params.fullName.trim(),
+        passwordHash,
+        referralCode,
+        referredBy,
+        gender,
+      ],
     );
     const userId = inserted.rows[0]!.id;
     await query(
@@ -218,7 +230,7 @@ export async function authenticateWithEmail(
     db,
     `
       SELECT id, email, full_name, password_hash, status, role, referral_code,
-        avatar_url, failed_login_count, login_locked_until
+        avatar_url, gender, failed_login_count, login_locked_until
       FROM users WHERE lower(email) = $1 LIMIT 1
     `,
     [email],
@@ -288,6 +300,7 @@ export async function authenticateWithEmail(
     status: user.status,
     referralCode: user.referral_code,
     avatarUrl: user.avatar_url,
+    gender: user.gender ?? "UNKNOWN",
   };
 }
 

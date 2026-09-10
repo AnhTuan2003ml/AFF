@@ -22,6 +22,7 @@ function profile(overrides: Partial<GoogleProfile> = {}): GoogleProfile {
     emailVerified: true,
     name: "Nguyễn Văn A",
     avatarUrl: "",
+    gender: "UNKNOWN",
     ...overrides,
   };
 }

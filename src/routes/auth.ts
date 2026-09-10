@@ -63,6 +63,9 @@ const registerSchema = z
   .object({
     fullName: nameSchema,
     email: emailSchema,
+    gender: z.enum(["MALE", "FEMALE"], {
+      error: "Vui lòng chọn giới tính.",
+    }),
     password: passwordSchema,
     passwordConfirm: z.string(),
     referralCode: z.string().trim().max(30).optional().default(""),
@@ -250,6 +253,7 @@ export async function registerAuthRoutes(
           values: {
             fullName: String(body.fullName ?? ""),
             email: String(body.email ?? ""),
+            gender: String(body.gender ?? ""),
             referralCode: String(body.referralCode ?? ""),
           },
         });

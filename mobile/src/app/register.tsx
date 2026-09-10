@@ -25,6 +25,7 @@ export default function RegisterScreen() {
   const [buoc, setBuoc] = useState<1 | 2>(1);
 
   const [hoTen, setHoTen] = useState('');
+  const [gioiTinh, setGioiTinh] = useState<'MALE' | 'FEMALE' | null>(null);
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
   const [nhapLai, setNhapLai] = useState('');
@@ -42,6 +43,10 @@ export default function RegisterScreen() {
       setLoi(t('Hai lần nhập mật khẩu chưa khớp nhau.', 'The two passwords do not match.'));
       return;
     }
+    if (!gioiTinh) {
+      setLoi(t('Vui lòng chọn giới tính.', 'Please choose your gender.'));
+      return;
+    }
     if (!dongY) {
       setLoi(
         t(
@@ -56,6 +61,7 @@ export default function RegisterScreen() {
       await register({
         fullName: hoTen.trim(),
         email: email.trim(),
+        gender: gioiTinh,
         password: matKhau,
         passwordConfirm: nhapLai,
         referralCode: gioiThieu.trim() || undefined,
@@ -137,6 +143,24 @@ export default function RegisterScreen() {
         placeholder={t('Nguyễn Văn A', 'John Doe')}
         autoCapitalize="words"
       />
+      <View style={styles.gioiWrap}>
+        <Text style={styles.gioiLabel}>{t('Giới tính', 'Gender')}</Text>
+        <View style={styles.gioiOpts}>
+          {(['MALE', 'FEMALE'] as const).map((g) => {
+            const on = gioiTinh === g;
+            return (
+              <Pressable
+                key={g}
+                onPress={() => setGioiTinh(g)}
+                style={[styles.gioiPill, on && styles.gioiPillOn]}>
+                <Text style={[styles.gioiPillText, on && styles.gioiPillTextOn]}>
+                  {g === 'MALE' ? t('Nam', 'Male') : t('Nữ', 'Female')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
       <Field
         label={t('Email', 'Email')}
         icon="mail-outline"
@@ -192,6 +216,7 @@ export default function RegisterScreen() {
         loading={dangGui}
         disabled={
           !dongY ||
+          !gioiTinh ||
           hoTen.trim().length < 2 ||
           email.trim().length < 5 ||
           matKhau.length < 10
@@ -212,6 +237,22 @@ const styles = StyleSheet.create({
   linkText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
   policyRow: { marginTop: 2, marginBottom: 18 },
   policyLink: { color: colors.brand, fontWeight: '800' },
+  gioiWrap: { marginBottom: 14, gap: 7 },
+  gioiLabel: { fontSize: 13, fontWeight: '800', color: colors.text },
+  gioiOpts: { flexDirection: 'row', gap: 10 },
+  gioiPill: {
+    flex: 1,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  gioiPillOn: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
+  gioiPillText: { fontSize: 14, fontWeight: '800', color: colors.muted },
+  gioiPillTextOn: { color: colors.brand },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 16 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
   dividerText: { fontSize: 12, color: colors.muted, fontWeight: '700' },

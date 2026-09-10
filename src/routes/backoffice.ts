@@ -597,6 +597,9 @@ export async function registerBackofficeRoutes(
           aiApiKey: z.string().trim().max(500).optional().default(""),
           learnEnabled: z.string().optional(),
           similarityThreshold: z.coerce.number().min(50).max(100).default(82),
+          camioGreetingMale: z.string().trim().max(500).optional().default(""),
+          camioGreetingFemale: z.string().trim().max(500).optional().default(""),
+          camioGreetingUnknown: z.string().trim().max(500).optional().default(""),
         }),
         request.body,
       );

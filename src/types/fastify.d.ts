@@ -8,6 +8,8 @@ export interface CurrentUser {
   status: "PENDING_EMAIL" | "ACTIVE" | "LOCKED" | "DISABLED";
   referralCode: string;
   avatarUrl: string;
+  /** Giới tính — Camio dùng để xưng hô (anh/chị). UNKNOWN = chưa xác định. */
+  gender: "MALE" | "FEMALE" | "UNKNOWN";
   isSpecialPartner?: boolean;
   /** Có đặt mật khẩu không. Tài khoản đăng nhập Google thuần = false → xác nhận
    *  xóa tài khoản bằng email thay vì mật khẩu. */

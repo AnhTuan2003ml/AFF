@@ -95,6 +95,22 @@
           </div>
         </details>
 
+        <details class="bo-advanced">
+          <summary>Lời chào của Camio (theo giới tính)</summary>
+          <div class="bo-advanced-body">
+            <p class="bo-muted">Camio chào khách theo tên + giới tính. Dùng biến <code>{ten}</code> = tên gọi (vd "Tuấn"). Ai chưa có giới tính dùng mẫu "Chưa rõ".</p>
+            <label for="ar-greet-male">Chào khách Nam
+              <textarea id="ar-greet-male" name="camioGreetingMale" rows="2" maxlength="500">{{ settings.camioGreetingMale }}</textarea>
+            </label>
+            <label for="ar-greet-female">Chào khách Nữ
+              <textarea id="ar-greet-female" name="camioGreetingFemale" rows="2" maxlength="500">{{ settings.camioGreetingFemale }}</textarea>
+            </label>
+            <label for="ar-greet-unknown">Chào khách chưa rõ giới tính
+              <textarea id="ar-greet-unknown" name="camioGreetingUnknown" rows="2" maxlength="500">{{ settings.camioGreetingUnknown }}</textarea>
+            </label>
+          </div>
+        </details>
+
         <button class="button button-primary" type="submit">Lưu cấu hình</button>
       </div>
     </form>

@@ -88,7 +88,9 @@ import {
   sendSupportChatMessage,
 } from "../services/support-chat.js";
 import {
+  buildCamioGreeting,
   generateCamioReply,
+  getAutoReplySettings,
   type ChatHistoryEntry,
 } from "../services/support-autoreply.js";
 import {
@@ -1506,7 +1508,7 @@ export async function registerAppRoutes(
     }
     const uid = userId(request);
     const businessConfig = await getBusinessConfig(deps.db, deps.config);
-    const [messages, orderHistory, conversationRow, latestExchange] =
+    const [messages, orderHistory, conversationRow, latestExchange, arSettings] =
       await Promise.all([
       listSupportChatMessages(deps.db, uid),
       listOrderHistory(deps.db, {
@@ -1523,8 +1525,10 @@ export async function registerAppRoutes(
         [uid],
       ),
       getLatestSupportExchange(deps.db, uid),
+      getAutoReplySettings(deps.db),
     ]);
     const orderOptions = orderHistory.map(toSupportOrderOption);
+    const camioGreeting = buildCamioGreeting(arSettings, request.currentUser);
 
     // Đi từ trang Đơn hàng sang: chọn sẵn đơn đó trong form theo mẫu; nếu
     // không khớp được bản ghi nào thì lùi về điền sẵn tin nhắn chat như cũ.
@@ -1562,6 +1566,7 @@ export async function registerAppRoutes(
         requestedOrderId && !preselected
           ? `Nhờ kiểm tra và hỗ trợ đơn #${requestedOrderId}${platformLabel ? ` trên ${platformLabel}` : ""}.`
           : "",
+      camioGreeting,
     });
   });
 

@@ -134,6 +134,8 @@ export interface SupportFormData {
   latestRequest: SupportExchangeMessage | null;
   latestReply: SupportExchangeMessage | null;
   chatOnline: boolean;
+  /** Lời chào Camio theo tên + giới tính (seed tin chào đầu). */
+  camioGreeting?: string;
 }
 
 /** Dữ liệu dựng form + yêu cầu/phản hồi mới nhất. Mở form = đã xem phản hồi. */

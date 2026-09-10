@@ -75,6 +75,16 @@ const KB_MAX_CHARS = 6000;
 const HUMAN_ACTIVE_WINDOW_MINUTES = 10;
 const CANNED_COOLDOWN_HOURS = 24;
 
+// Mẫu câu chào mặc định của Camio theo giới tính ({ten} = tên gọi của khách).
+// Khớp DEFAULT ở migration 054; dùng khi chưa có row cấu hình.
+export const DEFAULT_CAMIO_GREETINGS = {
+  male: "Camio chào anh {ten} 🧡 Anh muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?",
+  female:
+    "Camio chào chị {ten} 🧡 Chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?",
+  unknown:
+    "Camio chào anh/chị {ten} 🧡 Anh/chị muốn hỏi về chính sách hoàn tiền, điều khoản hay cách ShopTik hoạt động không ạ?",
+} as const;
+
 export interface AutoReplySettings {
   mode: AutoReplyMode;
   cannedMessage: string;
@@ -85,6 +95,9 @@ export interface AutoReplySettings {
   hasApiKey: boolean;
   learnEnabled: boolean;
   similarityThreshold: number;
+  camioGreetingMale: string;
+  camioGreetingFemale: string;
+  camioGreetingUnknown: string;
 }
 
 interface SettingsRow {
@@ -97,6 +110,9 @@ interface SettingsRow {
   ai_system_prompt: string;
   learn_enabled: boolean;
   similarity_threshold: number;
+  camio_greeting_male: string;
+  camio_greeting_female: string;
+  camio_greeting_unknown: string;
 }
 
 async function loadSettingsRow(db: Database): Promise<SettingsRow | null> {
@@ -105,7 +121,8 @@ async function loadSettingsRow(db: Database): Promise<SettingsRow | null> {
     `
       SELECT mode, canned_message, ai_provider, ai_api_key_ciphertext,
         ai_model, ai_base_url, ai_system_prompt, learn_enabled,
-        similarity_threshold
+        similarity_threshold, camio_greeting_male, camio_greeting_female,
+        camio_greeting_unknown
       FROM support_autoreply_settings WHERE id = true
     `,
   );
@@ -127,6 +144,9 @@ export async function getAutoReplySettings(
       hasApiKey: false,
       learnEnabled: true,
       similarityThreshold: 82,
+      camioGreetingMale: DEFAULT_CAMIO_GREETINGS.male,
+      camioGreetingFemale: DEFAULT_CAMIO_GREETINGS.female,
+      camioGreetingUnknown: DEFAULT_CAMIO_GREETINGS.unknown,
     };
   }
   return {
@@ -139,6 +159,11 @@ export async function getAutoReplySettings(
     hasApiKey: Boolean(row.ai_api_key_ciphertext),
     learnEnabled: row.learn_enabled,
     similarityThreshold: row.similarity_threshold,
+    camioGreetingMale: row.camio_greeting_male || DEFAULT_CAMIO_GREETINGS.male,
+    camioGreetingFemale:
+      row.camio_greeting_female || DEFAULT_CAMIO_GREETINGS.female,
+    camioGreetingUnknown:
+      row.camio_greeting_unknown || DEFAULT_CAMIO_GREETINGS.unknown,
   };
 }
 
@@ -156,6 +181,9 @@ export async function saveAutoReplySettings(
     aiApiKey: string;
     learnEnabled?: boolean;
     similarityThreshold?: number;
+    camioGreetingMale?: string;
+    camioGreetingFemale?: string;
+    camioGreetingUnknown?: string;
   },
 ): Promise<void> {
   const existing = await loadSettingsRow(db);
@@ -188,8 +216,9 @@ export async function saveAutoReplySettings(
       INSERT INTO support_autoreply_settings (
         id, mode, canned_message, ai_provider, ai_api_key_ciphertext,
         ai_model, ai_base_url, ai_system_prompt, learn_enabled,
-        similarity_threshold, updated_at
-      ) VALUES (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+        similarity_threshold, camio_greeting_male, camio_greeting_female,
+        camio_greeting_unknown, updated_at
+      ) VALUES (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
       ON CONFLICT (id) DO UPDATE SET
         mode = EXCLUDED.mode,
         canned_message = EXCLUDED.canned_message,
@@ -200,6 +229,9 @@ export async function saveAutoReplySettings(
         ai_system_prompt = EXCLUDED.ai_system_prompt,
         learn_enabled = EXCLUDED.learn_enabled,
         similarity_threshold = EXCLUDED.similarity_threshold,
+        camio_greeting_male = EXCLUDED.camio_greeting_male,
+        camio_greeting_female = EXCLUDED.camio_greeting_female,
+        camio_greeting_unknown = EXCLUDED.camio_greeting_unknown,
         updated_at = now()
     `,
     [
@@ -212,8 +244,46 @@ export async function saveAutoReplySettings(
       input.aiSystemPrompt.trim(),
       input.learnEnabled ?? true,
       Math.min(100, Math.max(50, Math.round(input.similarityThreshold ?? 82))),
+      (input.camioGreetingMale ?? DEFAULT_CAMIO_GREETINGS.male).trim() ||
+        DEFAULT_CAMIO_GREETINGS.male,
+      (input.camioGreetingFemale ?? DEFAULT_CAMIO_GREETINGS.female).trim() ||
+        DEFAULT_CAMIO_GREETINGS.female,
+      (input.camioGreetingUnknown ?? DEFAULT_CAMIO_GREETINGS.unknown).trim() ||
+        DEFAULT_CAMIO_GREETINGS.unknown,
     ],
   );
+}
+
+/** Tên gọi để chào: từ CUỐI của họ tên (kiểu Việt) — "Phạm Anh Tuấn" → "Tuấn". */
+export function firstNameForGreeting(fullName: string | null | undefined): string {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  return parts.length ? parts[parts.length - 1]! : "";
+}
+
+/**
+ * Dựng lời chào Camio theo giới tính + tên, từ mẫu câu cấu hình. {ten} được
+ * thay bằng tên gọi; nếu trống thì bỏ khoảng trắng thừa cho câu vẫn gọn.
+ */
+export function buildCamioGreeting(
+  settings: Pick<
+    AutoReplySettings,
+    "camioGreetingMale" | "camioGreetingFemale" | "camioGreetingUnknown"
+  >,
+  user: { fullName?: string | null; gender?: string | null } | null,
+): string {
+  const gender = user?.gender ?? "UNKNOWN";
+  const template =
+    gender === "MALE"
+      ? settings.camioGreetingMale
+      : gender === "FEMALE"
+        ? settings.camioGreetingFemale
+        : settings.camioGreetingUnknown;
+  const name = firstNameForGreeting(user?.fullName);
+  return template
+    .replace(/\{ten\}/g, name)
+    .replace(/\s+([,.!?…])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export interface KbDocument {

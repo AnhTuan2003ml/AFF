@@ -16,7 +16,16 @@ const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_ENDPOINT =
   "https://openidconnect.googleapis.com/v1/userinfo";
 const GOOGLE_TOKENINFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
+// People API để đọc giới tính (userinfo OpenID chuẩn KHÔNG có gender). Cần bật
+// People API + scope user.gender.read trong Google Cloud Console; nhiều tài
+// khoản để trống nên đây là best-effort — rỗng thì coi như UNKNOWN.
+const GOOGLE_PEOPLE_ENDPOINT =
+  "https://people.googleapis.com/v1/people/me?personFields=genders";
+const GOOGLE_GENDER_SCOPE =
+  "https://www.googleapis.com/auth/user.gender.read";
 const REQUEST_TIMEOUT_MS = 8000;
+
+export type Gender = "MALE" | "FEMALE" | "UNKNOWN";
 
 const PROVIDER = "GOOGLE";
 
@@ -26,6 +35,8 @@ export interface GoogleProfile {
   emailVerified: boolean;
   name: string;
   avatarUrl: string;
+  /** Giới tính từ People API (best-effort) — UNKNOWN nếu Google không trả. */
+  gender: Gender;
 }
 
 /** Có đủ Client ID + Secret thì tính năng Google mới bật. */
@@ -49,7 +60,7 @@ export function buildGoogleAuthUrl(config: AppConfig, state: string): string {
     client_id: config.GOOGLE_OAUTH_CLIENT_ID,
     redirect_uri: googleRedirectUri(config),
     response_type: "code",
-    scope: "openid email profile",
+    scope: `openid email profile ${GOOGLE_GENDER_SCOPE}`,
     state,
     access_type: "online",
     include_granted_scopes: "true",
@@ -83,6 +94,27 @@ async function postToken(
     );
   }
   return (await response.json()) as { access_token?: string };
+}
+
+/** Đọc giới tính qua People API (best-effort). Lỗi/không có → UNKNOWN, KHÔNG
+ *  làm hỏng đăng nhập (giới tính không bắt buộc). */
+async function fetchGoogleGender(accessToken: string): Promise<Gender> {
+  try {
+    const response = await fetch(GOOGLE_PEOPLE_ENDPOINT, {
+      headers: { authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    if (!response.ok) return "UNKNOWN";
+    const data = (await response.json()) as {
+      genders?: Array<{ value?: string }>;
+    };
+    const value = (data.genders?.[0]?.value ?? "").toLowerCase();
+    if (value === "male") return "MALE";
+    if (value === "female") return "FEMALE";
+    return "UNKNOWN";
+  } catch {
+    return "UNKNOWN";
+  }
 }
 
 /** Đổi authorization code lấy hồ sơ người dùng đã xác thực từ Google. */
@@ -126,6 +158,7 @@ export async function fetchGoogleProfile(
       400,
     );
   }
+  const gender = await fetchGoogleGender(token.access_token);
   return {
     sub: info.sub,
     email: info.email,
@@ -133,6 +166,7 @@ export async function fetchGoogleProfile(
     emailVerified: info.email_verified === true || info.email_verified === "true",
     name: (info.name ?? info.given_name ?? "").trim(),
     avatarUrl: (info.picture ?? "").trim().slice(0, 500),
+    gender,
   };
 }
 
@@ -216,6 +250,8 @@ export async function verifyGoogleIdToken(
     emailVerified: info.email_verified === true || info.email_verified === "true",
     name: (info.name ?? info.given_name ?? "").trim(),
     avatarUrl: (info.picture ?? "").trim().slice(0, 500),
+    // Luồng app dùng id_token (tokeninfo) không có gender — để UNKNOWN.
+    gender: "UNKNOWN",
   };
 }
 
@@ -280,10 +316,11 @@ export async function findOrCreateGoogleUser(
         SET status = CASE WHEN status = 'PENDING_EMAIL' THEN 'ACTIVE' ELSE status END,
           email_verified_at = COALESCE(email_verified_at, now()),
           avatar_url = COALESCE(NULLIF($2, ''), avatar_url),
+          gender = CASE WHEN gender = 'UNKNOWN' AND $3 <> 'UNKNOWN' THEN $3 ELSE gender END,
           last_login_at = now()
         WHERE id = $1
       `,
-      [user.id, profile.avatarUrl],
+      [user.id, profile.avatarUrl, profile.gender],
     );
     return { userId: user.id, isNew: false };
   }
@@ -316,10 +353,11 @@ export async function findOrCreateGoogleUser(
           SET status = CASE WHEN status = 'PENDING_EMAIL' THEN 'ACTIVE' ELSE status END,
             email_verified_at = COALESCE(email_verified_at, now()),
             avatar_url = COALESCE(NULLIF($2, ''), avatar_url),
+            gender = CASE WHEN gender = 'UNKNOWN' AND $3 <> 'UNKNOWN' THEN $3 ELSE gender END,
             last_login_at = now()
           WHERE id = $1
         `,
-        [current.id, profile.avatarUrl],
+        [current.id, profile.avatarUrl, profile.gender],
       );
       return { userId: current.id, isNew: false };
     }
@@ -341,11 +379,11 @@ export async function findOrCreateGoogleUser(
       `
         INSERT INTO users (
           email, full_name, password_hash, status, email_verified_at,
-          referral_code, avatar_url, last_login_at
-        ) VALUES ($1, $2, NULL, 'ACTIVE', now(), $3, $4, now())
+          referral_code, avatar_url, gender, last_login_at
+        ) VALUES ($1, $2, NULL, 'ACTIVE', now(), $3, $4, $5, now())
         RETURNING id
       `,
-      [email, fullName, referralCode, profile.avatarUrl],
+      [email, fullName, referralCode, profile.avatarUrl, profile.gender],
     );
     const userId = inserted.rows[0]!.id;
     await query(

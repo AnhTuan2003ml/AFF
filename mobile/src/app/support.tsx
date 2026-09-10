@@ -154,6 +154,18 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
   const { data: form } = useQuery({ queryKey: ['support-form'], queryFn: laySupportForm });
   const coDon = (form?.orderOptions.length ?? 0) > 0;
 
+  // Lời chào cá nhân hoá (tên + giới tính) từ server — thay tin chào mặc định
+  // khi chưa có trao đổi nào (không đè lên hội thoại đang diễn ra).
+  useEffect(() => {
+    const chao = form?.camioGreeting;
+    if (!chao) return;
+    setTin((cur) =>
+      cur.length === 1 && cur[0]?.role === 'assistant'
+        ? [{ role: 'assistant', body: chao }]
+        : cur,
+    );
+  }, [form?.camioGreeting]);
+
   async function guiTin() {
     const text = noiDung.trim();
     if (!text || dangGui) return;
@@ -164,7 +176,11 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
     setDangGui(true);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
     try {
-      const res = await chatCamio({ message, history });
+      const res = await chatCamio({
+        message,
+        history,
+        ...(donDangHoi ? { orderKey: donDangHoi.key } : {}),
+      });
       setTin((cur) => [...cur, { role: 'assistant', body: res.reply }]);
     } catch {
       setTin((cur) => [...cur, { role: 'assistant', body: t('Xin lỗi, Camio chưa trả lời được. Thử lại sau nhé.', 'Sorry, Camio couldn’t reply. Please try again later.') }]);

@@ -22,6 +22,8 @@ export interface AuthUser {
   hasPassword?: boolean;
   /** Tài khoản đối tác (KOL/đối tác đặc biệt) → hiện huy hiệu ⭐ Đối tác. */
   isSpecialPartner?: boolean;
+  /** Giới tính (chỉ /api/v1/me trả về). Camio dùng để xưng hô. */
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
 }
 
 interface TokenResponse {
@@ -103,6 +105,7 @@ export async function loginWithGoogleWeb(): Promise<{ isNew: boolean }> {
 export async function register(input: {
   fullName: string;
   email: string;
+  gender?: 'MALE' | 'FEMALE';
   password: string;
   passwordConfirm: string;
   referralCode?: string;

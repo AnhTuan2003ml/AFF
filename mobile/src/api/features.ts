@@ -132,14 +132,20 @@ export function layGioiThieu() {
   }>('/api/v1/referrals');
 }
 
-/** Chat với Camio (AI) — trả lời ngay. history: các lượt trước (user/assistant). */
+/** Chat với Camio (AI) — trả lời ngay. history: các lượt trước (user/assistant).
+ *  orderKey (ORDER:/INTENT:) khi khách chọn "Tìm đơn" → Camio trả lời theo đơn. */
 export function chatCamio(params: {
   message: string;
   history?: { role: 'user' | 'assistant'; body: string }[];
+  orderKey?: string;
 }) {
   return apiFetch<{ reply: string; configured: boolean }>('/api/v1/camio/messages', {
     method: 'POST',
-    body: { message: params.message, history: params.history ?? [] },
+    body: {
+      message: params.message,
+      history: params.history ?? [],
+      ...(params.orderKey ? { orderKey: params.orderKey } : {}),
+    },
   });
 }
 
