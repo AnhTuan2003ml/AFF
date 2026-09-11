@@ -1,6 +1,5 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/macros.njk" import status_badge, empty_state %}
-{% from "partials/charts.njk" import income_line_chart %}
 {% from "partials/icons.njk" import icon %}
 
 {% block app_content %}
@@ -104,35 +103,6 @@
     </section>
   {% endif %}
 
-  {% if referralIncomeChart %}
-    <section class="panel referral-chart-panel" data-income-panel data-income-endpoint="/app/referrals/income-fragment">
-      <header class="panel-heading"><div><span class="eyebrow">{{ t('DOANH THU', 'REVENUE') }}</span><h2>{{ t('Doanh thu theo thời gian', 'Revenue over time') }}</h2></div></header>
-      {# Áp dụng chỉ đổi biểu đồ (AJAX) — không reload trang. #}
-      <form method="get" action="/app/referrals" class="income-filter" data-income-form>
-        <label class="income-field">
-          <span>{{ t('Từ ngày', 'From') }}</span>
-          <input type="date" name="from" class="income-date" value="{{ incomeRange.from }}" max="{{ incomeRange.maxDate }}" required>
-        </label>
-        <label class="income-field">
-          <span>{{ t('Đến ngày', 'To') }}</span>
-          <input type="date" name="to" class="income-date" value="{{ incomeRange.to }}" max="{{ incomeRange.maxDate }}" required>
-        </label>
-        <label class="income-field">
-          <span>{{ t('Đơn vị', 'Unit') }}</span>
-          <select name="unit" class="income-unit">
-            <option value="day" {% if incomeRange.unit == 'day' %}selected{% endif %}>{{ t('Ngày', 'Day') }}</option>
-            <option value="week" {% if incomeRange.unit == 'week' %}selected{% endif %}>{{ t('Tuần', 'Week') }}</option>
-            <option value="month" {% if incomeRange.unit == 'month' %}selected{% endif %}>{{ t('Tháng', 'Month') }}</option>
-          </select>
-        </label>
-        <button type="submit" class="button button-primary button-small income-apply">{{ t('Áp dụng', 'Apply') }}</button>
-      </form>
-      <div data-income-body>
-        {% include "app/_income-fragment.njk" %}
-      </div>
-    </section>
-  {% endif %}
-
   <section class="stat-grid" aria-label="{{ t('Hiệu quả mạng lưới', 'Network performance') }}">
     <div class="stat-card">
       <span class="stat-icon" aria-hidden="true">{{ icon('referral') }}</span>
@@ -177,8 +147,4 @@
   </aside>
 
   <aside class="info-strip"><span>i</span><div><b>{{ t('Không tự tạo nhiều tài khoản', 'Don’t create fake accounts') }}</b><p>{{ t('Referral vòng lặp, tự mua hoặc hành vi gian lận có thể bị loại và khóa rút tiền.', 'Circular referrals, self-buying or fraud may be voided and can lock withdrawals.') }}</p></div></aside>
-{% endblock %}
-
-{% block page_scripts %}
-  <script src="/assets/income-apply.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

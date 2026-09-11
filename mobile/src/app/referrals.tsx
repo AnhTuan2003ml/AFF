@@ -2,14 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { guiDoiMaGioiThieu, layGioiThieu } from '@/api/features';
 import { CanDangNhap } from '@/components/CanDangNhap';
 import { FormScreen } from '@/components/FormScreen';
-import { IncomeChartCard } from '@/components/IncomeChartCard';
 import { useSession } from '@/hooks/useSession';
 import { useT } from '@/i18n';
 import { ngay, vnd } from '@/lib/format';
@@ -221,7 +220,11 @@ export default function ReferralsScreen() {
             <Text style={styles.totalValue}>{vnd(data?.totalEarnedVnd)}</Text>
           </View>
 
-          <IncomeChartCard />
+          <Pressable style={styles.revenueLink} onPress={() => router.push('/doanh-thu' as unknown as Href)}>
+            <Ionicons name="stats-chart-outline" size={18} color={colors.brand} />
+            <Text style={styles.revenueLinkText}>{t('Xem báo cáo doanh thu', 'View revenue report')}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
         </>
       )}
     </FormScreen>
@@ -381,6 +384,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 12, color: colors.muted, fontWeight: '700' },
   totalValue: { fontSize: 24, fontWeight: '900', color: colors.success, marginTop: 4 },
+  revenueLink: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14,
+    paddingVertical: 14, paddingHorizontal: 16, borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, backgroundColor: colors.surface,
+  },
+  revenueLinkText: { flex: 1, fontSize: 14, fontWeight: '800', color: colors.text },
 
   chartCard: {
     padding: spacing.md,

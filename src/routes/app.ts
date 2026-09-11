@@ -1235,10 +1235,7 @@ export async function registerAppRoutes(
   app.get("/referrals", async (request, reply) => {
     const id = userId(request);
 
-    // Bộ lọc biểu đồ doanh thu: đơn vị (ngày/tuần/tháng) + khoảng [from, to].
-    const range = parseIncomeRange(request.query as Record<string, unknown>);
-
-    const [referrals, mySource, myEarnings, myShopping, income, kolStatus] =
+    const [referrals, mySource, myEarnings, myShopping, kolStatus] =
       await Promise.all([
       query<{
         full_name: string;
@@ -1300,22 +1297,12 @@ export async function registerAppRoutes(
         `,
         [id],
       ),
-      loadReferralIncome(deps.db, id, range.fromDate, range.toDate, range.unit),
       getUserKolStatus(deps.db, id),
     ]);
-    const referralIncomeChart = buildIncomeChart(income.points);
     return reply.view("app/referrals.njk", {
       pageTitle: "Mạng lưới của tôi",
       appSection: "referrals",
       kolStatus,
-      referralIncomeChart,
-      incomeBreakdown: income.breakdown,
-      incomeRange: {
-        from: range.from,
-        to: range.to,
-        unit: range.unit,
-        maxDate: range.maxDate,
-      },
       referrals: referrals.rows,
       referredByName: mySource.rows[0]?.full_name ?? null,
       networkEarnings: myEarnings.rows[0] ?? {
@@ -1332,9 +1319,36 @@ export async function registerAppRoutes(
     });
   });
 
+  // Trang Doanh thu — thống kê thu nhập 3 nguồn (hoa hồng đơn của mình / người
+  // mình giới thiệu / mua qua link chia sẻ) + biểu đồ theo thời gian. Tách khỏi
+  // trang Giới thiệu (chỉ còn danh sách thành viên).
+  app.get("/doanh-thu", async (request, reply) => {
+    const id = userId(request);
+    const range = parseIncomeRange(request.query as Record<string, unknown>);
+    const income = await loadReferralIncome(
+      deps.db,
+      id,
+      range.fromDate,
+      range.toDate,
+      range.unit,
+    );
+    return reply.view("app/revenue.njk", {
+      pageTitle: "Doanh thu",
+      appSection: "revenue",
+      referralIncomeChart: buildIncomeChart(income.points),
+      incomeBreakdown: income.breakdown,
+      incomeRange: {
+        from: range.from,
+        to: range.to,
+        unit: range.unit,
+        maxDate: range.maxDate,
+      },
+    });
+  });
+
   // Mảnh HTML biểu đồ doanh thu — cho nút "Áp dụng" đổi bảng bằng AJAX, không
   // reload trang (khỏi nhảy về đầu trang).
-  app.get("/referrals/income-fragment", async (request, reply) => {
+  app.get("/doanh-thu/income-fragment", async (request, reply) => {
     const range = parseIncomeRange(request.query as Record<string, unknown>);
     const income = await loadReferralIncome(
       deps.db,

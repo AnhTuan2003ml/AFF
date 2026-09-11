@@ -1,0 +1,51 @@
+{% extends "app/app-base.njk" %}
+{% from "partials/charts.njk" import income_line_chart %}
+
+{% block app_content %}
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">{{ t('DOANH THU CỦA TÔI', 'MY REVENUE') }}</span>
+      <h1>{{ t('Doanh thu', 'Revenue') }} <em>{{ t('từ 3 nguồn', 'from 3 sources') }}</em></h1>
+      <p>{{ t('Thống kê tiền bạn nhận: hoa hồng từ đơn của chính bạn, từ người bạn giới thiệu, và từ link chia sẻ.', 'Money you earn: cashback on your own orders, from people you referred, and from your share links.') }}</p>
+    </div>
+  </header>
+
+  <section class="panel referral-chart-panel" data-income-panel data-income-endpoint="/app/doanh-thu/income-fragment">
+    <header class="panel-heading"><div><span class="eyebrow">{{ t('DOANH THU', 'REVENUE') }}</span><h2>{{ t('Doanh thu theo thời gian', 'Revenue over time') }}</h2></div></header>
+    {# Áp dụng chỉ đổi biểu đồ (AJAX) — không reload trang. #}
+    <form method="get" action="/app/doanh-thu" class="income-filter" data-income-form>
+      <label class="income-field">
+        <span>{{ t('Từ ngày', 'From') }}</span>
+        <input type="date" name="from" class="income-date" value="{{ incomeRange.from }}" max="{{ incomeRange.maxDate }}" required>
+      </label>
+      <label class="income-field">
+        <span>{{ t('Đến ngày', 'To') }}</span>
+        <input type="date" name="to" class="income-date" value="{{ incomeRange.to }}" max="{{ incomeRange.maxDate }}" required>
+      </label>
+      <label class="income-field">
+        <span>{{ t('Đơn vị', 'Unit') }}</span>
+        <select name="unit" class="income-unit">
+          <option value="day" {% if incomeRange.unit == 'day' %}selected{% endif %}>{{ t('Ngày', 'Day') }}</option>
+          <option value="week" {% if incomeRange.unit == 'week' %}selected{% endif %}>{{ t('Tuần', 'Week') }}</option>
+          <option value="month" {% if incomeRange.unit == 'month' %}selected{% endif %}>{{ t('Tháng', 'Month') }}</option>
+        </select>
+      </label>
+      <button type="submit" class="button button-primary button-small income-apply">{{ t('Áp dụng', 'Apply') }}</button>
+    </form>
+    <div data-income-body>
+      {% include "app/_income-fragment.njk" %}
+    </div>
+  </section>
+
+  <aside class="info-strip">
+    <span>i</span>
+    <div>
+      <b>{{ t('3 nguồn doanh thu', '3 revenue sources') }}</b>
+      <p>{{ t('“Đơn của bạn” = hoàn tiền từ đơn bạn tự mua. “Người bạn giới thiệu” = hoa hồng khi người nhập mã của bạn mua hàng. “Mua qua link chia sẻ” = hoa hồng từ link bạn chia sẻ.', '“Your orders” = cashback on your own purchases. “People you referred” = commission when someone who used your code buys. “Via share links” = commission from links you shared.') }}</p>
+    </div>
+  </aside>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/income-apply.js?v={{ assetVersion }}" defer></script>
+{% endblock %}
