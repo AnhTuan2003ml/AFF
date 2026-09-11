@@ -118,8 +118,9 @@
               <th>Sản phẩm</th>
               <th>Sub ID</th>
               <th>Người mua</th>
-              <th>Giá trị / hoa hồng</th>
-              <th>Hoàn tiền</th>
+              <th class="num-col">Giá trị đơn</th>
+              <th class="num-col">Tổng hoa hồng</th>
+              <th class="num-col">Hoàn cho user</th>
               <th>Trạng thái</th>
               <th class="detail-col">Chi tiết</th>
             </tr>
@@ -178,14 +179,17 @@
                   <small>{{ order.email }}</small>
                 </td>
 
-                <td class="recon-money">
-                  <b class="money-value">{{ order.order_amount_vnd | vnd }}</b>
-                  <span class="money-commission">+{{ order.commission_vnd | vnd }} <em>hoa hồng</em></span>
+                <td class="num-col">
+                  <b class="money-num money-value">{{ order.order_amount_vnd | vnd }}</b>
                 </td>
 
-                <td class="recon-money">
-                  <b class="money-cashback">{{ order.cashback_vnd | vnd }}</b>
-                  <small>{% if order.reviewer_email %}{{ order.reviewer_email }}{% else %}Chưa có người duyệt{% endif %}</small>
+                <td class="num-col">
+                  <b class="money-num money-commission">{{ order.commission_vnd | vnd }}</b>
+                </td>
+
+                <td class="num-col">
+                  <b class="money-num money-cashback">{{ order.cashback_vnd | vnd }}</b>
+                  <small class="money-note">{% if order.reviewer_email %}{{ order.reviewer_email }}{% else %}Chưa duyệt{% endif %}</small>
                 </td>
 
                 <td>
