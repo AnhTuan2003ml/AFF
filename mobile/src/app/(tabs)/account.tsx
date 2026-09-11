@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import * as Updates from 'expo-updates';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
@@ -190,6 +190,12 @@ export default function AccountScreen() {
             icon="receipt-outline"
             label={t('Đơn hàng & đối soát', 'Orders & reconciliation')}
             onPress={() => router.push('/(tabs)/orders')}
+            divider
+          />
+          <MenuRow
+            icon="bar-chart-outline"
+            label={t('Báo cáo doanh thu', 'Revenue report')}
+            onPress={() => router.push('/doanh-thu' as unknown as Href)}
             divider
           />
           <MenuRow

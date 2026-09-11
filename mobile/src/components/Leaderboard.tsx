@@ -70,7 +70,16 @@ function Spot({ item, rank, product }: { item?: Item; rank: 1 | 2 | 3; product: 
 
 export function Leaderboard() {
   const t = useT();
-  const { data } = useQuery({ queryKey: ['leaderboard'], queryFn: layBangXepHang });
+  // Cập nhật gần realtime: tự tải lại mỗi 30s và mỗi khi quay lại màn hình,
+  // để hạng thay đổi hiện ra sớm nhất (bảng tính trực tiếp từ DV mỗi lần gọi).
+  const { data } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: layBangXepHang,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    refetchOnMount: 'always',
+    staleTime: 15_000,
+  });
   const [tab, setTab] = useState<0 | 1>(0);
 
   if (!data || (data.topBuyers.length === 0 && data.topProducts.length === 0)) {

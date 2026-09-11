@@ -411,8 +411,9 @@ export async function registerFeatureApiRoutes(
   /* --------------------------- Bảng xếp hạng -------------------------- */
 
   // Công khai như web: bảng xếp hạng hiện cả khi chưa đăng nhập.
+  // Cache ngắn (20s) để cập nhật gần realtime — hạng đổi hiện ra sớm.
   app.get("/leaderboard", async (_request, reply) => {
-    reply.header("cache-control", "public, max-age=60");
+    reply.header("cache-control", "public, max-age=20");
     return getPlatformLeaderboard(deps.db);
   });
 

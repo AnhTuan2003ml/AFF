@@ -7,13 +7,11 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { layMe } from '@/api/account';
 import { layDiemDanh, layThongBao } from '@/api/features';
 import { apiBaseUrl } from '@/api/client';
 import { CheckinModal } from '@/components/CheckinModal';
 import { useSession } from '@/hooks/useSession';
 import { useLang, useT } from '@/i18n';
-import { vnd } from '@/lib/format';
 import { colors, radius, shadow, spacing } from '@/theme/tokens';
 
 /**
@@ -34,7 +32,6 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
   const [moDiemDanh, setMoDiemDanh] = useState(false);
   const [moNgonNgu, setMoNgonNgu] = useState(false);
 
-  const { data: me } = useQuery({ queryKey: ['me'], queryFn: layMe, enabled: !!user });
   const { data: tb } = useQuery({
     queryKey: ['notifications'],
     queryFn: layThongBao,
@@ -65,15 +62,8 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
 
       {user ? (
         <View style={styles.right}>
-          {/* Đổi ngôn ngữ toàn app — quả cầu ngay cạnh lịch điểm danh. */}
-          <Pressable
-            style={styles.iconBtn}
-            hitSlop={6}
-            accessibilityLabel={lang === 'vi' ? 'Đổi ngôn ngữ' : 'Change language'}
-            onPress={() => setMoNgonNgu(true)}>
-            <Ionicons name="globe-outline" size={22} color={colors.inkSoft} />
-          </Pressable>
-
+          {/* Thứ tự khớp header web mobile: lịch điểm danh · ngôn ngữ · chuông ·
+             avatar. Số dư KHÔNG để ở header (web mobile ẩn) — đã có ở hero + tab Ví. */}
           <Pressable
             style={styles.iconBtn}
             hitSlop={6}
@@ -81,6 +71,16 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
             onPress={() => setMoDiemDanh(true)}>
             <Ionicons name="calendar-outline" size={22} color={colors.inkSoft} />
             {chuaDiemDanh && <View style={styles.dot} />}
+          </Pressable>
+
+          {/* Đổi ngôn ngữ toàn app — quả cầu kèm mã VI/EN như web. */}
+          <Pressable
+            style={styles.langBtn}
+            hitSlop={6}
+            accessibilityLabel={lang === 'vi' ? 'Đổi ngôn ngữ' : 'Change language'}
+            onPress={() => setMoNgonNgu(true)}>
+            <Ionicons name="globe-outline" size={22} color={colors.inkSoft} />
+            <Text style={styles.langCode}>{lang === 'vi' ? 'VI' : 'EN'}</Text>
           </Pressable>
 
           <Pressable
@@ -93,10 +93,6 @@ export function BrandHeader({ onRegister }: { onRegister?: () => void }) {
                 <Text style={styles.badgeText}>{chuaDoc > 9 ? '9+' : chuaDoc}</Text>
               </View>
             )}
-          </Pressable>
-
-          <Pressable style={styles.walletChip} onPress={() => router.push('/(tabs)/wallet')}>
-            <Text style={styles.walletChipText}>{vnd(me?.balances.available ?? 0)}</Text>
           </Pressable>
 
           <Pressable style={styles.avatar} onPress={() => setMoMenu(true)}>
@@ -194,6 +190,7 @@ function MenuTaiKhoan({
           <Muc icon="flag-outline" nhan={t('Nhiệm vụ nhận thưởng', 'Reward missions')} onPress={() => di('/missions')} />
           <Muc icon="share-social-outline" nhan={t('Chia sẻ nhận hoa hồng', 'Share to earn commission')} onPress={() => di('/chia-se')} />
           <Muc icon="link-outline" nhan={t('Giới thiệu bạn bè', 'Refer friends')} onPress={() => di('/referrals')} />
+          <Muc icon="bar-chart-outline" nhan={t('Báo cáo doanh thu', 'Revenue report')} onPress={() => di('/doanh-thu' as unknown as Parameters<typeof router.push>[0])} />
           <Muc icon="ribbon-outline" nhan={t('Đăng ký đối tác với chúng tôi', 'Become our partner')} onPress={() => di('/kol')} />
           <Muc icon="card-outline" nhan={t('Tài khoản ngân hàng', 'Bank account')} onPress={() => di('/bank')} />
           <Muc icon="chatbubbles-outline" nhan={t('Hỗ trợ & khiếu nại', 'Support & complaints')} onPress={() => di('/support')} />
@@ -279,8 +276,17 @@ const styles = StyleSheet.create({
   logo: { width: 34, height: 34 },
   brandText: { fontSize: 21, fontWeight: '900', letterSpacing: -1, color: colors.brand },
 
-  right: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  langBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    height: 36,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+  },
+  langCode: { fontSize: 11.5, fontWeight: '900', color: colors.inkSoft, letterSpacing: 0.3 },
   badge: {
     position: 'absolute',
     top: 3,
@@ -303,13 +309,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.brand,
   },
-  walletChip: {
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
-  },
-  walletChipText: { fontSize: 12.5, fontWeight: '900', color: colors.brand },
   avatar: {
     width: 34,
     height: 34,
