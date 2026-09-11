@@ -115,7 +115,8 @@
                 <input type="checkbox" data-select-all="orders" aria-label="Chọn tất cả đơn trên trang">
               </th>
               <th>Mã đơn</th>
-              <th>Sản phẩm &amp; tracking</th>
+              <th>Sản phẩm</th>
+              <th>Sub ID</th>
               <th>Người mua</th>
               <th>Giá trị / hoa hồng</th>
               <th>Hoàn tiền</th>
@@ -156,17 +157,20 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM4 7l2-3h12l2 3M9 13h6"/></svg>
                       {% endif %}
                     </span>
-                    <div class="recon-prod-body">
-                      <b class="recon-prod-name">{{ order.product_name or 'Chưa có tên sản phẩm' }}</b>
-                      <dl class="recon-ids">
-                        <div><dt>Affiliate ID</dt><dd><code>{{ order.affiliate_id or '—' }}</code></dd></div>
-                        <div>
-                          <dt>{% if order.attribution_method == 'SUB_ID' and order.sub_id %}Sub ID{% elif order.click_id %}Click ID{% else %}Tracking{% endif %}</dt>
-                          <dd><code>{% if order.attribution_method == 'SUB_ID' and order.sub_id %}{{ order.sub_id }}{% elif order.click_id %}{{ order.click_id }}{% else %}Không có{% endif %}</code></dd>
-                        </div>
-                      </dl>
-                    </div>
+                    <b class="recon-prod-name">{{ order.product_name or 'Chưa có tên sản phẩm' }}</b>
                   </div>
+                </td>
+
+                <td class="recon-subid-cell">
+                  {% if order.attribution_method == 'SUB_ID' and order.sub_id %}
+                    <span class="recon-subid-tag">Sub ID</span>
+                    <code>{{ order.sub_id }}</code>
+                  {% elif order.click_id %}
+                    <span class="recon-subid-tag is-click">Click ID</span>
+                    <code>{{ order.click_id }}</code>
+                  {% else %}
+                    <span class="recon-subid-none">Không có mã tracking</span>
+                  {% endif %}
                 </td>
 
                 <td>
@@ -174,13 +178,13 @@
                   <small>{{ order.email }}</small>
                 </td>
 
-                <td>
-                  <strong>{{ order.order_amount_vnd | vnd }}</strong>
-                  <small>{{ order.commission_vnd | vnd }} hoa hồng</small>
+                <td class="recon-money">
+                  <b class="money-value">{{ order.order_amount_vnd | vnd }}</b>
+                  <span class="money-commission">+{{ order.commission_vnd | vnd }} <em>hoa hồng</em></span>
                 </td>
 
-                <td>
-                  <strong>{{ order.cashback_vnd | vnd }}</strong>
+                <td class="recon-money">
+                  <b class="money-cashback">{{ order.cashback_vnd | vnd }}</b>
                   <small>{% if order.reviewer_email %}{{ order.reviewer_email }}{% else %}Chưa có người duyệt{% endif %}</small>
                 </td>
 
