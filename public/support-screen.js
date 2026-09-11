@@ -5,6 +5,25 @@
   var landing = document.querySelector("[data-support-landing]");
   if (!landing) return;
 
+  // iOS Safari khôi phục vị trí cuộn khi reload → trang Hỗ trợ hay bị nhảy về
+  // CHÂN trang. Trang này luôn nên bắt đầu từ đầu: tắt khôi phục cuộn (chỉ cho
+  // trang này, trả lại 'auto' khi rời đi) và ép về đầu trang.
+  try {
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+      window.addEventListener("pagehide", function () {
+        try { history.scrollRestoration = "auto"; } catch (e) {}
+      });
+    }
+  } catch (e) {}
+  function toTop() { window.scrollTo(0, 0); }
+  toTop();
+  window.addEventListener("pageshow", function () {
+    toTop();
+    requestAnimationFrame(toTop);
+    setTimeout(toTop, 80);
+  });
+
   var screens = {};
   Array.prototype.forEach.call(
     document.querySelectorAll("[data-support-screen]"),
