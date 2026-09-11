@@ -120,6 +120,8 @@ export interface SupportTopic {
 export interface SupportOrderOption {
   key: string;
   label: string;
+  /** Ảnh sản phẩm để hiện trong danh sách chọn đơn. */
+  imageUrl: string | null;
 }
 
 export interface SupportExchangeMessage {

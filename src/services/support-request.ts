@@ -303,6 +303,8 @@ export interface SupportOrderOption {
   /** `ORDER:<id>` hoặc `INTENT:<id>` — khớp `orderKey` khi gửi. */
   key: string;
   label: string;
+  /** Ảnh sản phẩm để hiển thị trong danh sách chọn đơn. */
+  imageUrl: string | null;
 }
 
 const ORDER_OPTION_DATE = new Intl.DateTimeFormat("vi-VN", {
@@ -317,11 +319,13 @@ export function toSupportOrderOption(row: {
   platform: string;
   platform_order_id: string | null;
   product_name: string | null;
+  product_image_url?: string | null;
   purchased_at: Date | string | null;
   created_at: Date | string;
 }): SupportOrderOption {
   return {
     key: `${row.record_kind}:${row.id}`,
+    imageUrl: row.product_image_url ?? null,
     label: [
       platformDisplayName(row.platform),
       row.platform_order_id

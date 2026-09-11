@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -235,7 +236,11 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
       {donDangHoi || donLink ? (
         <View style={styles.attachBar}>
           <Pressable style={styles.attachChip} onPress={() => setMoChonDon(true)}>
-            <Ionicons name={donDangHoi ? 'cube-outline' : 'link-outline'} size={14} color={colors.brand} />
+            {donDangHoi?.imageUrl ? (
+              <Image source={{ uri: donDangHoi.imageUrl }} style={styles.chipThumb} contentFit="cover" />
+            ) : (
+              <Ionicons name={donDangHoi ? 'cube-outline' : 'link-outline'} size={14} color={colors.brand} />
+            )}
             <Text style={styles.attachText} numberOfLines={1}>
               {donDangHoi ? donDangHoi.label : donLink}
             </Text>
@@ -278,8 +283,15 @@ function ChatCamio({ veLanding }: { veLanding: () => void }) {
                   <ScrollView style={{ maxHeight: 220 }}>
                     {(form?.orderOptions ?? []).map((o) => (
                       <Pressable key={o.key} onPress={() => { setDonDangHoi(o); setDonLink(null); setMoChonDon(false); }}
-                        style={({ pressed }) => [styles.option, donDangHoi?.key === o.key && styles.optionOn, pressed && { opacity: 0.85 }]}>
-                        <Text style={styles.optionText} numberOfLines={2}>{o.label}</Text>
+                        style={({ pressed }) => [styles.orderItem, donDangHoi?.key === o.key && styles.optionOn, pressed && { opacity: 0.85 }]}>
+                        <View style={styles.orderThumb}>
+                          {o.imageUrl ? (
+                            <Image source={{ uri: o.imageUrl }} style={styles.orderThumbImg} contentFit="cover" />
+                          ) : (
+                            <Ionicons name="cube-outline" size={20} color={colors.muted} />
+                          )}
+                        </View>
+                        <Text style={styles.orderItemText} numberOfLines={2}>{o.label}</Text>
                         {donDangHoi?.key === o.key && <Ionicons name="checkmark" size={18} color={colors.brand} />}
                       </Pressable>
                     ))}
@@ -1307,6 +1319,18 @@ const styles = StyleSheet.create({
   },
   optionOn: { backgroundColor: colors.brandSoft },
   optionText: { flex: 1, fontSize: 13.5, color: colors.text },
+  orderItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 8, paddingHorizontal: 8, borderRadius: 12, marginBottom: 6,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, backgroundColor: colors.paper,
+  },
+  orderThumb: {
+    width: 46, height: 46, flex: 0, borderRadius: 10, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.brandSoft,
+  },
+  orderThumbImg: { width: '100%', height: '100%' },
+  orderItemText: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.text, lineHeight: 18 },
+  chipThumb: { width: 20, height: 20, borderRadius: 5, flex: 0 },
   ghost: { alignItems: 'center', paddingVertical: 8 },
   ghostText: { color: colors.muted, fontWeight: '700', fontSize: 13.5 },
 

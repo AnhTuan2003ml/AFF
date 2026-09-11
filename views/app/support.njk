@@ -66,31 +66,34 @@
       </div>
       <div class="support-screen-foot">
         <div class="camio-order-chip" data-camio-order-chip hidden>
+          <span class="camio-chip-thumb" data-camio-order-thumb hidden><img src="" alt="" referrerpolicy="no-referrer"></span>
           <span data-camio-order-label></span>
           <button type="button" data-camio-order-clear aria-label="{{ t('Bỏ đơn', 'Remove order') }}">×</button>
         </div>
         <div class="camio-picker" data-camio-picker hidden>
           <div class="camio-picker-head">
             <b>{{ t('Hỏi về một đơn / sản phẩm', 'Ask about an order / product') }}</b>
-            <button type="button" class="camio-picker-x" data-camio-picker-done aria-label="{{ t('Đóng', 'Close') }}">
+            <button type="button" class="camio-picker-x" data-camio-picker-close aria-label="{{ t('Đóng', 'Close') }}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
           </div>
-          <label class="camio-picker-field">
-            <span>{{ t('Chọn đơn của bạn', 'Choose your order') }}</span>
-            <select data-camio-order-select>
-              <option value="">{{ t('— Chọn đơn —', '— Choose an order —') }}</option>
+          {% if orderOptions.length %}
+            <div class="camio-picker-field-label">{{ t('Chọn đơn của bạn', 'Choose your order') }}</div>
+            <div class="camio-order-list" data-camio-order-list>
               {% for option in orderOptions %}
-                <option value="{{ option.key }}" data-label="{{ option.label }}">{{ option.label }}</option>
+                <button type="button" class="camio-order-item" data-order-key="{{ option.key }}" data-order-label="{{ option.label }}" data-order-img="{{ option.imageUrl or '' }}">
+                  <span class="camio-order-thumb">{% if option.imageUrl %}<img src="{{ option.imageUrl }}" alt="" referrerpolicy="no-referrer">{% else %}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM4 7l2-3h12l2 3"/></svg>{% endif %}</span>
+                  <span class="camio-order-text">{{ option.label }}</span>
+                </button>
               {% endfor %}
-            </select>
-          </label>
-          <div class="camio-picker-or"><span>{{ t('hoặc', 'or') }}</span></div>
+            </div>
+            <div class="camio-picker-or"><span>{{ t('hoặc', 'or') }}</span></div>
+          {% endif %}
           <label class="camio-picker-field">
             <span>{{ t('Dán link sản phẩm (Shopee/TikTok/Lazada)', 'Paste product link') }}</span>
             <input type="url" inputmode="url" data-camio-order-link maxlength="500" placeholder="https://shopee.vn/...">
           </label>
-          <button type="button" class="button button-primary button-small camio-picker-done" data-camio-picker-done>{{ t('Đính kèm', 'Attach') }}</button>
+          <button type="button" class="button button-primary button-small camio-picker-done" data-camio-link-attach>{{ t('Đính kèm link', 'Attach link') }}</button>
         </div>
         <form class="camio-bar" data-camio-form novalidate>
           <button type="button" class="camio-find" data-camio-find>

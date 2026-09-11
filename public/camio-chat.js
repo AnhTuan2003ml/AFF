@@ -16,11 +16,13 @@
   var errorBox = root.querySelector("[data-camio-error]");
   var findBtn = root.querySelector("[data-camio-find]");
   var picker = root.querySelector("[data-camio-picker]");
-  var pickerDone = root.querySelector("[data-camio-picker-done]");
-  var orderSelect = root.querySelector("[data-camio-order-select]");
+  var pickerClose = root.querySelector("[data-camio-picker-close]");
+  var linkAttach = root.querySelector("[data-camio-link-attach]");
+  var orderList = root.querySelector("[data-camio-order-list]");
   var orderLink = root.querySelector("[data-camio-order-link]");
   var orderChip = root.querySelector("[data-camio-order-chip]");
   var orderLabelEl = root.querySelector("[data-camio-order-label]");
+  var orderThumb = root.querySelector("[data-camio-order-thumb]");
   var orderClear = root.querySelector("[data-camio-order-clear]");
   if (!thread || !form || !input) return;
 
@@ -68,7 +70,7 @@
     return row;
   }
 
-  function setOrder(label, key, link) {
+  function setOrder(label, key, link, imageUrl) {
     // key = ORDER:<id>/INTENT:<id> khi chọn từ danh sách (backend nạp ngữ cảnh
     // đơn); link = URL sản phẩm khi dán link (backend tra cứu sản phẩm).
     attachedOrder = label
@@ -76,33 +78,54 @@
       : null;
     if (attachedOrder) {
       if (orderLabelEl) orderLabelEl.textContent = label;
+      if (orderThumb) {
+        var thumbImg = orderThumb.querySelector("img");
+        if (imageUrl && thumbImg) {
+          thumbImg.src = imageUrl;
+          orderThumb.hidden = false;
+        } else {
+          orderThumb.hidden = true;
+        }
+      }
       if (orderChip) orderChip.hidden = false;
     } else if (orderChip) {
       orderChip.hidden = true;
     }
   }
 
+  function closePicker() { if (picker) picker.hidden = true; }
+
   if (findBtn && picker) {
     findBtn.addEventListener("click", function () {
       picker.hidden = !picker.hidden;
     });
   }
-  if (pickerDone) {
-    pickerDone.addEventListener("click", function () {
-      var label = "";
-      var key = "";
-      var link = "";
-      if (orderSelect && orderSelect.value) {
-        var opt = orderSelect.options[orderSelect.selectedIndex];
-        label = opt ? (opt.getAttribute("data-label") || opt.textContent) : "";
-        key = orderSelect.value;
-      } else if (orderLink && orderLink.value.trim()) {
-        link = orderLink.value.trim();
-        // Nhãn gọn cho link (bỏ query cho đỡ dài).
-        label = link.split("?")[0];
+  if (pickerClose) {
+    pickerClose.addEventListener("click", closePicker);
+  }
+  // Bấm một đơn trong danh sách = đính kèm đơn đó rồi ĐÓNG popup ngay.
+  if (orderList) {
+    orderList.addEventListener("click", function (e) {
+      var item = e.target.closest ? e.target.closest(".camio-order-item") : null;
+      if (!item) return;
+      setOrder(
+        item.getAttribute("data-order-label") || "",
+        item.getAttribute("data-order-key") || "",
+        "",
+        item.getAttribute("data-order-img") || "",
+      );
+      closePicker();
+    });
+  }
+  // Dán link → "Đính kèm link": đính kèm rồi đóng popup.
+  if (linkAttach) {
+    linkAttach.addEventListener("click", function () {
+      var link = orderLink && orderLink.value.trim();
+      if (link) {
+        setOrder(link.split("?")[0], "", link, "");
+        if (orderLink) orderLink.value = "";
+        closePicker();
       }
-      if (label) setOrder(label, key, link);
-      if (picker) picker.hidden = true;
     });
   }
   if (orderClear) {
