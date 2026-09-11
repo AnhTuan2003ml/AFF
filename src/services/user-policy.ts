@@ -9,7 +9,7 @@ import { REFERRAL_MILESTONE_MIN_ORDERS } from "./mission.js";
  * và email đăng ký. Con số lấy từ cấu hình nghiệp vụ trong DB, không viết cứng.
  * Sửa nội dung ảnh hưởng quyền lợi thì tăng USER_POLICY_VERSION.
  */
-export const USER_POLICY_VERSION = "2026.09.10";
+export const USER_POLICY_VERSION = "2026.09.11";
 
 export const USER_POLICY_PATH = "/chinh-sach-nguoi-dung";
 
@@ -307,6 +307,10 @@ export function buildUserPolicy(
           "Tiền chỉ chuyển về tài khoản ngân hàng chính chủ đã được xác minh.",
           "Thông tin chủ tài khoản ngân hàng phải phù hợp với thông tin xác minh " +
             "của bạn.",
+          `Khi thêm hoặc cập nhật tài khoản nhận tiền, bạn phải tự xác nhận thông ` +
+            `tin thanh toán (số tài khoản, tên chủ tài khoản, ngân hàng) là hoàn ` +
+            `toàn chính xác. ${app} không chịu bất cứ trách nhiệm nào nếu bạn điền ` +
+            `sai thông tin thanh toán, trừ khi lỗi phát sinh từ hệ thống ${app}.`,
           `Bạn tự kiểm tra chính xác số tài khoản trước khi xác nhận yêu cầu rút. ` +
             `${app} không chịu trách nhiệm khi bạn cung cấp sai thông tin, trừ khi ` +
             `lỗi phát sinh từ hệ thống ${app}.`,
@@ -493,7 +497,7 @@ export function buildUserPolicy(
         "hieu-luc",
         "17. Hiệu lực và tài liệu liên quan",
         [
-          `Chính sách này có hiệu lực từ 10/09/2026 và được công bố tại trang chính ` +
+          `Chính sách này có hiệu lực từ 11/09/2026 và được công bố tại trang chính ` +
             `sách chính thức của ${app}.`,
           "Bạn nên đọc đồng thời Điều khoản sử dụng và Chính sách quyền riêng tư " +
             `(liên kết ở chân trang). ${app} có thể cập nhật đường dẫn, thông tin ` +
@@ -690,6 +694,10 @@ function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
             "announces a different threshold.",
           "Money is only transferred to your own verified bank account.",
           "The bank account holder's details must match your verified information.",
+          `When adding or updating a payout account, you must confirm the payment ` +
+            `details (account number, holder name, bank) are entirely correct. ` +
+            `${app} takes no responsibility if you enter the wrong payment details, ` +
+            `unless the error is from ${app}'s system.`,
           `You must check the account number carefully before confirming. ${app} is ` +
             `not liable for incorrect details you provide, unless the error is from ` +
             `${app}'s system.`,
@@ -880,7 +888,7 @@ function buildUserPolicyEn(facts: UserPolicyFacts): UserPolicyDocument {
         "hieu-luc",
         "17. Effect and related documents",
         [
-          `This policy is effective from 10/09/2026 and published on ${app}'s ` +
+          `This policy is effective from 11/09/2026 and published on ${app}'s ` +
             "official policy page.",
           "You should also read the Terms of Use and Privacy Policy (links in the " +
             `footer). ${app} may update links, contact details or operational ` +

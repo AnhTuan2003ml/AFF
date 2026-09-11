@@ -1,5 +1,6 @@
 {% extends "app/app-base.njk" %}
 {% from "partials/macros.njk" import status_badge, empty_state %}
+{% from "partials/icons.njk" import icon %}
 
 {% block app_content %}
   <div class="two-column-layout bank-task-layout">
@@ -23,6 +24,12 @@
           <small>{{ t('Đúng tên tại ngân hàng — tự chuẩn hóa thành chữ in hoa.', 'Exact name at your bank — auto-normalized to uppercase.') }}</small>
           <small class="field-error" id="account-name-input-error" hidden></small>
         </label>
+        <p class="bank-disclaimer">{{ t('ShopTik không chịu bất cứ trách nhiệm nào nếu bạn điền sai thông tin thanh toán. Vui lòng kiểm tra kỹ số tài khoản và tên chủ tài khoản trước khi gửi.', 'ShopTik takes no responsibility if you enter the wrong payment details. Please double-check the account number and holder name before submitting.') }}</p>
+        <label class="bank-confirm-check" for="bank-confirm-accurate">
+          <input id="bank-confirm-accurate" type="checkbox" name="confirmAccurate" required data-required-message="{{ t('Vui lòng xác nhận thông tin thanh toán là chính xác.', 'Please confirm your payment details are correct.') }}">
+          <span>{{ t('Tôi xác nhận thông tin thanh toán tôi điền là hoàn toàn chính xác.', 'I confirm the payment details I entered are entirely correct.') }}</span>
+        </label>
+        <small class="field-error" id="bank-confirm-accurate-error" hidden></small>
         <button class="button button-primary button-block" type="submit" data-submit-button>{{ t('Gửi OTP xác nhận', 'Send confirmation OTP') }}</button>
       </form>
       <div class="security-note"><span>⌾</span><p>{{ t('ShopTik không cần và không bao giờ hỏi mật khẩu, PIN hoặc OTP Internet Banking.', 'ShopTik never needs or asks for your Internet Banking password, PIN or OTP.') }}</p></div>
@@ -39,9 +46,20 @@
                 {{ status_badge(account.status, lang) }}
               </header>
               <span class="bank-visual-chip" aria-hidden="true"></span>
-              <p class="bank-visual-number" aria-label="Số tài khoản đã che">
-                xxxx&nbsp;xxxx&nbsp;x{{ account.account_last4.slice(1) }}
-              </p>
+              <div class="bank-visual-number-row">
+                <p class="bank-visual-number" data-account-number
+                   data-mask="xxxx xxxx x{{ account.account_last4.slice(1) }}"
+                   {% if account.account_number_full %}data-full="{{ account.account_number_full }}"{% endif %}
+                   aria-label="{{ t('Số tài khoản', 'Account number') }}">xxxx&nbsp;xxxx&nbsp;x{{ account.account_last4.slice(1) }}</p>
+                {% if account.account_number_full %}
+                  <button type="button" class="bank-eye-toggle" data-account-toggle aria-pressed="false"
+                          aria-label="{{ t('Hiện số tài khoản', 'Show account number') }}"
+                          title="{{ t('Hiện số tài khoản', 'Show account number') }}">
+                    <span class="bank-eye-on">{{ icon('eye') }}</span>
+                    <span class="bank-eye-off" hidden>{{ icon('eye-off') }}</span>
+                  </button>
+                {% endif %}
+              </div>
               <footer>
                 <span><small>{{ t('CHỦ TÀI KHOẢN', 'ACCOUNT HOLDER') }}</small><b>{{ account.account_name_full }}</b></span>
                 <span><small>{{ t('NGÀY THÊM', 'ADDED ON') }}</small><b>{{ account.created_at | date }}</b></span>
@@ -56,4 +74,8 @@
       {% endif %}
     </section>
   </div>
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="/assets/bank-reveal.js?v={{ assetVersion }}" defer></script>
 {% endblock %}

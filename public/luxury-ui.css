@@ -3415,7 +3415,81 @@ body.no-scroll {
 
 .bank-visual-number {
   font-size: 20px;
-  letter-spacing: .08em
+  letter-spacing: .08em;
+  margin: 0
+}
+
+.bank-visual-number-row {
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+.bank-eye-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease
+}
+
+.bank-eye-toggle:hover {
+  background: rgba(255, 255, 255, .22)
+}
+
+.bank-eye-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px
+}
+
+.bank-eye-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round
+}
+
+.bank-eye-toggle span {
+  display: inline-flex
+}
+
+.bank-disclaimer {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--lx-line, #ece6dd);
+  background: var(--lx-ivory, #faf6f0);
+  color: var(--lx-muted, #6b6357);
+  font-size: 12.5px;
+  line-height: 1.5
+}
+
+.bank-confirm-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer
+}
+
+.bank-confirm-check input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--lx-orange, #d85a32);
+  cursor: pointer
 }
 
 .bank-visual-list {

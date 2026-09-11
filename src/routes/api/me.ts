@@ -6,6 +6,7 @@ import {
   revokeAllUserSessions,
 } from "../../auth/session.js";
 import { query } from "../../db.js";
+import { decryptField } from "../../lib/crypto.js";
 import { AppError } from "../../lib/errors.js";
 import { parseInput } from "../../lib/validation.js";
 import { deleteOwnAccount } from "../../services/account-deletion.js";
@@ -72,20 +73,45 @@ export async function registerMeApiRoutes(
     "/me/bank-accounts",
     { preHandler: requireApiUser },
     async (request) => {
-      const accounts = await query(
+      const accounts = await query<{
+        id: string;
+        bank_code: string;
+        account_last4: string;
+        account_name_masked: string;
+        account_number_ciphertext: string;
+        status: string;
+        verified_at: Date | null;
+        created_at: Date;
+      }>(
         deps.db,
         `
           SELECT id, bank_code, account_last4, account_name_masked,
-            status, verified_at, created_at
+            account_number_ciphertext, status, verified_at, created_at
           FROM user_bank_accounts
           WHERE user_id = $1 AND status <> 'DISABLED'
           ORDER BY verified_at DESC NULLS LAST, created_at DESC
         `,
         [request.currentUser!.id],
       );
+      // Chủ tài khoản xem được số đầy đủ của chính mình (giải mã tại chỗ) để
+      // app hiện nút con mắt; không giải được thì để trống, app chỉ hiện 4 số cuối.
+      const data = accounts.rows.map((account) => {
+        let accountNumber = "";
+        try {
+          accountNumber = decryptField(
+            account.account_number_ciphertext,
+            deps.config,
+          );
+        } catch {
+          // Bỏ qua bản mã cũ không giải được.
+        }
+        const { account_number_ciphertext, ...rest } = account;
+        void account_number_ciphertext;
+        return { ...rest, account_number_full: accountNumber };
+      });
       // Kèm luôn danh sách ngân hàng hỗ trợ để app khỏi hardcode — đổi ở
       // services/bank.ts là app thấy ngay sau lần mở màn hình kế tiếp.
-      return { data: accounts.rows, supportedBanks: BANKS };
+      return { data, supportedBanks: BANKS };
     },
   );
 

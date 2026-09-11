@@ -29,6 +29,14 @@ export default function BankScreen() {
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string | null>(null);
   const [tin, setTin] = useState<string | null>(null);
+  // Nút con mắt: id các tài khoản đang hiện số đầy đủ.
+  const [hienSo, setHienSo] = useState<Record<string, boolean>>({});
+  // Xác nhận thông tin thanh toán chính xác trước khi gửi.
+  const [xacNhanDung, setXacNhanDung] = useState(false);
+
+  function nhomSo(so: string) {
+    return so.replace(/\s+/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
 
   async function them() {
     setLoi(null);
@@ -59,6 +67,7 @@ export default function BankScreen() {
       setMa('');
       setSoTK('');
       setTenTK('');
+      setXacNhanDung(false);
       setTin(t('Đã xác minh tài khoản ngân hàng.', 'Bank account verified.'));
     } catch (e) {
       setLoi(e instanceof Error && e.message ? e.message : t('Mã chưa đúng.', 'Incorrect code.'));
@@ -87,13 +96,34 @@ export default function BankScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemTitle}>
-                  {b.bank_code} ···{b.account_last4}
+                  {b.bank_code}{' '}
+                  {hienSo[b.id] && b.account_number_full
+                    ? nhomSo(b.account_number_full)
+                    : `···${b.account_last4}`}
                 </Text>
                 <Text style={styles.itemMeta}>
                   {b.account_name_masked} ·{' '}
                   {b.verified_at ? `${t('xác minh', 'verified')} ${ngay(b.verified_at)}` : t('chưa xác minh', 'not verified')}
                 </Text>
               </View>
+              {b.account_number_full ? (
+                <Pressable
+                  onPress={() => setHienSo((s) => ({ ...s, [b.id]: !s[b.id] }))}
+                  hitSlop={8}
+                  style={styles.mat}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    hienSo[b.id]
+                      ? t('Ẩn số tài khoản', 'Hide account number')
+                      : t('Hiện số tài khoản', 'Show account number')
+                  }>
+                  <Ionicons
+                    name={hienSo[b.id] ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color={colors.muted}
+                  />
+                </Pressable>
+              ) : null}
               {b.status === 'VERIFIED' && (
                 <Ionicons name="checkmark-circle" size={19} color={colors.success} />
               )}
@@ -155,11 +185,39 @@ export default function BankScreen() {
             placeholder="NGUYEN VAN A"
             autoCapitalize="characters"
           />
+          <Text style={styles.mienTru}>
+            {t(
+              'ShopTik không chịu bất cứ trách nhiệm nào nếu bạn điền sai thông tin thanh toán. Vui lòng kiểm tra kỹ số tài khoản và tên chủ tài khoản trước khi gửi.',
+              'ShopTik takes no responsibility if you enter the wrong payment details. Please double-check the account number and holder name before submitting.',
+            )}
+          </Text>
+          <Pressable
+            onPress={() => setXacNhanDung((v) => !v)}
+            style={styles.check}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: xacNhanDung }}>
+            <Ionicons
+              name={xacNhanDung ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={xacNhanDung ? colors.brand : colors.muted}
+            />
+            <Text style={styles.checkText}>
+              {t(
+                'Tôi xác nhận thông tin thanh toán tôi điền là hoàn toàn chính xác.',
+                'I confirm the payment details I entered are entirely correct.',
+              )}
+            </Text>
+          </Pressable>
           <PrimaryButton
             label={t('Gửi mã xác nhận', 'Send verification code')}
             onPress={them}
             loading={dangGui}
-            disabled={maNH.trim().length < 2 || soTK.trim().length < 6 || tenTK.trim().length < 3}
+            disabled={
+              maNH.trim().length < 2 ||
+              soTK.trim().length < 6 ||
+              tenTK.trim().length < 3 ||
+              !xacNhanDung
+            }
           />
         </>
       )}
@@ -188,6 +246,25 @@ const styles = StyleSheet.create({
   },
   itemTitle: { fontSize: 14, fontWeight: '800', color: colors.text },
   itemMeta: { fontSize: 11.5, color: colors.muted, marginTop: 2 },
+  mat: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  mienTru: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.muted,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.sm,
+    padding: 10,
+    marginBottom: 12,
+  },
+  check: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 14 },
+  checkText: { flex: 1, fontSize: 13, lineHeight: 19, color: colors.text },
   huy: { alignSelf: 'center', marginTop: 14, padding: 6 },
   huyText: { color: colors.muted, fontSize: 13, fontWeight: '700' },
 });

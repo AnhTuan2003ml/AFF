@@ -508,6 +508,7 @@ export async function registerAppRoutes(
       account_last4: string;
       account_name_masked: string;
       account_name_ciphertext: string;
+      account_number_ciphertext: string;
       status: string;
       rejection_reason: string | null;
       created_at: Date;
@@ -515,7 +516,8 @@ export async function registerAppRoutes(
       deps.db,
       `
         SELECT id, bank_code, account_last4, account_name_masked,
-          account_name_ciphertext, status, rejection_reason, created_at
+          account_name_ciphertext, account_number_ciphertext,
+          status, rejection_reason, created_at
         FROM user_bank_accounts
         WHERE user_id = $1
         ORDER BY created_at DESC
@@ -526,7 +528,7 @@ export async function registerAppRoutes(
       pageTitle: "Tài khoản nhận tiền",
       appSection: "banks",
       banks: BANKS,
-      // Chủ tài khoản xem tên đầy đủ của chính mình; nơi khác vẫn dùng bản che.
+      // Chủ tài khoản xem tên + số đầy đủ của chính mình; nơi khác vẫn dùng bản che.
       accounts: accounts.rows.map((account) => {
         let accountName = account.account_name_masked;
         try {
@@ -537,7 +539,20 @@ export async function registerAppRoutes(
         } catch {
           // Giữ bản che nếu bản mã không giải được (đổi khóa cũ).
         }
-        return { ...account, account_name_full: accountName };
+        let accountNumber = "";
+        try {
+          accountNumber = decryptField(
+            account.account_number_ciphertext,
+            deps.config,
+          );
+        } catch {
+          // Không giải được thì để trống — chỉ hiện bản che 4 số cuối.
+        }
+        return {
+          ...account,
+          account_name_full: accountName,
+          account_number_full: accountNumber,
+        };
       }),
     });
   });

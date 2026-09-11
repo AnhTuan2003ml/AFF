@@ -2010,6 +2010,22 @@
   border-radius: 0 !important;
 }
 
+.dv13-commerce-shell .bank-eye-toggle {
+  border-radius: 0 !important;
+  color: #fff !important;
+}
+
+.dv13-commerce-shell .bank-disclaimer {
+  border-radius: 0 !important;
+  border-color: rgba(14, 18, 22, .14) !important;
+  background: #f5f1ea !important;
+  color: #5a5248 !important;
+}
+
+.dv13-commerce-shell .bank-confirm-check input {
+  accent-color: var(--dv-orange) !important;
+}
+
 /* Giới thiệu */
 .dv13-commerce-shell .referral-hero {
   position: relative;

@@ -14,6 +14,8 @@ export interface BankAccount {
   bank_code: string;
   account_last4: string;
   account_name_masked: string;
+  /** Số tài khoản đầy đủ của chính chủ — dùng cho nút con mắt. Có thể rỗng. */
+  account_number_full?: string;
   status: string;
   verified_at: string | null;
   created_at: string;
