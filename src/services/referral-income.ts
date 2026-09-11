@@ -47,13 +47,13 @@ export function buildIncomeChart(
     ],
     (value) => formatVnd(value),
     {
-      width: 640,
+      width: 760,
       height: 300,
       padLeft: 56,
       padRight: 18,
       padTop: 18,
       padBottom: 40,
-      labelFont: 15,
+      labelFont: 14,
       maxXLabels: 7,
     },
   );

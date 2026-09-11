@@ -10722,9 +10722,27 @@ button.cal-cell.is-today:hover:not(:disabled) {
 .income-legend .is-shareLink .income-legend-dot { background: var(--src-shareLink); }
 
 /* Biểu đồ ĐƯỜNG lớn (doanh thu 3 nguồn) — khung cao, chữ to, tỉ lệ đúng.
-   Desktop: giới hạn bề rộng + căn giữa để không kéo dài thành dải mỏng lệch. */
-.income-chart-wrap { width: 100%; max-width: 760px; margin-inline: auto; }
+   Mobile/tablet: lấp đầy bề ngang (không căn giữa để khỏi thụt lề). */
+.income-chart-wrap { width: 100%; }
 .income-chart { position: relative; width: 100%; }
+
+/* Desktop: 2 cột — biểu đồ lấp đầy bên trái, 3 nguồn + tổng xếp dọc bên phải.
+   Bỏ cảnh biểu đồ nằm giữa khung rộng khiến trông như lùi lề quá nặng. */
+@media (min-width: 900px) {
+  [data-income-body] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+    align-items: start;
+  }
+  [data-income-body] .income-chart-wrap { grid-column: 1; grid-row: 1; }
+  [data-income-body] .income-breakdown {
+    grid-column: 2; grid-row: 1;
+    grid-template-columns: 1fr;
+    margin-bottom: 0;
+    align-content: start;
+  }
+}
 .income-chart svg { display: block; width: 100%; height: auto; }
 .income-chart .trend-gridline {
   stroke: var(--lx-line, #e9ded4);
