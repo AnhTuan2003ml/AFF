@@ -114,7 +114,8 @@
               <th class="select-col">
                 <input type="checkbox" data-select-all="orders" aria-label="Chọn tất cả đơn trên trang">
               </th>
-              <th>Đơn hàng</th>
+              <th>Mã đơn</th>
+              <th>Sản phẩm &amp; tracking</th>
               <th>Người mua</th>
               <th>Giá trị / hoa hồng</th>
               <th>Hoàn tiền</th>
@@ -141,22 +142,31 @@
                   {% endif %}
                 </td>
 
-                <td>
+                <td class="recon-code-cell">
                   <strong>#{{ order.platform_order_id }}</strong>
-                  <small>
-                    {% if order.purchased_at %}Mua {{ order.purchased_at | datetime }}{% else %}Chưa có ngày mua{% endif %}
-                  </small>
-                  {% if order.product_name %}<small>{{ order.product_name }}</small>{% endif %}
-                  <small>Affiliate ID {{ order.affiliate_id or '—' }}</small>
-                  <small>
-                    {% if order.attribution_method == 'SUB_ID' and order.sub_id %}
-                      Sub ID {{ order.sub_id }}
-                    {% elif order.click_id %}
-                      Click {{ order.click_id }}
-                    {% else %}
-                      Không có mã tracking
-                    {% endif %}
-                  </small>
+                  <small>{% if order.purchased_at %}Mua {{ order.purchased_at | datetime }}{% else %}Chưa có ngày mua{% endif %}</small>
+                </td>
+
+                <td class="recon-info-cell">
+                  <div class="recon-prod">
+                    <span class="recon-prod-thumb">
+                      {% if order.product_image_url %}
+                        <img src="{{ order.product_image_url }}" alt="" referrerpolicy="no-referrer" loading="lazy">
+                      {% else %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM4 7l2-3h12l2 3M9 13h6"/></svg>
+                      {% endif %}
+                    </span>
+                    <div class="recon-prod-body">
+                      <b class="recon-prod-name">{{ order.product_name or 'Chưa có tên sản phẩm' }}</b>
+                      <dl class="recon-ids">
+                        <div><dt>Affiliate ID</dt><dd><code>{{ order.affiliate_id or '—' }}</code></dd></div>
+                        <div>
+                          <dt>{% if order.attribution_method == 'SUB_ID' and order.sub_id %}Sub ID{% elif order.click_id %}Click ID{% else %}Tracking{% endif %}</dt>
+                          <dd><code>{% if order.attribution_method == 'SUB_ID' and order.sub_id %}{{ order.sub_id }}{% elif order.click_id %}{{ order.click_id }}{% else %}Không có{% endif %}</code></dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
                 </td>
 
                 <td>

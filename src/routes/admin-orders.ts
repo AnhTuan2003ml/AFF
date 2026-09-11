@@ -159,6 +159,7 @@ export async function registerAdminOrderRoutes(
         click_id: string | null;
         sub_id: string | null;
         product_name: string | null;
+        product_image_url: string | null;
         clicked_product_name: string | null;
         item_source: string | null;
         attribution_method: string | null;
@@ -191,6 +192,7 @@ export async function registerAdminOrderRoutes(
         `
           SELECT o.id, o.platform_order_id, l.click_id, l.sub_id,
             COALESCE(oi.item_name, l.product_name) AS product_name,
+            COALESCE(oi.item_image_url, l.product_image_url) AS product_image_url,
             l.product_name AS clicked_product_name, oi.source AS item_source,
             o.attribution_method, o.attribution_value, o.attributed_at,
             o.evidence_status, o.evidence_verified_at, p.affiliate_id,
@@ -210,7 +212,7 @@ export async function registerAdminOrderRoutes(
           LEFT JOIN affiliate_programs p ON p.id = l.program_id
           LEFT JOIN conversion_raw raw ON raw.id = o.raw_conversion_id
           LEFT JOIN LATERAL (
-            SELECT item_name, source
+            SELECT item_name, item_image_url, source
             FROM order_items
             WHERE order_id = o.id
             ORDER BY CASE source WHEN 'REPORT' THEN 0 ELSE 1 END, id

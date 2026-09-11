@@ -822,14 +822,15 @@
 
 .backoffice-shell .admin-data-table td { min-width: 118px; }
 .backoffice-shell .admin-data-table td:first-child { min-width: 42px; }
-.backoffice-shell .order-review-table { min-width: 1160px; table-layout: fixed; }
-.backoffice-shell .order-review-table th:nth-child(1) { width: 46px; }
-.backoffice-shell .order-review-table th:nth-child(2) { width: 190px; }
-.backoffice-shell .order-review-table th:nth-child(3) { width: 180px; }
-.backoffice-shell .order-review-table th:nth-child(4) { width: 170px; }
-.backoffice-shell .order-review-table th:nth-child(5) { width: 150px; }
-.backoffice-shell .order-review-table th:nth-child(6) { width: 260px; }
-.backoffice-shell .order-review-table th:nth-child(7) { width: 180px; }
+.backoffice-shell .order-review-table { min-width: 1380px; table-layout: fixed; }
+.backoffice-shell .order-review-table th:nth-child(1) { width: 46px; }   /* chọn */
+.backoffice-shell .order-review-table th:nth-child(2) { width: 132px; }  /* Mã đơn */
+.backoffice-shell .order-review-table th:nth-child(3) { width: 320px; }  /* Sản phẩm & tracking */
+.backoffice-shell .order-review-table th:nth-child(4) { width: 180px; }  /* Người mua */
+.backoffice-shell .order-review-table th:nth-child(5) { width: 160px; }  /* Giá trị / hoa hồng */
+.backoffice-shell .order-review-table th:nth-child(6) { width: 140px; }  /* Hoàn tiền */
+.backoffice-shell .order-review-table th:nth-child(7) { width: 220px; }  /* Trạng thái */
+.backoffice-shell .order-review-table th:nth-child(8) { width: 170px; }  /* Chi tiết */
 
 .backoffice-shell .select-col {
   width: 46px;
@@ -1614,6 +1615,33 @@
   color: var(--admin-warning);
   border-color: var(--admin-warning-border);
   background: var(--admin-warning-bg);
+}
+
+/* Đối soát: tách cột "Đơn hàng" → Mã đơn + Sản phẩm & tracking (kèm ảnh) cho
+   dễ đọc thay vì gộp hết một chỗ. */
+.recon-code-cell strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.recon-info-cell { min-width: 300px; max-width: 420px; }
+.recon-prod { display: flex; gap: 12px; align-items: flex-start; }
+.recon-prod-thumb {
+  width: 52px; height: 52px; flex: none; border-radius: 10px; overflow: hidden;
+  display: grid; place-items: center;
+  background: var(--admin-surface-soft); border: 1px solid var(--admin-border);
+}
+.recon-prod-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.recon-prod-thumb svg { width: 24px; height: 24px; fill: none; stroke: var(--admin-muted); stroke-width: 1.5; }
+.recon-prod-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.recon-prod-name {
+  font-size: 13px; font-weight: 700; color: var(--admin-text); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.recon-ids { display: grid; gap: 4px; margin: 0; }
+.recon-ids > div { display: flex; gap: 8px; align-items: baseline; }
+.recon-ids dt { flex: none; width: 64px; font-size: 11px; font-weight: 700; color: var(--admin-muted); }
+.recon-ids dd { margin: 0; flex: 1; min-width: 0; }
+.recon-ids dd code {
+  display: inline-block; max-width: 100%;
+  font-size: 11.5px; color: var(--admin-text-soft); overflow-wrap: anywhere;
+  background: var(--admin-surface-soft); padding: 1px 6px; border-radius: 5px; line-height: 1.5;
 }
 
 .order-evidence-list {
