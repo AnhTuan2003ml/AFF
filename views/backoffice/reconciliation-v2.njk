@@ -164,10 +164,8 @@
 
                 <td class="recon-subid-cell">
                   {% if order.attribution_method == 'SUB_ID' and order.sub_id %}
-                    <span class="recon-subid-tag">Sub ID</span>
                     <code>{{ order.sub_id }}</code>
                   {% elif order.click_id %}
-                    <span class="recon-subid-tag is-click">Click ID</span>
                     <code>{{ order.click_id }}</code>
                   {% else %}
                     <span class="recon-subid-none">Không có mã tracking</span>
@@ -205,8 +203,8 @@
                 </td>
 
                 <td class="detail-col">
-                  <button class="button button-small button-ghost" type="button" data-panel-toggle="order-detail-{{ order.id }}">
-                    {{ icon("search") }} Đối chứng
+                  <button class="button button-small button-ghost recon-detail-btn" type="button" data-panel-toggle="order-detail-{{ order.id }}" title="Xem đối chứng">
+                    {{ icon("search") }}<span>Đối chứng</span>
                   </button>
                 </td>
               </tr>
@@ -231,6 +229,14 @@
                   </span>
                 </div>
               </div>
+              <figure class="odt-head-thumb" aria-hidden="true">
+                {% if order.product_image_url %}
+                  <img src="{{ order.product_image_url }}" alt="" referrerpolicy="no-referrer" loading="lazy">
+                {% else %}
+                  <svg viewBox="0 0 24 24"><path d="M4 7h16v13H4zM4 7l2-3h12l2 3M9 13h6"/></svg>
+                {% endif %}
+                {% if order.product_name %}<figcaption>{{ order.product_name }}</figcaption>{% endif %}
+              </figure>
               <button class="icon-button" type="button" data-panel-toggle="order-detail-{{ order.id }}" aria-label="Đóng">×</button>
             </header>
 
