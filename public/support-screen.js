@@ -32,12 +32,15 @@
   var current = null;
   var vv = window.visualViewport || null;
 
-  // Bàn phím mobile che overlay position:fixed (100vh): trình duyệt cuộn cả
-  // overlay lên để lộ ô nhập → mất header + tin nhắn. Ghim overlay đúng vùng
-  // NHÌN THẤY (trên bàn phím) bằng VisualViewport. (Đặt style qua CSSOM được
-  // phép dù CSP chặn thuộc tính style=).
+  // Bàn phím mobile che overlay position:fixed: khi MỞ, ghim overlay đúng vùng
+  // nhìn thấy (trên bàn phím) bằng VisualViewport để header + ô nhập không bị
+  // đẩy đi. Khi bàn phím ĐÓNG, BỎ ghim để overlay về full màn hình qua CSS
+  // (inset:0) — KHÔNG tự tính lại vv.height lúc đóng vì iOS trả sai/không cập
+  // nhật → gây kẹt ngắn + khựng. (Đặt style qua CSSOM được phép dù CSP chặn
+  // thuộc tính style=.)
+  var kbOpen = false;
   function fitViewport() {
-    if (!current || !vv) return;
+    if (!current || !vv || !kbOpen) return; // chỉ ghim khi bàn phím đang mở
     var s = screens[current];
     if (!s) return;
     s.style.height = vv.height + "px";
@@ -49,18 +52,31 @@
     s.style.top = "";
     s.style.bottom = "";
   }
-  // visualViewport 'resize'/'scroll' theo SÁT bàn phím trượt → mượt, không giật.
+  function unfit() {
+    if (!current) return;
+    var s = screens[current];
+    if (s) clearViewport(s); // về full màn hình qua CSS inset:0
+  }
+  // visualViewport 'resize'/'scroll' theo SÁT bàn phím lúc MỞ → mượt.
   if (vv) {
     vv.addEventListener("resize", fitViewport);
     vv.addEventListener("scroll", fitViewport);
   }
-  window.addEventListener("orientationchange", function () {
-    setTimeout(fitViewport, 300);
+  // Vào ô nhập = bàn phím sắp mở → bật ghim. Rời ô = bàn phím đóng → bỏ ghim.
+  document.addEventListener("focusin", function () {
+    if (!current) return;
+    kbOpen = true;
+    fitViewport();
   });
-  // iOS đôi khi KHÔNG bắn 'resize' khi bàn phím đóng → overlay kẹt ngắn. Fit lại
-  // ĐÚNG MỘT LẦN sau khi bàn phím đã đóng hẳn (không hammer để khỏi giật).
   document.addEventListener("focusout", function () {
-    if (current) setTimeout(fitViewport, 350);
+    if (!current) return;
+    kbOpen = false;
+    // Bỏ ghim vài lần trong lúc bàn phím trượt xuống để chắc chắn về full.
+    setTimeout(unfit, 30);
+    setTimeout(unfit, 300);
+  });
+  window.addEventListener("orientationchange", function () {
+    setTimeout(unfit, 250);
   });
 
   function open(name) {
@@ -71,8 +87,8 @@
     void s.offsetWidth; // reflow để chạy hiệu ứng
     s.classList.add("is-open");
     document.body.classList.add("support-screen-open");
-    fitViewport();
-    setTimeout(fitViewport, 300);
+    kbOpen = false;
+    unfit(); // mở ra = full màn hình (CSS inset:0); chỉ ghim khi bàn phím mở
 
     // Mở CSKH → bỏ chấm đỏ "có phản hồi mới" trên thẻ chọn.
     if (name === "cskh") {
