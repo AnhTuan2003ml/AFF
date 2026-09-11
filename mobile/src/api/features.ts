@@ -168,6 +168,13 @@ export interface IncomePoint {
   value: number;
 }
 
+/** 3 nguồn doanh thu tách riêng theo mốc thời gian (cùng số mốc + nhãn). */
+export interface IncomeSeries {
+  own: IncomePoint[];
+  referral: IncomePoint[];
+  shareLink: IncomePoint[];
+}
+
 /** Thu nhập giới thiệu theo khoảng ngày + đơn vị — cho biểu đồ đường có bộ lọc. */
 export function layThuNhap(params: { from?: string; to?: string; unit: IncomeUnit }) {
   const qs = new URLSearchParams({ unit: params.unit });
@@ -184,7 +191,7 @@ export function layThuNhap(params: { from?: string; to?: string; unit: IncomeUni
       shareLinkVnd: number;
       totalVnd: number;
     };
-    points: IncomePoint[];
+    series: IncomeSeries;
   }>(`/api/v1/referrals/income?${qs.toString()}`);
 }
 

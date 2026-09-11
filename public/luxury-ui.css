@@ -10657,12 +10657,31 @@ button.cal-cell.is-today:hover:not(:disabled) {
 @media (max-width: 560px) {
   .income-breakdown { grid-template-columns: repeat(2, 1fr); }
 }
+/* Màu định danh 3 nguồn doanh thu — dùng chung cho thẻ, đường biểu đồ, legend. */
+.income-breakdown, .income-chart-wrap {
+  --src-own: #ee4d2d;
+  --src-referral: #0f9d8f;
+  --src-shareLink: #7c5cff;
+}
 .income-src {
-  padding: 10px 12px;
+  position: relative;
+  padding: 10px 12px 10px 14px;
   border-radius: 12px;
   background: var(--lx-ivory, #fbf6f0);
   border: 1px solid var(--lx-line, #eadfce);
 }
+/* Vạch màu bên trái = màu của nguồn tương ứng. */
+.income-src::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  background: var(--lx-line, #eadfce);
+}
+.income-src.is-own::before { background: var(--src-own); }
+.income-src.is-referral::before { background: var(--src-referral); }
+.income-src.is-shareLink::before { background: var(--src-shareLink); }
 .income-src small {
   display: block;
   font-size: 10.5px;
@@ -10672,12 +10691,41 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 .income-src b { display: block; margin-top: 4px; font-size: 15px; font-weight: 900; color: var(--lx-ink); }
 .income-src.is-total { background: rgba(238, 77, 45, .09); border-color: rgba(238, 77, 45, .22); }
+.income-src.is-total::before { background: var(--src-own); }
 .income-src.is-total b { color: var(--lx-orange, #ee4d2d); }
 [data-income-body].is-loading { opacity: .5; transition: opacity .15s ease; }
 
-/* Biểu đồ ĐƯỜNG lớn (thu nhập giới thiệu) — khung cao, chữ to, tỉ lệ đúng. */
-.income-chart { width: 100%; }
-.income-chart svg { display: block; width: 100%; height: auto; max-height: 340px; }
+/* Chú thích (legend): mỗi nguồn một chấm màu. */
+.income-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.income-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--lx-ink);
+}
+.income-legend-dot {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  flex: none;
+}
+.income-legend .is-own .income-legend-dot { background: var(--src-own); }
+.income-legend .is-referral .income-legend-dot { background: var(--src-referral); }
+.income-legend .is-shareLink .income-legend-dot { background: var(--src-shareLink); }
+
+/* Biểu đồ ĐƯỜNG lớn (doanh thu 3 nguồn) — khung cao, chữ to, tỉ lệ đúng.
+   Desktop: giới hạn bề rộng + căn giữa để không kéo dài thành dải mỏng lệch. */
+.income-chart-wrap { width: 100%; max-width: 760px; margin-inline: auto; }
+.income-chart { position: relative; width: 100%; }
+.income-chart svg { display: block; width: 100%; height: auto; }
 .income-chart .trend-gridline {
   stroke: var(--lx-line, #e9ded4);
   stroke-width: 1;
@@ -10686,16 +10734,22 @@ button.cal-cell.is-today:hover:not(:disabled) {
 }
 .income-chart .trend-grid-label,
 .income-chart .trend-axis-label { fill: var(--lx-muted, #81736a); font-weight: 600; }
-.income-chart .trend-area { fill: rgba(238, 77, 45, .12); }
-.income-chart .trend-line {
+.income-chart .chart-empty-copy { color: var(--lx-muted, #81736a); font-size: 13px; text-align: center; padding: 10px 0; }
+
+/* Ba đường doanh thu — mỗi nguồn một màu. */
+.income-multichart .income-line {
   fill: none;
-  stroke: var(--lx-orange, #ee4d2d);
-  stroke-width: 3;
+  stroke-width: 2.6;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
-.income-chart .trend-dot { fill: var(--lx-paper, #fff); stroke: var(--lx-orange, #ee4d2d); stroke-width: 2.4; }
-.income-chart .chart-empty-copy { color: var(--lx-muted, #81736a); font-size: 13px; text-align: center; padding: 10px 0; }
+.income-multichart .income-line.is-own { stroke: var(--src-own); }
+.income-multichart .income-line.is-referral { stroke: var(--src-referral); }
+.income-multichart .income-line.is-shareLink { stroke: var(--src-shareLink); }
+.income-multichart .income-dot { fill: var(--lx-paper, #fff); stroke-width: 2; }
+.income-multichart .income-dot.is-own { stroke: var(--src-own); }
+.income-multichart .income-dot.is-referral { stroke: var(--src-referral); }
+.income-multichart .income-dot.is-shareLink { stroke: var(--src-shareLink); }
 
 .trend-chart { width: 100%; height: auto; }
 .trend-chart .trend-gridline { stroke: var(--lx-line, #e9ded4); stroke-width: 1; }

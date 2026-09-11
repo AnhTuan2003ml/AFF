@@ -255,7 +255,8 @@ export async function registerFeatureApiRoutes(
         unit: range.unit,
         totalVnd: income.breakdown.totalVnd,
         breakdown: income.breakdown,
-        points: income.points,
+        // 3 nguồn tách riêng theo mốc thời gian — app vẽ 3 đường màu khác nhau.
+        series: income.series,
       };
     },
   );

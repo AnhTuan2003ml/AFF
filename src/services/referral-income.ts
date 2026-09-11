@@ -2,24 +2,61 @@ import { query, type Database } from "../db.js";
 import { formatVnd } from "../lib/format.js";
 import {
   buildIncomeSeries,
-  buildSeriesLineChart,
+  buildMultiSeriesLineChart,
   type IncomeUnit,
+  type MultiSeriesChartData,
   type SeriesPoint,
-  type TrendChartData,
 } from "./chart-data.js";
 
-/** Dựng biểu đồ đường doanh thu (khung lớn, chữ to, không kéo méo). */
-export function buildIncomeChart(points: SeriesPoint[]): TrendChartData {
-  return buildSeriesLineChart(points, (value) => formatVnd(value), {
-    width: 560,
-    height: 320,
-    padLeft: 54,
-    padRight: 16,
-    padTop: 18,
-    padBottom: 40,
-    labelFont: 16,
-    maxXLabels: 7,
-  });
+/** Ba nguồn doanh thu, theo thứ tự và khoá dùng chung cho màu ở web + app. */
+export const INCOME_SOURCES = [
+  { key: "own", vi: "Đơn của bạn", en: "Your orders" },
+  { key: "referral", vi: "Người bạn giới thiệu", en: "Referred users" },
+  { key: "shareLink", vi: "Mua qua link chia sẻ", en: "Via shared links" },
+] as const;
+
+export interface IncomeSeries {
+  own: SeriesPoint[];
+  referral: SeriesPoint[];
+  shareLink: SeriesPoint[];
+}
+
+/**
+ * Biểu đồ nhiều đường: mỗi nguồn doanh thu một màu. Nhãn tên nguồn tuỳ ngôn
+ * ngữ (chú thích/legend hiển thị riêng ở view).
+ */
+export function buildIncomeChart(
+  series: IncomeSeries,
+  lang = "vi",
+): MultiSeriesChartData {
+  const label = (s: (typeof INCOME_SOURCES)[number]) =>
+    lang === "en" ? s.en : s.vi;
+  return buildMultiSeriesLineChart(
+    [
+      { key: "own", label: label(INCOME_SOURCES[0]), points: series.own },
+      {
+        key: "referral",
+        label: label(INCOME_SOURCES[1]),
+        points: series.referral,
+      },
+      {
+        key: "shareLink",
+        label: label(INCOME_SOURCES[2]),
+        points: series.shareLink,
+      },
+    ],
+    (value) => formatVnd(value),
+    {
+      width: 640,
+      height: 300,
+      padLeft: 56,
+      padRight: 18,
+      padTop: 18,
+      padBottom: 40,
+      labelFont: 15,
+      maxXLabels: 7,
+    },
+  );
 }
 
 /**
@@ -39,7 +76,7 @@ export interface IncomeBreakdown {
 }
 
 export interface ReferralIncomeResult {
-  points: SeriesPoint[];
+  series: IncomeSeries;
   breakdown: IncomeBreakdown;
 }
 
@@ -102,44 +139,25 @@ export async function loadReferralIncome(
   const from = ymd(fromDate);
   const to = ymd(toDate);
 
-  const [seriesRows, ownRow, sharerRow] = await Promise.all([
-    // Chuỗi theo mốc thời gian: gộp cashback của chính mình + hoa hồng sharer.
+  const [ownRows, sharerRows] = await Promise.all([
+    // Nguồn 1: hoàn tiền đơn của CHÍNH mình, theo mốc thời gian.
     query<{ bucket: string; total: string }>(
       db,
       `
-        SELECT to_char(date_trunc($2, t.created_at), 'YYYY-MM-DD') AS bucket,
-          COALESCE(sum(t.amt), 0)::text AS total
-        FROM (
-          SELECT created_at, user_amount_vnd AS amt
-            FROM commission_entries
-           WHERE user_id = $1 AND status <> 'REVERSED'
-          UNION ALL
-          SELECT created_at, referral_amount_vnd AS amt
-            FROM commission_entries
-           WHERE sharer_user_id = $1 AND status <> 'REVERSED'
-        ) t
-        WHERE t.created_at >= $3::date
-          AND t.created_at < ($4::date + interval '1 day')
+        SELECT to_char(date_trunc($2, created_at), 'YYYY-MM-DD') AS bucket,
+          COALESCE(sum(user_amount_vnd), 0)::text AS total
+          FROM commission_entries
+         WHERE user_id = $1 AND status <> 'REVERSED'
+           AND created_at >= $3::date AND created_at < ($4::date + interval '1 day')
         GROUP BY 1
       `,
       [userId, unit, from, to],
     ),
-    // Nguồn 1: hoàn tiền đơn của chính mình.
-    query<{ own: string }>(
+    // Nguồn 2 & 3: hoa hồng sharer, tách theo mốc + người mua do U giới thiệu hay không.
+    query<{ bucket: string; referral: string; sharelink: string }>(
       db,
       `
-        SELECT COALESCE(sum(user_amount_vnd), 0)::text AS own
-          FROM commission_entries
-         WHERE user_id = $1 AND status <> 'REVERSED'
-           AND created_at >= $2::date AND created_at < ($3::date + interval '1 day')
-      `,
-      [userId, from, to],
-    ),
-    // Nguồn 2 & 3: hoa hồng sharer, tách theo người mua có do U giới thiệu hay không.
-    query<{ referral: string; sharelink: string }>(
-      db,
-      `
-        SELECT
+        SELECT to_char(date_trunc($2, ce.created_at), 'YYYY-MM-DD') AS bucket,
           COALESCE(sum(ce.referral_amount_vnd)
             FILTER (WHERE b.referred_by_user_id = $1), 0)::text AS referral,
           COALESCE(sum(ce.referral_amount_vnd)
@@ -148,28 +166,41 @@ export async function loadReferralIncome(
         JOIN orders o ON o.id = ce.order_id
         JOIN users b ON b.id = o.user_id
         WHERE ce.sharer_user_id = $1 AND ce.status <> 'REVERSED'
-          AND ce.created_at >= $2::date AND ce.created_at < ($3::date + interval '1 day')
+          AND ce.created_at >= $3::date AND ce.created_at < ($4::date + interval '1 day')
+        GROUP BY 1
       `,
-      [userId, from, to],
+      [userId, unit, from, to],
     ),
   ]);
 
-  const points = buildIncomeSeries(
-    seriesRows.rows.map((row) => ({
+  const toSeries = (rows: { bucket: string; value: number }[]): SeriesPoint[] =>
+    buildIncomeSeries(rows, fromDate, toDate, unit);
+
+  const own = toSeries(
+    ownRows.rows.map((row) => ({ bucket: row.bucket, value: Number(row.total) })),
+  );
+  const referral = toSeries(
+    sharerRows.rows.map((row) => ({
       bucket: row.bucket,
-      value: Number(row.total),
+      value: Number(row.referral),
     })),
-    fromDate,
-    toDate,
-    unit,
+  );
+  const shareLink = toSeries(
+    sharerRows.rows.map((row) => ({
+      bucket: row.bucket,
+      value: Number(row.sharelink),
+    })),
   );
 
-  const ownVnd = Number(ownRow.rows[0]?.own ?? 0);
-  const referralVnd = Number(sharerRow.rows[0]?.referral ?? 0);
-  const shareLinkVnd = Number(sharerRow.rows[0]?.sharelink ?? 0);
+  // Tổng mỗi nguồn = cộng các mốc (khoảng ngày đã khớp nên bằng tổng tuyệt đối).
+  const sum = (points: SeriesPoint[]) =>
+    points.reduce((acc, point) => acc + point.value, 0);
+  const ownVnd = sum(own);
+  const referralVnd = sum(referral);
+  const shareLinkVnd = sum(shareLink);
 
   return {
-    points,
+    series: { own, referral, shareLink },
     breakdown: {
       ownVnd,
       referralVnd,

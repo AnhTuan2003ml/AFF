@@ -192,6 +192,123 @@ export interface SeriesPoint {
   tooltip?: string;
 }
 
+/** Một đường trong biểu đồ nhiều nguồn (mỗi nguồn 1 màu). */
+export interface MultiSeriesInput {
+  key: string;
+  label: string;
+  points: SeriesPoint[];
+}
+
+export interface MultiSeriesLine {
+  key: string;
+  label: string;
+  linePath: string;
+  dots: TrendDot[];
+  hasData: boolean;
+}
+
+export interface MultiSeriesChartData {
+  viewBoxWidth: number;
+  viewBoxHeight: number;
+  gridLines: TrendGridLine[];
+  axisLabels: TrendAxisLabel[];
+  axisLeft: number;
+  axisRight: number;
+  labelFont: number;
+  lines: MultiSeriesLine[];
+  hasData: boolean;
+}
+
+/**
+ * Biểu đồ nhiều đường chung một trục — mỗi nguồn doanh thu là một đường màu
+ * riêng. Các series PHẢI cùng số mốc và cùng nhãn (đã điền 0 qua
+ * buildIncomeSeries) để trục X khớp nhau. Trục Y dùng chung, thang tính theo
+ * giá trị lớn nhất trong TẤT CẢ các series để so sánh trực quan.
+ */
+export function buildMultiSeriesLineChart(
+  series: MultiSeriesInput[],
+  formatValue: (value: number) => string = (value) => `${value}`,
+  options: SeriesLineOptions = {},
+): MultiSeriesChartData {
+  const width = options.width ?? TREND_WIDTH;
+  const height = options.height ?? TREND_HEIGHT;
+  const padLeft = options.padLeft ?? TREND_PAD_LEFT;
+  const padRight = options.padRight ?? TREND_PAD_RIGHT;
+  const padTop = options.padTop ?? TREND_PAD_TOP;
+  const padBottom = options.padBottom ?? TREND_PAD_BOTTOM;
+  const labelFont = options.labelFont ?? 10;
+  const maxXLabels = options.maxXLabels ?? 8;
+
+  const plotWidth = width - padLeft - padRight;
+  const plotHeight = height - padTop - padBottom;
+  const baselineY = padTop + plotHeight;
+  // Số mốc lấy theo series dài nhất (thực tế mọi series bằng nhau).
+  const length = Math.max(0, ...series.map((s) => s.points.length));
+  const maxValue = Math.max(
+    1,
+    ...series.flatMap((s) => s.points.map((p) => p.value)),
+  );
+  const stepX = length > 1 ? plotWidth / (length - 1) : 0;
+  const xAt = (index: number) => padLeft + stepX * index;
+  const yAt = (value: number) => baselineY - (value / maxValue) * plotHeight;
+
+  const lines: MultiSeriesLine[] = series.map((s) => {
+    const positioned = s.points.map((point, index) => ({
+      ...point,
+      x: xAt(index),
+      y: yAt(point.value),
+    }));
+    const linePath = positioned
+      .map(
+        (point, index) =>
+          `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`,
+      )
+      .join(" ");
+    return {
+      key: s.key,
+      label: s.label,
+      linePath,
+      dots: positioned.map((point) => ({
+        x: point.x,
+        y: point.y,
+        dateLabel: point.label,
+        valueLabel: point.tooltip ?? formatValue(point.value),
+      })),
+      hasData: positioned.some((point) => point.value > 0),
+    };
+  });
+
+  const gridLines: TrendGridLine[] = Array.from(
+    { length: TREND_GRID_STEPS + 1 },
+    (_, step) => ({
+      y: padTop + (plotHeight / TREND_GRID_STEPS) * step,
+      label: formatCompactValue(maxValue * (1 - step / TREND_GRID_STEPS)),
+    }),
+  );
+
+  const labelEvery = Math.max(1, Math.ceil(length / maxXLabels));
+  const baseLabels = series[0]?.points ?? [];
+  const axisLabels: TrendAxisLabel[] = baseLabels
+    .map((point, index) => ({ point, index }))
+    .filter(({ index }) => {
+      if (index % labelEvery === 0) return true;
+      return index === length - 1 && index % labelEvery > labelEvery / 2;
+    })
+    .map(({ point, index }) => ({ x: xAt(index), label: point.label }));
+
+  return {
+    viewBoxWidth: width,
+    viewBoxHeight: height,
+    gridLines,
+    axisLabels,
+    axisLeft: padLeft,
+    axisRight: width - padRight,
+    labelFont,
+    lines,
+    hasData: lines.some((line) => line.hasData),
+  };
+}
+
 /**
  * Biểu đồ đường tổng quát cho chuỗi mốc bất kỳ (tháng, tuần…) — cùng hình
  * dạng dữ liệu với buildTrendChart nên dùng chung template SVG.

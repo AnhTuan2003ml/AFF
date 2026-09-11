@@ -66,7 +66,14 @@ export function IncomeChartCard() {
     queryFn: () => layThuNhap({ from, to, unit }),
   });
 
-  const points = data?.points ?? [];
+  // Màu định danh 3 nguồn — khớp với web (public/luxury-ui.css).
+  const SRC = [
+    { key: 'own' as const, color: '#ee4d2d', nhan: t('Đơn của bạn', 'Your orders') },
+    { key: 'referral' as const, color: '#0f9d8f', nhan: t('Người bạn giới thiệu', 'Referred users') },
+    { key: 'shareLink' as const, color: '#7c5cff', nhan: t('Mua qua link chia sẻ', 'Via shared links') },
+  ];
+  const series = data?.series;
+  const baseSeries = series?.own ?? [];
   const H = 176;
   const PADL = 42;
   const PADR = 10;
@@ -74,24 +81,25 @@ export function IncomeChartCard() {
   const PADB = 26;
   const plotW = Math.max(1, w - PADL - PADR);
   const plotH = H - PADT - PADB;
-  const maxV = nhamTronTruc(Math.max(0, ...points.map((p) => p.value)));
-  const stepX = points.length > 1 ? plotW / (points.length - 1) : 0;
-  const pts = points.map((p, i) => ({
-    ...p,
-    x: PADL + stepX * i,
-    y: PADT + plotH - (p.value / maxV) * plotH,
-  }));
-  const linePath = pts
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-    .join(' ');
-  const last = pts.at(-1);
-  const first = pts[0];
-  const areaPath =
-    first && last
-      ? `${linePath} L${last.x.toFixed(1)},${(PADT + plotH).toFixed(1)} L${first.x.toFixed(1)},${(PADT + plotH).toFixed(1)} Z`
-      : '';
-  const hasData = points.some((p) => p.value > 0);
-  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+  const allValues = series
+    ? [...series.own, ...series.referral, ...series.shareLink].map((p) => p.value)
+    : [];
+  const maxV = nhamTronTruc(Math.max(0, ...allValues));
+  const count = baseSeries.length;
+  const stepX = count > 1 ? plotW / (count - 1) : 0;
+  const xAt = (i: number) => PADL + stepX * i;
+  const yAt = (v: number) => PADT + plotH - (v / maxV) * plotH;
+  // Mỗi nguồn → một đường: path + các điểm.
+  const lines = SRC.map((s) => {
+    const pointsOf = series?.[s.key] ?? [];
+    const positioned = pointsOf.map((p, i) => ({ ...p, x: xAt(i), y: yAt(p.value) }));
+    const path = positioned
+      .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+      .join(' ');
+    return { ...s, positioned, path, hasData: positioned.some((p) => p.value > 0) };
+  });
+  const hasData = lines.some((l) => l.hasData);
+  const labelEvery = Math.max(1, Math.ceil(count / 6));
 
   const UNITS: { key: IncomeUnit; nhan: string }[] = [
     { key: 'day', nhan: t('Ngày', 'Day') },
@@ -133,18 +141,18 @@ export function IncomeChartCard() {
         ))}
       </View>
 
-      {/* Doanh thu 3 nguồn + tổng */}
+      {/* Doanh thu 3 nguồn + tổng — vạch màu trái theo từng nguồn */}
       {data?.breakdown ? (
         <View style={styles.breakdown}>
-          <View style={styles.srcBox}>
+          <View style={[styles.srcBox, { borderLeftWidth: 3, borderLeftColor: SRC[0].color }]}>
             <Text style={styles.srcLabel}>{t('Đơn của bạn', 'Your orders')}</Text>
             <Text style={styles.srcValue}>{vnd(data.breakdown.ownVnd)}</Text>
           </View>
-          <View style={styles.srcBox}>
+          <View style={[styles.srcBox, { borderLeftWidth: 3, borderLeftColor: SRC[1].color }]}>
             <Text style={styles.srcLabel}>{t('Người giới thiệu', 'Referred')}</Text>
             <Text style={styles.srcValue}>{vnd(data.breakdown.referralVnd)}</Text>
           </View>
-          <View style={styles.srcBox}>
+          <View style={[styles.srcBox, { borderLeftWidth: 3, borderLeftColor: SRC[2].color }]}>
             <Text style={styles.srcLabel}>{t('Link chia sẻ', 'Shared links')}</Text>
             <Text style={styles.srcValue}>{vnd(data.breakdown.shareLinkVnd)}</Text>
           </View>
@@ -154,6 +162,16 @@ export function IncomeChartCard() {
           </View>
         </View>
       ) : null}
+
+      {/* Chú thích: mỗi nguồn một chấm màu */}
+      <View style={styles.legend}>
+        {SRC.map((s) => (
+          <View key={s.key} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: s.color }]} />
+            <Text style={styles.legendText}>{s.nhan}</Text>
+          </View>
+        ))}
+      </View>
 
       {/* Biểu đồ đường */}
       <View style={styles.chart} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
@@ -173,18 +191,29 @@ export function IncomeChartCard() {
                   {gonTien(v)}
                 </SvgText>
               ))}
-              {hasData ? (
-                <>
-                  <Path d={areaPath} fill={colors.brandSoft} />
-                  <Path d={linePath} fill="none" stroke={colors.brand} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-                  {pts.map((p, i) => (
-                    <Circle key={i} cx={p.x} cy={p.y} r={2.6} fill={colors.brand} />
-                  ))}
-                </>
-              ) : null}
-              {pts.map((p, i) =>
-                i % labelEvery === 0 || i === pts.length - 1 ? (
-                  <SvgText key={`x${i}`} x={p.x} y={H - 6} fontSize={9} fill={colors.muted} textAnchor="middle">
+              {hasData
+                ? lines.map((l) => (
+                    <Path
+                      key={`line-${l.key}`}
+                      d={l.path}
+                      fill="none"
+                      stroke={l.color}
+                      strokeWidth={2}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  ))
+                : null}
+              {hasData
+                ? lines.flatMap((l) =>
+                    l.positioned.map((p, i) => (
+                      <Circle key={`dot-${l.key}-${i}`} cx={p.x} cy={p.y} r={2.4} fill={colors.paper} stroke={l.color} strokeWidth={1.6} />
+                    )),
+                  )
+                : null}
+              {baseSeries.map((p, i) =>
+                i % labelEvery === 0 || i === count - 1 ? (
+                  <SvgText key={`x${i}`} x={xAt(i)} y={H - 6} fontSize={9} fill={colors.muted} textAnchor="middle">
                     {p.label}
                   </SvgText>
                 ) : null,
@@ -257,6 +286,10 @@ const styles = StyleSheet.create({
   srcValue: { fontSize: 15, fontWeight: '900', color: colors.text, marginTop: 3 },
   srcTotal: { backgroundColor: colors.brandSoft, borderColor: colors.brandLine },
   srcTotalValue: { color: colors.brand },
-  chart: { marginTop: 14, minHeight: 176, justifyContent: 'center' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 12, fontWeight: '700', color: colors.text },
+  chart: { marginTop: 10, minHeight: 176, justifyContent: 'center' },
   chartEmpty: { fontSize: 12.5, color: colors.muted, textAlign: 'center', paddingVertical: 20 },
 });

@@ -1350,7 +1350,10 @@ export async function registerAppRoutes(
     return reply.view("app/revenue.njk", {
       pageTitle: "Doanh thu",
       appSection: "revenue",
-      referralIncomeChart: buildIncomeChart(income.points),
+      referralIncomeChart: buildIncomeChart(
+        income.series,
+        request.cookies?.lang === "en" ? "en" : "vi",
+      ),
       incomeBreakdown: income.breakdown,
       incomeRange: {
         from: range.from,
@@ -1374,7 +1377,10 @@ export async function registerAppRoutes(
     );
     reply.header("cache-control", "private, no-store");
     return reply.view("app/_income-fragment.njk", {
-      referralIncomeChart: buildIncomeChart(income.points),
+      referralIncomeChart: buildIncomeChart(
+        income.series,
+        request.cookies?.lang === "en" ? "en" : "vi",
+      ),
       incomeBreakdown: income.breakdown,
     });
   });
