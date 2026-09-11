@@ -174,7 +174,8 @@
       .then(function () {
         sending = false;
         if (sendBtn) sendBtn.disabled = false;
-        input.focus();
+        // KHÔNG tự focus lại ô nhập: trên iOS việc này cố MỞ LẠI bàn phím ngay
+        // lúc nó đang đóng sau khi gửi → khựng/giật. Người dùng chạm ô để gõ tiếp.
       });
   }
 

@@ -113,7 +113,7 @@
     } finally {
       sending = false;
       if (chatSend) chatSend.disabled = false;
-      chatInput.focus();
+      // Không tự focus lại: trên iOS gây mở lại bàn phím lúc đang đóng → giật.
     }
   }
   if (chatForm) {

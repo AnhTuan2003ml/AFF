@@ -25,31 +25,24 @@
     s.style.top = vv.offsetTop + "px";
     s.style.bottom = "auto";
   }
-  // iOS Safari: khi bàn phím ĐÓNG (vd sau khi gửi tin), sự kiện resize của
-  // visualViewport hay không bắn / trả chiều cao CŨ → overlay bị kẹt ngắn, lộ
-  // trang phía dưới và cuộn lung tung. Fit lại NHIỀU LẦN sau khi layout ổn định.
-  function fitRepeat() {
-    fitViewport();
-    requestAnimationFrame(fitViewport);
-    setTimeout(fitViewport, 120);
-    setTimeout(fitViewport, 400);
-  }
   function clearViewport(s) {
     s.style.height = "";
     s.style.top = "";
     s.style.bottom = "";
   }
+  // visualViewport 'resize'/'scroll' theo SÁT bàn phím trượt → mượt, không giật.
   if (vv) {
     vv.addEventListener("resize", fitViewport);
     vv.addEventListener("scroll", fitViewport);
   }
-  window.addEventListener("resize", fitViewport);
   window.addEventListener("orientationchange", function () {
-    setTimeout(fitRepeat, 250);
+    setTimeout(fitViewport, 300);
   });
-  // Rời/vào ô nhập = bàn phím đóng/mở → chiều cao vùng nhìn thấy đổi.
-  document.addEventListener("focusout", function () { if (current) fitRepeat(); });
-  document.addEventListener("focusin", function () { if (current) fitRepeat(); });
+  // iOS đôi khi KHÔNG bắn 'resize' khi bàn phím đóng → overlay kẹt ngắn. Fit lại
+  // ĐÚNG MỘT LẦN sau khi bàn phím đã đóng hẳn (không hammer để khỏi giật).
+  document.addEventListener("focusout", function () {
+    if (current) setTimeout(fitViewport, 350);
+  });
 
   function open(name) {
     var s = screens[name];
@@ -59,7 +52,8 @@
     void s.offsetWidth; // reflow để chạy hiệu ứng
     s.classList.add("is-open");
     document.body.classList.add("support-screen-open");
-    fitRepeat();
+    fitViewport();
+    setTimeout(fitViewport, 300);
 
     // Mở CSKH → bỏ chấm đỏ "có phản hồi mới" trên thẻ chọn.
     if (name === "cskh") {
