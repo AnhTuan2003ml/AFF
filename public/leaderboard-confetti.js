@@ -1,8 +1,8 @@
 /*
  * Hiệu ứng "rơi hoa" cho Bảng xếp hạng — cánh hoa (sakura) rơi lả tả, bay
  * nghiêng qua lại và xoay nhẹ, mờ dần khi vào/ra khung. ĐỒNG BỘ với app
- * (mobile/src/components/Confetti.tsx). Vẽ bằng Canvas 2D, tương thích CSP,
- * tôn trọng prefers-reduced-motion.
+ * (mobile/src/components/Confetti.tsx). Vẽ bằng Canvas 2D, tương thích CSP.
+ * CỐ Ý chạy bất kể prefers-reduced-motion (xem ghi chú trong start()).
  */
 (function () {
   "use strict";
@@ -16,9 +16,9 @@
   // Màu cánh hoa: hồng anh đào, hồng nhạt, trắng, đào, vàng phấn.
   var PALETTE = ["#ff9ec4", "#ffc2d8", "#ffffff", "#ffd3bf", "#ffe3a3"];
 
-  var reduce =
-    window.matchMedia &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // CỐ Ý không tắt theo prefers-reduced-motion: trên Windows 10 hiệu ứng
+  // animation thường bị tắt trong Cài đặt → reduce=true nhầm, làm hoa đứng yên.
+  // Đây là hiệu ứng trang trí ăn mừng (như showcase), phải rơi bất kể reduce.
 
   var W = 0,
     H = 0,
@@ -115,10 +115,7 @@
   function start() {
     resize();
     build();
-    if (reduce) {
-      draw(0);
-      return;
-    }
+    draw(0); // vẽ khung đầu ngay, khỏi trống trước khi rAF chạy
     last = 0;
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
@@ -131,7 +128,7 @@
   });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") cancelAnimationFrame(raf);
-    else if (!reduce) {
+    else {
       last = 0;
       raf = requestAnimationFrame(frame);
     }
