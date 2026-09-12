@@ -5,6 +5,7 @@ import { requireRoles } from "../auth/guards.js";
 import type { AppConfig } from "../config.js";
 import { query, type Database } from "../db.js";
 import { getBackofficeQueueCounts } from "../services/backoffice-queue.js";
+import { decryptField } from "../lib/crypto.js";
 import { AppError } from "../lib/errors.js";
 import { setFlash } from "../lib/flash.js";
 import { parseInput } from "../lib/validation.js";
@@ -321,6 +322,8 @@ export async function registerBackofficeRoutes(
       amount_vnd: string;
       bank_code: string;
       bank_last4: string;
+      bank_account_ciphertext: string;
+      bank_name_ciphertext: string;
       status: string;
       risk_score: number;
       requested_at: Date;
@@ -329,7 +332,8 @@ export async function registerBackofficeRoutes(
       deps.db,
       `
         SELECT w.id, u.email, u.full_name, w.amount_vnd::text,
-          w.bank_code, w.bank_last4, w.status, w.risk_score, w.requested_at,
+          w.bank_code, w.bank_last4, w.bank_account_ciphertext,
+          w.bank_name_ciphertext, w.status, w.risk_score, w.requested_at,
           count(*) OVER()::text AS total_count
         FROM withdrawals w
         JOIN users u ON u.id = w.user_id
@@ -340,10 +344,38 @@ export async function registerBackofficeRoutes(
       `,
       [perPage, (page - 1) * perPage],
     );
+    // Nhân viên tài chính cần SỐ TÀI KHOẢN ĐẦY ĐỦ + tên chủ TK để chuyển tiền
+    // thủ công — giải mã tại chỗ (số lưu mã hoá theo từng yêu cầu rút).
+    const withdrawalRows = withdrawals.rows.map((row) => {
+      let accountFull = "";
+      let nameFull = "";
+      try {
+        accountFull = decryptField(row.bank_account_ciphertext, deps.config);
+      } catch {
+        // Không giải được (đổi khoá cũ) → để trống, vẫn còn 4 số cuối.
+      }
+      try {
+        nameFull = decryptField(row.bank_name_ciphertext, deps.config);
+      } catch {
+        // Bỏ qua.
+      }
+      const {
+        bank_account_ciphertext,
+        bank_name_ciphertext,
+        ...rest
+      } = row;
+      void bank_account_ciphertext;
+      void bank_name_ciphertext;
+      return {
+        ...rest,
+        bank_account_full: accountFull,
+        bank_name_full: nameFull,
+      };
+    });
     return reply.view("backoffice/withdrawals.njk", {
       pageTitle: "Duyệt rút tiền",
       backofficeSection: "withdrawals",
-      withdrawals: withdrawals.rows,
+      withdrawals: withdrawalRows,
       pagination: buildPagination(
         page,
         perPage,

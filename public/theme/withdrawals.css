@@ -331,3 +331,58 @@
     min-width: 720px;
   }
 }
+
+/* Ô ngân hàng ở Duyệt rút tiền: số tài khoản ĐẦY ĐỦ + tên chủ + nút copy để
+   nhân viên tài chính chuyển tiền thủ công. */
+.bo-payout {
+  vertical-align: top;
+  white-space: nowrap;
+}
+.bo-payout-bank {
+  display: inline-block;
+  font-weight: 800;
+  color: var(--admin-text, #1c2430);
+}
+.bo-payout-acct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+.bo-payout-acct code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--admin-text, #1c2430);
+  user-select: all;
+}
+.bo-payout-name {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--admin-muted, #667085);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.bo-copy {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--admin-border, #d6dbe4);
+  border-radius: 7px;
+  background: var(--admin-surface-soft, #f4f6fa);
+  color: var(--admin-brand, #0b63d6);
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.bo-copy:hover {
+  border-color: var(--admin-brand, #0b63d6);
+  background: var(--admin-brand-soft, #e7f0ff);
+}
+.bo-copy.is-copied {
+  color: var(--admin-success, #16794a);
+  border-color: var(--admin-success-border, #9fd8ba);
+  background: var(--admin-success-bg, #e7f7ef);
+}

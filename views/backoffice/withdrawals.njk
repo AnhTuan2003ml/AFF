@@ -25,7 +25,18 @@
                 <td class="select-col">{% if withdrawal.status == 'FUNDS_HELD' and currentUser.role in ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] %}<input type="checkbox" name="ids" value="{{ withdrawal.id }}" form="withdrawals-bulk-form" data-select-item="withdrawals" aria-label="Chọn yêu cầu rút {{ withdrawal.amount_vnd | vnd }}">{% else %}<span class="muted">—</span>{% endif %}</td>
                 <td><b>{{ withdrawal.full_name }}</b><br><small>{{ withdrawal.email }}</small></td>
                 <td><strong>{{ withdrawal.amount_vnd | vnd }}</strong></td>
-                <td>{{ withdrawal.bank_code }} · •••• {{ withdrawal.bank_last4 }}</td>
+                <td class="bo-payout">
+                  <span class="bo-payout-bank">{{ withdrawal.bank_code }}</span>
+                  {% if withdrawal.bank_account_full %}
+                    <span class="bo-payout-acct">
+                      <code data-account-number>{{ withdrawal.bank_account_full }}</code>
+                      <button type="button" class="bo-copy" data-copy-text="{{ withdrawal.bank_account_full }}" aria-label="Sao chép số tài khoản">Copy</button>
+                    </span>
+                  {% else %}
+                    <span class="bo-payout-acct"><code>•••• {{ withdrawal.bank_last4 }}</code></span>
+                  {% endif %}
+                  {% if withdrawal.bank_name_full %}<small class="bo-payout-name">{{ withdrawal.bank_name_full }}</small>{% endif %}
+                </td>
                 <td><span class="risk-score {% if withdrawal.risk_score > 50 %}high{% endif %}">{{ withdrawal.risk_score }}</span></td>
                 <td>{{ status_badge(withdrawal.status) }}</td>
                 <td>{{ withdrawal.requested_at | datetime }}</td>
