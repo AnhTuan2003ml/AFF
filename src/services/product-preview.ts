@@ -82,6 +82,8 @@ const SHORT_LINK_HOSTS = new Set([
   "s.shopee.vn",
   "shp.ee",
   "vn.shp.ee",
+  "shope.ee",
+  "vn.shope.ee",
   "vt.tiktok.com",
   "vm.tiktok.com",
   "s.lazada.vn",

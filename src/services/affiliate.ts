@@ -52,6 +52,8 @@ const PLATFORM_HOSTS: Record<ProductPlatform, ReadonlySet<string>> = {
     "s.shopee.vn",
     "shp.ee",
     "vn.shp.ee",
+    "shope.ee",
+    "vn.shope.ee",
   ]),
   TIKTOK: new Set([
     "tiktok.com",
